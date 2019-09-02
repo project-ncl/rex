@@ -1,0 +1,14 @@
+# Maven
+target/
+settings.xml
+
+# Eclipse
+.project
+.settings
+.classpath
+/eclipse-target
+bin
+
+# IntelliJ
+*.iml
+.idea

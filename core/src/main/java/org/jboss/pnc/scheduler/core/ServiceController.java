@@ -168,10 +168,10 @@ public interface ServiceController extends Dependent {
      * before a transition is completed. Another transition cannot be initiated until these tasks are completed.
      *
      * F.e. Transition between UP and STOPPING state creates x tasks for each dependant to stop and one task to invoke async
-     * http server to stop remote execution of itself. After these tasks are completed. It can Transition to STOPPED/STOP_FAILED
+     * http server to stop remote execution of itself. After these tasks are completed, t can Transition to STOPPED/STOP_FAILED
      * which is dependent on positive or negative callback.
      *
-     * Transition is an edge in state-machine diagram
+     * Transition is an edge in state-machine diagram.
      */
     enum Transition {
         /**
