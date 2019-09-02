@@ -1,0 +1,10 @@
+connect
+/subsystem=datagrid-infinispan/cache-container=clustered/configurations=CONFIGURATIONS/replicated-cache-configuration=task-config:add()
+/subsystem=datagrid-infinispan/cache-container=clustered/configurations=CONFIGURATIONS/replicated-cache-configuration=task-config/transaction=TRANSACTION:add(mode=NON_DURABLE_XA, locking=PESSIMISTIC)
+/subsystem=datagrid-infinispan/cache-container=clustered/configurations=CONFIGURATIONS/replicated-cache-configuration=task-config/locking=LOCKING:add(isolation=REPEATABLE_READ, concurrency-level=1000)
+
+/subsystem=datagrid-infinispan/cache-container=clustered/replicated-cache=near-tasks:add(configuration=task-config)
+/socket-binding-group=standard-sockets/socket-binding=rest:write-attribute(name=port,value=8091)
+/socket-binding-group=standard-sockets/socket-binding=rest-multi-tenancy:write-attribute(name=port,value=8092)
+/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=remote-store-rest-server:write-attribute(name=port, value=8093)
+reload
