@@ -1,4 +1,4 @@
-package org.jboss.pnc.scheduler.core;
+package org.jboss.pnc.scheduler.core.api;
 
 import org.jboss.msc.service.ServiceName;
 
@@ -27,14 +27,22 @@ public interface ServiceBuilder {
     /**
      * Set initial mode
      *
+     * @param mode initialMode (default is Mode.IDLE)
      * @return the service builder
      */
-    ServiceBuilder serInitialMode(ServiceController.Mode mode);
+    ServiceBuilder setInitialMode(ServiceController.Mode mode);
 
     /**
-     * Install the service to a Container.
+     * Set payload that is sent to remote entity
      *
-     * @return the service controller
+     * @param payload generic payload
+     * @return the service builder
      */
-    ServiceController install();
+    ServiceBuilder setPayload(String payload);
+
+    /**
+     * Commit changes to the BatchServiceBuilder
+     *
+     */
+    void install();
 }

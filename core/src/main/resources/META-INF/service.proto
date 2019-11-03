@@ -1,0 +1,47 @@
+package org.jboss.pnc.scheduler.core.model;
+
+import "service_name.proto";
+import "ServerResponseContextInitialixer.proto";
+
+
+message Service {
+    /* @IndexedField */
+    required ServiceName name = 1;
+    required RemoteAPI remoteEndpoints = 2;
+    enum Mode {
+        IDLE = 0;
+        ACTIVE = 1;
+        CANCEL = 2;
+    }
+    required Mode mode = 3;
+    enum State {
+        NEW = 0;
+        WAITING = 1;
+        STARTING = 2;
+        UP = 3;
+        STOPPING = 4;
+        START_FAILED = 5;
+        STOP_FAILED = 6;
+        FAILED = 7;
+        SUCCESSFUL = 8;
+        STOPPED = 9;
+    }
+    required State state = 4;
+    repeated ServiceName dependants = 5;
+    required int32 unfinishedDependencies = 6;
+    required string payload = 7;
+    repeated ServiceName dependencies = 8;
+    enum StopFlag {
+        NONE = 0;
+        CANCELLED = 1;
+        UNSUCCESSFUL = 2;
+        DEPENDENCY_FAILED = 3;
+    }
+    required StopFlag stopFlag = 9;
+    optional ServerResponse serverResponse = 10;
+}
+
+message RemoteAPI {
+    required string startUrl = 1;
+    required string stopUrl = 2;
+}

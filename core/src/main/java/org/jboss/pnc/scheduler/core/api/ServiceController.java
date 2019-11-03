@@ -1,70 +1,71 @@
-package org.jboss.pnc.scheduler.core;
+package org.jboss.pnc.scheduler.core.api;
 
 import org.jboss.msc.service.ServiceName;
 
 /**
  * This is API for ServiceController.
  * <p>
- * ServiceController is an main entity that handles transitions and holds data for each scheduled remote job(Service).
- * ServiceController has to be installed through ServiceBuilder that is provided by ServiceTarget. After installation, Controllers
- * data is held by Infinispan cache inside ServiceRegistry/ServiceContainer.
+ * ServiceController is an main entity that manipulates and handles transitions for each scheduled remote job(Service).
+ *
  * <p>
- * Each ServiceController has unique ServiceName that serves as a key in a Infinispan cache.
+ * ServiceController does not hold any data besides ServiceName key of a Service that it is associated with. Before each method
+ * is invoked it loads updated data from Container.
  *
  * @author Jan Michalov <jmichalo@redhat.com>
  */
-public interface ServiceController extends Dependent {
+public interface ServiceController {
     /**
-     * Gets unique name of a Controller.
+     * Gets unique name of an associated job(Service).
      *
      * @return the name
      */
     ServiceName getName();
 
     /**
-     * Gets container in which the ServiceController is installed in.
+     * Gets the Container in which the job(Service) is installed in.
      *
      * @return the container
      */
     ServiceContainer getContainer();
 
     /**
-     * Gets mode.
+     * Gets mode of a Service.
      *
      * @return the mode
      */
     Mode getMode();
 
     /**
-     * Sets mode of a Controller. Needs to be called under a lock.
+     * Sets mode of a Service. Needs to be called under a lock.
      *
      * @param mode the mode
      */
     void setMode(Mode mode);
 
     /**
-     * Gets current Controllers state.
+     * Gets current Service state.
      *
      * @return the state
      */
     State getState();
 
     /**
-     * Method used for positive callback
+     * Method used for positive callback. Needs to be called under a lock.
      *
      * f.e. to signalize that remote job(Service) has started/cancelled/finished.
      */
     void accept();
 
     /**
-     * Method used for negative callback
+     * Method used for negative callback. Needs to be called under a lock.
      *
      * f.e. to signalize that remote job(Service) failed to start/cancel or failed during execution.
      */
     void fail();
 
     /**
-     * ServiceControllers affect each other through Tasks. Mode serves as a way for users and other entities to affect Controllers behaviour.
+     * ServiceControllers communicate with each other through Tasks. Modes serve as a way for users and other entities to affect
+     * Controller's behaviour.
      */
     enum Mode {
         /**
@@ -82,14 +83,14 @@ public interface ServiceController extends Dependent {
     }
 
     /**
-     * The enum represents State the Controller is currently in.
+     * The enum represents State the job(Service) is currently in.
      * <p>
      * State represents vertices in state-machine diagram.
      */
     enum State {
 
         /**
-         * Controller was created and is being idle. It does not transition unless Mode.ACTIVE.
+         * Service was created and is being idle. It does not transition unless Mode.ACTIVE.
          */
         NEW(StateGroup.IDLE),
         /**
@@ -106,7 +107,7 @@ public interface ServiceController extends Dependent {
          */
         UP(StateGroup.RUNNING),
         /**
-         * Controller requests remote job(Service) to stop and waits for callback to approve that remote job successfully stopped.
+         * Controller requests remote job(Service) to stop and waits for a callback to approve that remote job successfully stopped.
          */
         STOPPING(StateGroup.RUNNING),
         /**
@@ -134,6 +135,22 @@ public interface ServiceController extends Dependent {
 
         State(StateGroup type) {
             this.type = type;
+        }
+
+        public StateGroup getGroup() {
+            return type;
+        }
+
+        public boolean isIdle() {
+            return type.equals(StateGroup.IDLE);
+        }
+
+        public boolean isRunning() {
+            return type.equals(StateGroup.IDLE);
+        }
+
+        public boolean isFinal() {
+            return type.equals(StateGroup.IDLE);
         }
     }
 
@@ -164,7 +181,7 @@ public interface ServiceController extends Dependent {
     /**
      * This enum represent Transition between States
      *
-     * Transition is a process and that means that to complete transition there could be number of tasks that need to be executed
+     * Transition is a process, that means that to complete transition there could be number of tasks that need to be executed
      * before a transition is completed. Another transition cannot be initiated until these tasks are completed.
      *
      * F.e. Transition between UP and STOPPING state creates x tasks for each dependant to stop and one task to invoke async

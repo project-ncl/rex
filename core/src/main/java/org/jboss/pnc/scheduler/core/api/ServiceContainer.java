@@ -1,4 +1,4 @@
-package org.jboss.pnc.scheduler.core;
+package org.jboss.pnc.scheduler.core.api;
 
 /**
  * The interface Service container.
