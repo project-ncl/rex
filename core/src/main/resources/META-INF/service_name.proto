@@ -1,5 +1,5 @@
 package org.jboss.pnc.scheduler.core.model;
 
 message ServiceName {
-    required string serviceName = 1;
+     required string serviceName = 1;
 }

@@ -7,10 +7,11 @@ import org.jboss.pnc.scheduler.core.api.ServiceContainer;
 import org.jboss.pnc.scheduler.core.api.ServiceController;
 import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.core.exceptions.ServiceNotFoundException;
-import org.jboss.pnc.scheduler.core.model.Service;
+import org.jboss.pnc.scheduler.core.model.*;
 
 import javax.transaction.SystemException;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ServiceControllerImpl implements ServiceController, Dependent {
 
@@ -71,7 +72,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
         }
     }
 
-    /*private List<Runnable> transition(Service service) {
+    private List<Runnable> transition(Service service) {
         assertInTransaction();
         Transition transition;
         do {
@@ -82,36 +83,64 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
     private Transition getTransition(Service service) {
         Mode mode = service.getControllerMode();
         switch (service.getState()) {
-            case NEW:
-                if (mode == Mode.CANCEL) {
-
-                }
-            case WAITING:
-                break;
-            case STARTING:
-                break;
-            case UP:
-                break;
-            case STOPPING:
-                break;
+            case NEW: {
+                if (shouldStop(service))
+                    return Transition.NEW_to_STOPPED;
+                if (shouldStart(service))
+                    return Transition.NEW_to_STARTING;
+                if (mode == Mode.ACTIVE && service.getUnfinishedDependencies() > 0)
+                    return Transition.NEW_to_WAITING;
+            }
+            case WAITING: {
+                if (shouldStop(service))
+                    return Transition.WAITING_to_STOPPED;
+                if (shouldStart(service))
+                    return Transition.WAITING_to_STARTING;
+            }
+            case STARTING: {
+                if (service.getStopFlag() == StopFlag.CANCELLED)
+                    return Transition.STARTING_to_STOPPING;
+                Stream<ServerResponse> responses = service.getServerResponses().stream().filter(sr -> sr.getState() == State.STARTING);
+                if (responses.anyMatch(ServerResponse::isPositive))
+                    return Transition.STARTING_to_UP;
+                if (responses.anyMatch(ServerResponse::isNegative))
+                    return Transition.STARTING_to_START_FAILED;
+            }
+            case UP: {
+                if (service.getStopFlag() == StopFlag.CANCELLED)
+                    return Transition.UP_to_STOPPING;
+                Stream<ServerResponse> responses = service.getServerResponses().stream().filter(sr -> sr.getState() == State.UP);
+                if (responses.anyMatch(ServerResponse::isPositive))
+                    return Transition.UP_to_SUCCESSFUL;
+                if (responses.anyMatch(ServerResponse::isNegative))
+                    return Transition.UP_to_FAILED;
+            }
+            case STOPPING: {
+                Stream<ServerResponse> responses = service.getServerResponses().stream().filter(sr -> sr.getState() == State.STOPPING);
+                if (responses.anyMatch(ServerResponse::isPositive))
+                    return Transition.STOPPING_to_STOPPED;
+                if (responses.anyMatch(ServerResponse::isNegative))
+                    return Transition.STOPPING_to_STOP_FAILED;
+            }
+            // final states have no possible transitions
             case START_FAILED:
-                break;
             case STOP_FAILED:
-                break;
             case FAILED:
-                break;
             case SUCCESSFUL:
-                break;
             case STOPPED:
                 break;
             default:
                 throw new IllegalStateException("Service is in unrecognized state.");
         }
         return null;
-    }*/
+    }
 
     private boolean shouldStart(Service service) {
         return service.getControllerMode() == Mode.ACTIVE && service.getUnfinishedDependencies() <= 0;
+    }
+
+    private boolean shouldStop(Service service) {
+        return service.getStopFlag() != StopFlag.NONE;
     }
 
     private static void assertCanAcceptDependencies(Service service) {

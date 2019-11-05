@@ -1,6 +1,7 @@
 package org.jboss.pnc.scheduler.core.api;
 
 import org.jboss.msc.service.ServiceName;
+import org.jboss.pnc.scheduler.core.model.Mode;
 
 /**
  * ServiceBuilders are used for creating jobs(Services) and their installment into the container
@@ -30,7 +31,7 @@ public interface ServiceBuilder {
      * @param mode initialMode (default is Mode.IDLE)
      * @return the service builder
      */
-    ServiceBuilder setInitialMode(ServiceController.Mode mode);
+    ServiceBuilder setInitialMode(Mode mode);
 
     /**
      * Set payload that is sent to remote entity

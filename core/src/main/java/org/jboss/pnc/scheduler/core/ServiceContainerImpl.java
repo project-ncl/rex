@@ -100,7 +100,19 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
     //TODO check for Circle
     protected void install(BatchServiceInstallerImpl serviceBuilder) {
         try {
-            getTransactionManager().begin();
+            installInternal(serviceBuilder);
+        } catch (RollbackException e) {
+            throw new IllegalStateException("Installation rolled back.", e);
+        } catch (HeuristicMixedException e) {
+            throw new IllegalStateException("Part of transaction was committed and part rollback. Data corruption possible.", e);
+        } catch (SystemException | NotSupportedException | HeuristicRollbackException e) {
+            throw new IllegalStateException("Cannot start Transaction, unexpected error was thrown while committing transactions", e);
+        }
+    }
+
+    private void installInternal(BatchServiceInstallerImpl serviceBuilder) throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+        try {
+            boolean joined = joinOrBeginTransation();
             Set<ServiceName> installed = serviceBuilder.getInstalledServices();
 
             for (ServiceBuilderImpl declaration : serviceBuilder.getServiceDeclarations()) {
@@ -119,7 +131,7 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
                         newDependency(dependantService, newService);
 
                         //update the dependency
-                        if(!getCache().replaceWithVersion(dependant, dependantService, dependantServiceMetadata.getVersion())) {
+                        if (!getCache().replaceWithVersion(dependant, dependantService, dependantServiceMetadata.getVersion())) {
                             throw new ConcurrentUpdateException("Service " + dependant.getCanonicalName() + " was remotely updated during the transaction");
                         }
                     }
@@ -140,7 +152,7 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
                         newDependant(dependencyService, newService);
 
                         //update the dependency
-                        if(!getCache().replaceWithVersion(dependency, dependencyService, dependencyServiceMetadata.getVersion())) {
+                        if (!getCache().replaceWithVersion(dependency, dependencyService, dependencyServiceMetadata.getVersion())) {
                             throw new ConcurrentUpdateException("Service " + dependency.getCanonicalName() + " was remotely updated during the transaction");
                         }
                         if (dependencyService.getState().isFinal()) {
@@ -156,13 +168,23 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
                     throw new InvalidServiceDeclarationException("Service " + newService.getName().getCanonicalName() + " already exists.");
                 }
             }
-            getTransactionManager().commit();
-        } catch (RollbackException e) {
-            throw new IllegalStateException("Installation rolled back.", e);
-        } catch (HeuristicMixedException e) {
-            throw new IllegalStateException("Part of transaction was committed and part rollback. Data corruption possible.", e);
-        } catch (SystemException | NotSupportedException | HeuristicRollbackException e) {
-            throw new IllegalStateException("Cannot start Transaction, unexpected error was thrown while committing transactions", e);
+            if (!joined) getTransactionManager().commit();
+        } catch (RuntimeException e) {
+            //rollback on failure
+            getTransactionManager().rollback();
+            throw e;
         }
+    }
+
+    /**
+     *
+     * @return returns true if joined
+     */
+    private boolean joinOrBeginTransation() throws SystemException, NotSupportedException {
+        if (getTransactionManager().getTransaction() != null){
+            getTransactionManager().begin();
+            return false;
+        }
+        return true;
     }
 }

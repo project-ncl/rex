@@ -1,6 +1,8 @@
 package org.jboss.pnc.scheduler.core.api;
 
 import org.jboss.msc.service.ServiceName;
+import org.jboss.pnc.scheduler.core.model.Mode;
+import org.jboss.pnc.scheduler.core.model.State;
 
 /**
  * This is API for ServiceController.
@@ -33,7 +35,7 @@ public interface ServiceController {
      *
      * @return the mode
      */
-    Mode getMode();
+    org.jboss.pnc.scheduler.core.model.Mode getMode();
 
     /**
      * Sets mode of a Service. Needs to be called under a lock.
@@ -62,121 +64,6 @@ public interface ServiceController {
      * f.e. to signalize that remote job(Service) failed to start/cancel or failed during execution.
      */
     void fail();
-
-    /**
-     * ServiceControllers communicate with each other through Tasks. Modes serve as a way for users and other entities to affect
-     * Controller's behaviour.
-     */
-    enum Mode {
-        /**
-         * Controller does not attempt to start and sits idly. This is initial Mode.
-         */
-        IDLE,
-        /**
-         * Controller is actively trying to start its execution.
-         */
-        ACTIVE,
-        /**
-         * Controller is told to cancel its execution.
-         */
-        CANCEL
-    }
-
-    /**
-     * The enum represents State the job(Service) is currently in.
-     * <p>
-     * State represents vertices in state-machine diagram.
-     */
-    enum State {
-
-        /**
-         * Service was created and is being idle. It does not transition unless Mode.ACTIVE.
-         */
-        NEW(StateGroup.IDLE),
-        /**
-         * Controller is waiting for either all dependencies to successfully complete
-         * or for room in the Container(limited number of active tasks).
-         */
-        WAITING(StateGroup.IDLE),
-        /**
-         * Controller requests remote job(Service) to start and waits for callback to approve that remote job successfully started.
-         */
-        STARTING(StateGroup.RUNNING),
-        /**
-         * Remote job(Service) successfully started and is running.
-         */
-        UP(StateGroup.RUNNING),
-        /**
-         * Controller requests remote job(Service) to stop and waits for a callback to approve that remote job successfully stopped.
-         */
-        STOPPING(StateGroup.RUNNING),
-        /**
-         * Received callback that remote job(Service) failed to start.
-         */
-        START_FAILED(StateGroup.FINAL),
-        /**
-         * Received callback that remote job(Service) failed to stop.
-         */
-        STOP_FAILED(StateGroup.FINAL),
-        /**
-         * Remote job(Service) failed during execution.
-         */
-        FAILED(StateGroup.FINAL),
-        /**
-         * Remote job(Service) ended successfully.
-         */
-        SUCCESSFUL(StateGroup.FINAL),
-        /**
-         * Remote job(Service) stopped successfully.
-         */
-        STOPPED(StateGroup.FINAL);
-
-        private final StateGroup type;
-
-        State(StateGroup type) {
-            this.type = type;
-        }
-
-        public StateGroup getGroup() {
-            return type;
-        }
-
-        public boolean isIdle() {
-            return type.equals(StateGroup.IDLE);
-        }
-
-        public boolean isRunning() {
-            return type.equals(StateGroup.IDLE);
-        }
-
-        public boolean isFinal() {
-            return type.equals(StateGroup.IDLE);
-        }
-    }
-
-    /**
-     * The enum State Group.
-     */
-    enum StateGroup {
-        /**
-         * Controller is idle and job(Service) hasn't started remote execution.
-         * <p>
-         * In this state you are able to add additional dependencies.
-         */
-        IDLE,
-        /**
-         * Job(Service) is remotely active.
-         * <p>
-         * In this state you are unable to add additional dependencies.
-         */
-        RUNNING,
-        /**
-         * Job(Service) has finished execution or failed.
-         * <p>
-         * In this state you are unable to add additional dependencies and cannot transition to any other state.
-         */
-        FINAL
-    }
 
     /**
      * This enum represent Transition between States

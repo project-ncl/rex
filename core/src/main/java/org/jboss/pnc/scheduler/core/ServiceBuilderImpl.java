@@ -3,10 +3,7 @@ package org.jboss.pnc.scheduler.core;
 import lombok.Getter;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.ServiceBuilder;
-import org.jboss.pnc.scheduler.core.api.ServiceController;
-import org.jboss.pnc.scheduler.core.model.RemoteAPI;
-import org.jboss.pnc.scheduler.core.model.Service;
-import org.jboss.pnc.scheduler.core.model.StopFlag;
+import org.jboss.pnc.scheduler.core.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +33,7 @@ public class ServiceBuilderImpl implements ServiceBuilder, Comparable<ServiceBui
     private boolean installed = false;
 
     @Getter
-    private ServiceController.Mode initialMode = ServiceController.Mode.IDLE;
+    private Mode initialMode = Mode.IDLE;
 
     public ServiceBuilderImpl(ServiceName name, BatchServiceInstallerImpl installer) {
         this.installer = assertNotNull(installer);
@@ -64,7 +61,7 @@ public class ServiceBuilderImpl implements ServiceBuilder, Comparable<ServiceBui
     }
 
     @Override
-    public ServiceBuilder setInitialMode(ServiceController.Mode mode) {
+    public ServiceBuilder setInitialMode(Mode mode) {
         assertNotInstalled();
         assertNotCancelledState(mode);
         assertNotNull(mode);
@@ -106,7 +103,7 @@ public class ServiceBuilderImpl implements ServiceBuilder, Comparable<ServiceBui
                         .startUrl("hello.url") //TODO FIXME
                         .stopUrl("bye.url")
                         .build())
-                .state(ServiceController.State.NEW)
+                .state(State.NEW)
                 .build();
     }
 
@@ -122,8 +119,8 @@ public class ServiceBuilderImpl implements ServiceBuilder, Comparable<ServiceBui
         }
     }
 
-    private void assertNotCancelledState(ServiceController.Mode mode) {
-        if (mode.equals(ServiceController.Mode.CANCEL)) {
+    private void assertNotCancelledState(Mode mode) {
+        if (mode.equals(Mode.CANCEL)) {
             throw new IllegalArgumentException("Service cannot with cancelled mode.");
         }
     }

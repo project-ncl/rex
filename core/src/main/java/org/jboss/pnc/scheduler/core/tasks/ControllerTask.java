@@ -13,12 +13,16 @@ public abstract class ControllerTask implements Runnable {
     public void run() {
         try {
             beforeExecute();
-            if(!execute()) return;
+            if (!execute()) return;
+        } catch (RuntimeException e) {
+            onException(e);
+            throw e;
         } finally {
             afterExecute();
         }
     }
 
+    void onException(Throwable e) {};
     abstract void beforeExecute();
     abstract void afterExecute();
     abstract boolean execute();

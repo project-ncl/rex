@@ -6,6 +6,9 @@ import org.jboss.msc.service.ServiceName;
 import javax.enterprise.inject.Produces;
 import java.io.IOException;
 
+/**
+ * Marshaller for the key in the cache
+ */
 public class ServiceNameMarshaller implements MessageMarshaller<ServiceName> {
 
     @Override

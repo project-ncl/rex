@@ -2,9 +2,8 @@ package org.jboss.pnc.scheduler.core;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.infinispan.client.hotrod.MetadataValue;
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.BatchServiceInstaller;
-import org.jboss.pnc.scheduler.core.api.ServiceController;
+import org.jboss.pnc.scheduler.core.model.Mode;
 import org.jboss.pnc.scheduler.core.model.Service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,7 @@ class ServiceContainerImplTest {
         installer
                 .addService(parse("omg.wtf.whatt"))
                 .setPayload("{id: 100}")
-                .setInitialMode(ServiceController.Mode.IDLE)
+                .setInitialMode(Mode.IDLE)
                 .install();
         installer.commit();
 
@@ -63,13 +62,13 @@ class ServiceContainerImplTest {
     public void testInstall() throws Exception{
         BatchServiceInstaller installer = container.addServices();
         installer.addService(parse("service1"))
-                .setInitialMode(ServiceController.Mode.IDLE)
+                .setInitialMode(Mode.IDLE)
                 .isRequiredBy(parse("service2"))
                 .setPayload("SAOIDHSAOIDHSALKDH LKSA")
                 .install();
 
         installer.addService(parse("service2"))
-                .setInitialMode(ServiceController.Mode.IDLE)
+                .setInitialMode(Mode.IDLE)
                 .requires(parse("service1"))
                 .setPayload("ASDLJSALKJDHSAKJDHLKJSAHDLKJSAHDK")
                 .install();
