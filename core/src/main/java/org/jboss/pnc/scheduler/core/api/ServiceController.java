@@ -152,6 +152,15 @@ public interface ServiceController {
         UP_to_SUCCESSFUL(State.UP, State.SUCCESSFUL);
 
         private final State before;
+
+        public State getBefore() {
+            return before;
+        }
+
+        public State getAfter() {
+            return after;
+        }
+
         private final State after;
 
         Transition(State before, State after) {

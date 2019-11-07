@@ -15,8 +15,7 @@ public abstract class TransactionalControllerTask extends ControllerTask {
 
     private boolean alreadyInTransaction;
 
-    TransactionalControllerTask(ServiceControllerImpl controller, TransactionManager tm) {
-        super(controller);
+    TransactionalControllerTask(TransactionManager tm) {
         this.tm = tm;
         try {
             this.alreadyInTransaction = tm.getTransaction()==null ? true : false;

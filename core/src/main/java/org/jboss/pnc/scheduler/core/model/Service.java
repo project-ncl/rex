@@ -5,6 +5,8 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.jboss.msc.service.ServiceName;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,7 +56,7 @@ public class Service {
      */
     @Singular
     @Getter
-    private Set<ServiceName> dependants;
+    private Set<ServiceName> dependants = new HashSet<>();
 
     /**
      * Number of unfinishedDependencies. Service can't remotely start if the number is positive.
@@ -63,7 +65,7 @@ public class Service {
 
     @Singular
     @Getter
-    private Set<ServiceName> dependencies;
+    private Set<ServiceName> dependencies = new HashSet<>();
 
     /**
      * Payload sent to remote entity.
@@ -73,7 +75,7 @@ public class Service {
     private StopFlag stopFlag;
 
     @Singular
-    private List<ServerResponse> serverResponses;
+    private List<ServerResponse> serverResponses = new ArrayList<>();
 
     /**
      * Used by infinispan to create .proto schema and marshaller values in the cache
@@ -96,6 +98,10 @@ public class Service {
     }
 
     public void incUnfinishedDependencies() {
+        unfinishedDependencies++;
+    }
+
+    public void decUnfinishedDependencies() {
         unfinishedDependencies++;
     }
 

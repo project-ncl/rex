@@ -111,8 +111,8 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
     }
 
     private void installInternal(BatchServiceInstallerImpl serviceBuilder) throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+        boolean joined = joinOrBeginTransation();
         try {
-            boolean joined = joinOrBeginTransation();
             Set<ServiceName> installed = serviceBuilder.getInstalledServices();
 
             for (ServiceBuilderImpl declaration : serviceBuilder.getServiceDeclarations()) {
@@ -171,7 +171,7 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
             if (!joined) getTransactionManager().commit();
         } catch (RuntimeException e) {
             //rollback on failure
-            getTransactionManager().rollback();
+            if (!joined) getTransactionManager().rollback();
             throw e;
         }
     }

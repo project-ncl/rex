@@ -19,11 +19,6 @@ public interface Dependent {
     void dependencyStopped();
 
     /**
-     * Notify this dependent that it's dependency has failed.
-     */
-    void dependencyFailed();
-
-    /**
      * Notify this dependent that it's dependency has been cancelled.
      */
     void dependencyCancelled();

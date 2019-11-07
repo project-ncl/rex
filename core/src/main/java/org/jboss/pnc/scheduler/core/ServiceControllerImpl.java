@@ -8,9 +8,14 @@ import org.jboss.pnc.scheduler.core.api.ServiceController;
 import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.core.exceptions.ServiceNotFoundException;
 import org.jboss.pnc.scheduler.core.model.*;
+import org.jboss.pnc.scheduler.core.tasks.*;
 
 import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ServiceControllerImpl implements ServiceController, Dependent {
@@ -19,23 +24,29 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
     private ServiceContainerImpl container;
 
+    private TransactionManager tm;
+
     public ServiceControllerImpl(ServiceName name, ServiceContainerImpl container) {
         this.name = name;
         this.container = container;
+        tm = container.getTransactionManager();
     }
 
     @Override
     public void dependencyCreated(ServiceName dependencyName) {
         assertInTransaction();
         MetadataValue<Service> serviceMeta = container.getCache().getWithMetadata(name);
+        assertNotNull(serviceMeta, new ServiceNotFoundException("Service " + name +" not found!"));
         Service service = serviceMeta.getValue();
         Service dependency = container.getService(dependencyName);
+
         newDependency(service, dependency);
+
         boolean pushed = container.getCache().replaceWithVersion(service.getName(),service,serviceMeta.getVersion());
         if (!pushed) {
             throw new ConcurrentUpdateException("Service " + service.getName().getCanonicalName() + " was remotely updated during the transaction");
         }
-        //Get get controller of the dependency and notify it that it has new dependant
+        //Get get controller of the dependency and notify it that it has a new dependant
         ServiceControllerImpl dependencyController = (ServiceControllerImpl) container.getServiceController(dependencyName);
         dependencyController.dependantCreated(name);
     }
@@ -61,6 +72,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
     public void dependantCreated(ServiceName dependantName) {
         assertInTransaction();
         MetadataValue<Service> serviceMeta = container.getCache().getWithMetadata(name);
+        assertNotNull(serviceMeta, new ServiceNotFoundException("Service " + name + "not found"));
         Service service = serviceMeta.getValue();
         Service dependant = container.getService(dependantName);
 
@@ -75,9 +87,73 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
     private List<Runnable> transition(Service service) {
         assertInTransaction();
         Transition transition;
-        do {
-            transition = getTransition(service);
+        transition = getTransition(service);
+
+        List<Runnable> tasks = new ArrayList<>();
+
+        if (transition == null) {
+            return tasks;
         }
+
+        switch (transition) {
+            case NEW_to_WAITING:
+                //no tasks
+                break;
+
+            case NEW_to_STARTING:
+            case WAITING_to_STARTING:
+                tasks.add(new InvokeStartTask(tm));
+                break;
+
+            case UP_to_STOPPING:
+            case STARTING_to_STOPPING:
+                tasks.add(new InvokeStopTask(tm));
+                break;
+
+            case STOPPING_to_STOPPED:
+                tasks.add(new DependencyCancelledTask(
+                        service.getDependants().stream().map(dep -> container.getServiceControllerInternal(dep)).collect(Collectors.toSet()),
+                        tm));
+                break;
+
+            case NEW_to_STOPPED:
+            case WAITING_to_STOPPED:
+                switch (service.getStopFlag()) {
+                    case CANCELLED:
+                        tasks.add(new DependencyCancelledTask(
+                                service.getDependants().stream().map(dep -> container.getServiceControllerInternal(dep)).collect(Collectors.toSet()),
+                                tm));
+                        break;
+                    case DEPENDENCY_FAILED:
+                        tasks.add(new DependencyStoppedTask(
+                                service.getDependants().stream().map(dep -> container.getServiceControllerInternal(dep)).collect(Collectors.toSet()),
+                                tm));
+                        break;
+
+                };
+
+            case UP_to_FAILED:
+            case STARTING_to_START_FAILED:
+            case STOPPING_to_STOP_FAILED:
+                tasks.add(new DependencyStoppedTask(
+                        service.getDependants().stream().map(dep -> container.getServiceControllerInternal(dep)).collect(Collectors.toSet()),
+                        tm));
+                break;
+
+            case STARTING_to_UP:
+                //no tasks
+                break;
+
+            case UP_to_SUCCESSFUL:
+                tasks.add(new DependencySuccededTask(
+                        service.getDependants().stream().map(dep -> container.getServiceControllerInternal(dep)).collect(Collectors.toSet()),
+                        tm));
+                break;
+            default:
+                throw new IllegalStateException("Controller returned unknown transition: " + transition);
+        }
+        service.setState(transition.getAfter());
+        return tasks;
     }
 
     private Transition getTransition(Service service) {
@@ -167,7 +243,25 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
     @Override
     public void setMode(Mode mode) {
+        assertInTransaction();
+        MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        assertNotNull(serviceMetadata, new ServiceNotFoundException("Service " + name + "not found"));
+        Service service = serviceMetadata.getValue();
 
+        Mode currentMode = service.getControllerMode();
+        if (currentMode == mode || currentMode == Mode.CANCEL || (mode == Mode.IDLE && currentMode == Mode.ACTIVE)) {
+            //no possible movement
+            //TODO log
+            return;
+        }
+        service.setControllerMode(mode);
+
+        List<Runnable> tasks = transition(service);
+        doExecute(tasks);
+        boolean pushed = container.getCache().replaceWithVersion(service.getName(), service, serviceMetadata.getVersion());
+        if (!pushed) {
+            throw new ConcurrentUpdateException("Service " + service.getName().getCanonicalName() + " was remotely updated during the transaction");
+        }
     }
 
     @Override
@@ -177,32 +271,111 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
     @Override
     public void accept() {
+        assertInTransaction();
+        MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        assertNotNull(serviceMetadata, new ServiceNotFoundException("Service " + name + "not found"));
+        Service service = serviceMetadata.getValue();
 
+        if (EnumSet.of(State.STARTING,State.UP,State.STOPPING).contains(service.getState())){
+            ServerResponse positiveResponse = new ServerResponse(service.getState(), true);
+            List<ServerResponse> responses = service.getServerResponses();
+            responses.add(positiveResponse);
+            service.setServerResponses(responses); //probably unnecessary
+        } else {
+            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Service: " + service.getName().getCanonicalName() + " State: " + service.getState());
+        }
+
+        List<Runnable> tasks = transition(service);
+        doExecute(tasks);
+        boolean pushed = container.getCache().replaceWithVersion(service.getName(), service, serviceMetadata.getVersion());
+        if (!pushed) {
+            throw new ConcurrentUpdateException("Service " + service.getName().getCanonicalName() + " was remotely updated during the transaction");
+        }
+    }
+
+    private void doExecute(List<Runnable> tasks) {
+        //run in single thread
+        for (Runnable task : tasks) {
+            task.run();
+        }
     }
 
     @Override
     public void fail() {
+        assertInTransaction();
+        MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        Service service = serviceMetadata.getValue();
 
+        if (EnumSet.of(State.STARTING,State.UP,State.STOPPING).contains(service.getState())){
+            ServerResponse positiveResponse = new ServerResponse(service.getState(), false);
+            List<ServerResponse> responses = service.getServerResponses();
+            responses.add(positiveResponse);
+            service.setServerResponses(responses); //probably unnecessary
+            //maybe assert it was null before
+            service.setStopFlag(StopFlag.UNSUCCESSFUL);
+        } else {
+            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Service: " + service.getName().getCanonicalName() + " State: " + service.getState());
+        }
+
+        List<Runnable> tasks = transition(service);
+        doExecute(tasks);
+        boolean pushed = container.getCache().replaceWithVersion(service.getName(), service, serviceMetadata.getVersion());
+        if (!pushed) {
+            throw new ConcurrentUpdateException("Service " + service.getName().getCanonicalName() + " was remotely updated during the transaction");
+        }
     }
 
     @Override
     public void dependencySucceeded() {
+        assertInTransaction();
+        MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        Service service = serviceMetadata.getValue();
+
+        //maybe assert it was null before
+        service.decUnfinishedDependencies();
+
+        List<Runnable> tasks = transition(service);
+        doExecute(tasks);
+        boolean pushed = container.getCache().replaceWithVersion(service.getName(), service, serviceMetadata.getVersion());
+        if (!pushed) {
+            throw new ConcurrentUpdateException("Service " + service.getName().getCanonicalName() + " was remotely updated during the transaction");
+        }
 
     }
 
     @Override
     public void dependencyStopped() {
+        assertInTransaction();
+        MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        Service service = serviceMetadata.getValue();
 
+        //maybe assert it was null before
+        service.setStopFlag(StopFlag.DEPENDENCY_FAILED);
+
+        List<Runnable> tasks = transition(service);
+        doExecute(tasks);
+        boolean pushed = container.getCache().replaceWithVersion(service.getName(), service, serviceMetadata.getVersion());
+        if (!pushed) {
+            throw new ConcurrentUpdateException("Service " + service.getName().getCanonicalName() + " was remotely updated during the transaction");
+        }
     }
 
-    @Override
-    public void dependencyFailed() {
-
-    }
 
     @Override
     public void dependencyCancelled() {
+        assertInTransaction();
+        MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        Service service = serviceMetadata.getValue();
 
+        //maybe assert it was null before
+        service.setStopFlag(StopFlag.CANCELLED);
+
+        List<Runnable> tasks = transition(service);
+        doExecute(tasks);
+        boolean pushed = container.getCache().replaceWithVersion(service.getName(), service, serviceMetadata.getVersion());
+        if (!pushed) {
+            throw new ConcurrentUpdateException("Service " + service.getName().getCanonicalName() + " was remotely updated during the transaction");
+        }
     }
 
     private static void assertDependantRelationships(Service dependant, Service dependency){
@@ -250,7 +423,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
     private void assertInTransaction() {
         try {
-            if (container.getTransactionManager().getTransaction() == null) {
+            if (tm.getTransaction() == null) {
                 throw new IllegalStateException("Thread not in transaction");
             }
         } catch (SystemException e) {
