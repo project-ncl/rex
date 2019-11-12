@@ -12,6 +12,7 @@ import org.jboss.pnc.scheduler.core.api.ServiceController;
 import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.core.exceptions.InvalidServiceDeclarationException;
 import org.jboss.pnc.scheduler.core.exceptions.ServiceNotFoundException;
+import org.jboss.pnc.scheduler.core.model.Mode;
 import org.jboss.pnc.scheduler.core.model.Service;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -167,6 +168,14 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
                 if (previousValue != null) {
                     throw new InvalidServiceDeclarationException("Service " + newService.getName().getCanonicalName() + " already exists.");
                 }
+
+            }
+            //All services should be saved, now start up ones declared ACTIVE
+            for (ServiceBuilderImpl serviceDeclaration : serviceBuilder.getServiceDeclarations()) {
+                ServiceName name = serviceDeclaration.getName();
+                if (serviceDeclaration.getInitialMode() == Mode.ACTIVE) {
+                    getServiceController(name).setMode(Mode.ACTIVE);
+                }
             }
             if (!joined) getTransactionManager().commit();
         } catch (RuntimeException e) {
@@ -181,7 +190,7 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
      * @return returns true if joined
      */
     private boolean joinOrBeginTransation() throws SystemException, NotSupportedException {
-        if (getTransactionManager().getTransaction() != null){
+        if (getTransactionManager().getTransaction() == null){
             getTransactionManager().begin();
             return false;
         }

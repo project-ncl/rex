@@ -9,6 +9,8 @@ import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.core.exceptions.ServiceNotFoundException;
 import org.jboss.pnc.scheduler.core.model.*;
 import org.jboss.pnc.scheduler.core.tasks.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ServiceControllerImpl implements ServiceController, Dependent {
+
+    private static final Logger logger = LoggerFactory.getLogger(ServiceControllerImpl.class);
 
     private ServiceName name;
 
@@ -102,12 +106,12 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
             case NEW_to_STARTING:
             case WAITING_to_STARTING:
-                tasks.add(new InvokeStartTask(tm));
+                tasks.add(new InvokeStartTask(tm, service, this));
                 break;
 
             case UP_to_STOPPING:
             case STARTING_to_STOPPING:
-                tasks.add(new InvokeStopTask(tm));
+                tasks.add(new InvokeStopTask(tm, service, this));
                 break;
 
             case STOPPING_to_STOPPED:
@@ -176,26 +180,26 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
             case STARTING: {
                 if (service.getStopFlag() == StopFlag.CANCELLED)
                     return Transition.STARTING_to_STOPPING;
-                Stream<ServerResponse> responses = service.getServerResponses().stream().filter(sr -> sr.getState() == State.STARTING);
-                if (responses.anyMatch(ServerResponse::isPositive))
+                List<ServerResponse> responses = service.getServerResponses().stream().filter(sr -> sr.getState() == State.STARTING).collect(Collectors.toList());
+                if (responses.stream().anyMatch(ServerResponse::isPositive))
                     return Transition.STARTING_to_UP;
-                if (responses.anyMatch(ServerResponse::isNegative))
+                if (responses.stream().anyMatch(ServerResponse::isNegative))
                     return Transition.STARTING_to_START_FAILED;
             }
             case UP: {
                 if (service.getStopFlag() == StopFlag.CANCELLED)
                     return Transition.UP_to_STOPPING;
-                Stream<ServerResponse> responses = service.getServerResponses().stream().filter(sr -> sr.getState() == State.UP);
-                if (responses.anyMatch(ServerResponse::isPositive))
+                List<ServerResponse> responses = service.getServerResponses().stream().filter(sr -> sr.getState() == State.UP).collect(Collectors.toList());
+                if (responses.stream().anyMatch(ServerResponse::isPositive))
                     return Transition.UP_to_SUCCESSFUL;
-                if (responses.anyMatch(ServerResponse::isNegative))
+                if (responses.stream().anyMatch(ServerResponse::isNegative))
                     return Transition.UP_to_FAILED;
             }
             case STOPPING: {
-                Stream<ServerResponse> responses = service.getServerResponses().stream().filter(sr -> sr.getState() == State.STOPPING);
-                if (responses.anyMatch(ServerResponse::isPositive))
+                List<ServerResponse> responses = service.getServerResponses().stream().filter(sr -> sr.getState() == State.STOPPING).collect(Collectors.toList());
+                if (responses.stream().anyMatch(ServerResponse::isPositive))
                     return Transition.STOPPING_to_STOPPED;
-                if (responses.anyMatch(ServerResponse::isNegative))
+                if (responses.stream().anyMatch(ServerResponse::isNegative))
                     return Transition.STOPPING_to_STOP_FAILED;
             }
             // final states have no possible transitions
@@ -271,6 +275,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
     @Override
     public void accept() {
+        logger.info("GOT HEEEREE");
         assertInTransaction();
         MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(serviceMetadata, new ServiceNotFoundException("Service " + name + "not found"));
@@ -302,6 +307,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
     @Override
     public void fail() {
+        logger.info("FAILLLLLLED");
         assertInTransaction();
         MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
         Service service = serviceMetadata.getValue();
@@ -382,7 +388,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
         ServiceName dependantName = dependant.getName();
         ServiceName dependencyName = dependency.getName();
 
-        if (!dependantName.equals(dependencyName)) {
+        if (dependantName.equals(dependencyName)) {
             throw new IllegalStateException("Service " + dependantName.getCanonicalName() + " cannot depend on itself");
         };
 
@@ -395,7 +401,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
         ServiceName dependencyName = dependency.getName();
         ServiceName dependantName = dependant.getName();
 
-        if (!dependantName.equals(dependencyName)) {
+        if (dependantName.equals(dependencyName)) {
             throw new IllegalStateException("Service " + dependencyName.getCanonicalName() + " cannot depend on itself");
         };
 

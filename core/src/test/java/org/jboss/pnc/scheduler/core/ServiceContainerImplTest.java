@@ -2,9 +2,13 @@ package org.jboss.pnc.scheduler.core;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.infinispan.client.hotrod.MetadataValue;
+import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.BatchServiceInstaller;
+import org.jboss.pnc.scheduler.core.api.ServiceController;
 import org.jboss.pnc.scheduler.core.model.Mode;
+import org.jboss.pnc.scheduler.core.model.RemoteAPI;
 import org.jboss.pnc.scheduler.core.model.Service;
+import org.jboss.pnc.scheduler.core.model.State;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -12,6 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.transaction.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,7 +34,7 @@ class ServiceContainerImplTest {
     private static final Logger log = LoggerFactory.getLogger(ServiceContainerImplTest.class);
 
     @Inject
-    private ServiceContainerImpl container;
+    ServiceContainerImpl container;
 
     @BeforeEach
     public void before() throws Exception {
@@ -32,6 +43,7 @@ class ServiceContainerImplTest {
         installer
                 .addService(parse("omg.wtf.whatt"))
                 .setPayload("{id: 100}")
+                .setRemoteEndpoints(getMockAPI())
                 .setInitialMode(Mode.IDLE)
                 .install();
         installer.commit();
@@ -88,8 +100,117 @@ class ServiceContainerImplTest {
                 .containsOnly(parse("service1"));
         assertThat(service2.getUnfinishedDependencies())
                 .isEqualTo(1);
+    }
 
 
+//    @Test
+//    public void testMockEndpoint() {
+//        given().when().body("ASDKSALKDJ").post("http://localhost:8081/test/accept").then().statusCode(200);
+//    }
 
+//    @Test
+//    public void testInvokeVertxEndpoint(io.vertx.ext.web.client.WebClient client, VertxTestContext testContext) {
+//        testContext.succeeding(h -> {
+//            testRequest(client, HttpMethod.POST, "/test/accept")
+//                    .expect(statusCode(200))
+//                    .expect(emptyResponse())
+//                    .sendBuffer(io.vertx.core.buffer.Buffer.buffer("Aosdiusaoidu"), testContext)
+//                    .succeeded();
+//        }).handle();
+//    }
+    @Test
+    public void testSingleService() throws Exception {
+        ServiceController controller = container.getServiceController(parse("omg.wtf.whatt"));
+        TransactionManager manager = container.getTransactionManager();
+        manager.begin();
+        controller.setMode(Mode.ACTIVE);
+        manager.commit();
+
+        waitTillServicesAre(State.UP, container.getService(parse("omg.wtf.whatt")));
+        Service service = container.getService(parse("omg.wtf.whatt"));
+        assertThat(service.getState()).isEqualTo(State.UP);
+
+    }
+
+    @Test
+    public void testDependantWaiting() throws Exception {
+        BatchServiceInstaller batchServiceInstaller = container.addServices();
+        ServiceName dependant = parse("dependant.service");
+        batchServiceInstaller.addService(dependant)
+                .setRemoteEndpoints(getMockAPI())
+                .requires(parse("omg.wtf.whatt"))
+                .setInitialMode(Mode.ACTIVE)
+                .setPayload("A Payload")
+                .install();
+        batchServiceInstaller.commit();
+        Service service = container.getService(dependant);
+        assertThat(service)
+                .isNotNull();
+        assertThat(service.getState())
+                .isEqualTo(State.WAITING);
+    }
+
+    @Test
+    public void testDependantStartsThroughDependency() throws Exception {
+        BatchServiceInstaller batchServiceInstaller = container.addServices();
+        ServiceName dependant = parse("dependant.service");
+        batchServiceInstaller.addService(dependant)
+                .setRemoteEndpoints(getMockAPI())
+                .requires(parse("omg.wtf.whatt"))
+                .setInitialMode(Mode.ACTIVE)
+                .setPayload("A Payload")
+                .install();
+        batchServiceInstaller.commit();
+
+        ServiceController dependencyController = container.getServiceController(parse("omg.wtf.whatt"));
+        container.getTransactionManager().begin();
+        dependencyController.setMode(Mode.ACTIVE);
+        container.getTransactionManager().commit();
+
+        waitTillServicesAre(State.UP, parse("omg.wtf.whatt"));
+
+        container.getTransactionManager().begin();
+        dependencyController.accept();
+        container.getTransactionManager().commit();
+
+        waitTillServicesAre(State.UP, dependant);
+    }
+
+    void waitTillServicesAre(State state, Service... services) {
+        waitTillServicesAre(state, Arrays.stream(services).map(Service::getName).toArray(ServiceName[]::new));
+    }
+
+    void waitTillServicesAre(State state, ServiceName... serviceNames) {
+        List<ServiceName> fine = new ArrayList<>(Arrays.asList(serviceNames));
+        waitSynchronouslyFor(() -> {
+            Iterator<ServiceName> iterator = fine.iterator();
+            while (iterator.hasNext()) {
+                Service s = container.getService(iterator.next());
+                if (s.getState().equals(state))
+                    iterator.remove();
+            }
+            return fine.isEmpty();
+        }, 40, TimeUnit.SECONDS);
+    }
+
+    public static void waitSynchronouslyFor(Supplier<Boolean> condition, long timeout, TimeUnit timeUnit) {
+        long stopTime = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
+        do {
+            try {
+                TimeUnit.MILLISECONDS.sleep(50);
+            } catch (InterruptedException e) {
+                throw new AssertionError("Unexpected interruption", e);
+            }
+            if(System.currentTimeMillis() > stopTime) {
+                throw new AssertionError("Timeout " + timeout + " " + timeUnit + " reached while waiting for condition");
+            }
+        } while(!condition.get());
+    }
+
+    private static RemoteAPI getMockAPI() {
+        return RemoteAPI.builder()
+                .startUrl("http://localhost:8081/test/accept")
+                .stopUrl("http://localhost:8081/test/stop")
+                .build();
     }
 }

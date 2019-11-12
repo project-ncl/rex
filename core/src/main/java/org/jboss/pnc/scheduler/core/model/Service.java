@@ -102,7 +102,7 @@ public class Service {
     }
 
     public void decUnfinishedDependencies() {
-        unfinishedDependencies++;
+        unfinishedDependencies--;
     }
 
     @ProtoField(number = 1)

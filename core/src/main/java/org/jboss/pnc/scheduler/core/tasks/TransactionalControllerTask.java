@@ -18,7 +18,7 @@ public abstract class TransactionalControllerTask extends ControllerTask {
     TransactionalControllerTask(TransactionManager tm) {
         this.tm = tm;
         try {
-            this.alreadyInTransaction = tm.getTransaction()==null ? true : false;
+            this.alreadyInTransaction = tm.getTransaction()==null ? false : true;
         } catch (SystemException e) {
             throw new IllegalStateException("Cannot start Transaction, unexpected error was thrown", e);
         }
@@ -39,7 +39,8 @@ public abstract class TransactionalControllerTask extends ControllerTask {
     @Override
     void onException(Throwable e) {
         try {
-            tm.rollback();
+            //transaction initiator should handle the rollback
+            if (!alreadyInTransaction) tm.rollback();
         } catch (SystemException ex) {
             throw new IllegalStateException("Cannot rollback Transaction, unexpected error was thrown", ex);
         }

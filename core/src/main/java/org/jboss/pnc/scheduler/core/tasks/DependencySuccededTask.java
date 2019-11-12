@@ -12,6 +12,6 @@ public class DependencySuccededTask extends  DependentControllerTask {
 
     @Override
     void inform(Dependent dependent) {
-
+        dependent.dependencySucceeded();
     }
 }

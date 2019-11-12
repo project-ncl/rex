@@ -2,6 +2,7 @@ package org.jboss.pnc.scheduler.core.api;
 
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.model.Mode;
+import org.jboss.pnc.scheduler.core.model.RemoteAPI;
 
 /**
  * ServiceBuilders are used for creating jobs(Services) and their installment into the container
@@ -32,6 +33,14 @@ public interface ServiceBuilder {
      * @return the service builder
      */
     ServiceBuilder setInitialMode(Mode mode);
+
+    /**
+     * Set remote communication
+     *
+     * @param api endpoints invoking start and stop urls
+     * @return the service builder
+     */
+    ServiceBuilder setRemoteEndpoints(RemoteAPI api);
 
     /**
      * Set payload that is sent to remote entity

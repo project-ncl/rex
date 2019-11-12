@@ -7,6 +7,8 @@ import org.jboss.pnc.scheduler.core.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,6 +30,9 @@ public class ServiceBuilderImpl implements ServiceBuilder, Comparable<ServiceBui
 
     @Getter
     private String payload;
+
+    @Getter
+    private RemoteAPI remoteAPI;
 
     @Getter
     private boolean installed = false;
@@ -71,6 +76,33 @@ public class ServiceBuilderImpl implements ServiceBuilder, Comparable<ServiceBui
     }
 
     @Override
+    public ServiceBuilder setRemoteEndpoints(RemoteAPI api) {
+        assertNotInstalled();
+        assertNotNull(api);
+        assertValidUrls(api);
+
+        this.remoteAPI = api;
+        return this;
+    }
+
+    private void assertValidUrls(RemoteAPI api) {
+        assertNotNull(api.getStartUrl());
+        assertNotNull(api.getStopUrl());
+        try {
+            URI start = new URI(api.getStartUrl());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("startUrl:" + api.getStartUrl() + " is not valid url");
+        }
+        try {
+            URI stop = new URI(api.getStopUrl());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("stopUrl:" + api.getStartUrl() + " is not a valid url");
+        }
+
+
+    }
+
+    @Override
     public ServiceBuilder setPayload(String payload) {
         assertNotInstalled();
 
@@ -96,13 +128,10 @@ public class ServiceBuilderImpl implements ServiceBuilder, Comparable<ServiceBui
                 .dependants(getDependants())
                 .dependencies(getDependencies())
                 .unfinishedDependencies(0)
-                .controllerMode(initialMode)
+                .controllerMode(Mode.IDLE)
                 .payload(payload)
                 .stopFlag(StopFlag.NONE)
-                .remoteEndpoints(RemoteAPI.builder()
-                        .startUrl("hello.url") //TODO FIXME
-                        .stopUrl("bye.url")
-                        .build())
+                .remoteEndpoints(remoteAPI)
                 .state(State.NEW)
                 .build();
     }
