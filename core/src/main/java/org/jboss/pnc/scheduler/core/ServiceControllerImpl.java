@@ -339,11 +339,11 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
         Service service = serviceMetadata.getValue();
 
         //maybe assert it was null before
-        Service newService = service.toBuilder().unfinishedDependencies(service.getUnfinishedDependencies()-1).build();
+        service.decUnfinishedDependencies();
 
-        List<Runnable> tasks = transition(newService);
+        List<Runnable> tasks = transition(service);
         doExecute(tasks);
-        boolean pushed = container.getCache().replaceWithVersion(service.getName(), newService, serviceMetadata.getVersion());
+        boolean pushed = container.getCache().replaceWithVersion(service.getName(), service, serviceMetadata.getVersion());
         System.out.println("Called dep succeeded on " + name + " and pushed: " + pushed + "with prev version: " + serviceMetadata.getVersion());
         if (!pushed) {
             throw new ConcurrentUpdateException("Service " + service.getName().getCanonicalName() + " was remotely updated during the transaction");

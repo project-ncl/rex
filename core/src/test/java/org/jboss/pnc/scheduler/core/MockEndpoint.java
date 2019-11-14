@@ -57,15 +57,21 @@ public class MockEndpoint {
 
     private void invokeAccept(String body) {
         try {
-            Thread.sleep(500);
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             //shouldn't happen
         }
         System.out.println("Calling accept on: " + body);
         try {
-                tm.begin();
-                container.getServiceController(ServiceName.parse(body)).accept();
-                tm.commit();
+            tm.begin();
+            container.getServiceController(ServiceName.parse(body)).accept();
+            tm.commit();
+        }catch (IllegalStateException e) {
+            try {
+                tm.rollback();
+            } catch (SystemException ex) {
+                ex.printStackTrace();
+            }
         } catch (RollbackException | HeuristicRollbackException | NotSupportedException | HeuristicMixedException | SystemException e) {
             throw new ConcurrentUpdateException("Unexpected error has during committing", e);
         }
@@ -78,6 +84,8 @@ public class MockEndpoint {
                 break;
             } catch (ConcurrentUpdateException e) {
                 System.out.println("retry number: " + i);
+                if (i > 5)
+                    e.printStackTrace();
             }
         }
         throw new IllegalStateException("Enough is enough!");
