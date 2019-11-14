@@ -47,7 +47,9 @@ public class InvokeStartTask extends TransactionalControllerTask{
 
     @Override
     boolean execute() {
-        logger.debug("Invoking endpoint");
+        System.out.println("starting: " + service.getName() + " numDep: " + service.getUnfinishedDependencies()) ;
+        /* propagate transaction to async operation and wait for completion to avoid concurrent transactions
+         and probable dirty read that would result in ConcurrentUpdateException */
         threadContext.withContextCapture(
                 client.post(uri.toString())
                 .putHeader("content-type", "text/plain")
@@ -56,10 +58,12 @@ public class InvokeStartTask extends TransactionalControllerTask{
             try {
                 logger.debug(resp.toString());
                 waitForTransactionToEnd(tm.getTransaction());
+                //disassociate the propagated transaction from thread after it completes
                 tm.suspend();
+                //start new transaction
                 tm.begin();
                 if (resp.statusCode() == 200) {
-                    System.out.println("GOT 200");
+                    System.out.println("GOT 200 on " + controller.getName());
                     controller.accept();
                 } else {
                     System.out.println("GOT " + resp.statusCode());

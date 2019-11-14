@@ -5,10 +5,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.jboss.msc.service.ServiceName;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -152,5 +149,27 @@ public class Service {
     @ProtoField(number = 10)
     public List<ServerResponse> getServerResponses() {
         return serverResponses;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Service service = (Service) o;
+        return unfinishedDependencies == service.unfinishedDependencies &&
+                name.equals(service.name) &&
+                Objects.equals(remoteEndpoints, service.remoteEndpoints) &&
+                controllerMode == service.controllerMode &&
+                state == service.state &&
+                Objects.equals(dependants, service.dependants) &&
+                Objects.equals(dependencies, service.dependencies) &&
+                Objects.equals(payload, service.payload) &&
+                stopFlag == service.stopFlag &&
+                Objects.equals(serverResponses, service.serverResponses);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, remoteEndpoints, controllerMode, state, dependants, unfinishedDependencies, dependencies, payload, stopFlag, serverResponses);
     }
 }

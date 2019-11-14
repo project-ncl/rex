@@ -1,5 +1,6 @@
 package org.jboss.pnc.scheduler.core.tasks;
 
+import org.jboss.pnc.scheduler.core.ServiceControllerImpl;
 import org.jboss.pnc.scheduler.core.api.Dependent;
 
 import javax.transaction.TransactionManager;

@@ -4,6 +4,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.BatchServiceInstaller;
+import org.jboss.pnc.scheduler.core.api.ServiceBuilder;
 import org.jboss.pnc.scheduler.core.api.ServiceController;
 import org.jboss.pnc.scheduler.core.model.Mode;
 import org.jboss.pnc.scheduler.core.model.RemoteAPI;
@@ -176,11 +177,165 @@ class ServiceContainerImplTest {
         waitTillServicesAre(State.UP, dependant);
     }
 
-    void waitTillServicesAre(State state, Service... services) {
+    @Test
+    public void testComplexInstallation() {
+        BatchServiceInstaller batchServiceInstaller = container.addServices();
+        ServiceName a = parse("a");
+        ServiceName b = parse("b");
+        ServiceName c = parse("c");
+        ServiceName d = parse("d");
+        ServiceName e = parse("e");
+        ServiceName f = parse("f");
+        ServiceName g = parse("g");
+        ServiceName h = parse("h");
+        ServiceName i = parse("i");
+        ServiceName j = parse("j");
+
+        installService(batchServiceInstaller, a, Mode.IDLE, new ServiceName[]{c, d}, null);
+        installService(batchServiceInstaller, b, Mode.IDLE, new ServiceName[]{d, e, h}, null);
+        installService(batchServiceInstaller, c, Mode.IDLE, new ServiceName[]{f}, new ServiceName[]{a});
+        installService(batchServiceInstaller, d, Mode.IDLE, new ServiceName[]{e}, new ServiceName[]{a, b});
+        installService(batchServiceInstaller, e, Mode.IDLE, new ServiceName[]{g, h}, new ServiceName[]{d, b});
+        installService(batchServiceInstaller, f, Mode.IDLE, new ServiceName[]{i}, new ServiceName[]{c});
+        installService(batchServiceInstaller, g, Mode.IDLE, new ServiceName[]{i, j}, new ServiceName[]{e});
+        installService(batchServiceInstaller, h, Mode.IDLE, new ServiceName[]{j}, new ServiceName[]{e, b});
+        installService(batchServiceInstaller, i, Mode.IDLE, null, new ServiceName[]{f, g});
+        installService(batchServiceInstaller, j, Mode.IDLE, null, new ServiceName[]{g, h});
+        batchServiceInstaller.commit();
+
+        assertCorrectServiceRelations(container.getService(a), 0, new ServiceName[]{c, d}, null);
+        assertCorrectServiceRelations(container.getService(b), 0, new ServiceName[]{d, e, h}, null);
+        assertCorrectServiceRelations(container.getService(c), 1, new ServiceName[]{f}, new ServiceName[]{a});
+        assertCorrectServiceRelations(container.getService(d), 2, new ServiceName[]{e}, new ServiceName[]{a, b});
+        assertCorrectServiceRelations(container.getService(e), 2, new ServiceName[]{g, h}, new ServiceName[]{d, b});
+        assertCorrectServiceRelations(container.getService(f), 1, new ServiceName[]{i}, new ServiceName[]{c});
+        assertCorrectServiceRelations(container.getService(g), 1, new ServiceName[]{i, j}, new ServiceName[]{e});
+        assertCorrectServiceRelations(container.getService(h), 2, new ServiceName[]{j}, new ServiceName[]{e, b});
+        assertCorrectServiceRelations(container.getService(i), 2, null, new ServiceName[]{f, g});
+        assertCorrectServiceRelations(container.getService(j), 2, null, new ServiceName[]{g, h});
+    }
+
+    @Test
+    public void testComplexInstallationWithAlreadyExistingService() throws Exception {
+        BatchServiceInstaller batchServiceInstaller = container.addServices();
+        ServiceName a = parse("a");
+        ServiceName b = parse("b");
+        ServiceName c = parse("c");
+        ServiceName d = parse("d");
+        ServiceName e = parse("e");
+        ServiceName f = parse("f");
+        ServiceName g = parse("g");
+        ServiceName h = parse("h");
+        ServiceName i = parse("i");
+        ServiceName j = parse("j");
+        ServiceName existing = parse("omg.wtf.whatt");
+
+        installService(batchServiceInstaller, a, Mode.IDLE, new ServiceName[]{c, d}, null);
+        installService(batchServiceInstaller, b, Mode.IDLE, new ServiceName[]{d, e, h}, null);
+        installService(batchServiceInstaller, c, Mode.IDLE, new ServiceName[]{f, existing}, new ServiceName[]{a});
+        installService(batchServiceInstaller, d, Mode.IDLE, new ServiceName[]{e, existing}, new ServiceName[]{a, b});
+        installService(batchServiceInstaller, e, Mode.IDLE, new ServiceName[]{g, h}, new ServiceName[]{d, b});
+        installService(batchServiceInstaller, f, Mode.IDLE, new ServiceName[]{i}, new ServiceName[]{c, existing});
+        installService(batchServiceInstaller, g, Mode.IDLE, new ServiceName[]{i, j}, new ServiceName[]{e});
+        installService(batchServiceInstaller, h, Mode.IDLE, new ServiceName[]{j}, new ServiceName[]{e, b});
+        installService(batchServiceInstaller, i, Mode.IDLE, null, new ServiceName[]{f, g});
+        installService(batchServiceInstaller, j, Mode.IDLE, null, new ServiceName[]{g, h});
+        batchServiceInstaller.commit();
+
+        assertCorrectServiceRelations(container.getService(a), 0, new ServiceName[]{c, d}, null);
+        assertCorrectServiceRelations(container.getService(b), 0, new ServiceName[]{d, e, h}, null);
+        assertCorrectServiceRelations(container.getService(c), 1, new ServiceName[]{f, existing}, new ServiceName[]{a});
+        assertCorrectServiceRelations(container.getService(d), 2, new ServiceName[]{e, existing}, new ServiceName[]{a, b});
+        assertCorrectServiceRelations(container.getService(e), 2, new ServiceName[]{g, h}, new ServiceName[]{d, b});
+        assertCorrectServiceRelations(container.getService(f), 2, new ServiceName[]{i}, new ServiceName[]{c, existing});
+        assertCorrectServiceRelations(container.getService(g), 1, new ServiceName[]{i, j}, new ServiceName[]{e});
+        assertCorrectServiceRelations(container.getService(h), 2, new ServiceName[]{j}, new ServiceName[]{e, b});
+        assertCorrectServiceRelations(container.getService(i), 2, null, new ServiceName[]{f, g});
+        assertCorrectServiceRelations(container.getService(j), 2, null, new ServiceName[]{g, h});
+        assertCorrectServiceRelations(container.getService(existing), 2, new ServiceName[]{f}, new ServiceName[]{c, d});
+    }
+
+    @Test
+    public void testComplexWithCompletion() throws Exception {
+        BatchServiceInstaller batchServiceInstaller = container.addServices();
+        ServiceName a = parse("a");
+        ServiceName b = parse("b");
+        ServiceName c = parse("c");
+        ServiceName d = parse("d");
+        ServiceName e = parse("e");
+        ServiceName f = parse("f");
+        ServiceName g = parse("g");
+        ServiceName h = parse("h");
+        ServiceName i = parse("i");
+        ServiceName j = parse("j");
+        ServiceName existing = parse("omg.wtf.whatt");
+        ServiceName[] services = new ServiceName[]{a,b,c,d,e,f,g,h,i,existing};
+
+        Service existingService = container.getService(existing);
+        Service updatedService = existingService.toBuilder().remoteEndpoints(getMockWithStart()).payload(existing.getCanonicalName()).build();
+        container.getCache().put(existing, updatedService);
+
+        installService(batchServiceInstaller, a, Mode.IDLE, new ServiceName[]{c, d}, null, getMockWithStart(), a.getCanonicalName());
+        installService(batchServiceInstaller, b, Mode.IDLE, new ServiceName[]{d, e, h}, null, getMockWithStart(), b.getCanonicalName());
+        installService(batchServiceInstaller, c, Mode.IDLE, new ServiceName[]{f, existing}, new ServiceName[]{a}, getMockWithStart(), c.getCanonicalName());
+        installService(batchServiceInstaller, d, Mode.IDLE, new ServiceName[]{e, existing}, new ServiceName[]{a, b}, getMockWithStart(), d.getCanonicalName());
+        installService(batchServiceInstaller, e, Mode.IDLE, new ServiceName[]{g, h}, new ServiceName[]{d, b}, getMockWithStart(), e.getCanonicalName());
+        installService(batchServiceInstaller, f, Mode.IDLE, new ServiceName[]{i}, new ServiceName[]{c, existing}, getMockWithStart(), f.getCanonicalName());
+        installService(batchServiceInstaller, g, Mode.IDLE, new ServiceName[]{i, j}, new ServiceName[]{e}, getMockWithStart(), g.getCanonicalName());
+        installService(batchServiceInstaller, h, Mode.IDLE, new ServiceName[]{j}, new ServiceName[]{e, b}, getMockWithStart(), h.getCanonicalName());
+        installService(batchServiceInstaller, i, Mode.IDLE, null, new ServiceName[]{f, g}, getMockWithStart(), i.getCanonicalName());
+        installService(batchServiceInstaller, j, Mode.IDLE, null, new ServiceName[]{g, h}, getMockWithStart(), j.getCanonicalName());
+        batchServiceInstaller.commit();
+
+        container.getTransactionManager().begin();
+        for (ServiceName name : services) {
+            container.getServiceController(name).setMode(Mode.ACTIVE);
+        }
+        container.getTransactionManager().commit();
+
+        waitTillServicesAre(State.SUCCESSFUL, services);
+    }
+
+    private static void installService(BatchServiceInstaller batchServiceInstaller, ServiceName name, Mode mode, ServiceName[] dependants, ServiceName[] dependencies) {
+        installService(batchServiceInstaller,name, mode, dependants, dependencies, getMockAPI(), String.format("I'm an %s!", name));
+    }
+
+    private static void installService(BatchServiceInstaller batchServiceInstaller, ServiceName name, Mode mode, ServiceName[] dependants, ServiceName[] dependencies, RemoteAPI remoteAPI, String payload) {
+        ServiceBuilder builder = batchServiceInstaller.addService(name)
+                .setPayload(payload)
+                .setInitialMode(mode)
+                .setRemoteEndpoints(remoteAPI);
+        if (dependants != null)
+            for (ServiceName dependant : dependants) {
+                builder.isRequiredBy(dependant);
+            }
+        if (dependencies != null)
+            for (ServiceName dependency : dependencies) {
+                builder.requires(dependency);
+            }
+        builder.install();
+    }
+
+    private void assertCorrectServiceRelations(Service testing, int unfinishedDeps, ServiceName[] dependants, ServiceName[] dependencies) {
+        assertThat(testing)
+                .isNotNull();
+        assertThat(testing.getUnfinishedDependencies())
+                .isEqualTo(unfinishedDeps);
+        if (dependants != null) {
+            assertThat(testing.getDependants())
+                    .containsExactlyInAnyOrder(dependants);
+        }
+        if (dependencies != null) {
+            assertThat(testing.getDependencies())
+                    .containsExactlyInAnyOrder(dependencies);
+        }
+    }
+
+    private void waitTillServicesAre(State state, Service... services) {
         waitTillServicesAre(state, Arrays.stream(services).map(Service::getName).toArray(ServiceName[]::new));
     }
 
-    void waitTillServicesAre(State state, ServiceName... serviceNames) {
+    private void waitTillServicesAre(State state, ServiceName... serviceNames) {
         List<ServiceName> fine = new ArrayList<>(Arrays.asList(serviceNames));
         waitSynchronouslyFor(() -> {
             Iterator<ServiceName> iterator = fine.iterator();
@@ -210,6 +365,12 @@ class ServiceContainerImplTest {
     private static RemoteAPI getMockAPI() {
         return RemoteAPI.builder()
                 .startUrl("http://localhost:8081/test/accept")
+                .stopUrl("http://localhost:8081/test/stop")
+                .build();
+    }
+    private static RemoteAPI getMockWithStart() {
+        return RemoteAPI.builder()
+                .startUrl("http://localhost:8081/test/acceptAndStart")
                 .stopUrl("http://localhost:8081/test/stop")
                 .build();
     }

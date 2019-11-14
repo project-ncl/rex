@@ -1,5 +1,6 @@
 package org.jboss.pnc.scheduler.core;
 
+import org.infinispan.client.hotrod.Metadata;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.Dependent;
@@ -60,7 +61,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
         assertDependantRelationships(dependant, dependency);
         assertCanAcceptDependencies(dependant);
         //if the supposed new dependency didn't finish, increase unfinishedDependencies counter
-        dependant.getDependants().add(dependency.getName());
+        dependant.getDependencies().add(dependency.getName());
         if (!dependency.getState().isFinal()) {
             dependant.incUnfinishedDependencies();
         }
@@ -338,11 +339,12 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
         Service service = serviceMetadata.getValue();
 
         //maybe assert it was null before
-        service.decUnfinishedDependencies();
+        Service newService = service.toBuilder().unfinishedDependencies(service.getUnfinishedDependencies()-1).build();
 
-        List<Runnable> tasks = transition(service);
+        List<Runnable> tasks = transition(newService);
         doExecute(tasks);
-        boolean pushed = container.getCache().replaceWithVersion(service.getName(), service, serviceMetadata.getVersion());
+        boolean pushed = container.getCache().replaceWithVersion(service.getName(), newService, serviceMetadata.getVersion());
+        System.out.println("Called dep succeeded on " + name + " and pushed: " + pushed + "with prev version: " + serviceMetadata.getVersion());
         if (!pushed) {
             throw new ConcurrentUpdateException("Service " + service.getName().getCanonicalName() + " was remotely updated during the transaction");
         }

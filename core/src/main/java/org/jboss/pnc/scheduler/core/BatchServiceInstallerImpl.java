@@ -13,7 +13,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public class BatchServiceInstallerImpl implements BatchServiceInstaller {
-    private SortedSet<ServiceBuilderImpl> serviceDeclarations = new TreeSet<>();
+    private Set<ServiceBuilderImpl> serviceDeclarations = new HashSet<>();
     private Set<ServiceName> installed = new HashSet<>();
     private boolean committed = false;
     private ServiceTargetImpl target;
@@ -44,8 +44,8 @@ public class BatchServiceInstallerImpl implements BatchServiceInstaller {
         serviceDeclarations.add(builder);
     }
 
-    public SortedSet<ServiceBuilderImpl> getServiceDeclarations() {
-        return Collections.unmodifiableSortedSet(serviceDeclarations);
+    public Set<ServiceBuilderImpl> getServiceDeclarations() {
+        return Collections.unmodifiableSet(serviceDeclarations);
     }
 
     public Set<ServiceName> getInstalledServices() {

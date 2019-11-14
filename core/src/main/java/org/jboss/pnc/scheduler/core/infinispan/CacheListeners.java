@@ -11,23 +11,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ClientListener
-     public class CacheListeners {
-        Logger log = LoggerFactory.getLogger(CacheListeners.class);
+public class CacheListeners {
+    Logger log = LoggerFactory.getLogger(CacheListeners.class);
 
-        @ClientCacheEntryCreated
-        public void handleCreatedEvent(ClientCacheEntryCreatedEvent e) {
-            log.info("Someone has created an entry: " + e);
-        }
-
-        @ClientCacheEntryModified
-        public void handleModifiedEvent(ClientCacheEntryModifiedEvent e) {
-            log.info("Someone has modified an entry: " + e);
-        }
-
-        @ClientCacheEntryRemoved
-        public void handleRemovedEvent(ClientCacheEntryRemovedEvent e) {
-            log.info("Someone has removed an entry: " + e);
-        }
-
+    @ClientCacheEntryCreated
+    public void handleCreatedEvent(ClientCacheEntryCreatedEvent e) {
+        log.info("Someone has created an entry: " + e);
     }
+
+    @ClientCacheEntryModified
+    public void handleModifiedEvent(ClientCacheEntryModifiedEvent e) {
+        log.info("Someone has modified an entry: " + e);
+    }
+
+    @ClientCacheEntryRemoved
+    public void handleRemovedEvent(ClientCacheEntryRemovedEvent e) {
+        log.info("Someone has removed an entry: " + e);
+    }
+}
 
