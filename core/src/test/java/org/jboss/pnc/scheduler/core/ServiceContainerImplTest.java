@@ -1,6 +1,8 @@
 package org.jboss.pnc.scheduler.core;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.vertx.core.spi.metrics.TCPMetrics;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.BatchServiceInstaller;
@@ -36,6 +38,9 @@ class ServiceContainerImplTest {
 
     @Inject
     ServiceContainerImpl container;
+
+    @Inject
+    ManagedExecutor executor;
 
     @BeforeEach
     public void before() throws Exception {
@@ -103,24 +108,8 @@ class ServiceContainerImplTest {
                 .isEqualTo(1);
     }
 
-
-//    @Test
-//    public void testMockEndpoint() {
-//        given().when().body("ASDKSALKDJ").post("http://localhost:8081/test/accept").then().statusCode(200);
-//    }
-
-//    @Test
-//    public void testInvokeVertxEndpoint(io.vertx.ext.web.client.WebClient client, VertxTestContext testContext) {
-//        testContext.succeeding(h -> {
-//            testRequest(client, HttpMethod.POST, "/test/accept")
-//                    .expect(statusCode(200))
-//                    .expect(emptyResponse())
-//                    .sendBuffer(io.vertx.core.buffer.Buffer.buffer("Aosdiusaoidu"), testContext)
-//                    .succeeded();
-//        }).handle();
-//    }
     @Test
-    public void testSingleService() throws Exception {
+    public void testSingleServiceStarts() throws Exception {
         ServiceController controller = container.getServiceController(parse("omg.wtf.whatt"));
         TransactionManager manager = container.getTransactionManager();
         manager.begin();
@@ -294,6 +283,63 @@ class ServiceContainerImplTest {
         container.getTransactionManager().commit();
 
         waitTillServicesAre(State.SUCCESSFUL, services);
+    }
+
+    @Test
+    public void testCancellationWithDependencies() throws Exception {
+        BatchServiceInstaller batchServiceInstaller = container.addServices();
+        ServiceName a = parse("a");
+        ServiceName b = parse("b");
+        ServiceName c = parse("c");
+        ServiceName d = parse("d");
+        ServiceName e = parse("e");
+        ServiceName f = parse("f");
+        ServiceName g = parse("g");
+        ServiceName h = parse("h");
+        ServiceName i = parse("i");
+        ServiceName j = parse("j");
+        ServiceName k = parse("k");
+        ServiceName[] services = new ServiceName[]{a,b,c,d,e,f,g,h,i,j,k};
+
+        installService(batchServiceInstaller, a, Mode.IDLE, new ServiceName[]{b, c, d}, null, getMockWithStart(), a.getCanonicalName());
+        installService(batchServiceInstaller, b, Mode.IDLE, new ServiceName[]{e, f}, new ServiceName[]{a}, getMockWithStart(), b.getCanonicalName());
+        installService(batchServiceInstaller, c, Mode.IDLE, new ServiceName[]{f}, new ServiceName[]{a}, getMockWithStart(), c.getCanonicalName());
+        installService(batchServiceInstaller, d, Mode.IDLE, new ServiceName[]{f, g}, new ServiceName[]{a}, getMockWithStart(), d.getCanonicalName());
+        installService(batchServiceInstaller, e, Mode.IDLE, new ServiceName[]{h, f}, new ServiceName[]{b}, getMockWithStart(), e.getCanonicalName());
+        installService(batchServiceInstaller, f, Mode.IDLE, new ServiceName[]{g, h, i, j}, new ServiceName[]{e, b, c, d}, getMockWithStart(), f.getCanonicalName());
+        installService(batchServiceInstaller, g, Mode.IDLE, new ServiceName[]{i, k}, new ServiceName[]{f, d}, getMockWithStart(), g.getCanonicalName());
+        installService(batchServiceInstaller, h, Mode.IDLE, new ServiceName[]{j}, new ServiceName[]{e, f}, getMockWithStart(), h.getCanonicalName());
+        installService(batchServiceInstaller, i, Mode.IDLE, new ServiceName[]{k}, new ServiceName[]{f, g}, getMockWithStart(), i.getCanonicalName());
+        installService(batchServiceInstaller, j, Mode.IDLE, new ServiceName[]{k}, new ServiceName[]{h, f}, getMockWithStart(), j.getCanonicalName());
+        installService(batchServiceInstaller, k, Mode.IDLE, null, new ServiceName[]{g, j, i}, getMockWithStart(), j.getCanonicalName());
+        batchServiceInstaller.commit();
+        container.getCache().getTransactionManager().begin();
+        container.getServiceController(a).setMode(Mode.CANCEL);
+        container.getCache().getTransactionManager().commit();
+
+        waitTillServicesAre(State.STOPPED, services);
+
+    }
+
+    @Test
+    public void forFunPropagation() throws Exception {
+        TransactionManager tm = container.getTransactionManager();
+        tm.begin();
+        executor.submit(
+                () -> {
+                    System.out.println(Thread.currentThread().getName());
+                    try {
+                        Transaction transaction = tm.getTransaction();
+                        assertThat(transaction).isNotNull();
+                        assertThat(transaction.getStatus())
+                                .isEqualTo(Status.STATUS_ACTIVE);
+                    } catch (SystemException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+        ).get();
+        tm.commit();
+
     }
 
     private static void installService(BatchServiceInstaller batchServiceInstaller, ServiceName name, Mode mode, ServiceName[] dependants, ServiceName[] dependencies) {

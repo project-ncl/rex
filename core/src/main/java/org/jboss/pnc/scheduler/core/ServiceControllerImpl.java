@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.core;
 
-import org.infinispan.client.hotrod.Metadata;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.Dependent;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ServiceControllerImpl implements ServiceController, Dependent {
 
@@ -93,6 +91,8 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
         assertInTransaction();
         Transition transition;
         transition = getTransition(service);
+        if (transition != null)
+            System.out.println(String.format("transitioning; before: %s after: %s for service: %s", transition.getBefore().toString(),transition.getAfter().toString(), getName()));
 
         List<Runnable> tasks = new ArrayList<>();
 
@@ -107,12 +107,12 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
             case NEW_to_STARTING:
             case WAITING_to_STARTING:
-                tasks.add(new InvokeStartTask(tm, service, this));
+                tasks.add(new AsyncInvokeStartTask(tm, service, this));
                 break;
 
             case UP_to_STOPPING:
             case STARTING_to_STOPPING:
-                tasks.add(new InvokeStopTask(tm, service, this));
+                tasks.add(new AsyncInvokeStopTask(tm, service, this));
                 break;
 
             case STOPPING_to_STOPPED:
@@ -260,6 +260,9 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
             return;
         }
         service.setControllerMode(mode);
+        if (mode == Mode.CANCEL) {
+            service.setStopFlag(StopFlag.CANCELLED);
+        }
 
         List<Runnable> tasks = transition(service);
         doExecute(tasks);
@@ -276,7 +279,6 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
     @Override
     public void accept() {
-        logger.info("GOT HEEEREE");
         assertInTransaction();
         MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(serviceMetadata, new ServiceNotFoundException("Service " + name + "not found"));
@@ -308,9 +310,9 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
 
     @Override
     public void fail() {
-        logger.info("FAILLLLLLED");
         assertInTransaction();
         MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        assertNotNull(serviceMetadata, new ServiceNotFoundException("Service " + name + "not found"));
         Service service = serviceMetadata.getValue();
 
         if (EnumSet.of(State.STARTING,State.UP,State.STOPPING).contains(service.getState())){
@@ -336,6 +338,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
     public void dependencySucceeded() {
         assertInTransaction();
         MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        assertNotNull(serviceMetadata, new ServiceNotFoundException("Service " + name + "not found"));
         Service service = serviceMetadata.getValue();
 
         //maybe assert it was null before
@@ -355,6 +358,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
     public void dependencyStopped() {
         assertInTransaction();
         MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        assertNotNull(serviceMetadata, new ServiceNotFoundException("Service " + name + "not found"));
         Service service = serviceMetadata.getValue();
 
         //maybe assert it was null before
@@ -373,6 +377,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
     public void dependencyCancelled() {
         assertInTransaction();
         MetadataValue<Service> serviceMetadata = container.getCache().getWithMetadata(name);
+        assertNotNull(serviceMetadata, new ServiceNotFoundException("Service " + name + "not found"));
         Service service = serviceMetadata.getValue();
 
         //maybe assert it was null before

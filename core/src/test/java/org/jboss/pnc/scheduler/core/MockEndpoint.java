@@ -3,6 +3,7 @@ package org.jboss.pnc.scheduler.core;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.ServiceContainer;
 import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.scheduler.core.exceptions.RetryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,11 +57,6 @@ public class MockEndpoint {
     }
 
     private void invokeAccept(String body) {
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            //shouldn't happen
-        }
         System.out.println("Calling accept on: " + body);
         try {
             tm.begin();
@@ -80,6 +76,11 @@ public class MockEndpoint {
     private static void retry(int times, Runnable runnable) {
         for (int i = 0; i < times; i++) {
             try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                //shouldn't happen
+            }
+            try {
                 runnable.run();
                 break;
             } catch (ConcurrentUpdateException e) {
@@ -88,6 +89,6 @@ public class MockEndpoint {
                     e.printStackTrace();
             }
         }
-        throw new IllegalStateException("Enough is enough!");
+        throw new RetryException("Enough is enough!");
     }
 }
