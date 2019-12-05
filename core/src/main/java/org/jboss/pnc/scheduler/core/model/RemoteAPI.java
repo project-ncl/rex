@@ -36,5 +36,4 @@ public class RemoteAPI {
     public String getStopUrl() {
         return stopUrl;
     }
-    //private URL pingUrl;
 }

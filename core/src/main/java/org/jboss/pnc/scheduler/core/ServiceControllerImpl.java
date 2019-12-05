@@ -2,6 +2,10 @@ package org.jboss.pnc.scheduler.core;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.msc.service.ServiceName;
+import org.jboss.pnc.scheduler.common.enums.Mode;
+import org.jboss.pnc.scheduler.common.enums.State;
+import org.jboss.pnc.scheduler.common.enums.StopFlag;
+import org.jboss.pnc.scheduler.common.enums.Transition;
 import org.jboss.pnc.scheduler.core.api.Dependent;
 import org.jboss.pnc.scheduler.core.api.ServiceContainer;
 import org.jboss.pnc.scheduler.core.api.ServiceController;
@@ -315,7 +319,7 @@ public class ServiceControllerImpl implements ServiceController, Dependent {
         assertNotNull(serviceMetadata, new ServiceNotFoundException("Service " + name + "not found"));
         Service service = serviceMetadata.getValue();
 
-        if (EnumSet.of(State.STARTING,State.UP,State.STOPPING).contains(service.getState())){
+        if (EnumSet.of(State.STARTING,State.UP, State.STOPPING).contains(service.getState())){
             ServerResponse positiveResponse = new ServerResponse(service.getState(), false);
             List<ServerResponse> responses = service.getServerResponses();
             responses.add(positiveResponse);

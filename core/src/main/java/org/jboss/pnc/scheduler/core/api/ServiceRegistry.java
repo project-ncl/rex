@@ -6,6 +6,7 @@ import org.jboss.pnc.scheduler.core.exceptions.ServiceNotFoundException;
 import org.jboss.pnc.scheduler.core.model.Service;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * The registry used to retrieve Services.
@@ -22,14 +23,6 @@ public interface ServiceRegistry {
     ServiceController getServiceController(ServiceName service);
 
     /**
-     * Returns the Service for a unique ServiceName.
-     *
-     * @param service the serviceName of the service
-     * @return the service or null if doesn't exist
-     */
-    Service getService(ServiceName service);
-
-    /**
      * Returns the Controller for a particular job(Service). Throws an exception if not found.
      *
      * @param service the service name
@@ -39,6 +32,14 @@ public interface ServiceRegistry {
     ServiceController getRequiredServiceController(ServiceName service) throws ServiceNotFoundException;
 
     /**
+     * Returns the Service for a unique ServiceName.
+     *
+     * @param service the serviceName of the service
+     * @return the service or null if doesn't exist
+     */
+    Service getService(ServiceName service);
+
+    /**
      * Returns the Service for a unique ServiceName. Throws an exception if not found.
      *
      * @param service the service name
@@ -46,6 +47,18 @@ public interface ServiceRegistry {
      * @throws ServiceNotFoundException the service was not found
      */
     Service getRequiredService(ServiceName service) throws ServiceNotFoundException;
+
+    /**
+     * Returns all Services present in the cache filtered by parameters
+     *
+     * (Can be costly without filters)
+     *
+     * @param waiting is in StateGroup.IDLE state
+     * @param running is in StateGroup.RUNNING state
+     * @param finished is in StateGroup.FINAL state
+     * @return list of filtered services
+     */
+    List<Service> getServices(boolean waiting, boolean running, boolean finished);
 
     /**
      * Returns all services in clustered container.

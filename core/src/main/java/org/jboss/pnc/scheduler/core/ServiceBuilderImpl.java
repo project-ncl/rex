@@ -2,6 +2,9 @@ package org.jboss.pnc.scheduler.core;
 
 import lombok.Getter;
 import org.jboss.msc.service.ServiceName;
+import org.jboss.pnc.scheduler.common.enums.Mode;
+import org.jboss.pnc.scheduler.common.enums.State;
+import org.jboss.pnc.scheduler.common.enums.StopFlag;
 import org.jboss.pnc.scheduler.core.api.ServiceBuilder;
 import org.jboss.pnc.scheduler.core.model.*;
 import org.slf4j.Logger;

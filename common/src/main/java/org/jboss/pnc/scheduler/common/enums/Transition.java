@@ -1,4 +1,4 @@
-package org.jboss.pnc.scheduler.core.model;
+package org.jboss.pnc.scheduler.common.enums;
 
 /**
  * This enum represent Transition between States

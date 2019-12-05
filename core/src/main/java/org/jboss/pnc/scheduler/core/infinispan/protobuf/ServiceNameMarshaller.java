@@ -13,7 +13,7 @@ public class ServiceNameMarshaller implements MessageMarshaller<ServiceName> {
 
     @Override
     public String getTypeName() {
-        return "org.jboss.pnc.scheduler.core.model.ServiceName";
+        return "org.jboss.pnc.scheduler.model.ServiceName";
     }
 
     @Override

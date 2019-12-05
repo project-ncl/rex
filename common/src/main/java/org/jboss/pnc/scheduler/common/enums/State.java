@@ -1,11 +1,11 @@
-package org.jboss.pnc.scheduler.core.model;
+package org.jboss.pnc.scheduler.common.enums;
 
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 
 /**
  * The enum represents State the job(Service) is currently in.
  * <p>
- * State represents vertices in state-machine diagram.
+ * State represents vertices in the state-machine diagram.
  */
 public enum State {
 

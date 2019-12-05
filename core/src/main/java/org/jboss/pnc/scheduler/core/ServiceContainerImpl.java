@@ -1,25 +1,24 @@
 package org.jboss.pnc.scheduler.core;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.MetadataValue;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.*;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.msc.service.ServiceName;
+import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.core.api.ServiceContainer;
 import org.jboss.pnc.scheduler.core.api.ServiceController;
 import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.core.exceptions.InvalidServiceDeclarationException;
 import org.jboss.pnc.scheduler.core.exceptions.ServiceNotFoundException;
-import org.jboss.pnc.scheduler.core.model.Mode;
+import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.core.model.Service;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.*;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 import static org.jboss.pnc.scheduler.core.ServiceControllerImpl.newDependant;
 import static org.jboss.pnc.scheduler.core.ServiceControllerImpl.newDependency;
@@ -32,6 +31,8 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
 
     private RemoteCache<ServiceName, Service> services;
 
+    //CDI
+    @Deprecated
     public ServiceContainerImpl() {
     }
 
@@ -42,7 +43,7 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
 
     //FIXME implement
     public void shutdown() {
-        return;
+        throw new UnsupportedOperationException("Currently not implemented!");
     }
 
     public String getName() {
@@ -112,7 +113,7 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
     }
 
     private void installInternal(BatchServiceInstallerImpl serviceBuilder) throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
-        boolean joined = joinOrBeginTransation();
+        boolean joined = joinOrBeginTransaction();
         try {
             Set<ServiceName> installed = serviceBuilder.getInstalledServices();
 
@@ -185,11 +186,33 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
         }
     }
 
+    @Override
+    public List<Service> getServices(boolean waiting, boolean running, boolean finished) {
+        if (!waiting && !running && !finished) return Collections.emptyList();
+
+        List<State> states = new ArrayList<>();
+        if (waiting) {
+            states.addAll(EnumSet.of(State.NEW, State.WAITING));
+        }
+        if (running) {
+            states.addAll(EnumSet.of(State.UP, State.STARTING, State.STOPPING));
+        }
+        if (finished) {
+            states.addAll(EnumSet.of(State.STOPPED, State.SUCCESSFUL, State.FAILED, State.START_FAILED, State.START_FAILED));
+        }
+        QueryFactory factory = Search.getQueryFactory(services);
+        Query query = factory.from(Service.class)
+                .having("state").containsAny(states)
+                .build();
+
+        return query.list();
+    }
+
     /**
      *
      * @return returns true if joined
      */
-    private boolean joinOrBeginTransation() throws SystemException, NotSupportedException {
+    private boolean joinOrBeginTransaction() throws SystemException, NotSupportedException {
         if (getTransactionManager().getTransaction() == null){
             getTransactionManager().begin();
             return false;

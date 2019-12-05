@@ -1,8 +1,8 @@
 package org.jboss.pnc.scheduler.core.api;
 
 import org.jboss.msc.service.ServiceName;
-import org.jboss.pnc.scheduler.core.model.Mode;
-import org.jboss.pnc.scheduler.core.model.State;
+import org.jboss.pnc.scheduler.common.enums.Mode;
+import org.jboss.pnc.scheduler.common.enums.State;
 
 /**
  * This is API for ServiceController.
@@ -35,7 +35,7 @@ public interface ServiceController {
      *
      * @return the mode
      */
-    org.jboss.pnc.scheduler.core.model.Mode getMode();
+    Mode getMode();
 
     /**
      * Sets mode of a Service. Needs to be called under a lock.

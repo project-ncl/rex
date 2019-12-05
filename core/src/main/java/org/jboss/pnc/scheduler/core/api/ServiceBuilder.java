@@ -1,7 +1,7 @@
 package org.jboss.pnc.scheduler.core.api;
 
 import org.jboss.msc.service.ServiceName;
-import org.jboss.pnc.scheduler.core.model.Mode;
+import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.core.model.RemoteAPI;
 
 /**

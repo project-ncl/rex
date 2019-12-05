@@ -4,6 +4,7 @@ import lombok.Builder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
+import org.jboss.pnc.scheduler.common.enums.State;
 
 @Builder
 public class ServerResponse {

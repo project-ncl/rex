@@ -1,17 +1,16 @@
 package org.jboss.pnc.scheduler.core;
 
 import io.quarkus.test.junit.QuarkusTest;
-import io.vertx.core.spi.metrics.TCPMetrics;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.BatchServiceInstaller;
 import org.jboss.pnc.scheduler.core.api.ServiceBuilder;
 import org.jboss.pnc.scheduler.core.api.ServiceController;
-import org.jboss.pnc.scheduler.core.model.Mode;
+import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.core.model.RemoteAPI;
 import org.jboss.pnc.scheduler.core.model.Service;
-import org.jboss.pnc.scheduler.core.model.State;
+import org.jboss.pnc.scheduler.common.enums.State;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
