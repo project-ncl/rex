@@ -14,6 +14,6 @@ import javax.ws.rs.core.MediaType;
 public interface InternalEndpoint {
 
     @Path("/{serviceName}/finish")
-    @PUT
+    @POST
     void finish(@PathParam("serviceName") String serviceName, FinishRequest result);
 }
