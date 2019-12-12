@@ -14,39 +14,39 @@ package org.jboss.pnc.scheduler.common.enums;
  */
 public enum Transition {
     /**
-     * Created job(Service) is set to Mode.ACTIVE and has unfinished dependencies or Container has no room for an active job.
+     * Created task is set to Mode.ACTIVE and has unfinished dependencies or Container has no room for an active task.
      */
     NEW_to_WAITING(State.NEW, State.WAITING),
     /**
-     * Created job(Service) is set to Mode.ACTIVE, has no unfinished dependencies and Container has room for an active job.
+     * Created task is set to Mode.ACTIVE, has no unfinished dependencies and Container has room for an active task.
      *
-     * Controller invokes async http client to start execution of remote job(Service).
+     * Controller invokes async http client to start execution of remote task.
      */
     NEW_to_STARTING(State.NEW, State.STARTING),
     /**
-     * Controller has dependencies successfully finished and Container had room for an active job.
+     * Controller has dependencies successfully finished and Container had room for an active task.
      *
-     * Controller invokes async http client to start execution of remote job(Service).
+     * Controller invokes async http client to start execution of remote task.
      */
     WAITING_to_STARTING(State.WAITING, State.STARTING),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
-     * Controller invokes async http client to stop execution of remote job(Service) and informs dependants that it's stopping.
+     * Controller invokes async http client to stop execution of remote task and informs dependants that it's stopping.
      */
     UP_to_STOPPING(State.UP,State.STOPPING),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
-     * Controller invokes async http client to stop execution of remote job(Service) and informs dependants that it's stopping.
+     * Controller invokes async http client to stop execution of remote task and informs dependants that it's stopping.
      */
     STARTING_to_STOPPING(State.STARTING, State.STOPPING),
     /**
-     * Controller has received positive callback that remote job(Service) stopped its execution.
+     * Controller has received positive callback that remote task stopped its execution.
      */
     STOPPING_to_STOPPED(State.STOPPING, State.STOPPED),
     /**
-     * Controller has received negative callback and remote job(Service) failed to stop(could be f.e. unavailable).
+     * Controller has received negative callback and remote task failed to stop(could be f.e. unavailable).
      *
      * Controller informs its dependants that it failed.
      */
@@ -64,23 +64,23 @@ public enum Transition {
      */
     WAITING_to_STOPPED(State.WAITING, State.STOPPED),
     /**
-     * Controller received positive callback that remote job(Service) has successfully started its execution.
+     * Controller received positive callback that remote task has successfully started its execution.
      */
     STARTING_to_UP(State.STARTING, State.UP),
     /**
-     * Controller received negative callback that remote job(Service) failed to start its execution.
+     * Controller received negative callback that remote task failed to start its execution.
      *
      * Controller informs its dependants that it failed.
      */
     STARTING_to_START_FAILED(State.STARTING, State.START_FAILED),
     /**
-     * Controller received an notification that remote job(Service) failed during its execution.
+     * Controller received an notification that remote task failed during its execution.
      *
      * Controller informs its dependants that it failed.
      */
     UP_to_FAILED(State.UP, State.FAILED),
     /**
-     * Controller received an notification that remote job(Service) has successfully completed its execution.
+     * Controller received an notification that remote task has successfully completed its execution.
      *
      * Controller informs its dependants that it successfully finished.
      */

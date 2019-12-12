@@ -1,7 +1,7 @@
 package org.jboss.pnc.scheduler.core;
 
 import org.jboss.msc.service.ServiceName;
-import org.jboss.pnc.scheduler.core.api.ServiceContainer;
+import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.RetryException;
 import org.slf4j.Logger;
@@ -18,11 +18,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Path("/test")
+@Consumes(MediaType.APPLICATION_JSON)
 public class MockEndpoint {
     Logger logger = LoggerFactory.getLogger(MockEndpoint.class);
 
     @Inject
-    ServiceContainer container;
+    TaskContainer container;
 
     ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -31,36 +32,37 @@ public class MockEndpoint {
 
     @POST
     @Path("/accept")
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response accept(String body){
-        logger.debug("payload==" + body);
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response accept(String request){
+        logger.debug("request==" + request);
         logger.debug("HELLO GOTTT ITTT");
         return Response.ok().build();
     }
 
     @POST
     @Path("/stop")
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response stop(String string){
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response stop(String request){
         logger.debug("HELLO GOTTT");
         return Response.ok().build();
     }
 
     @POST
     @Path("/acceptAndStart")
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response acceptAndStart(String body){
-        logger.debug("payload==" + body);
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response acceptAndStart(String request){
+        logger.debug("payload==" + request);
         logger.debug("Endpoint acceptAndStart called");
-        executor.submit(() -> retry(10, () -> invokeAccept(body)));
+        executor.submit(() -> retry(10, () -> invokeAccept(request)));
         return Response.ok().build();
     }
 
-    private void invokeAccept(String body) {
-        System.out.println("Calling accept on: " + body);
+    private void invokeAccept(String request) {
+        System.out.println("Calling accept on: " + request);
         try {
             tm.begin();
-            container.getServiceController(ServiceName.parse(body)).accept();
+            //parse name out of request and call accept
+            container.getTaskController(ServiceName.parse(request.substring(request.indexOf("payload") + 10, request.length()-2))).accept();
             tm.commit();
         }catch (IllegalStateException e) {
             try {

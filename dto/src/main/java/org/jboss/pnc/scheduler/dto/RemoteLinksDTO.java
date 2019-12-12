@@ -7,7 +7,10 @@ import lombok.*;
 @Builder
 public class RemoteLinksDTO {
 
-    private String startUrl;
+    public String startUrl;
 
-    private String stopUrl;
+    public String stopUrl;
+
+    public RemoteLinksDTO() {
+    }
 }

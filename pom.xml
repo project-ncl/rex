@@ -10,8 +10,7 @@
     <module>core</module>
     <module>dto</module>
     <module>common</module>
-    <module>facade</module>
-    <module>rest</module>
+    <module>model</module>
   </modules>
   <properties>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -47,7 +46,7 @@
       </dependency>
       <dependency>
         <groupId>org.jboss.pnc.scheduler</groupId>
-        <artifactId>facade</artifactId>
+        <artifactId>model</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -3,7 +3,7 @@ package org.jboss.pnc.scheduler.common.enums;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 
 /**
- * ServiceControllers communicate with each other through Tasks. Modes serve as a way for users and other entities to affect
+ * TaskControllers communicate with each other through Jobs. Modes serve as a way for users and other entities to affect
  * Controller's behaviour.
  */
 public enum Mode {
@@ -18,7 +18,7 @@ public enum Mode {
     @ProtoEnumValue(number = 1)
     ACTIVE,
     /**
-     * Controller is told to cancel its execution.
+     * Controller is told to cancel its Task's execution.
      */
     @ProtoEnumValue(number = 2)
     CANCEL

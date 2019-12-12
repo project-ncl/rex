@@ -23,7 +23,7 @@ public class StartupCacheConfiguration {
         log.info("Checking for server configuration");
         RemoteCache cache;
         try {
-            cache = cacheManager.getCache("near-services", TransactionMode.NON_DURABLE_XA);
+            cache = cacheManager.getCache("near-tasks", TransactionMode.NON_DURABLE_XA);
         } catch (Exception e) {
             throw new IllegalStateException("Invalid configuration cannot get TransactionManager, ", e);
         }

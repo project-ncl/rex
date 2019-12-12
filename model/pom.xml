@@ -9,16 +9,24 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>dto</artifactId>
+    <artifactId>model</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.jboss.pnc.scheduler</groupId>
-            <artifactId>common</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-infinispan-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.msc</groupId>
+            <artifactId>jboss-msc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.pnc.scheduler</groupId>
+            <artifactId>common</artifactId>
         </dependency>
     </dependencies>
     <build>

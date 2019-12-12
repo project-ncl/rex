@@ -1,8 +1,0 @@
-<infinispan>
-    <cache-container name="clustered">
-        <local-cache-configuration name="services">
-            <locking isolation="REPEATABLE_READ"/>
-            <transaction locking="PESSIMISTIC" mode="NON_DURABLE_XA"/>
-        </local-cache-configuration>
-    </cache-container>
-</infinispan>

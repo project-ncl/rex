@@ -30,7 +30,7 @@ public interface Dependent {
      */
     void dependencyCreated(ServiceName dependency);
     /**
-     * Gets unique name of an associated job(Service).
+     * Gets unique name of an associated Task.
      *
      * @return the name
      */
