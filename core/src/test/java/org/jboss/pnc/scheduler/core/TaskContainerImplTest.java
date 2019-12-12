@@ -4,6 +4,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.msc.service.ServiceName;
+import org.jboss.pnc.scheduler.common.exceptions.CircularDependencyException;
 import org.jboss.pnc.scheduler.core.api.BatchTaskInstaller;
 import org.jboss.pnc.scheduler.core.api.TaskBuilder;
 import org.jboss.pnc.scheduler.core.api.TaskController;
@@ -321,7 +322,7 @@ class TaskContainerImplTest {
     }
 
     @Test
-    public void forFunPropagation() throws Exception {
+    public void testTransactionPropagation() throws Exception {
         TransactionManager tm = container.getTransactionManager();
         tm.begin();
         executor.submit(
@@ -338,7 +339,6 @@ class TaskContainerImplTest {
                 }
         ).get();
         tm.commit();
-
     }
 
     @Test
@@ -368,6 +368,36 @@ class TaskContainerImplTest {
         batchTaskInstaller.commit();
 
         assertThat(container.getTask(true, true, true)).hasSize(11);
+    }
+
+    @Test
+    public void testCycle() throws Exception {
+        BatchTaskInstaller batchTaskInstaller = container.addTasks();
+        ServiceName a = parse("a");
+        ServiceName b = parse("b");
+        ServiceName c = parse("c");
+        ServiceName d = parse("d");
+        ServiceName e = parse("e");
+        ServiceName f = parse("f");
+        ServiceName g = parse("g");
+        ServiceName h = parse("h");
+        ServiceName i = parse("i");
+        ServiceName j = parse("j");
+
+        // a -> i creates a i->f->c->a->i cycle
+        installService(batchTaskInstaller, a, Mode.IDLE, new ServiceName[]{c, d}, new ServiceName[]{i});
+        installService(batchTaskInstaller, b, Mode.IDLE, new ServiceName[]{d, e, h}, null);
+        installService(batchTaskInstaller, c, Mode.IDLE, new ServiceName[]{f}, new ServiceName[]{a});
+        installService(batchTaskInstaller, d, Mode.IDLE, new ServiceName[]{e}, new ServiceName[]{a, b});
+        installService(batchTaskInstaller, e, Mode.IDLE, new ServiceName[]{g, h}, new ServiceName[]{d, b});
+        installService(batchTaskInstaller, f, Mode.IDLE, new ServiceName[]{i}, new ServiceName[]{c});
+        installService(batchTaskInstaller, g, Mode.IDLE, new ServiceName[]{i, j}, new ServiceName[]{e});
+        installService(batchTaskInstaller, h, Mode.IDLE, new ServiceName[]{j}, new ServiceName[]{e, b});
+        installService(batchTaskInstaller, i, Mode.IDLE, new ServiceName[]{a}, new ServiceName[]{f, g});
+        installService(batchTaskInstaller, j, Mode.IDLE, null, new ServiceName[]{g, h});
+
+        assertThatThrownBy(batchTaskInstaller::commit)
+            .isInstanceOf(CircularDependencyException.class);
     }
 
     private static void installService(BatchTaskInstaller batchTaskInstaller, ServiceName name, Mode mode, ServiceName[] dependants, ServiceName[] dependencies) {

@@ -6,10 +6,7 @@ import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
 import org.jboss.pnc.scheduler.core.TaskContainerImpl;
-import org.jboss.pnc.scheduler.core.api.BatchTaskInstaller;
-import org.jboss.pnc.scheduler.core.api.TaskBuilder;
-import org.jboss.pnc.scheduler.core.api.TaskRegistry;
-import org.jboss.pnc.scheduler.core.api.TaskTarget;
+import org.jboss.pnc.scheduler.core.api.*;
 import org.jboss.pnc.scheduler.model.Task;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.facade.api.TaskProvider;
@@ -39,7 +36,7 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Inject
-    public TaskProviderImpl(TaskContainerImpl container, TaskMapper mapper) {
+    public TaskProviderImpl(TaskContainer container, TaskMapper mapper) {
         this.target = container;
         this.registry = container;
         this.mapper = mapper;

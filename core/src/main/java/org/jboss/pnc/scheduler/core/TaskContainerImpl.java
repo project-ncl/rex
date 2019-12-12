@@ -7,6 +7,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.State;
+import org.jboss.pnc.scheduler.common.exceptions.CircularDependencyException;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
@@ -19,6 +20,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jboss.pnc.scheduler.core.TaskControllerImpl.newDependant;
 import static org.jboss.pnc.scheduler.core.TaskControllerImpl.newDependency;
@@ -173,6 +175,8 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
                 }
 
             }
+            //check for cycles using DFS
+            hasCycle(taskBuilder.getTaskDeclarations().stream().map(TaskBuilderImpl::getName).collect(Collectors.toSet()));
             //All services should be saved, now start up ones declared ACTIVE
             for (TaskBuilderImpl taskDeclaration : taskBuilder.getTaskDeclarations()) {
                 ServiceName name = taskDeclaration.getName();
@@ -224,5 +228,49 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
             return false;
         }
         return true;
+    }
+
+    private boolean hasCycle(Set<ServiceName> taskIds) {
+        Set<ServiceName> notVisited = new HashSet<>(taskIds);
+        Set<ServiceName> visiting = new HashSet<>();
+        Set<ServiceName> visited = new HashSet<>();
+
+        while (notVisited.size() > 0) {
+            ServiceName current = notVisited.iterator().next();
+            if (dfs(current, notVisited, visiting, visited)) {
+                throw new CircularDependencyException("Cycle has been found on Task " + current.getCanonicalName());
+            }
+        }
+        return false;
+    }
+
+    private boolean dfs(ServiceName current, Set<ServiceName> notVisited, Set<ServiceName> visiting, Set<ServiceName> visited) {
+        move(current, notVisited, visiting);
+        Task currentTask = getTask(current);
+        for (ServiceName dependency : currentTask.getDependencies()) {
+            //attached dependencies are not in the builder declaration, therefore if discovered, they have to be add as notVisited
+            if (!notVisited.contains(dependency) && !visiting.contains(dependency) && !visited.contains(dependency)){
+                notVisited.add(dependency);
+            }
+            //already explored, continue
+            if (visited.contains(dependency)) {
+                continue;
+            }
+            //visiting again, cycle found
+            if (visiting.contains(dependency)) {
+                return true;
+            }
+            //recursive call
+            if (dfs(dependency, notVisited, visiting, visited)) {
+                return true;
+            }
+        }
+        move(current, visiting, visited);
+        return false;
+    }
+
+    private void move(ServiceName name, Set<ServiceName> sourceSet, Set<ServiceName> destinationSet) {
+        sourceSet.remove(name);
+        destinationSet.add(name);
     }
 }

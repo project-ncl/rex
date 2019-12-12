@@ -31,6 +31,12 @@ public class TaskDTO {
     }
 
     public TaskDTO(String name, RemoteLinksDTO links, Mode mode, State state, StopFlag stopFlag, String payload, Set<String> dependants, Set<String> dependencies) {
+        if (dependants == null) {
+            dependants = new HashSet<>();
+        }
+        if (dependencies == null) {
+            dependencies = new HashSet<>();
+        }
         this.name = name;
         this.links = links;
         this.mode = mode;

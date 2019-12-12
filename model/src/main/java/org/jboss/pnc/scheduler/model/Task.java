@@ -87,6 +87,12 @@ public class Task {
     @Deprecated
     @ProtoFactory
     public Task(String stringName, RemoteAPI remoteEndpoints, Mode controllerMode, State state, Set<String> stringDependants, int unfinishedDependencies, Set<String> stringDependencies, String payload, StopFlag stopFlag, List<ServerResponse> serverResponses) {
+        if (stringDependants == null) {
+            stringDependants = new HashSet<>();
+        }
+        if (stringDependencies == null) {
+            stringDependencies = new HashSet<>();
+        }
         this.name = ServiceName.parse(stringName);
         this.remoteEndpoints = remoteEndpoints;
         this.controllerMode = controllerMode;
