@@ -4,11 +4,9 @@ import io.vertx.axle.core.Vertx;
 import io.vertx.axle.core.buffer.Buffer;
 import io.vertx.axle.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
-import org.eclipse.microprofile.context.ManagedExecutor;
-import org.eclipse.microprofile.context.ThreadContext;
 import org.jboss.pnc.scheduler.core.ServiceControllerImpl;
-import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.scheduler.core.exceptions.RetryException;
+import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.scheduler.common.exceptions.RetryException;
 import org.jboss.pnc.scheduler.core.model.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.function.BooleanSupplier;
 
-public class AsyncInvokeStopTask extends TransactionalControllerTask{
+public class AsyncInvokeStopTask extends SynchronizedAsyncControllerTask {
     private WebClient client;
     private URI uri;
     private Service service;

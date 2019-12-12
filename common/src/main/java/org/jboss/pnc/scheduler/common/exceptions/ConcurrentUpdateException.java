@@ -1,4 +1,4 @@
-package org.jboss.pnc.scheduler.core.exceptions;
+package org.jboss.pnc.scheduler.common.exceptions;
 
 public class ConcurrentUpdateException extends RuntimeException {
     public ConcurrentUpdateException() {

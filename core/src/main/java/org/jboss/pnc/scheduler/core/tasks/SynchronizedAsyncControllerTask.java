@@ -1,6 +1,6 @@
 package org.jboss.pnc.scheduler.core.tasks;
 
-import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;

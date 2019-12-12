@@ -108,7 +108,7 @@ public class Service {
     }
 
     @ProtoField(number = 1)
-    @ProtoDoc("@IndexedField")
+    @ProtoDoc("@Field(store=Store.YES)")
     public String getStringName() {
         return name.getCanonicalName();
     }
@@ -123,7 +123,7 @@ public class Service {
     }
 
     @ProtoField(number = 4)
-    @ProtoDoc("@IndexedField")
+    @ProtoDoc("@Field(store=Store.YES)")
     public State getState() {
         return state;
     }
@@ -163,20 +163,11 @@ public class Service {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Service service = (Service) o;
-        return unfinishedDependencies == service.unfinishedDependencies &&
-                name.equals(service.name) &&
-                Objects.equals(remoteEndpoints, service.remoteEndpoints) &&
-                controllerMode == service.controllerMode &&
-                state == service.state &&
-                Objects.equals(dependants, service.dependants) &&
-                Objects.equals(dependencies, service.dependencies) &&
-                Objects.equals(payload, service.payload) &&
-                stopFlag == service.stopFlag &&
-                Objects.equals(serverResponses, service.serverResponses);
+        return  name.equals(service.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, remoteEndpoints, controllerMode, state, dependants, unfinishedDependencies, dependencies, payload, stopFlag, serverResponses);
+        return Objects.hash(name);
     }
 }

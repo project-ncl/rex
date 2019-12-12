@@ -81,7 +81,7 @@ public interface ServiceEndpoint {
     @PUT
     void cancel(@Parameter(description = SERVICE_NAME) @PathParam("serviceName") String serviceName);
 
-    @Path("/{serviceName}/graph")
+  /*  @Path("/{serviceName}/graph")
     @APIResponses(value = {
             @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ServiceListResponse.class))),
@@ -91,5 +91,5 @@ public interface ServiceEndpoint {
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    List<ServiceDTO> getGraph(@Parameter(description = SERVICE_NAME) @PathParam("serviceName") String serviceName);
+    List<ServiceDTO> getGraph(@Parameter(description = SERVICE_NAME) @PathParam("serviceName") String serviceName);*/
 }

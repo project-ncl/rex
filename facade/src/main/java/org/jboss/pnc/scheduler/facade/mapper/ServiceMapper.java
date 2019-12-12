@@ -7,6 +7,15 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.function.Function.identity;
+
 @Mapper(config = MapperCentralConfig.class, uses = {RemoteLinksMapper.class, ServiceMapper.ServiceNameMapper.class})
 public interface ServiceMapper extends EntityMapper<ServiceDTO, Service> {
 
@@ -25,7 +34,20 @@ public interface ServiceMapper extends EntityMapper<ServiceDTO, Service> {
     @Mapping(target = "serverResponse", ignore = true)
     @Mapping(target = "dependant", ignore = true)
     @Mapping(target = "dependency", ignore = true)
+    @Mapping(target = "stopFlag", ignore = true)
+    @BeanMapping(ignoreUnmappedSourceProperties = {"stopFlag"})
     Service toDB(ServiceDTO dtoEntity);
+
+    default Collection<Service> contextualToDB(Collection<ServiceDTO> dtoCollection){
+        Map<String, ServiceDTO> dtoMap = dtoCollection.stream().collect(Collectors.toMap(ServiceDTO::getName, identity()));
+        for (ServiceDTO serviceDTO : dtoCollection) {
+            for (String dependency : serviceDTO.getDependencies()) {
+                ServiceDTO service = dtoMap.get(dependency);
+                if (service != null) service.getDependants().add(serviceDTO.getName());
+            }
+        }
+        return dtoMap.values().stream().map(this::toDB).collect(Collectors.toSet());
+    }
 
     class ServiceNameMapper {
         public static ServiceName toServiceName(String string) {

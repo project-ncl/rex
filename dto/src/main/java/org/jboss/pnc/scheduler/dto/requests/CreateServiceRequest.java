@@ -5,8 +5,15 @@ import org.jboss.pnc.scheduler.dto.ServiceDTO;
 
 import java.util.List;
 
-@Data
 public class CreateServiceRequest {
 
     private final List<ServiceDTO> services;
+
+    public CreateServiceRequest(List<ServiceDTO> services) {
+        this.services = services;
+    }
+
+    public List<ServiceDTO> getServices() {
+        return services;
+    }
 }

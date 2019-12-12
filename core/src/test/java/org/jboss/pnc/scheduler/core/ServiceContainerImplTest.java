@@ -341,6 +341,35 @@ class ServiceContainerImplTest {
 
     }
 
+    @Test
+    public void testQuery() throws Exception {
+        BatchServiceInstaller batchServiceInstaller = container.addServices();
+        ServiceName a = parse("a");
+        ServiceName b = parse("b");
+        ServiceName c = parse("c");
+        ServiceName d = parse("d");
+        ServiceName e = parse("e");
+        ServiceName f = parse("f");
+        ServiceName g = parse("g");
+        ServiceName h = parse("h");
+        ServiceName i = parse("i");
+        ServiceName j = parse("j");
+
+        installService(batchServiceInstaller, a, Mode.IDLE, new ServiceName[]{c, d}, null);
+        installService(batchServiceInstaller, b, Mode.IDLE, new ServiceName[]{d, e, h}, null);
+        installService(batchServiceInstaller, c, Mode.IDLE, new ServiceName[]{f}, new ServiceName[]{a});
+        installService(batchServiceInstaller, d, Mode.IDLE, new ServiceName[]{e}, new ServiceName[]{a, b});
+        installService(batchServiceInstaller, e, Mode.IDLE, new ServiceName[]{g, h}, new ServiceName[]{d, b});
+        installService(batchServiceInstaller, f, Mode.IDLE, new ServiceName[]{i}, new ServiceName[]{c});
+        installService(batchServiceInstaller, g, Mode.IDLE, new ServiceName[]{i, j}, new ServiceName[]{e});
+        installService(batchServiceInstaller, h, Mode.IDLE, new ServiceName[]{j}, new ServiceName[]{e, b});
+        installService(batchServiceInstaller, i, Mode.IDLE, null, new ServiceName[]{f, g});
+        installService(batchServiceInstaller, j, Mode.IDLE, null, new ServiceName[]{g, h});
+        batchServiceInstaller.commit();
+
+        assertThat(container.getServices(true, true, true)).hasSize(11);
+    }
+
     private static void installService(BatchServiceInstaller batchServiceInstaller, ServiceName name, Mode mode, ServiceName[] dependants, ServiceName[] dependencies) {
         installService(batchServiceInstaller,name, mode, dependants, dependencies, getMockAPI(), String.format("I'm an %s!", name));
     }

@@ -7,7 +7,7 @@ import javax.enterprise.inject.Produces;
 public class ServiceProtoFileProducer {
 
     @Produces
-    FileDescriptorSource bookProtoDefinition() {
+    FileDescriptorSource serviceNameProtoDefinition() {
         return FileDescriptorSource.fromString("service_name.proto", "package org.jboss.pnc.scheduler.model;\n" +
                 "\n" +
                 "message ServiceName {\n" +

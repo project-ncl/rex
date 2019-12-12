@@ -9,9 +9,9 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.core.api.ServiceContainer;
 import org.jboss.pnc.scheduler.core.api.ServiceController;
-import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.scheduler.core.exceptions.InvalidServiceDeclarationException;
-import org.jboss.pnc.scheduler.core.exceptions.ServiceNotFoundException;
+import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.scheduler.common.exceptions.InvalidServiceDeclarationException;
+import org.jboss.pnc.scheduler.common.exceptions.ServiceNotFoundException;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.core.model.Service;
 
@@ -28,6 +28,9 @@ public class ServiceContainerImpl extends ServiceTargetImpl implements ServiceCo
 
     @ConfigProperty(name = "container.name", defaultValue = "undefined")
     String name;
+
+    @ConfigProperty(name = "scheduler.baseUrl", defaultValue = "http://localhost:8080")
+    String baseUrl;
 
     private RemoteCache<ServiceName, Service> services;
 

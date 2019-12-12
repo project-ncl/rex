@@ -1,7 +1,10 @@
 package org.jboss.pnc.scheduler.facade;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.Mode;
+import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.scheduler.common.exceptions.ServiceNotFoundException;
 import org.jboss.pnc.scheduler.core.ServiceContainerImpl;
 import org.jboss.pnc.scheduler.core.api.BatchServiceInstaller;
 import org.jboss.pnc.scheduler.core.api.ServiceBuilder;
@@ -14,8 +17,10 @@ import org.jboss.pnc.scheduler.facade.mapper.ServiceMapper;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.transaction.RollbackException;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,11 +49,11 @@ public class ServiceProviderImpl implements ServiceProvider {
     @Transactional
     public List<ServiceDTO> create(List<ServiceDTO> services) {
         BatchServiceInstaller batchServiceInstaller = target.addServices();
-        for (ServiceDTO service : services) {
-            Service serviceModel = mapper.toDB(service);
+        Collection<Service> dbServices = mapper.contextualToDB(services);
+        for (Service serviceModel: dbServices) {
             ServiceBuilder builder = batchServiceInstaller.addService(serviceModel.getName())
                     .setPayload(serviceModel.getPayload())
-                    .setInitialMode(Mode.ACTIVE)
+                    .setInitialMode(serviceModel.getControllerMode())
                     .setRemoteEndpoints(serviceModel.getRemoteEndpoints());
             serviceModel.getDependencies().forEach(builder::requires);
             serviceModel.getDependants().forEach(builder::isRequiredBy);
@@ -70,6 +75,7 @@ public class ServiceProviderImpl implements ServiceProvider {
     }
 
     @Override
+    @Retry(retryOn = {ConcurrentUpdateException.class, RollbackException.class}, abortOn = {ServiceNotFoundException.class})
     @Transactional
     public void cancel(ServiceName serviceName) {
         registry.getRequiredServiceController(serviceName).setMode(Mode.CANCEL);
@@ -82,7 +88,7 @@ public class ServiceProviderImpl implements ServiceProvider {
 
     @Override
     public List<ServiceDTO> getAllRelated(ServiceName serviceName) {
-        return null;
+        throw new UnsupportedOperationException("not yet implemented");
     }
 
     @Override

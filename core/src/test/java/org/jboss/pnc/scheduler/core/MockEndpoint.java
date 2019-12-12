@@ -2,8 +2,8 @@ package org.jboss.pnc.scheduler.core;
 
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.ServiceContainer;
-import org.jboss.pnc.scheduler.core.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.scheduler.core.exceptions.RetryException;
+import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.scheduler.common.exceptions.RetryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

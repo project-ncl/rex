@@ -2,7 +2,7 @@
 package org.jboss.pnc.scheduler.core.api;
 
 import org.jboss.msc.service.ServiceName;
-import org.jboss.pnc.scheduler.core.exceptions.ServiceNotFoundException;
+import org.jboss.pnc.scheduler.common.exceptions.ServiceNotFoundException;
 import org.jboss.pnc.scheduler.core.model.Service;
 
 import java.util.Collection;

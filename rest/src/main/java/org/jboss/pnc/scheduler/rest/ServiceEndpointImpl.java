@@ -48,8 +48,8 @@ public class ServiceEndpointImpl implements ServiceEndpoint {
         serviceProvider.cancel(ServiceName.parse(serviceName));
     }
 
-    @Override
+ /*   @Override
     public List<ServiceDTO> getGraph(String serviceName) {
         return serviceProvider.getAllRelated(ServiceName.parse(serviceName));
-    }
+    }*/
 }

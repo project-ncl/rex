@@ -4,8 +4,6 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.BatchServiceInstaller;
 import org.jboss.pnc.scheduler.core.api.ServiceTarget;
 
-import javax.transaction.*;
-
 public abstract class ServiceTargetImpl implements ServiceTarget {
 
     public ServiceTargetImpl() {
