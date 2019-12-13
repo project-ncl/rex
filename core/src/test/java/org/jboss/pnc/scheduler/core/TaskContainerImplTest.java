@@ -9,9 +9,11 @@ import org.jboss.pnc.scheduler.core.api.BatchTaskInstaller;
 import org.jboss.pnc.scheduler.core.api.TaskBuilder;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.common.enums.Mode;
+import org.jboss.pnc.scheduler.dto.requests.FinishRequest;
 import org.jboss.pnc.scheduler.model.RemoteAPI;
 import org.jboss.pnc.scheduler.model.Task;
 import org.jboss.pnc.scheduler.common.enums.State;
+import org.jboss.pnc.scheduler.rest.api.InternalEndpoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -41,6 +43,9 @@ class TaskContainerImplTest {
 
     @Inject
     ManagedExecutor executor;
+
+    @Inject
+    InternalEndpoint endpoint;
 
     @BeforeEach
     public void before() throws Exception {

@@ -1,5 +1,6 @@
 package org.jboss.pnc.scheduler.rest;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateTaskRequest;
@@ -44,6 +45,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
+    @Retry(maxRetries = 5)
     public void cancel(String taskID) {
         taskProvider.cancel(ServiceName.parse(taskID));
     }

@@ -1,20 +1,15 @@
 package org.jboss.pnc.scheduler.facade;
 
-import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.Mode;
-import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
-import org.jboss.pnc.scheduler.core.TaskContainerImpl;
 import org.jboss.pnc.scheduler.core.api.*;
-import org.jboss.pnc.scheduler.model.Task;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.facade.api.TaskProvider;
 import org.jboss.pnc.scheduler.facade.mapper.TaskMapper;
+import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.transaction.RollbackException;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,7 +40,11 @@ public class TaskProviderImpl implements TaskProvider {
     @Override
     public List<TaskDTO> create(List<TaskDTO> tasks) {
         BatchTaskInstaller batchTaskInstaller = target.addTasks();
-        Collection<Task> dbTasks = mapper.contextualToDB(tasks);
+        //fill dependents with contextualToDB and filter out existing tasks
+        Collection<Task> dbTasks = mapper.contextualToDB(tasks)
+                .stream()
+                .filter(task -> registry.getTask(task.getName()) == null)
+                .collect(Collectors.toSet());
         for (Task taskModel : dbTasks) {
             TaskBuilder builder = batchTaskInstaller.addTask(taskModel.getName())
                     .setPayload(taskModel.getPayload())
@@ -71,7 +70,6 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Override
-    @Retry(retryOn = {ConcurrentUpdateException.class, RollbackException.class}, abortOn = {TaskNotFoundException.class})
     @Transactional
     public void cancel(ServiceName serviceName) {
         registry.getRequiredTaskController(serviceName).setMode(Mode.CANCEL);
@@ -88,7 +86,6 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Override
-    @Retry(retryOn = {ConcurrentUpdateException.class, RollbackException.class}, abortOn = {TaskNotFoundException.class})
     @Transactional
     public void acceptRemoteResponse(ServiceName serviceName, boolean positive) {
         if (positive) {
