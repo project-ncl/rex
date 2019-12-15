@@ -34,8 +34,7 @@ public class MockEndpoint {
     @Path("/accept")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response accept(String request){
-        logger.debug("request==" + request);
-        logger.debug("HELLO GOTTT ITTT");
+        logger.debug("Mock 'accept' endpoint received a request: " + request);
         return Response.ok().build();
     }
 
@@ -43,7 +42,7 @@ public class MockEndpoint {
     @Path("/stop")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response stop(String request){
-        logger.debug("HELLO GOTTT");
+        logger.debug("Mock 'stop' endpoint received a request: " + request);
         return Response.ok().build();
     }
 
@@ -51,8 +50,7 @@ public class MockEndpoint {
     @Path("/acceptAndStart")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response acceptAndStart(String request){
-        logger.debug("payload==" + request);
-        logger.debug("Endpoint acceptAndStart called");
+        logger.debug("Mock 'acceptAndStart' endpoint received a request: " + request);
         executor.submit(() -> retry(10, () -> invokeAccept(request)));
         return Response.ok().build();
     }
@@ -86,11 +84,11 @@ public class MockEndpoint {
                 runnable.run();
                 break;
             } catch (ConcurrentUpdateException e) {
-                System.out.println("retry number: " + i);
+                System.out.println("Retry number: " + i);
                 if (i > 5)
                     e.printStackTrace();
             }
         }
-        throw new RetryException("Enough is enough!");
+        throw new RetryException("Retrying didn't make effect.");
     }
 }

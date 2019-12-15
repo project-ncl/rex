@@ -43,7 +43,7 @@ public class AsyncInvokeStopJob extends SynchronizedAsyncControllerJob {
 
     @Override
     boolean execute() {
-        logger.debug("Invoking stop task");
+        System.out.println("Invoking StopJob for " + controller.getName().getCanonicalName());
         client.post(uri.toString())
                 .putHeader("Content-Type", "application/json")
                 .sendJsonObject(new JsonObject()
@@ -54,10 +54,10 @@ public class AsyncInvokeStopJob extends SynchronizedAsyncControllerJob {
                             try {
                                 logger.debug(resp.toString());
                                 if (resp.statusCode() == 200) {
-                                    System.out.println("GOT 200 on " + controller.getName());
+                                    System.out.println("Got positive response on " + controller.getName());
                                     retry(10, () -> wrapInTransactionAndHandle(() -> controller.accept()));
                                 } else {
-                                    System.out.println("GOT " + resp.statusCode());
+                                    System.out.println("Got negative response on " + controller.getName());
                                     retry(10, () -> wrapInTransactionAndHandle(() -> controller.fail()));
                                 }
                             } catch (Exception e) {
@@ -98,7 +98,7 @@ public class AsyncInvokeStopJob extends SynchronizedAsyncControllerJob {
                 ex.printStackTrace();
             }
         } catch (RollbackException e) {
-            logger.debug("Transaction rolled back ");
+            System.out.println("Transaction rolled back");
             return true;
         } catch (HeuristicRollbackException | NotSupportedException | HeuristicMixedException | SystemException e) {
             e.printStackTrace();

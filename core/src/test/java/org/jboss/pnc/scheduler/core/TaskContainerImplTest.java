@@ -332,7 +332,6 @@ class TaskContainerImplTest {
         tm.begin();
         executor.submit(
                 () -> {
-                    System.out.println(Thread.currentThread().getName());
                     try {
                         Transaction transaction = tm.getTransaction();
                         assertThat(transaction).isNotNull();
@@ -454,7 +453,7 @@ class TaskContainerImplTest {
                     iterator.remove();
             }
             return fine.isEmpty();
-        }, 40, TimeUnit.SECONDS);
+        }, 10, TimeUnit.SECONDS);
     }
 
     public static void waitSynchronouslyFor(Supplier<Boolean> condition, long timeout, TimeUnit timeUnit) {

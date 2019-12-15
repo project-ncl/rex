@@ -97,7 +97,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         Transition transition;
         transition = getTransition(task);
         if (transition != null)
-            System.out.println(String.format("transitioning; before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), getName()));
+            System.out.println(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), getName().getCanonicalName()));
 
         List<Runnable> tasks = new ArrayList<>();
 

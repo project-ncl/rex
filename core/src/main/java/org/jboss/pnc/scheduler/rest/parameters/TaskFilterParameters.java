@@ -9,17 +9,17 @@ import javax.ws.rs.QueryParam;
 @Data
 public class TaskFilterParameters {
 
-    @Parameter(description = "Should include running services?")
+    @Parameter(description = "Should include running tasks?")
     @QueryParam("running")
     @DefaultValue("false")
     private Boolean running;
 
-    @Parameter(description = "Should include waiting services?")
+    @Parameter(description = "Should include waiting tasks?")
     @QueryParam("waiting")
     @DefaultValue("false")
     private Boolean waiting;
 
-    @Parameter(description = "Should include finished services?")
+    @Parameter(description = "Should include finished tasks?")
     @QueryParam("finished")
     @DefaultValue("false")
     private Boolean finished;
