@@ -1,0 +1,1 @@
+create cache --file=core/src/main/resources/task-configuration.xml near-cache
