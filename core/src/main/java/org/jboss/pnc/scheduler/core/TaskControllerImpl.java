@@ -1,7 +1,6 @@
 package org.jboss.pnc.scheduler.core;
 
 import org.infinispan.client.hotrod.MetadataValue;
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
@@ -28,20 +27,20 @@ public class TaskControllerImpl implements TaskController, Dependent {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskControllerImpl.class);
 
-    private ServiceName name;
+    private String name;
 
     private TaskContainerImpl container;
 
     private TransactionManager tm;
 
-    public TaskControllerImpl(ServiceName name, TaskContainerImpl container) {
+    public TaskControllerImpl(String name, TaskContainerImpl container) {
         this.name = name;
         this.container = container;
         tm = container.getTransactionManager();
     }
 
     @Override
-    public void dependencyCreated(ServiceName dependencyName) {
+    public void dependencyCreated(String dependencyName) {
         assertInTransaction();
         MetadataValue<Task> taskMeta = container.getCache().getWithMetadata(name);
         assertNotNull(taskMeta, new TaskNotFoundException("Task " + name + " not found!"));
@@ -52,7 +51,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
 
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task,taskMeta.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName().getCanonicalName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
         //Get get controller of the dependency and notify it that it has a new dependant
         TaskControllerImpl dependencyController = (TaskControllerImpl) container.getTaskController(dependencyName);
@@ -77,7 +76,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         dependency.getDependants().add(dependant.getName());
     }
 
-    public void dependantCreated(ServiceName dependantName) {
+    public void dependantCreated(String dependantName) {
         assertInTransaction();
         MetadataValue<Task> taskMeta = container.getCache().getWithMetadata(name);
         assertNotNull(taskMeta, new TaskNotFoundException("Task " + name + "not found"));
@@ -88,7 +87,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
 
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMeta.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName().getCanonicalName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
     }
 
@@ -97,7 +96,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         Transition transition;
         transition = getTransition(task);
         if (transition != null)
-            System.out.println(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), getName().getCanonicalName()));
+            System.out.println(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), getName()));
 
         List<Runnable> tasks = new ArrayList<>();
 
@@ -232,12 +231,12 @@ public class TaskControllerImpl implements TaskController, Dependent {
     private static void assertCanAcceptDependencies(Task task) {
         if (!task.getState().isIdle()) {
             throw new IllegalStateException(String.format("Task %s cannot accept a dependency",
-                    task.getName().getCanonicalName()));
+                    task.getName()));
         }
     }
 
     @Override
-    public ServiceName getName() {
+    public String getName() {
         return name;
     }
 
@@ -273,7 +272,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName().getCanonicalName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
     }
 
@@ -295,14 +294,14 @@ public class TaskControllerImpl implements TaskController, Dependent {
             responses.add(positiveResponse);
             task.setServerResponses(responses); //probably unnecessary
         } else {
-            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName().getCanonicalName() + " State: " + task.getState());
+            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
         }
 
         List<Runnable> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName().getCanonicalName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
     }
 
@@ -328,14 +327,14 @@ public class TaskControllerImpl implements TaskController, Dependent {
             //maybe assert it was null before
             task.setStopFlag(StopFlag.UNSUCCESSFUL);
         } else {
-            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Service: " + task.getName().getCanonicalName() + " State: " + task.getState());
+            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Service: " + task.getName() + " State: " + task.getState());
         }
 
         List<Runnable> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Service " + task.getName().getCanonicalName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Service " + task.getName() + " was remotely updated during the transaction");
         }
     }
 
@@ -354,7 +353,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         System.out.println("Called dep succeeded on " + name + " and pushed: " + pushed + "with prev version: " + taskMetadata.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName().getCanonicalName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
 
     }
@@ -373,7 +372,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName().getCanonicalName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
     }
 
@@ -392,39 +391,39 @@ public class TaskControllerImpl implements TaskController, Dependent {
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName().getCanonicalName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
     }
 
     private static void assertDependantRelationships(Task dependant, Task dependency){
-        ServiceName dependantName = dependant.getName();
-        ServiceName dependencyName = dependency.getName();
+        String dependantName = dependant.getName();
+        String dependencyName = dependency.getName();
 
         if (dependantName.equals(dependencyName)) {
-            throw new IllegalStateException("Task " + dependantName.getCanonicalName() + " cannot depend on itself");
+            throw new IllegalStateException("Task " + dependantName + " cannot depend on itself");
         };
 
         if (dependant.getDependants().contains(dependencyName)) {
-            throw new IllegalStateException("Task " + dependantName.getCanonicalName() + " cannot depend and be dependant on the "+ dependencyName.getCanonicalName());
+            throw new IllegalStateException("Task " + dependantName + " cannot depend and be dependant on the "+ dependencyName);
         }
     };
 
     private static void assertDependencyRelationships(Task dependency, Task dependant){
-        ServiceName dependencyName = dependency.getName();
-        ServiceName dependantName = dependant.getName();
+        String dependencyName = dependency.getName();
+        String dependantName = dependant.getName();
 
         if (dependantName.equals(dependencyName)) {
-            throw new IllegalStateException("Task " + dependencyName.getCanonicalName() + " cannot depend on itself");
+            throw new IllegalStateException("Task " + dependencyName + " cannot depend on itself");
         };
 
         if (dependant.getDependants().contains(dependencyName)) {
-            throw new IllegalStateException("Task " + dependencyName.getCanonicalName() + " cannot depend and be dependant on the "+ dependantName.getCanonicalName());
+            throw new IllegalStateException("Task " + dependencyName + " cannot depend and be dependant on the "+ dependantName);
         }
     };
 
     private static void assertTaskNotNull(Task... tasks) {
         for (Task task : tasks) {
-            assertNotNull(task, new TaskNotFoundException("Task " + task.getName().getCanonicalName() + "was not found!"));
+            assertNotNull(task, new TaskNotFoundException("Task " + task.getName() + "was not found!"));
         }
     }
 

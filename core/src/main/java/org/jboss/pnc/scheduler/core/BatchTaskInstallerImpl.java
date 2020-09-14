@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.core;
 
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.BatchTaskInstaller;
 import org.jboss.pnc.scheduler.core.api.TaskBuilder;
 
@@ -12,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class BatchTaskInstallerImpl implements BatchTaskInstaller {
     private Set<TaskBuilderImpl> taskDeclarations = new HashSet<>();
-    private Set<ServiceName> installed = new HashSet<>();
+    private Set<String> installed = new HashSet<String>();
     private boolean committed = false;
     private TaskTargetImpl target;
 
@@ -21,7 +20,7 @@ public class BatchTaskInstallerImpl implements BatchTaskInstaller {
     }
 
     @Override
-    public TaskBuilder addTask(ServiceName name) {
+    public TaskBuilder addTask(String name) {
         assertNotCommitted();
         assertNotAlreadyDeclared(name);
         return new TaskBuilderImpl(name, this);
@@ -46,19 +45,19 @@ public class BatchTaskInstallerImpl implements BatchTaskInstaller {
         return Collections.unmodifiableSet(taskDeclarations);
     }
 
-    public Set<ServiceName> getInstalledTasks() {
+    public Set<String> getInstalledTasks() {
         return Collections.unmodifiableSet(installed);
     }
 
     private void assertRelationsAndFillInstalled() {
         // Brand new services and their builders
-        Map<ServiceName, TaskBuilderImpl> declaredNewServiceNames = taskDeclarations.stream()
+        Map<String, TaskBuilderImpl> declaredNewServiceNames = taskDeclarations.stream()
                 .collect(Collectors.toMap(TaskBuilderImpl::getName, x -> x));
 
         for (TaskBuilderImpl builder : taskDeclarations) {
-            ServiceName builderName = builder.getName();
+            String builderName = builder.getName();
             //All dependants have to be declared as dependencies on the other side
-            for (ServiceName dependant : builder.getDependants()) {
+            for (String dependant : builder.getDependants()) {
                 //Skip already installed services
                 if (!declaredNewServiceNames.containsKey(dependant)) {
                     installed.add(dependant);
@@ -66,12 +65,12 @@ public class BatchTaskInstallerImpl implements BatchTaskInstaller {
                 }
                 TaskBuilderImpl dependantsBuilder = declaredNewServiceNames.get(dependant);
                 if (!dependantsBuilder.getDependencies().contains(builderName)) {
-                    throw new IllegalArgumentException("Builder of '" + dependant.getCanonicalName() + "' does not have declared dependency for '" + builderName + "'");
+                    throw new IllegalArgumentException("Builder of '" + dependant + "' does not have declared dependency for '" + builderName + "'");
                 }
             }
 
             //All dependencies have to be declared as dependants on the other side
-            for (ServiceName dependency : builder.getDependencies()) {
+            for (String dependency : builder.getDependencies()) {
                 //Skip already installed services
                 if (!declaredNewServiceNames.containsKey(dependency)) {
                     installed.add(dependency);
@@ -79,7 +78,7 @@ public class BatchTaskInstallerImpl implements BatchTaskInstaller {
                 }
                 TaskBuilderImpl dependantsBuilder = declaredNewServiceNames.get(dependency);
                 if (!dependantsBuilder.getDependants().contains(builderName)) {
-                    throw new IllegalArgumentException("Builder of '" + dependency.getCanonicalName() + "' does not have declared dependant of '" + builderName + "'");
+                    throw new IllegalArgumentException("Builder of '" + dependency + "' does not have declared dependant of '" + builderName + "'");
                 }
             }
         }
@@ -91,7 +90,7 @@ public class BatchTaskInstallerImpl implements BatchTaskInstaller {
         }
     }
 
-    private void assertNotAlreadyDeclared(ServiceName name) {
+    private void assertNotAlreadyDeclared(String name) {
         if(taskDeclarations.stream().anyMatch(sb -> sb.getName().equals(name))) {
             throw new IllegalArgumentException("Cannot create SB with the same name");
         }

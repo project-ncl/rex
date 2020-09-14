@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.core.api;
 
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.model.RemoteAPI;
 
@@ -16,7 +15,7 @@ public interface TaskBuilder {
      * @param dependency the task
      * @return the task builder
      */
-    TaskBuilder requires(ServiceName dependency);
+    TaskBuilder requires(String dependency);
 
     /**
      * Registers a dependent(parent)
@@ -24,7 +23,7 @@ public interface TaskBuilder {
      * @param dependant the task
      * @return the task builder
      */
-    TaskBuilder isRequiredBy(ServiceName dependant);
+    TaskBuilder isRequiredBy(String dependant);
 
     /**
      * Set initial mode

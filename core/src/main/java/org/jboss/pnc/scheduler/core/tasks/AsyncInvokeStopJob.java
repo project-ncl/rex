@@ -43,11 +43,11 @@ public class AsyncInvokeStopJob extends SynchronizedAsyncControllerJob {
 
     @Override
     boolean execute() {
-        System.out.println("Invoking StopJob for " + controller.getName().getCanonicalName());
+        System.out.println("Invoking StopJob for " + controller.getName());
         client.post(uri.toString())
                 .putHeader("Content-Type", "application/json")
                 .sendJsonObject(new JsonObject()
-                        .put("callback", schedulerBaseUrl + "/rest/internal/"+ task.getName().getCanonicalName() + "/finish")
+                        .put("callback", schedulerBaseUrl + "/rest/internal/"+ task.getName() + "/finish")
                         .put("payload", task.getPayload())
                 )
                 .thenApply(resp -> {

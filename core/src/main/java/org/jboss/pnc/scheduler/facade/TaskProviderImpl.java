@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.facade;
 
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.core.api.*;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
@@ -57,7 +56,7 @@ public class TaskProviderImpl implements TaskProvider {
         batchTaskInstaller.commit();
         List<TaskDTO> toReturn = new ArrayList<>();
         for (TaskDTO taskDTO : tasks) {
-            toReturn.add(mapper.toDTO(registry.getRequiredTask(ServiceName.parse(taskDTO.getName()))));
+            toReturn.add(mapper.toDTO(registry.getRequiredTask(taskDTO.getName())));
         }
         return toReturn;
     }
@@ -71,23 +70,23 @@ public class TaskProviderImpl implements TaskProvider {
 
     @Override
     @Transactional
-    public void cancel(ServiceName serviceName) {
+    public void cancel(String serviceName) {
         registry.getRequiredTaskController(serviceName).setMode(Mode.CANCEL);
     }
 
     @Override
-    public TaskDTO get(ServiceName serviceName) {
+    public TaskDTO get(String serviceName) {
         return mapper.toDTO(registry.getTask(serviceName));
     }
 
     @Override
-    public List<TaskDTO> getAllRelated(ServiceName serviceName) {
+    public List<TaskDTO> getAllRelated(String serviceName) {
         throw new UnsupportedOperationException("not yet implemented");
     }
 
     @Override
     @Transactional
-    public void acceptRemoteResponse(ServiceName serviceName, boolean positive) {
+    public void acceptRemoteResponse(String serviceName, boolean positive) {
         if (positive) {
             registry.getRequiredTaskController(serviceName).accept();
         } else {

@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.facade.mapper;
 
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.model.Task;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.mapstruct.BeanMapping;
@@ -13,7 +12,7 @@ import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
 
-@Mapper(config = MapperCentralConfig.class, uses = {RemoteLinksMapper.class, TaskMapper.ServiceNameMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = {RemoteLinksMapper.class})
 public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
 
     @Override
@@ -44,14 +43,5 @@ public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
             }
         }
         return dtoMap.values().stream().map(this::toDB).collect(Collectors.toSet());
-    }
-
-    class ServiceNameMapper {
-        public static ServiceName toServiceName(String string) {
-            return ServiceName.parse(string);
-        }
-        public static String fromServiceName(ServiceName serviceName) {
-            return serviceName.getCanonicalName();
-        }
     }
 }

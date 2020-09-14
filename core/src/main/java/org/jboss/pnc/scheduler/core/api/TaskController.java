@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.core.api;
 
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.enums.State;
 
@@ -21,7 +20,7 @@ public interface TaskController {
      *
      * @return the name
      */
-    ServiceName getName();
+    String getName();
 
     /**
      * Gets the Container in which the Task is installed in.

@@ -21,7 +21,6 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
-    <msc.version>1.4.12.Final</msc.version>
     <lombok.version>1.18.10</lombok.version>
     <slf4j.version>1.7.28</slf4j.version>
     <assertj.version>3.12.2</assertj.version>
@@ -74,25 +73,6 @@
         <version>${quarkus.version}</version>
         <type>pom</type>
         <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.msc</groupId>
-        <artifactId>jboss-msc</artifactId>
-        <version>${msc.version}</version>
-        <exclusions>
-          <exclusion>
-            <artifactId>jboss-logging</artifactId>
-            <groupId>org.jboss.logging</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>wildfly-common</artifactId>
-            <groupId>org.wildfly.common</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>jboss-threads</artifactId>
-            <groupId>org.jboss.threads</groupId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.projectlombok</groupId>

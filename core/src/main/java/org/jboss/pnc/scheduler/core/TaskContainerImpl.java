@@ -5,7 +5,6 @@ import org.infinispan.client.hotrod.*;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.exceptions.CircularDependencyException;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
@@ -34,7 +33,7 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
     @ConfigProperty(name = "scheduler.baseUrl", defaultValue = "http://localhost:8080")
     String baseUrl;
 
-    private RemoteCache<ServiceName, Task> tasks;
+    private RemoteCache<String, Task> tasks;
 
     //CDI
     @Deprecated
@@ -58,35 +57,35 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
         return false;
     }
 
-    public TaskController getTaskController(ServiceName task) {
+    public TaskController getTaskController(String task) {
         return getTaskControllerInternal(task);
     }
 
-    public TaskControllerImpl getTaskControllerInternal(ServiceName task) {
+    public TaskControllerImpl getTaskControllerInternal(String task) {
         return new TaskControllerImpl(task, this);
     }
 
-    public Task getTask(ServiceName task) {
+    public Task getTask(String task) {
         return tasks.get(task);
     }
 
-    public TaskController getRequiredTaskController(ServiceName task) throws TaskNotFoundException {
+    public TaskController getRequiredTaskController(String task) throws TaskNotFoundException {
         Task s = getCache().get(task);
         if (s == null) {
-            throw new TaskNotFoundException("Task with name " + task.getCanonicalName() + " was not found");
+            throw new TaskNotFoundException("Task with name " + task + " was not found");
         };
         return getTaskController(task);
     }
 
-    public Task getRequiredTask(ServiceName task) throws TaskNotFoundException {
+    public Task getRequiredTask(String task) throws TaskNotFoundException {
         Task s = getCache().get(task);
         if (s == null) {
-            throw new TaskNotFoundException("Task with name " + task.getCanonicalName() + " was not found");
+            throw new TaskNotFoundException("Task with name " + task + " was not found");
         };
         return s;
     }
 
-    public Collection<ServiceName> getTaskIds() {
+    public Collection<String> getTaskIds() {
         return tasks.keySet();
     }
 
@@ -94,11 +93,11 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
         return tasks.getTransactionManager();
     }
 
-    public RemoteCache<ServiceName, Task> getCache() {
+    public RemoteCache<String, Task> getCache() {
         return tasks;
     }
 
-    public MetadataValue<Task> getWithMetadata(ServiceName name) {
+    public MetadataValue<Task> getWithMetadata(String name) {
         return tasks.getWithMetadata(name);
     }
 
@@ -119,18 +118,18 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
     private void installInternal(BatchTaskInstallerImpl taskBuilder) throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
         boolean joined = joinOrBeginTransaction();
         try {
-            Set<ServiceName> installed = taskBuilder.getInstalledTasks();
+            Set<String> installed = taskBuilder.getInstalledTasks();
 
             for (TaskBuilderImpl declaration : taskBuilder.getTaskDeclarations()) {
 
                 Task newTask = declaration.toPartiallyFilledTask();
-                for (ServiceName dependant : declaration.getDependants()) {
+                for (String dependant : declaration.getDependants()) {
                     if (installed.contains(dependant)) {
                         //get existing dependant
                         MetadataValue<Task> dependantTaskMetadata = getWithMetadata(dependant);
                         Task dependantTask = dependantTaskMetadata.getValue();
                         if (dependantTaskMetadata == null) {
-                            throw new TaskNotFoundException("Task " + dependant.getCanonicalName() + " was not found while installing Batch");
+                            throw new TaskNotFoundException("Task " + dependant + " was not found while installing Batch");
                         }
 
                         //add new task as dependency to existing dependant
@@ -138,20 +137,20 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
 
                         //update the dependency
                         if (!getCache().replaceWithVersion(dependant, dependantTask, dependantTaskMetadata.getVersion())) {
-                            throw new ConcurrentUpdateException("Task " + dependant.getCanonicalName() + " was remotely updated during the transaction");
+                            throw new ConcurrentUpdateException("Task " + dependant + " was remotely updated during the transaction");
                         }
                     }
                     //dependants are already initialized in SBImpl::toPartiallyFilledTask
                 }
 
                 int unfinishedDependencies = 0;
-                for (ServiceName dependency : declaration.getDependencies()) {
+                for (String dependency : declaration.getDependencies()) {
                     if (installed.contains(dependency)) {
                         //get existing dependency
                         MetadataValue<Task> dependencyTaskMetadata = getWithMetadata(dependency);
                         Task dependencyTask = dependencyTaskMetadata.getValue();
                         if (dependencyTaskMetadata == null) {
-                            throw new TaskNotFoundException("Task " + dependency.getCanonicalName() + " was not found while installing Batch");
+                            throw new TaskNotFoundException("Task " + dependency + " was not found while installing Batch");
                         }
 
                         //add new Task as dependant to existing dependency
@@ -159,7 +158,7 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
 
                         //update the dependency
                         if (!getCache().replaceWithVersion(dependency, dependencyTask, dependencyTaskMetadata.getVersion())) {
-                            throw new ConcurrentUpdateException("Task " + dependency.getCanonicalName() + " was remotely updated during the transaction");
+                            throw new ConcurrentUpdateException("Task " + dependency + " was remotely updated during the transaction");
                         }
                         if (dependencyTask.getState().isFinal()) {
                             continue; //skip, unfinishedDep inc not needed
@@ -171,7 +170,7 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
 
                 Task previousValue = getCache().withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(newTask.getName(), newTask);
                 if (previousValue != null) {
-                    throw new InvalidTaskDeclarationException("Task " + newTask.getName().getCanonicalName() + " already exists.");
+                    throw new InvalidTaskDeclarationException("Task " + newTask.getName() + " already exists.");
                 }
 
             }
@@ -179,7 +178,7 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
             hasCycle(taskBuilder.getTaskDeclarations().stream().map(TaskBuilderImpl::getName).collect(Collectors.toSet()));
             //All services should be saved, now start up ones declared ACTIVE
             for (TaskBuilderImpl taskDeclaration : taskBuilder.getTaskDeclarations()) {
-                ServiceName name = taskDeclaration.getName();
+                String name = taskDeclaration.getName();
                 if (taskDeclaration.getInitialMode() == Mode.ACTIVE) {
                     getTaskController(name).setMode(Mode.ACTIVE);
                 }
@@ -230,24 +229,24 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
         return true;
     }
 
-    private boolean hasCycle(Set<ServiceName> taskIds) {
-        Set<ServiceName> notVisited = new HashSet<>(taskIds);
-        Set<ServiceName> visiting = new HashSet<>();
-        Set<ServiceName> visited = new HashSet<>();
+    private boolean hasCycle(Set<String> taskIds) {
+        Set<String> notVisited = new HashSet<String>(taskIds);
+        Set<String> visiting = new HashSet<>();
+        Set<String> visited = new HashSet<>();
 
         while (notVisited.size() > 0) {
-            ServiceName current = notVisited.iterator().next();
+            String current = notVisited.iterator().next();
             if (dfs(current, notVisited, visiting, visited)) {
-                throw new CircularDependencyException("Cycle has been found on Task " + current.getCanonicalName());
+                throw new CircularDependencyException("Cycle has been found on Task " + current);
             }
         }
         return false;
     }
 
-    private boolean dfs(ServiceName current, Set<ServiceName> notVisited, Set<ServiceName> visiting, Set<ServiceName> visited) {
+    private boolean dfs(String current, Set<String> notVisited, Set<String> visiting, Set<String> visited) {
         move(current, notVisited, visiting);
         Task currentTask = getTask(current);
-        for (ServiceName dependency : currentTask.getDependencies()) {
+        for (String dependency : currentTask.getDependencies()) {
             //attached dependencies are not in the builder declaration, therefore if discovered, they have to be add as notVisited
             if (!notVisited.contains(dependency) && !visiting.contains(dependency) && !visited.contains(dependency)){
                 notVisited.add(dependency);
@@ -269,7 +268,7 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
         return false;
     }
 
-    private void move(ServiceName name, Set<ServiceName> sourceSet, Set<ServiceName> destinationSet) {
+    private void move(String name, Set<String> sourceSet, Set<String> destinationSet) {
         sourceSet.remove(name);
         destinationSet.add(name);
     }

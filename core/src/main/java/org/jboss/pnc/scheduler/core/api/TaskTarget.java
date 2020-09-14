@@ -1,7 +1,5 @@
 package org.jboss.pnc.scheduler.core.api;
 
-import org.jboss.msc.service.ServiceName;
-
 /**
  * Target where Tasks are installed into and removed from.
  *
@@ -30,5 +28,5 @@ public interface TaskTarget {
      *
      * @param task the unique task name
      */
-    void removeTask(ServiceName task);
+    void removeTask(String task);
 }

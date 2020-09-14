@@ -1,7 +1,6 @@
 package org.jboss.pnc.scheduler.core;
 
 import lombok.Getter;
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
@@ -24,13 +23,13 @@ public class TaskBuilderImpl implements TaskBuilder, Comparable<TaskBuilderImpl>
     private BatchTaskInstallerImpl installer;
 
     @Getter
-    private final ServiceName name;
+    private final String name;
 
     @Getter
-    private Set<ServiceName> dependencies = new HashSet<>();
+    private Set<String> dependencies = new HashSet<>();
 
     @Getter
-    private Set<ServiceName> dependants = new HashSet<>();
+    private Set<String> dependants = new HashSet<>();
 
     @Getter
     private String payload;
@@ -44,13 +43,13 @@ public class TaskBuilderImpl implements TaskBuilder, Comparable<TaskBuilderImpl>
     @Getter
     private Mode initialMode = Mode.IDLE;
 
-    public TaskBuilderImpl(ServiceName name, BatchTaskInstallerImpl installer) {
+    public TaskBuilderImpl(String name, BatchTaskInstallerImpl installer) {
         this.installer = assertNotNull(installer);
         this.name = assertNotNull(name);
     }
 
     @Override
-    public TaskBuilder requires(ServiceName dependency) {
+    public TaskBuilder requires(String dependency) {
         assertNotInstalled();
         assertNotNull(dependency);
         assertNotItself(dependency);
@@ -60,7 +59,7 @@ public class TaskBuilderImpl implements TaskBuilder, Comparable<TaskBuilderImpl>
     }
 
     @Override
-    public TaskBuilder isRequiredBy(ServiceName dependant) {
+    public TaskBuilder isRequiredBy(String dependant) {
         assertNotInstalled();
         assertNotNull(dependant);
         assertNotItself(dependant);
@@ -165,7 +164,7 @@ public class TaskBuilderImpl implements TaskBuilder, Comparable<TaskBuilderImpl>
         return object;
     }
 
-    private void assertNotItself(ServiceName serviceName) {
+    private void assertNotItself(String serviceName) {
         if (serviceName.equals(name)) {
             throw new IllegalArgumentException("Task cannot depend/be dependent on itself.");
         }
