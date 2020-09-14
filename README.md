@@ -3,8 +3,8 @@ Clusterable Task Scheduler
 # Running the scheduler
 
 ## Requirements
-- Apache Maven 3.5.3+
-- OpenJDK 1.8 or OpenJDK 11
+- Apache Maven 3.6.3+
+- OpenJDK 11
 - Infinispan Server 9.4.16.Final (currently)
 
 ## Setting up an Infinispan Server
