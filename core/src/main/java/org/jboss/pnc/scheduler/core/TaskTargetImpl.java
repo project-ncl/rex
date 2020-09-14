@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.core;
 
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.BatchTaskInstaller;
 import org.jboss.pnc.scheduler.core.api.TaskTarget;
 
@@ -15,7 +14,7 @@ public abstract class TaskTargetImpl implements TaskTarget {
     }
 
     @Override
-    public void removeTask(ServiceName task) {
+    public void removeTask(String task) {
         throw new UnsupportedOperationException("Currently not implemented");
     }
 

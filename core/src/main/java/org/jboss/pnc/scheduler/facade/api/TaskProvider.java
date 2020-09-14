@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.facade.api;
 
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 
 import java.util.List;
@@ -29,7 +28,7 @@ public interface TaskProvider {
      *
      * @param serviceName existing service
      */
-    void cancel(ServiceName serviceName);
+    void cancel(String serviceName);
 
     /**
      * Returns existing service based on param
@@ -37,7 +36,7 @@ public interface TaskProvider {
      * @param serviceName name of existing service
      * @return service entity
      */
-    TaskDTO get(ServiceName serviceName);
+    TaskDTO get(String serviceName);
 
     /**
      * Returns all related services
@@ -46,7 +45,7 @@ public interface TaskProvider {
      * @param serviceName name of existing service
      * @return set of related services
      */
-    List<TaskDTO> getAllRelated(ServiceName serviceName);
+    List<TaskDTO> getAllRelated(String serviceName);
 
     /**
      * Used for communication with remote entity. Invoked by remote entity by provided callback.
@@ -55,5 +54,5 @@ public interface TaskProvider {
      *          true == remote entity responds that it has finished execution of the service
      *          false == remote entity responds that the service has failed its execution
      */
-    void acceptRemoteResponse(ServiceName serviceName, boolean positive);
+    void acceptRemoteResponse(String serviceName, boolean positive);
 }

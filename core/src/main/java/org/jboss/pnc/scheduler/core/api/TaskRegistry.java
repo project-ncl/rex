@@ -1,7 +1,6 @@
 
 package org.jboss.pnc.scheduler.core.api;
 
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
 import org.jboss.pnc.scheduler.model.Task;
 
@@ -20,7 +19,7 @@ public interface TaskRegistry {
      * @param service the serviceName of the service
      * @return the service controller or null if doesn't exist
      */
-    TaskController getTaskController(ServiceName service);
+    TaskController getTaskController(String service);
 
     /**
      * Returns the Controller for a particular task. Throws an exception if not found.
@@ -29,7 +28,7 @@ public interface TaskRegistry {
      * @return the task controller
      * @throws TaskNotFoundException the service was not found
      */
-    TaskController getRequiredTaskController(ServiceName service) throws TaskNotFoundException;
+    TaskController getRequiredTaskController(String service) throws TaskNotFoundException;
 
     /**
      * Returns the Task for a unique ServiceName.
@@ -37,7 +36,7 @@ public interface TaskRegistry {
      * @param task the serviceName of the service
      * @return the task or null if doesn't exist
      */
-    Task getTask(ServiceName task);
+    Task getTask(String task);
 
     /**
      * Returns the Task for a unique ServiceName. Throws an exception if not found.
@@ -46,7 +45,7 @@ public interface TaskRegistry {
      * @return the task
      * @throws TaskNotFoundException the task was not found
      */
-    Task getRequiredTask(ServiceName task) throws TaskNotFoundException;
+    Task getRequiredTask(String task) throws TaskNotFoundException;
 
     /**
      * Returns all Tasks present in the cache filtered by parameters
@@ -65,5 +64,5 @@ public interface TaskRegistry {
      *
      * @return the service names
      */
-    Collection<ServiceName> getTaskIds();
+    Collection<String> getTaskIds();
 }

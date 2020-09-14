@@ -1,7 +1,6 @@
 package org.jboss.pnc.scheduler.rest;
 
 import org.eclipse.microprofile.faulttolerance.Retry;
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateTaskRequest;
 import org.jboss.pnc.scheduler.facade.api.TaskProvider;
@@ -16,7 +15,7 @@ import java.util.List;
 @ApplicationScoped
 public class TaskEndpointImpl implements TaskEndpoint {
 
-    private TaskProvider taskProvider;
+    private final TaskProvider taskProvider;
 
     @Inject
     public TaskEndpointImpl(TaskProvider taskProvider) {
@@ -41,17 +40,17 @@ public class TaskEndpointImpl implements TaskEndpoint {
 
     @Override
     public TaskDTO getSpecific(String taskID) {
-        return taskProvider.get(ServiceName.parse(taskID));
+        return taskProvider.get(taskID);
     }
 
     @Override
     @Retry(maxRetries = 5)
     public void cancel(String taskID) {
-        taskProvider.cancel(ServiceName.parse(taskID));
+        taskProvider.cancel(taskID);
     }
 
  /*   @Override
     public List<TaskDTO> getGraph(String serviceName) {
-        return serviceProvider.getAllRelated(ServiceName.parse(serviceName));
+        return serviceProvider.getAllRelated(serviceName);
     }*/
 }

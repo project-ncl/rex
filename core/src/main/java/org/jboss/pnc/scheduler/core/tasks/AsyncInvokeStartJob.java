@@ -43,13 +43,13 @@ public class AsyncInvokeStartJob extends SynchronizedAsyncControllerJob {
 
     @Override
     boolean execute() {
-        System.out.println("Invoking StartJob for " + controller.getName().getCanonicalName());
+        System.out.println("Invoking StartJob for " + controller.getName());
         /* propagate transaction to async operation and wait for completion to avoid concurrent transactions
          and probable dirty read that would result in ConcurrentUpdateException */
         client.post(uri.toString())
                 .putHeader("Content-Type", "application/json")
                 .sendJsonObject(new JsonObject()
-                        .put("callback", schedulerBaseUrl + "/rest/internal/" + task.getName().getCanonicalName() + "/finish")
+                        .put("callback", schedulerBaseUrl + "/rest/internal/" + task.getName() + "/finish")
                         .put("payload", task.getPayload())
                 )
                 .thenApply(resp -> {

@@ -1,7 +1,5 @@
 package org.jboss.pnc.scheduler.core.api;
 
-import org.jboss.msc.service.ServiceName;
-
 /**
  * Dependent depends on one or more dependencies.
  *
@@ -28,11 +26,11 @@ public interface Dependent {
      *
      * @param dependency name of added dependency
      */
-    void dependencyCreated(ServiceName dependency);
+    void dependencyCreated(String dependency);
     /**
      * Gets unique name of an associated Task.
      *
      * @return the name
      */
-    ServiceName getName();
+    String getName();
 }

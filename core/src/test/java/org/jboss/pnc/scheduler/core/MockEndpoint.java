@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.core;
 
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.RetryException;
@@ -60,7 +59,7 @@ public class MockEndpoint {
         try {
             tm.begin();
             //parse name out of request and call accept
-            container.getTaskController(ServiceName.parse(request.substring(request.indexOf("payload") + 10, request.length()-2))).accept();
+            container.getTaskController(request.substring(request.indexOf("payload") + 10, request.length()-2)).accept();
             tm.commit();
         }catch (IllegalStateException e) {
             try {

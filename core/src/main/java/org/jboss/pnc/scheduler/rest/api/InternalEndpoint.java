@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.rest.api;
 
-
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.scheduler.dto.requests.FinishRequest;
 

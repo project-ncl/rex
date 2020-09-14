@@ -4,13 +4,11 @@ import lombok.*;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.jboss.msc.service.ServiceName;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Task is an entity that holds data of remotely executed process.
@@ -24,7 +22,6 @@ import java.util.stream.Collectors;
  */
 @Setter
 @ToString
-@AllArgsConstructor
 @Builder(toBuilder = true)
 @ProtoDoc("@Indexed")
 public class Task {
@@ -32,7 +29,7 @@ public class Task {
      * Uniquely identifies a Task and serves as a key in Infinispan cache.
      */
     @Getter
-    private final ServiceName name;
+    private final String name;
 
     /**
      * Holds data for communication with remote entity.
@@ -58,7 +55,7 @@ public class Task {
      */
     @Singular
     @Getter
-    private Set<ServiceName> dependants = new HashSet<>();
+    private Set<String> dependants = new HashSet<>();
 
     /**
      * Number of unfinishedDependencies. Task can't remotely start if the number is positive.
@@ -67,7 +64,7 @@ public class Task {
 
     @Singular
     @Getter
-    private Set<ServiceName> dependencies = new HashSet<>();
+    private Set<String> dependencies = new HashSet<>();
 
     /**
      * Payload sent to remote entity.
@@ -93,13 +90,13 @@ public class Task {
         if (stringDependencies == null) {
             stringDependencies = new HashSet<>();
         }
-        this.name = ServiceName.parse(stringName);
+        this.name = stringName;
         this.remoteEndpoints = remoteEndpoints;
         this.controllerMode = controllerMode;
         this.state = state;
-        this.dependants = stringDependants.stream().map(ServiceName::parse).collect(Collectors.toSet());
+        this.dependants = stringDependants;
         this.unfinishedDependencies = unfinishedDependencies;
-        this.dependencies = stringDependencies.stream().map(ServiceName::parse).collect(Collectors.toSet());
+        this.dependencies = stringDependencies;
         this.payload = payload;
         this.stopFlag = stopFlag;
         this.serverResponses = serverResponses;
@@ -116,7 +113,7 @@ public class Task {
     @ProtoField(number = 1)
     @ProtoDoc("@Field(store=Store.YES)")
     public String getStringName() {
-        return name.getCanonicalName();
+        return name;
     }
 
     @ProtoField(number = 2)
@@ -136,7 +133,7 @@ public class Task {
 
     @ProtoField(number = 5)
     public Set<String> getStringDependants() {
-        return dependants.stream().map(ServiceName::getCanonicalName).collect(Collectors.toSet());
+        return dependants;
     }
 
     @ProtoField(number = 6, defaultValue = "-1")
@@ -146,7 +143,7 @@ public class Task {
 
     @ProtoField(number = 7)
     public Set<String> getStringDependencies() {
-        return dependencies.stream().map(ServiceName::getCanonicalName).collect(Collectors.toSet());
+        return dependencies;
     }
 
     @ProtoField(number = 8)

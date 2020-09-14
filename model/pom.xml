@@ -21,10 +21,6 @@
             <artifactId>quarkus-infinispan-client</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jboss.msc</groupId>
-            <artifactId>jboss-msc</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.jboss.pnc.scheduler</groupId>
             <artifactId>common</artifactId>
         </dependency>
