@@ -13,7 +13,7 @@
     <module>model</module>
   </modules>
   <properties>
-    <quarkus.version>1.5.2.Final</quarkus.version>
+    <quarkus.version>1.7.3.Final</quarkus.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
@@ -106,8 +106,8 @@
         <executions>
           <execution>
             <goals>
-<!--              <goal>generate-code</goal>-->
-<!--              <goal>generate-code-tests</goal>-->
+              <goal>generate-code</goal>
+              <goal>generate-code-tests</goal>
               <goal>build</goal>
             </goals>
           </execution>
