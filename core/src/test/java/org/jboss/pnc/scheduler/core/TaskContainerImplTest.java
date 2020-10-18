@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @QuarkusTest
+//@QuarkusTestResource(InfinispanResource.class)
 class TaskContainerImplTest {
 
     private static final Logger log = LoggerFactory.getLogger(TaskContainerImplTest.class);
