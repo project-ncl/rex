@@ -1,6 +1,6 @@
 package org.jboss.pnc.scheduler.dto.responses;
 
-import lombok.*;
+import lombok.Data;
 
 @Data
 public class ErrorResponse {

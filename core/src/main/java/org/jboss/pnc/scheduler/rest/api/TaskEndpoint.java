@@ -14,11 +14,25 @@ import org.jboss.pnc.scheduler.dto.responses.TaskListResponse;
 import org.jboss.pnc.scheduler.rest.parameters.TaskFilterParameters;
 
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.*;
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.INVALID_CODE;
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.INVALID_DESCRIPTION;
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.NOT_FOUND_CODE;
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.NOT_FOUND_DESCRIPTION;
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.SERVER_ERROR_CODE;
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.SERVER_ERROR_DESCRIPTION;
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.SUCCESS_CODE;
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.SUCCESS_DESCRIPTION;
 
 @Tag(name = "Task endpoint")
 @Path("/rest/tasks")

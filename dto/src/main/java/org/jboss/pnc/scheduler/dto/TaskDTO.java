@@ -1,6 +1,6 @@
 package org.jboss.pnc.scheduler.dto;
 
-import lombok.*;
+import lombok.Builder;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;

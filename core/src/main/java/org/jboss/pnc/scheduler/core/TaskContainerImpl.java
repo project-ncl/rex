@@ -1,7 +1,11 @@
 package org.jboss.pnc.scheduler.core;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.infinispan.client.hotrod.*;
+import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -17,8 +21,19 @@ import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.transaction.*;
-import java.util.*;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.jboss.pnc.scheduler.core.TaskControllerImpl.newDependant;

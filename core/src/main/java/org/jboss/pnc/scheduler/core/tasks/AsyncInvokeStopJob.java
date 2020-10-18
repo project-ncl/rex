@@ -13,7 +13,12 @@ import org.slf4j.LoggerFactory;
 
 
 import javax.enterprise.inject.spi.CDI;
-import javax.transaction.*;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.function.BooleanSupplier;

@@ -1,6 +1,6 @@
 package org.jboss.pnc.scheduler.dto.responses;
 
-import lombok.*;
+import lombok.Data;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 
 import java.util.List;

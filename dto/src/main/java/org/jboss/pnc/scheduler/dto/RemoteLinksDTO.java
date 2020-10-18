@@ -1,6 +1,8 @@
 package org.jboss.pnc.scheduler.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
 @AllArgsConstructor
