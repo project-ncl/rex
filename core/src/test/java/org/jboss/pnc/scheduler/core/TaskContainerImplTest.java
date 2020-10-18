@@ -80,7 +80,7 @@ class TaskContainerImplTest {
     }
 
     @Test
-    public void testInstall() throws Exception{
+    public void testInstall() throws Exception {
         BatchTaskInstaller installer = container.addTasks();
         installer.addTask("service1")
                 .setInitialMode(Mode.IDLE)
@@ -261,7 +261,7 @@ class TaskContainerImplTest {
         String i = "i";
         String j = "j";
         String existing = "omg.wtf.whatt";
-        String[] services = new String[]{a,b,c,d,e,f,g,h,i,existing};
+        String[] services = new String[]{a, b, c, d, e, f, g, h, i, existing};
 
         Task existingTask = container.getTask(existing);
         Task updatedTask = existingTask.toBuilder().remoteEndpoints(getMockWithStart()).payload(existing).build();
@@ -302,7 +302,7 @@ class TaskContainerImplTest {
         String i = "i";
         String j = "j";
         String k = "k";
-        String[] services = new String[]{a,b,c,d,e,f,g,h,i,j,k};
+        String[] services = new String[]{a, b, c, d, e, f, g, h, i, j, k};
 
         installService(batchTaskInstaller, a, Mode.IDLE, new String[]{b, c, d}, null, getMockWithStart(), a);
         installService(batchTaskInstaller, b, Mode.IDLE, new String[]{e, f}, new String[]{a}, getMockWithStart(), b);
@@ -399,11 +399,11 @@ class TaskContainerImplTest {
         installService(batchTaskInstaller, j, Mode.IDLE, null, new String[]{g, h});
 
         assertThatThrownBy(batchTaskInstaller::commit)
-            .isInstanceOf(CircularDependencyException.class);
+                .isInstanceOf(CircularDependencyException.class);
     }
 
     private static void installService(BatchTaskInstaller batchTaskInstaller, String name, Mode mode, String[] dependants, String[] dependencies) {
-        installService(batchTaskInstaller,name, mode, dependants, dependencies, getMockAPI(), String.format("I'm an %s!", name));
+        installService(batchTaskInstaller, name, mode, dependants, dependencies, getMockAPI(), String.format("I'm an %s!", name));
     }
 
     private static void installService(BatchTaskInstaller batchTaskInstaller, String name, Mode mode, String[] dependants, String[] dependencies, RemoteAPI remoteAPI, String payload) {
@@ -462,10 +462,10 @@ class TaskContainerImplTest {
             } catch (InterruptedException e) {
                 throw new AssertionError("Unexpected interruption", e);
             }
-            if(System.currentTimeMillis() > stopTime) {
+            if (System.currentTimeMillis() > stopTime) {
                 throw new AssertionError("Timeout " + timeout + " " + timeUnit + " reached while waiting for condition");
             }
-        } while(!condition.get());
+        } while (!condition.get());
     }
 
     private static RemoteAPI getMockAPI() {
@@ -474,6 +474,7 @@ class TaskContainerImplTest {
                 .stopUrl("http://localhost:8081/test/stop")
                 .build();
     }
+
     private static RemoteAPI getMockWithStart() {
         return RemoteAPI.builder()
                 .startUrl("http://localhost:8081/test/acceptAndStart")

@@ -12,9 +12,9 @@ import java.util.*;
 
 /**
  * Task is an entity that holds data of remotely executed process.
- *
+ * <p>
  * TaskController manipulates Task's data.
- *
+ * <p>
  * Service has to be installed through BatchTaskInstaller that is provided by TaskTarget. After installation, Task's
  * data is held by Infinispan cache inside TaskRegistry/TaskContainer.
  *
@@ -33,7 +33,7 @@ public class Task {
 
     /**
      * Holds data for communication with remote entity.
-     *
+     * <p>
      * f.e. to start/stop remote execution
      */
     private RemoteAPI remoteEndpoints;
@@ -50,7 +50,7 @@ public class Task {
 
     /**
      * Tasks that are dependent on this task.
-     *
+     * <p>
      * Parents of this Service.
      */
     @Singular
