@@ -96,7 +96,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         Transition transition;
         transition = getTransition(task);
         if (transition != null)
-            System.out.println(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), getName()));
+            logger.info(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), getName()));
 
         List<Runnable> tasks = new ArrayList<>();
 
@@ -351,7 +351,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         List<Runnable> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
-        System.out.println("Called dep succeeded on " + name + " and pushed: " + pushed + "with prev version: " + taskMetadata.getVersion());
+        logger.info("Called dep succeeded on " + name + " and pushed: " + pushed + "with prev version: " + taskMetadata.getVersion());
         if (!pushed) {
             throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }

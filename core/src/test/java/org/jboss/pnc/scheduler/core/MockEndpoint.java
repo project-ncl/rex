@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 @Path("/test")
 @Consumes(MediaType.APPLICATION_JSON)
 public class MockEndpoint {
-    Logger logger = LoggerFactory.getLogger(MockEndpoint.class);
+    private static final Logger logger = LoggerFactory.getLogger(MockEndpoint.class);
 
     @Inject
     TaskContainer container;
@@ -55,7 +55,7 @@ public class MockEndpoint {
     }
 
     private void invokeAccept(String request) {
-        System.out.println("Calling accept on: " + request);
+        logger.info("Calling accept on: " + request);
         try {
             tm.begin();
             //parse name out of request and call accept
@@ -83,7 +83,7 @@ public class MockEndpoint {
                 runnable.run();
                 break;
             } catch (ConcurrentUpdateException e) {
-                System.out.println("Retry number: " + i);
+                logger.info("Retry number: " + i);
                 if (i > 5)
                     e.printStackTrace();
             }

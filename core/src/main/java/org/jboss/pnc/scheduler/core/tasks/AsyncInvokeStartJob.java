@@ -43,7 +43,7 @@ public class AsyncInvokeStartJob extends SynchronizedAsyncControllerJob {
 
     @Override
     boolean execute() {
-        System.out.println("Invoking StartJob for " + controller.getName());
+        logger.info("Invoking StartJob for " + controller.getName());
         /* propagate transaction to async operation and wait for completion to avoid concurrent transactions
          and probable dirty read that would result in ConcurrentUpdateException */
         client.post(uri.toString())
@@ -56,10 +56,10 @@ public class AsyncInvokeStartJob extends SynchronizedAsyncControllerJob {
                     try {
                         logger.debug(resp.toString());
                         if (resp.statusCode() == 200) {
-                            System.out.println("Got positive response on " + controller.getName());
+                            logger.info("Got positive response on " + controller.getName());
                             retry(10, () -> wrapInTransactionAndHandle(() -> controller.accept()));
                         } else {
-                            System.out.println("Got negative response on " + controller.getName());
+                            logger.info("Got negative response on " + controller.getName());
                             retry(10, () -> wrapInTransactionAndHandle(() -> controller.fail()));
                         }
                     } catch (Exception e) {
@@ -100,7 +100,7 @@ public class AsyncInvokeStartJob extends SynchronizedAsyncControllerJob {
                 ex.printStackTrace();
             }
         } catch (RollbackException e) {
-            System.out.println("Transaction rolled back");
+            logger.info("Transaction rolled back");
             return true;
         } catch (HeuristicRollbackException | NotSupportedException | HeuristicMixedException | SystemException e) {
             e.printStackTrace();
