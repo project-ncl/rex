@@ -1,13 +1,10 @@
 package org.jboss.pnc.scheduler.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-
-import java.net.URL;
 
 /**
  * Class that holds data for communicating with remote entity where a Task runs/is going to run.
@@ -15,25 +12,12 @@ import java.net.URL;
  * @author Jan Michalov <jmichalo@redhat.com>
  */
 @Builder
+@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
 public class RemoteAPI {
 
+    @Getter(onMethod_ = {@ProtoField(number = 1)})
     private String startUrl;
 
+    @Getter(onMethod_ = {@ProtoField(number = 2)})
     private String stopUrl;
-
-    @ProtoFactory
-    public RemoteAPI(String startUrl, String stopUrl) {
-        this.startUrl = startUrl;
-        this.stopUrl = stopUrl;
-    }
-
-    @ProtoField(number = 1)
-    public String getStartUrl() {
-        return startUrl;
-    }
-
-    @ProtoField(number = 2)
-    public String getStopUrl() {
-        return stopUrl;
-    }
 }
