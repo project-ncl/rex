@@ -51,20 +51,20 @@ public class MockEndpoint {
     @Path("/stop")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response stop(String request){
-        logger.debug("Mock 'stop' endpoint received a request: " + request);
+        logger.info("Mock 'stop' endpoint received a request: " + request);
         return Response.ok().build();
     }
 
     @POST
     @Path("/acceptAndStart")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response acceptAndStart(String request){
-        logger.debug("Mock 'acceptAndStart' endpoint received a request: " + request);
+    public Response acceptAndStart(StartRequest request){
+        logger.info("Mock 'acceptAndStart' endpoint received a request from: " + request.getPayload());
         executor.submit(() -> retry(10, () -> invokeAccept(request)));
         return Response.ok().build();
     }
 
-    private void invokeAccept(String request) {
+    private void invokeAccept(StartRequest request) {
         logger.info("Calling accept on: " + request);
         try {
             tm.begin();
