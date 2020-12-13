@@ -6,7 +6,6 @@ import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
 import org.jboss.pnc.scheduler.common.enums.Transition;
 import org.jboss.pnc.scheduler.core.api.Dependent;
-import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
@@ -20,32 +19,34 @@ import org.jboss.pnc.scheduler.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static javax.transaction.Transactional.TxType.MANDATORY;
+
+@ApplicationScoped
 public class TaskControllerImpl implements TaskController, Dependent {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskControllerImpl.class);
-
-    private String name;
 
     private TaskContainerImpl container;
 
     private TransactionManager tm;
 
-    public TaskControllerImpl(String name, TaskContainerImpl container) {
-        this.name = name;
+    public TaskControllerImpl(TaskContainerImpl container) {
         this.container = container;
         tm = container.getTransactionManager();
     }
 
     @Override
-    public void dependencyCreated(String dependencyName) {
-        assertInTransaction();
+    @Transactional(MANDATORY)
+    public void dependencyCreated(String name, String dependencyName) {
         MetadataValue<Task> taskMeta = container.getCache().getWithMetadata(name);
         assertNotNull(taskMeta, new TaskNotFoundException("Task " + name + " not found!"));
         Task task = taskMeta.getValue();
@@ -53,13 +54,12 @@ public class TaskControllerImpl implements TaskController, Dependent {
 
         newDependency(task, dependency);
 
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task,taskMeta.getVersion());
+        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMeta.getVersion());
         if (!pushed) {
             throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
         //Get get controller of the dependency and notify it that it has a new dependant
-        TaskControllerImpl dependencyController = (TaskControllerImpl) container.getTaskController(dependencyName);
-        dependencyController.dependantCreated(name);
+        this.dependantCreated(dependencyName, name);
     }
 
     public static void newDependency(Task dependant, Task dependency) {
@@ -80,8 +80,8 @@ public class TaskControllerImpl implements TaskController, Dependent {
         dependency.getDependants().add(dependant.getName());
     }
 
-    public void dependantCreated(String dependantName) {
-        assertInTransaction();
+    @Transactional(MANDATORY)
+    public void dependantCreated(String name, String dependantName) {
         MetadataValue<Task> taskMeta = container.getCache().getWithMetadata(name);
         assertNotNull(taskMeta, new TaskNotFoundException("Task " + name + "not found"));
         Task task = taskMeta.getValue();
@@ -95,12 +95,12 @@ public class TaskControllerImpl implements TaskController, Dependent {
         }
     }
 
+    @Transactional(MANDATORY)
     private List<Runnable> transition(Task task) {
-        assertInTransaction();
         Transition transition;
         transition = getTransition(task);
         if (transition != null)
-            logger.info(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), getName()));
+            logger.info(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), task.getName()));
 
         List<Runnable> tasks = new ArrayList<>();
 
@@ -124,33 +124,24 @@ public class TaskControllerImpl implements TaskController, Dependent {
                 break;
 
             case STOPPING_to_STOPPED:
-                tasks.add(new DependencyCancelledJob(
-                        task.getDependants().stream().map(dep -> container.getTaskControllerInternal(dep)).collect(Collectors.toSet()),
-                        tm));
+                tasks.add(new DependencyCancelledJob(task.getDependants()));
                 break;
 
             case NEW_to_STOPPED:
             case WAITING_to_STOPPED:
                 switch (task.getStopFlag()) {
                     case CANCELLED:
-                        tasks.add(new DependencyCancelledJob(
-                                task.getDependants().stream().map(dep -> container.getTaskControllerInternal(dep)).collect(Collectors.toSet()),
-                                tm));
+                        tasks.add(new DependencyCancelledJob(task.getDependants()));
                         break;
                     case DEPENDENCY_FAILED:
-                        tasks.add(new DependencyStoppedJob(
-                                task.getDependants().stream().map(dep -> container.getTaskControllerInternal(dep)).collect(Collectors.toSet()),
-                                tm));
+                        tasks.add(new DependencyStoppedJob(task.getDependants()));
                         break;
-
                 };
 
             case UP_to_FAILED:
             case STARTING_to_START_FAILED:
             case STOPPING_to_STOP_FAILED:
-                tasks.add(new DependencyStoppedJob(
-                        task.getDependants().stream().map(dep -> container.getTaskControllerInternal(dep)).collect(Collectors.toSet()),
-                        tm));
+                tasks.add(new DependencyStoppedJob(task.getDependants()));
                 break;
 
             case STARTING_to_UP:
@@ -158,9 +149,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
                 break;
 
             case UP_to_SUCCESSFUL:
-                tasks.add(new DependencySucceededJob(
-                        task.getDependants().stream().map(dep -> container.getTaskControllerInternal(dep)).collect(Collectors.toSet()),
-                        tm));
+                tasks.add(new DependencySucceededJob(task.getDependants()));
                 break;
             default:
                 throw new IllegalStateException("Controller returned unknown transition: " + transition);
@@ -240,23 +229,8 @@ public class TaskControllerImpl implements TaskController, Dependent {
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public TaskContainer getContainer() {
-        return container;
-    }
-
-    @Override
-    public Mode getMode() {
-        return getContainer().getRequiredTask(name).getControllerMode();
-    }
-
-    @Override
-    public void setMode(Mode mode) {
-        assertInTransaction();
+    @Transactional(MANDATORY)
+    public void setMode(String name, Mode mode) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
         Task task = taskMetadata.getValue();
@@ -281,13 +255,8 @@ public class TaskControllerImpl implements TaskController, Dependent {
     }
 
     @Override
-    public State getState() {
-        return null;
-    }
-
-    @Override
-    public void accept() {
-        assertInTransaction();
+    @Transactional(MANDATORY)
+    public void accept(String name) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
         Task task = taskMetadata.getValue();
@@ -317,8 +286,8 @@ public class TaskControllerImpl implements TaskController, Dependent {
     }
 
     @Override
-    public void fail() {
-        assertInTransaction();
+    @Transactional(MANDATORY)
+    public void fail(String name) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Service " + name + "not found"));
         Task task = taskMetadata.getValue();
@@ -343,8 +312,8 @@ public class TaskControllerImpl implements TaskController, Dependent {
     }
 
     @Override
-    public void dependencySucceeded() {
-        assertInTransaction();
+    @Transactional(MANDATORY)
+    public void dependencySucceeded(String name) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
         Task task = taskMetadata.getValue();
@@ -355,7 +324,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         List<Runnable> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
-        logger.info("Called dep succeeded on " + name + " and pushed: " + pushed + "with prev version: " + taskMetadata.getVersion());
+        logger.info("Called dep succeeded on " + name + " and pushed: " + pushed + " with prev version: " + taskMetadata.getVersion());
         if (!pushed) {
             throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
@@ -363,8 +332,8 @@ public class TaskControllerImpl implements TaskController, Dependent {
     }
 
     @Override
-    public void dependencyStopped() {
-        assertInTransaction();
+    @Transactional(MANDATORY)
+    public void dependencyStopped(String name) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
         Task task = taskMetadata.getValue();
@@ -382,8 +351,8 @@ public class TaskControllerImpl implements TaskController, Dependent {
 
 
     @Override
-    public void dependencyCancelled() {
-        assertInTransaction();
+    @Transactional(MANDATORY)
+    public void dependencyCancelled(String name) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
         Task task = taskMetadata.getValue();
@@ -440,16 +409,6 @@ public class TaskControllerImpl implements TaskController, Dependent {
             throw e;
         }
         return object;
-    }
-
-    private void assertInTransaction() {
-        try {
-            if (tm.getTransaction() == null) {
-                throw new IllegalStateException("Thread not in transaction");
-            }
-        } catch (SystemException e) {
-            throw new IllegalStateException("Unexpected error thrown in TransactionManager", e);
-        }
     }
 
 }

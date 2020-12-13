@@ -39,6 +39,7 @@ public interface TaskController {
     /**
      * Sets mode of a Task. Needs to be called under a lock.
      *
+     * @param name id of the Task
      * @param mode the mode
      */
     void setMode(Mode mode);
@@ -54,14 +55,16 @@ public interface TaskController {
      * Method used for positive callback. Needs to be called in a transaction.
      *
      * f.e. to signalize that remote Task has started/cancelled/finished.
+     * @param name
      */
-    void accept();
+    void accept(String name);
 
     /**
      * Method used for negative callback. Needs to be called in a transaction.
      *
      * f.e. to signalize that remote Task failed to start/cancel or failed during execution.
+     * @param name
      */
-    void fail();
+    void fail(String name);
 
 }
