@@ -10,9 +10,8 @@ import org.jboss.pnc.scheduler.model.ServerResponse;
 import org.jboss.pnc.scheduler.model.Task;
 
 /**
- * Generates .proto schemas and infinispan protobuf marshallers of proto-annotated entities in basePackages
+ * Generates .proto schemas and infinispan protobuf marshallers of proto-annotated classes in includeClasses
  */
-@AutoProtoSchemaBuilder(basePackages = {"org.jboss.pnc.scheduler.model", "org.jboss.pnc.scheduler.common.enums"}, schemaPackageName = "org.jboss.pnc.scheduler.model",
-includeClasses = {ServerResponse.class, Task.class, RemoteAPI.class, Mode.class, State.class, StopFlag.class})
-interface ServerResponseContextInitialixer extends SerializationContextInitializer {
+@AutoProtoSchemaBuilder(schemaPackageName = "org.jboss.pnc.scheduler.model", includeClasses = {ServerResponse.class, Task.class, RemoteAPI.class, Mode.class, State.class, StopFlag.class})
+interface TaskProtobufContextInitialixer extends SerializationContextInitializer {
 }
