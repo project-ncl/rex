@@ -14,23 +14,6 @@ import java.util.List;
  */
 public interface TaskRegistry {
     /**
-     * Returns the Controller for a particular task. Returns {@code null} if not found.
-     *
-     * @param service the serviceName of the service
-     * @return the service controller or null if doesn't exist
-     */
-    TaskController getTaskController(String service);
-
-    /**
-     * Returns the Controller for a particular task. Throws an exception if not found.
-     *
-     * @param service the task name
-     * @return the task controller
-     * @throws TaskNotFoundException the service was not found
-     */
-    TaskController getRequiredTaskController(String service) throws TaskNotFoundException;
-
-    /**
      * Returns the Task for a unique ServiceName.
      *
      * @param task the serviceName of the service

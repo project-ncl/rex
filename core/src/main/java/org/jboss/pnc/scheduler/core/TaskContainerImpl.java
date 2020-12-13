@@ -1,5 +1,6 @@
 package org.jboss.pnc.scheduler.core;
 
+import io.quarkus.infinispan.client.Remote;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -48,15 +49,14 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
     @ConfigProperty(name = "scheduler.baseUrl", defaultValue = "http://localhost:8080")
     String baseUrl;
 
-    private RemoteCache<String, Task> tasks;
+    @Remote("near-tasks")
+    RemoteCache<String, Task> tasks;
 
-    //CDI
-    @Deprecated
-    public TaskContainerImpl() {
-    }
+    private TaskController controller;
+
     @Inject
-    public TaskContainerImpl(RemoteCacheManager cacheManager, TransactionManager transactionManager) {
-        tasks = cacheManager.getCache("near-tasks", TransactionMode.NON_DURABLE_XA, transactionManager);
+    public TaskContainerImpl(TaskController controller) {
+        this.controller = controller;
     }
 
     //FIXME implement
@@ -72,24 +72,8 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
         return false;
     }
 
-    public TaskController getTaskController(String task) {
-        return getTaskControllerInternal(task);
-    }
-
-    public TaskControllerImpl getTaskControllerInternal(String task) {
-        return new TaskControllerImpl(task, this);
-    }
-
     public Task getTask(String task) {
         return tasks.get(task);
-    }
-
-    public TaskController getRequiredTaskController(String task) throws TaskNotFoundException {
-        Task s = getCache().get(task);
-        if (s == null) {
-            throw new TaskNotFoundException("Task with name " + task + " was not found");
-        };
-        return getTaskController(task);
     }
 
     public Task getRequiredTask(String task) throws TaskNotFoundException {
@@ -117,7 +101,6 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
     }
 
     @Override
-    //TODO check for Circle
     protected void install(BatchTaskInstallerImpl taskBuilder) {
         try {
             installInternal(taskBuilder);
@@ -142,10 +125,10 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
                     if (installed.contains(dependant)) {
                         //get existing dependant
                         MetadataValue<Task> dependantTaskMetadata = getWithMetadata(dependant);
-                        Task dependantTask = dependantTaskMetadata.getValue();
                         if (dependantTaskMetadata == null) {
                             throw new TaskNotFoundException("Task " + dependant + " was not found while installing Batch");
                         }
+                        Task dependantTask = dependantTaskMetadata.getValue();
 
                         //add new task as dependency to existing dependant
                         newDependency(dependantTask, newTask);
@@ -195,7 +178,7 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
             for (TaskBuilderImpl taskDeclaration : taskBuilder.getTaskDeclarations()) {
                 String name = taskDeclaration.getName();
                 if (taskDeclaration.getInitialMode() == Mode.ACTIVE) {
-                    getTaskController(name).setMode(Mode.ACTIVE);
+                    controller.setMode(name, Mode.ACTIVE);
                 }
             }
             if (!joined) getTransactionManager().commit();
