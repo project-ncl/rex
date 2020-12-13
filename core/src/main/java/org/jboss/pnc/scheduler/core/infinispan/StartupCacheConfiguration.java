@@ -31,5 +31,4 @@ public class StartupCacheConfiguration {
             throw new IllegalStateException("Cannot retrieve needed cache. Check your Infinispan server configuration.");
         }
     }
-
 }
