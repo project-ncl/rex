@@ -3,6 +3,8 @@ package org.jboss.pnc.scheduler.core;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.RetryException;
+import org.jboss.pnc.scheduler.core.api.TaskController;
+import org.jboss.pnc.scheduler.model.requests.StartRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +30,9 @@ public class MockEndpoint {
 
     @Inject
     TaskContainer container;
+
+    @Inject
+    TaskController controller;
 
     ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -64,7 +69,7 @@ public class MockEndpoint {
         try {
             tm.begin();
             //parse name out of request and call accept
-            container.getTaskController(request.substring(request.indexOf("payload") + 10, request.length()-2)).accept();
+            controller.accept(request.getPayload());
             tm.commit();
         }catch (IllegalStateException e) {
             try {

@@ -4,6 +4,7 @@ import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.core.api.BatchTaskInstaller;
 import org.jboss.pnc.scheduler.core.api.TaskBuilder;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
+import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.core.api.TaskRegistry;
 import org.jboss.pnc.scheduler.core.api.TaskTarget;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
@@ -28,15 +29,13 @@ public class TaskProviderImpl implements TaskProvider {
 
     private TaskMapper mapper;
 
-    //CDI
-    @Deprecated
-    public TaskProviderImpl() {
-    }
+    private TaskController controller;
 
     @Inject
-    public TaskProviderImpl(TaskContainer container, TaskMapper mapper) {
+    public TaskProviderImpl(TaskContainer container, TaskController controller, TaskMapper mapper) {
         this.target = container;
         this.registry = container;
+        this.controller = controller;
         this.mapper = mapper;
     }
 
@@ -75,7 +74,7 @@ public class TaskProviderImpl implements TaskProvider {
     @Override
     @Transactional
     public void cancel(String serviceName) {
-        registry.getRequiredTaskController(serviceName).setMode(Mode.CANCEL);
+        controller.setMode(serviceName, Mode.CANCEL);
     }
 
     @Override
@@ -92,9 +91,9 @@ public class TaskProviderImpl implements TaskProvider {
     @Transactional
     public void acceptRemoteResponse(String serviceName, boolean positive) {
         if (positive) {
-            registry.getRequiredTaskController(serviceName).accept();
+            controller.accept(serviceName);
         } else {
-            registry.getRequiredTaskController(serviceName).fail();
+            controller.fail(serviceName);
         }
     }
 }

@@ -19,9 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -46,6 +43,9 @@ class TaskContainerImplTest {
 
     @Inject
     TaskContainerImpl container;
+
+    @Inject
+    TaskController controller;
 
     @Inject
     ManagedExecutor executor;
@@ -76,7 +76,7 @@ class TaskContainerImplTest {
     }
 
     @Test
-    public void testTransaction() throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+    public void testTransaction() throws Exception {
         TransactionManager tm = container.getCache().getTransactionManager();
         tm.begin();
         Task old = container.getTask("omg.wtf.whatt").toBuilder().payload("another useless string").build();
@@ -121,10 +121,9 @@ class TaskContainerImplTest {
 
     @Test
     public void testSingleServiceStarts() throws Exception {
-        TaskController controller = container.getTaskController("omg.wtf.whatt");
         TransactionManager manager = container.getTransactionManager();
         manager.begin();
-        controller.setMode(Mode.ACTIVE);
+        controller.setMode("omg.wtf.whatt", Mode.ACTIVE);
         manager.commit();
 
         waitTillServicesAre(State.UP, container.getTask("omg.wtf.whatt"));
@@ -163,15 +162,14 @@ class TaskContainerImplTest {
                 .install();
         batchTaskInstaller.commit();
 
-        TaskController dependencyController = container.getTaskController("omg.wtf.whatt");
         container.getTransactionManager().begin();
-        dependencyController.setMode(Mode.ACTIVE);
+        controller.setMode("omg.wtf.whatt", Mode.ACTIVE);
         container.getTransactionManager().commit();
 
         waitTillServicesAre(State.UP, "omg.wtf.whatt");
 
         container.getTransactionManager().begin();
-        dependencyController.accept();
+        controller.accept("omg.wtf.whatt");
         container.getTransactionManager().commit();
 
         waitTillServicesAre(State.UP, dependant);
@@ -289,7 +287,7 @@ class TaskContainerImplTest {
 
         container.getTransactionManager().begin();
         for (String name : services) {
-            container.getTaskController(name).setMode(Mode.ACTIVE);
+            controller.setMode(name, Mode.ACTIVE);
         }
         container.getTransactionManager().commit();
 
@@ -325,7 +323,7 @@ class TaskContainerImplTest {
         installService(batchTaskInstaller, k, Mode.IDLE, null, new String[]{g, j, i}, getMockWithStart(), j);
         batchTaskInstaller.commit();
         container.getCache().getTransactionManager().begin();
-        container.getTaskController(a).setMode(Mode.CANCEL);
+        controller.setMode(a, Mode.CANCEL);
         container.getCache().getTransactionManager().commit();
 
         waitTillServicesAre(State.STOPPED, services);
@@ -449,8 +447,8 @@ class TaskContainerImplTest {
         waitTillServicesAre(state, Arrays.stream(tasks).map(Task::getName).toArray(String[]::new));
     }
 
-    private void waitTillServicesAre(State state, String... Strings) {
-        List<String> fine = new ArrayList<>(Arrays.asList(Strings));
+    private void waitTillServicesAre(State state, String... strings) {
+        List<String> fine = new ArrayList<>(Arrays.asList(strings));
         waitSynchronouslyFor(() -> {
             Iterator<String> iterator = fine.iterator();
             while (iterator.hasNext()) {
