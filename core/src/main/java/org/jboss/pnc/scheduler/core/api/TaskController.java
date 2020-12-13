@@ -16,40 +16,12 @@ import org.jboss.pnc.scheduler.common.enums.State;
  */
 public interface TaskController {
     /**
-     * Gets unique name of an associated Task.
-     *
-     * @return the name
-     */
-    String getName();
-
-    /**
-     * Gets the Container in which the Task is installed in.
-     *
-     * @return the container
-     */
-    TaskContainer getContainer();
-
-    /**
-     * Gets mode of a Task.
-     *
-     * @return the mode
-     */
-    Mode getMode();
-
-    /**
      * Sets mode of a Task. Needs to be called under a lock.
      *
      * @param name id of the Task
      * @param mode the mode
      */
-    void setMode(Mode mode);
-
-    /**
-     * Gets current Task state.
-     *
-     * @return the state
-     */
-    State getState();
+    void setMode(String name, Mode mode);
 
     /**
      * Method used for positive callback. Needs to be called in a transaction.
