@@ -1,5 +1,6 @@
 package org.jboss.pnc.scheduler.core.tasks;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
@@ -9,12 +10,12 @@ import javax.transaction.TransactionManager;
 
 public abstract class TransactionalControllerJob extends ControllerJob {
 
-    protected final TransactionManager tm;
+    protected TransactionManager tm;
 
     private boolean alreadyInTransaction;
 
-    TransactionalControllerJob(TransactionManager tm) {
-        this.tm = tm;
+    TransactionalControllerJob() {
+        this.tm = CDI.current().select(TransactionManager.class).get();
         try {
             this.alreadyInTransaction = tm.getTransaction()==null ? false : true;
         } catch (SystemException e) {

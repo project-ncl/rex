@@ -115,12 +115,12 @@ public class TaskControllerImpl implements TaskController, Dependent {
 
             case NEW_to_STARTING:
             case WAITING_to_STARTING:
-                tasks.add(new AsyncInvokeStartJob(tm, task, this, container.getBaseUrl()));
+                tasks.add(new AsyncInvokeStartJob(tm, task));
                 break;
 
             case UP_to_STOPPING:
             case STARTING_to_STOPPING:
-                tasks.add(new AsyncInvokeStopJob(tm, task, this, container.getBaseUrl()));
+                tasks.add(new AsyncInvokeStopJob(tm, task));
                 break;
 
             case STOPPING_to_STOPPED:

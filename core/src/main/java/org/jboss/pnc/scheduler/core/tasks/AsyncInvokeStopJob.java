@@ -1,114 +1,31 @@
 package org.jboss.pnc.scheduler.core.tasks;
 
-import io.vertx.axle.core.Vertx;
-import io.vertx.axle.ext.web.client.WebClient;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.WebClientOptions;
-import org.jboss.pnc.scheduler.core.TaskControllerImpl;
-import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.scheduler.common.exceptions.RetryException;
+import org.jboss.pnc.scheduler.core.RemoteEntityClient;
 import org.jboss.pnc.scheduler.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import javax.enterprise.inject.spi.CDI;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.function.BooleanSupplier;
 
 public class AsyncInvokeStopJob extends SynchronizedAsyncControllerJob {
-    private WebClient client;
-    private URI uri;
-    private Task task;
-    private TaskControllerImpl controller;
-    private String schedulerBaseUrl;
+
+    private final RemoteEntityClient client;
+
+    private final Task task;
 
     private static final Logger logger = LoggerFactory.getLogger(AsyncInvokeStopJob.class);
 
-    public AsyncInvokeStopJob(TransactionManager tm, Task task, TaskControllerImpl controller, String schedulerBaseUrl) {
+    public AsyncInvokeStopJob(TransactionManager tm, Task task) {
         super(tm);
         this.task = task;
-        this.controller = controller;
-        this.schedulerBaseUrl = schedulerBaseUrl;
-        try {
-            this.uri = new URI(task.getRemoteEndpoints().getStopUrl());
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("invalid stop url", e);
-        }
-        Vertx vertx = CDI.current().select(Vertx.class).get();
-        client = WebClient.create(vertx, new WebClientOptions().setDefaultHost(uri.getHost()).setDefaultPort(uri.getPort()));
+        this.client = CDI.current().select(RemoteEntityClient.class).get();
     }
 
     @Override
     boolean execute() {
-        logger.info("Invoking StopJob for " + controller.getName());
-        client.post(uri.toString())
-                .putHeader("Content-Type", "application/json")
-                .sendJsonObject(new JsonObject()
-                        .put("callback", schedulerBaseUrl + "/rest/internal/"+ task.getName() + "/finish")
-                        .put("payload", task.getPayload())
-                )
-                .thenApply(resp -> {
-                            try {
-                                logger.debug(resp.toString());
-                                if (resp.statusCode() == 200) {
-                                    logger.info("Got positive response on " + controller.getName());
-                                    retry(10, () -> wrapInTransactionAndHandle(() -> controller.accept()));
-                                } else {
-                                    logger.info("Got negative response on " + controller.getName());
-                                    retry(10, () -> wrapInTransactionAndHandle(() -> controller.fail()));
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            return resp;
-                        }
-                );
+        logger.info("Invoking StopJob for " + task.getName());
+        client.stopJob(task);
         return true;
-    }
-
-    private static void retry(int times, BooleanSupplier shouldRetry) {
-        for (int i = 0; i < times; i++) {
-            try {
-                if (!shouldRetry.getAsBoolean())
-                    return;
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                //shouldn't happen
-            }
-        }
-        throw new RetryException("Enough is enough!");
-    }
-
-    /*
-      returns true if the invocation should be retried
-     */
-    private boolean wrapInTransactionAndHandle(Runnable runnable) {
-        try {
-            tm.begin();
-            runnable.run();
-            tm.commit();
-        } catch (IllegalStateException | ConcurrentUpdateException e) {
-            try {
-                tm.rollback();
-                return true;
-            } catch (SystemException ex) {
-                ex.printStackTrace();
-            }
-        } catch (RollbackException e) {
-            logger.info("Transaction rolled back");
-            return true;
-        } catch (HeuristicRollbackException | NotSupportedException | HeuristicMixedException | SystemException e) {
-            e.printStackTrace();
-            return true;
-        }
-        return false;
     }
 }
