@@ -1,26 +1,23 @@
 package org.jboss.pnc.scheduler.core.tasks;
 
-import org.jboss.pnc.scheduler.core.api.Dependent;
-
-import javax.transaction.TransactionManager;
 import java.util.Set;
 
 public abstract class DependentControllerJob extends TransactionalControllerJob {
 
-    Set<Dependent> dependents;
+    Set<String> dependents;
 
-    DependentControllerJob(final Set<Dependent> dependents, TransactionManager tm) {
-        super(tm);
+    DependentControllerJob(Set<String> dependents) {
+        super();
         this.dependents = dependents;
     }
 
     @Override
     boolean execute() {
-        for (Dependent dependent : dependents) {
+        for (String dependent : dependents) {
             inform(dependent);
         }
         return true;
     }
 
-    abstract void inform(final Dependent dependent);
+    abstract void inform(final String dependentName);
 }
