@@ -85,7 +85,7 @@ public class MockEndpoint {
     private static void retry(int times, Runnable runnable) {
         for (int i = 0; i < times; i++) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(50);
             } catch (InterruptedException e) {
                 //shouldn't happen
             }

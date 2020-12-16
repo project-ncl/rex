@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 @ClientListener
 public class CacheListeners {
-    Logger log = LoggerFactory.getLogger(CacheListeners.class);
+    private static final Logger log = LoggerFactory.getLogger(CacheListeners.class);
 
     @ClientCacheEntryCreated
     public void handleCreatedEvent(ClientCacheEntryCreatedEvent e) {

@@ -79,7 +79,7 @@ public class RemoteEntityClient {
     }
 
     private void handleResponse(HttpResponse<Buffer> response, Task task) {
-        if (response.statusCode() < 299) {
+        if (200 <= response.statusCode() && response.statusCode() <= 299) {
             log.info("Got positive response on " + task.getName());
             controller.accept(task.getName());
         } else {

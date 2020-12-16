@@ -30,5 +30,6 @@ public class StartupCacheConfiguration {
         if (cache == null) {
             throw new IllegalStateException("Cannot retrieve needed cache. Check your Infinispan server configuration.");
         }
+//        cache.addClientListener(new CacheListeners());
     }
 }

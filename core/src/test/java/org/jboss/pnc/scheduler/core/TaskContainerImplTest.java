@@ -457,14 +457,14 @@ class TaskContainerImplTest {
                     iterator.remove();
             }
             return fine.isEmpty();
-        }, 10, TimeUnit.SECONDS);
+        }, 5, TimeUnit.SECONDS);
     }
 
     public static void waitSynchronouslyFor(Supplier<Boolean> condition, long timeout, TimeUnit timeUnit) {
         long stopTime = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
         do {
             try {
-                TimeUnit.MILLISECONDS.sleep(50);
+                TimeUnit.MILLISECONDS.sleep(25);
             } catch (InterruptedException e) {
                 throw new AssertionError("Unexpected interruption", e);
             }
