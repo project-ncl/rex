@@ -9,8 +9,9 @@ import org.jboss.pnc.scheduler.core.api.Dependent;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
-import org.jboss.pnc.scheduler.core.tasks.AsyncInvokeStartJob;
-import org.jboss.pnc.scheduler.core.tasks.AsyncInvokeStopJob;
+import org.jboss.pnc.scheduler.core.tasks.InvokeStartJob;
+import org.jboss.pnc.scheduler.core.tasks.InvokeStopJob;
+import org.jboss.pnc.scheduler.core.tasks.ControllerJob;
 import org.jboss.pnc.scheduler.core.tasks.DependencyCancelledJob;
 import org.jboss.pnc.scheduler.core.tasks.DependencyStoppedJob;
 import org.jboss.pnc.scheduler.core.tasks.DependencySucceededJob;
@@ -20,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.transaction.SystemException;
+import javax.enterprise.event.Event;
 import javax.transaction.TransactionManager;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
@@ -39,9 +40,12 @@ public class TaskControllerImpl implements TaskController, Dependent {
 
     private TransactionManager tm;
 
-    public TaskControllerImpl(TaskContainerImpl container) {
+    private Event<ControllerJob> scheduleJob;
+
+    public TaskControllerImpl(TaskContainerImpl container, Event<ControllerJob> scheduleJob) {
         this.container = container;
         tm = container.getTransactionManager();
+        this.scheduleJob = scheduleJob;
     }
 
     @Override
@@ -96,13 +100,13 @@ public class TaskControllerImpl implements TaskController, Dependent {
     }
 
     @Transactional(MANDATORY)
-    private List<Runnable> transition(Task task) {
+    private List<ControllerJob> transition(Task task) {
         Transition transition;
         transition = getTransition(task);
         if (transition != null)
             logger.info(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), task.getName()));
 
-        List<Runnable> tasks = new ArrayList<>();
+        List<ControllerJob> tasks = new ArrayList<>();
 
         if (transition == null) {
             return tasks;
@@ -115,12 +119,12 @@ public class TaskControllerImpl implements TaskController, Dependent {
 
             case NEW_to_STARTING:
             case WAITING_to_STARTING:
-                tasks.add(new AsyncInvokeStartJob(tm, task));
+                tasks.add(new InvokeStartJob(task));
                 break;
 
             case UP_to_STOPPING:
             case STARTING_to_STOPPING:
-                tasks.add(new AsyncInvokeStopJob(tm, task));
+                tasks.add(new InvokeStopJob(task));
                 break;
 
             case STOPPING_to_STOPPED:
@@ -246,7 +250,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
             task.setStopFlag(StopFlag.CANCELLED);
         }
 
-        List<Runnable> tasks = transition(task);
+        List<ControllerJob> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
@@ -270,7 +274,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
             throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
         }
 
-        List<Runnable> tasks = transition(task);
+        List<ControllerJob> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
@@ -278,10 +282,10 @@ public class TaskControllerImpl implements TaskController, Dependent {
         }
     }
 
-    private void doExecute(List<Runnable> tasks) {
-        //run in single thread
-        for (Runnable task : tasks) {
-            task.run();
+    private void doExecute(List<ControllerJob> tasks) {
+        for (ControllerJob task : tasks) {
+//            task.run();
+            scheduleJob.fire(task);
         }
     }
 
@@ -303,7 +307,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
             throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Service: " + task.getName() + " State: " + task.getState());
         }
 
-        List<Runnable> tasks = transition(task);
+        List<ControllerJob> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
@@ -321,7 +325,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         //maybe assert it was null before
         task.decUnfinishedDependencies();
 
-        List<Runnable> tasks = transition(task);
+        List<ControllerJob> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         logger.info("Called dep succeeded on " + name + " and pushed: " + pushed + " with prev version: " + taskMetadata.getVersion());
@@ -341,7 +345,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         //maybe assert it was null before
         task.setStopFlag(StopFlag.DEPENDENCY_FAILED);
 
-        List<Runnable> tasks = transition(task);
+        List<ControllerJob> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
@@ -360,7 +364,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
         //maybe assert it was null before
         task.setStopFlag(StopFlag.CANCELLED);
 
-        List<Runnable> tasks = transition(task);
+        List<ControllerJob> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {

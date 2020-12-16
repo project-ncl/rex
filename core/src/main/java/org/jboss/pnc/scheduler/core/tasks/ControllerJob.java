@@ -1,6 +1,14 @@
 package org.jboss.pnc.scheduler.core.tasks;
 
+import javax.enterprise.event.TransactionPhase;
+
 public abstract class ControllerJob implements Runnable {
+
+    protected TransactionPhase invocationPhase;
+
+    protected ControllerJob(TransactionPhase invocationPhase) {
+        this.invocationPhase = invocationPhase;
+    }
 
     @Override
     public void run() {
@@ -19,4 +27,7 @@ public abstract class ControllerJob implements Runnable {
     abstract void afterExecute();
     abstract boolean execute();
     abstract void onException(Throwable e);
+    public TransactionPhase getInvocationPhase() {
+        return invocationPhase;
+    }
 }

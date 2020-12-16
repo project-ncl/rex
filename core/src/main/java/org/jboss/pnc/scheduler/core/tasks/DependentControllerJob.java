@@ -1,14 +1,21 @@
 package org.jboss.pnc.scheduler.core.tasks;
 
+import org.jboss.pnc.scheduler.core.api.Dependent;
+
+import javax.enterprise.event.TransactionPhase;
+import javax.enterprise.inject.spi.CDI;
 import java.util.Set;
 
 public abstract class DependentControllerJob extends TransactionalControllerJob {
 
-    Set<String> dependents;
+    private final Set<String> dependents;
 
-    DependentControllerJob(Set<String> dependents) {
-        super();
+    protected Dependent dependentAPI;
+
+    protected DependentControllerJob(Set<String> dependents, TransactionPhase invocationPhase) {
+        super(invocationPhase);
         this.dependents = dependents;
+        this.dependentAPI = CDI.current().select(Dependent.class).get();
     }
 
     @Override

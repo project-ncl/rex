@@ -5,22 +5,30 @@ import org.jboss.pnc.scheduler.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.event.TransactionPhase;
 import javax.enterprise.inject.spi.CDI;
-import javax.transaction.TransactionManager;
 
-public class AsyncInvokeStartJob extends SynchronizedAsyncControllerJob {
+public class InvokeStartJob extends ControllerJob {
+
+    private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.AFTER_SUCCESS;
 
     private final RemoteEntityClient client;
 
     private final Task task;
 
-    private static final Logger logger = LoggerFactory.getLogger(AsyncInvokeStartJob.class);
+    private static final Logger logger = LoggerFactory.getLogger(InvokeStartJob.class);
 
-    public AsyncInvokeStartJob(TransactionManager tm, Task task) {
-        super(tm);
+    public InvokeStartJob(Task task) {
+        super(INVOCATION_PHASE);
         this.task = task;
         this.client = CDI.current().select(RemoteEntityClient.class).get();
     }
+
+    @Override
+    void beforeExecute() {}
+
+    @Override
+    void afterExecute() {}
 
     @Override
     boolean execute() {
@@ -28,4 +36,8 @@ public class AsyncInvokeStartJob extends SynchronizedAsyncControllerJob {
         client.startJob(task);
         return true;
     }
+
+    @Override
+    void onException(Throwable e) {}
+
 }

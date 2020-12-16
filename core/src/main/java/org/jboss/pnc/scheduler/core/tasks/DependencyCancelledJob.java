@@ -1,17 +1,14 @@
 package org.jboss.pnc.scheduler.core.tasks;
 
-import org.jboss.pnc.scheduler.core.api.Dependent;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.transaction.TransactionManager;
+import javax.enterprise.event.TransactionPhase;
 import java.util.Set;
 
 public class DependencyCancelledJob extends DependentControllerJob {
-    Dependent dependentAPI;
+
+    private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
 
     public DependencyCancelledJob(Set<String> dependents) {
-        super(dependents);
-        this.dependentAPI = CDI.current().select(Dependent.class).get();
+        super(dependents, INVOCATION_PHASE);
     }
 
     @Override

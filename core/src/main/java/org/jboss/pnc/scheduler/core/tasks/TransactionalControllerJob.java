@@ -1,5 +1,6 @@
 package org.jboss.pnc.scheduler.core.tasks;
 
+import javax.enterprise.event.TransactionPhase;
 import javax.enterprise.inject.spi.CDI;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -14,10 +15,11 @@ public abstract class TransactionalControllerJob extends ControllerJob {
 
     private boolean alreadyInTransaction;
 
-    TransactionalControllerJob() {
+    protected TransactionalControllerJob(TransactionPhase invocationPhase) {
+        super(invocationPhase);
         this.tm = CDI.current().select(TransactionManager.class).get();
         try {
-            this.alreadyInTransaction = tm.getTransaction()==null ? false : true;
+            this.alreadyInTransaction = tm.getTransaction() != null;
         } catch (SystemException e) {
             throw new IllegalStateException("Cannot start Transaction, unexpected error was thrown", e);
         }
