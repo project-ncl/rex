@@ -50,9 +50,6 @@ class TaskContainerImplTest {
     @Inject
     ManagedExecutor executor;
 
-    @Inject
-    InternalEndpoint endpoint;
-
     @BeforeEach
     public void before() throws Exception {
         container.getCache().clear();

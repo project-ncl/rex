@@ -29,9 +29,6 @@ public class MockEndpoint {
     private static final Logger logger = LoggerFactory.getLogger(MockEndpoint.class);
 
     @Inject
-    TaskContainer container;
-
-    @Inject
     TaskController controller;
 
     ExecutorService executor = Executors.newFixedThreadPool(4);

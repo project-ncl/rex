@@ -5,9 +5,6 @@ import org.jboss.pnc.scheduler.core.api.TaskTarget;
 
 public abstract class TaskTargetImpl implements TaskTarget {
 
-    public TaskTargetImpl() {
-    }
-
     @Override
     public BatchTaskInstaller addTasks() {
         return new BatchTaskInstallerImpl(this);
