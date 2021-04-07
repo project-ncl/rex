@@ -8,7 +8,9 @@ import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.core.api.TaskRegistry;
 import org.jboss.pnc.scheduler.core.api.TaskTarget;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
+import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.facade.api.TaskProvider;
+import org.jboss.pnc.scheduler.facade.mapper.GraphsMapper;
 import org.jboss.pnc.scheduler.facade.mapper.TaskMapper;
 import org.jboss.pnc.scheduler.model.Task;
 
@@ -18,6 +20,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -29,14 +32,17 @@ public class TaskProviderImpl implements TaskProvider {
 
     private TaskMapper mapper;
 
+    private GraphsMapper graphMapper;
+
     private TaskController controller;
 
     @Inject
-    public TaskProviderImpl(TaskContainer container, TaskController controller, TaskMapper mapper) {
+    public TaskProviderImpl(TaskContainer container, TaskController controller, TaskMapper mapper, GraphsMapper graphMapper) {
         this.target = container;
         this.registry = container;
         this.controller = controller;
         this.mapper = mapper;
+        this.graphMapper = graphMapper;
     }
 
     @Override
@@ -62,6 +68,14 @@ public class TaskProviderImpl implements TaskProvider {
             toReturn.add(mapper.toDTO(registry.getRequiredTask(taskDTO.getName())));
         }
         return toReturn;
+    }
+
+    @Override
+    public Set<TaskDTO> create(CreateGraphRequest request) {
+        return target.install(graphMapper.toDB(request))
+                .stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toSet());
     }
 
     @Override

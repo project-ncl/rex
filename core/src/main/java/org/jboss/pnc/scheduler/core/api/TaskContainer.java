@@ -16,7 +16,7 @@ public interface TaskContainer extends TaskRegistry, TaskTarget {
      *
      * @return the name
      */
-    String getName();
+    String getDeploymentName();
 
     /**
      * Returns true is container is shutting down.

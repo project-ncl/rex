@@ -8,6 +8,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
+import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.dto.requests.CreateTaskRequest;
 import org.jboss.pnc.scheduler.dto.responses.ErrorResponse;
 import org.jboss.pnc.scheduler.dto.responses.TaskListResponse;
@@ -24,6 +25,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
+import java.util.Set;
 
 import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.INVALID_CODE;
 import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.INVALID_DESCRIPTION;
@@ -42,6 +44,20 @@ public interface TaskEndpoint {
 
     String TASK_ID = "Unique name of the task";
 
+/*    @Operation(summary = "Creates and starts scheduling of task")
+    @APIResponses(value = {
+                    @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
+                        content = @Content(schema = @Schema(implementation = TaskListResponse.class))),
+                    @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
+                        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+                        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    List<TaskDTO> create(@NotNull CreateTaskRequest request);   */
+
     @Operation(summary = "Creates and starts scheduling of task")
     @APIResponses(value = {
                     @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
@@ -54,7 +70,7 @@ public interface TaskEndpoint {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    List<TaskDTO> create(@NotNull CreateTaskRequest request);
+    Set<TaskDTO> create(@NotNull CreateGraphRequest request);
 
     @Operation(summary = "Returns list of all tasks with optional filtering")
     @APIResponses(value = {

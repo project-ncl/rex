@@ -1,5 +1,10 @@
 package org.jboss.pnc.scheduler.core.api;
 
+import org.jboss.pnc.scheduler.core.model.TaskGraph;
+import org.jboss.pnc.scheduler.model.Task;
+
+import java.util.Set;
+
 /**
  * Target where Tasks are installed into and removed from.
  *
@@ -29,4 +34,6 @@ public interface TaskTarget {
      * @param task the unique task name
      */
     void removeTask(String task);
+
+    Set<Task> install(TaskGraph serviceBuilder);
 }

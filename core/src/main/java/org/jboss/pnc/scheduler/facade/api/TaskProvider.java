@@ -1,8 +1,10 @@
 package org.jboss.pnc.scheduler.facade.api;
 
 import org.jboss.pnc.scheduler.dto.TaskDTO;
+import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 
 import java.util.List;
+import java.util.Set;
 
 public interface TaskProvider {
 
@@ -16,6 +18,8 @@ public interface TaskProvider {
      */
     List<TaskDTO> create(List<TaskDTO> services);
 
+    //todo document
+    Set<TaskDTO> create(CreateGraphRequest request);
     /**
      * returns all services based on filter
      *

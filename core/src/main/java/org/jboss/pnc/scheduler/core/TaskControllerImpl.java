@@ -236,7 +236,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         Task task = taskMetadata.getValue();
 
         Mode currentMode = task.getControllerMode();
-        if (currentMode == mode || currentMode == Mode.CANCEL || (mode == Mode.IDLE && currentMode == Mode.ACTIVE)) {
+        if (currentMode == Mode.CANCEL || (mode == Mode.IDLE && currentMode == Mode.ACTIVE)) {
             //no possible movement
             //TODO log
             return;

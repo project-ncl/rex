@@ -16,6 +16,10 @@ import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.InvalidTaskDeclarationException;
 import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
 import org.jboss.pnc.scheduler.common.enums.Mode;
+import org.jboss.pnc.scheduler.core.mapper.InitialTaskMapper;
+import org.jboss.pnc.scheduler.core.model.Edge;
+import org.jboss.pnc.scheduler.core.model.InitialTask;
+import org.jboss.pnc.scheduler.core.model.TaskGraph;
 import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -26,15 +30,19 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static javax.transaction.Transactional.TxType.MANDATORY;
 import static org.jboss.pnc.scheduler.core.TaskControllerImpl.newDependant;
 import static org.jboss.pnc.scheduler.core.TaskControllerImpl.newDependency;
 
@@ -42,7 +50,7 @@ import static org.jboss.pnc.scheduler.core.TaskControllerImpl.newDependency;
 public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
 
     @ConfigProperty(name = "container.name", defaultValue = "undefined")
-    String name;
+    String deploymentName;
 
     @ConfigProperty(name = "scheduler.baseUrl")
     String baseUrl;
@@ -50,14 +58,17 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
     @Remote("near-tasks")
     RemoteCache<String, Task> tasks;
 
-    private TaskController controller;
+    private final TaskController controller;
+
+    private final InitialTaskMapper initialMapper;
 
     @Inject
-    public TaskContainerImpl(TaskController controller) {
+    public TaskContainerImpl(TaskController controller, InitialTaskMapper initialMapper) {
         this.controller = controller;
+        this.initialMapper = initialMapper;
     }
 
-    //FIXME implement
+    // FIXME implement
     public void shutdown() {
         throw new UnsupportedOperationException("Currently not implemented!");
     }
@@ -115,7 +126,8 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
         }
     }
 
-    private void installInternal(BatchTaskInstallerImpl taskBuilder) throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+    private void installInternal(BatchTaskInstallerImpl taskBuilder) throws SystemException, NotSupportedException,
+            HeuristicRollbackException, HeuristicMixedException, RollbackException {
         boolean joined = joinOrBeginTransaction();
         try {
             Set<String> installed = taskBuilder.getInstalledTasks();
@@ -143,7 +155,7 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
                                     "Task " + dependant + " was remotely updated during the transaction");
                         }
                     }
-                    //dependants are already initialized in SBImpl::toPartiallyFilledTask
+                    // dependants are already initialized in SBImpl::toPartiallyFilledTask
                 }
 
                 int unfinishedDependencies = 0;
@@ -253,7 +265,6 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
                 throw new CircularDependencyException("Cycle has been found on Task " + current);
             }
         }
-        return false;
     }
 
     private boolean dfs(String current, Set<String> notVisited, Set<String> visiting, Set<String> visited) {
@@ -285,5 +296,148 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
     private void move(String name, Set<String> sourceSet, Set<String> destinationSet) {
         sourceSet.remove(name);
         destinationSet.add(name);
+    }
+
+    // ###################
+    // #### V2 ####
+    // ###################
+
+    @Override
+    @Transactional(MANDATORY)
+    public Set<Task> install(TaskGraph taskGraph) {
+        Set<Edge> edges = taskGraph.getEdges();
+        Map<String, InitialTask> vertices = taskGraph.getVertices();
+        Map<String, Task> taskCache = new HashMap<>();
+
+        // handle edge by edge
+        for (Edge edge : edges) {
+            String dependant = edge.getSource();
+            Task dependantTask = addToCache(dependant, taskCache, vertices);
+
+            assertDependantCanHaveDependency(dependantTask);
+
+            String dependency = edge.getTarget();
+            Task dependencyTask = addToCache(dependency, taskCache, vertices);
+
+            updateTasks(dependencyTask, dependantTask);
+        }
+
+        // add simple new tasks to cache that have no dependencies nor dependants
+        addTasksWithoutEdgesToCache(taskCache, vertices);
+
+        Set<Task> newTasks = storeTheTasks(taskCache, vertices);
+
+        hasCycle(taskCache.keySet());
+
+        // start the tasks
+        newTasks.forEach(task -> {
+            if (task.getControllerMode() == Mode.ACTIVE)
+                controller.setMode(task.getName(), Mode.ACTIVE);
+        });
+        return newTasks;
+    }
+
+    private Set<Task> storeTheTasks(Map<String, Task> taskCache, Map<String, InitialTask> vertices) {
+        Set<Task> toReturn = new HashSet<>();
+        for (Map.Entry<String, Task> entry : taskCache.entrySet()) {
+            Task task = entry.getValue();
+            if (isNewTask(entry.getKey(), vertices)) {
+                Task previousValue = getCache().withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(task.getName(), task);
+                if (previousValue != null) {
+                    throw new IllegalArgumentException(
+                            "Task " + task.getName() + " declared as new in vertices already exists.");
+                }
+
+                // return only new tasks
+                toReturn.add(task);
+            } else {
+                // we have to get the previous version
+                MetadataValue<Task> versioned = getCache().getWithMetadata(entry.getKey());
+                // could be optimized by using #putAll method of remote cache (only 'else' part could be; the 'then'
+                // part required FORCE_RETURN_VALUE flag which is not available in putAll)
+                boolean success = getCache().replaceWithVersion(entry.getKey(), versioned.getValue(), versioned.getVersion());
+                if (!success) {
+                    throw new ConcurrentUpdateException(
+                            "Task " + versioned.getValue() + " was remotely updated during the transaction");
+                }
+            }
+        }
+        return toReturn;
+    }
+
+    private void addTasksWithoutEdgesToCache(Map<String, Task> taskCache, Map<String, InitialTask> vertices) {
+        Set<String> newTasksWithoutEdges = new HashSet<>(vertices.keySet());
+        newTasksWithoutEdges.removeAll(taskCache.keySet());
+        for (String simpleTask : newTasksWithoutEdges) {
+            addToCache(simpleTask, taskCache, vertices);
+        }
+    }
+
+    private void updateTasks(Task dependencyTask, Task dependantTask) {
+        addDependency(dependantTask, dependencyTask);
+        addDependant(dependencyTask, dependantTask);
+    }
+
+    private void addDependency(Task dependant, Task dependency) {
+        if (dependant.getDependencies().contains(dependency.getName())) {
+            return;
+        }
+
+        dependant.getDependencies().add(dependency.getName());
+        // increase amount of unfinished dependencies if the dependency hasn't finished
+        if (!dependency.getState().isFinal()) {
+            dependant.incUnfinishedDependencies();
+        }
+    }
+
+    private void addDependant(Task dependency, Task dependant) {
+        if (dependency.getDependants().contains(dependant.getName())) {
+            return;
+        }
+
+        dependency.getDependants().add(dependant.getName());
+    }
+
+    private Task addToCache(String name, Map<String, Task> taskCache, Map<String, InitialTask> vertices) {
+        if (taskCache.containsKey(name)) {
+            return taskCache.get(name);
+        }
+
+        Task task;
+        if (isNewTask(name, vertices)) {
+            // task data for new tasks should be in the vertices
+            task = initialMapper.fromInitialTask(vertices.get(name));
+
+            // workaround for lombok builder's immutable collections
+            task.setDependants(new HashSet<>(task.getDependants()));
+            task.setDependencies(new HashSet<>(task.getDependencies()));
+        } else {
+            // task data for existing task should be retrieved from DB
+            task = getTask(name);
+            if (task == null) {
+                throw new IllegalArgumentException(
+                        "Either existing task" + name
+                                + " has incorrect identifier or data for a new task is not declared in vertices");
+            }
+        }
+        taskCache.put(name, task);
+        return task;
+    }
+
+    /**
+     * DEPENDANT -> DEPENDENCY
+     * 
+     * Dependant can have a dependency if it's currently in an IDLE state (hasn't finished nor started)
+     */
+    private void assertDependantCanHaveDependency(Task dependant) {
+        if (!dependant.getState().isIdle()) {
+            throw new IllegalArgumentException(
+                    "Existing task " + dependant.getName() + " is in " + dependant.getState()
+                            + " state and cannot have more dependencies.");
+        }
+    }
+
+    private boolean isNewTask(String task, Map<String, InitialTask> vertices) {
+        return vertices.containsKey(task);
     }
 }
