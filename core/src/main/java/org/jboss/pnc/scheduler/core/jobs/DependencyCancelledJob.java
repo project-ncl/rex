@@ -3,14 +3,13 @@ package org.jboss.pnc.scheduler.core.jobs;
 import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.event.TransactionPhase;
-import java.util.Set;
 
 public class DependencyCancelledJob extends DependentControllerJob {
 
     private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
 
-    public DependencyCancelledJob(Set<String> dependents) {
-        super(dependents, INVOCATION_PHASE);
+    public DependencyCancelledJob(Task task) {
+        super(task, INVOCATION_PHASE);
     }
 
     @Override

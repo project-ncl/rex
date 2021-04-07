@@ -5,7 +5,7 @@ package org.jboss.pnc.scheduler.core.api;
  *
  * @author Jan Michalov <jmichalo@redhat.com>
  */
-public interface Dependent {
+public interface DependentMessenger {
     /**
      * Notify this dependent that it's dependency has succeeded.
      * @param name

@@ -5,7 +5,7 @@ import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
 import org.jboss.pnc.scheduler.common.enums.Transition;
-import org.jboss.pnc.scheduler.core.api.Dependent;
+import org.jboss.pnc.scheduler.core.api.DependentMessenger;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
-import javax.transaction.TransactionManager;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -32,19 +31,16 @@ import java.util.stream.Collectors;
 import static javax.transaction.Transactional.TxType.MANDATORY;
 
 @ApplicationScoped
-public class TaskControllerImpl implements TaskController, Dependent {
+public class TaskControllerImpl implements TaskController, DependentMessenger {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskControllerImpl.class);
 
     private TaskContainerImpl container;
 
-    private TransactionManager tm;
-
     private Event<ControllerJob> scheduleJob;
 
     public TaskControllerImpl(TaskContainerImpl container, Event<ControllerJob> scheduleJob) {
         this.container = container;
-        tm = container.getTransactionManager();
         this.scheduleJob = scheduleJob;
     }
 
@@ -128,24 +124,24 @@ public class TaskControllerImpl implements TaskController, Dependent {
                 break;
 
             case STOPPING_to_STOPPED:
-                tasks.add(new DependencyCancelledJob(task.getDependants()));
+                tasks.add(new DependencyCancelledJob(task));
                 break;
 
             case NEW_to_STOPPED:
             case WAITING_to_STOPPED:
                 switch (task.getStopFlag()) {
                     case CANCELLED:
-                        tasks.add(new DependencyCancelledJob(task.getDependants()));
+                        tasks.add(new DependencyCancelledJob(task));
                         break;
                     case DEPENDENCY_FAILED:
-                        tasks.add(new DependencyStoppedJob(task.getDependants()));
+                        tasks.add(new DependencyStoppedJob(task));
                         break;
                 };
 
             case UP_to_FAILED:
             case STARTING_to_START_FAILED:
             case STOPPING_to_STOP_FAILED:
-                tasks.add(new DependencyStoppedJob(task.getDependants()));
+                tasks.add(new DependencyStoppedJob(task));
                 break;
 
             case STARTING_to_UP:
@@ -153,7 +149,7 @@ public class TaskControllerImpl implements TaskController, Dependent {
                 break;
 
             case UP_to_SUCCESSFUL:
-                tasks.add(new DependencySucceededJob(task.getDependants()));
+                tasks.add(new DependencySucceededJob(task));
                 break;
             default:
                 throw new IllegalStateException("Controller returned unknown transition: " + transition);

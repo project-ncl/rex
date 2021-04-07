@@ -1,6 +1,7 @@
 package org.jboss.pnc.scheduler.core.jobs;
 
-import org.jboss.pnc.scheduler.core.api.Dependent;
+import org.jboss.pnc.scheduler.core.api.DependentMessenger;
+import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.event.TransactionPhase;
 import javax.enterprise.inject.spi.CDI;
@@ -10,12 +11,12 @@ public abstract class DependentControllerJob extends TransactionalControllerJob 
 
     private final Set<String> dependents;
 
-    protected Dependent dependentAPI;
+    protected DependentMessenger dependentAPI;
 
-    protected DependentControllerJob(Set<String> dependents, TransactionPhase invocationPhase) {
+    protected DependentControllerJob(Task task, TransactionPhase invocationPhase) {
         super(invocationPhase);
-        this.dependents = dependents;
-        this.dependentAPI = CDI.current().select(Dependent.class).get();
+        this.dependents = task.getDependants();
+        this.dependentAPI = CDI.current().select(DependentMessenger.class).get();
     }
 
     @Override
