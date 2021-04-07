@@ -1,8 +1,6 @@
 package org.jboss.pnc.scheduler.facade;
 
 import org.jboss.pnc.scheduler.common.enums.Mode;
-import org.jboss.pnc.scheduler.core.api.BatchTaskInstaller;
-import org.jboss.pnc.scheduler.core.api.TaskBuilder;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.core.api.TaskRegistry;
@@ -12,13 +10,10 @@ import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.facade.api.TaskProvider;
 import org.jboss.pnc.scheduler.facade.mapper.GraphsMapper;
 import org.jboss.pnc.scheduler.facade.mapper.TaskMapper;
-import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,31 +38,6 @@ public class TaskProviderImpl implements TaskProvider {
         this.controller = controller;
         this.mapper = mapper;
         this.graphMapper = graphMapper;
-    }
-
-    @Override
-    public List<TaskDTO> create(List<TaskDTO> tasks) {
-        BatchTaskInstaller batchTaskInstaller = target.addTasks();
-        //fill dependents with contextualToDB and filter out existing tasks
-        Collection<Task> dbTasks = mapper.contextualToDB(tasks)
-                .stream()
-                .filter(task -> registry.getTask(task.getName()) == null)
-                .collect(Collectors.toSet());
-        for (Task taskModel : dbTasks) {
-            TaskBuilder builder = batchTaskInstaller.addTask(taskModel.getName())
-                    .setPayload(taskModel.getPayload())
-                    .setInitialMode(taskModel.getControllerMode())
-                    .setRemoteEndpoints(taskModel.getRemoteEndpoints());
-            taskModel.getDependencies().forEach(builder::requires);
-            taskModel.getDependants().forEach(builder::isRequiredBy);
-            builder.install();
-        }
-        batchTaskInstaller.commit();
-        List<TaskDTO> toReturn = new ArrayList<>();
-        for (TaskDTO taskDTO : tasks) {
-            toReturn.add(mapper.toDTO(registry.getRequiredTask(taskDTO.getName())));
-        }
-        return toReturn;
     }
 
     @Override

@@ -1,29 +1,8 @@
 package org.jboss.pnc.scheduler.core;
 
-import io.quarkus.test.junit.QuarkusTest;
-import org.eclipse.microprofile.context.ManagedExecutor;
-import org.infinispan.client.hotrod.MetadataValue;
-import java.lang.String;
-import org.jboss.pnc.scheduler.common.exceptions.CircularDependencyException;
-import org.jboss.pnc.scheduler.core.api.BatchTaskInstaller;
-import org.jboss.pnc.scheduler.core.api.TaskBuilder;
-import org.jboss.pnc.scheduler.core.api.TaskController;
-import org.jboss.pnc.scheduler.common.enums.Mode;
-import org.jboss.pnc.scheduler.model.RemoteAPI;
-import org.jboss.pnc.scheduler.model.Task;
-import org.jboss.pnc.scheduler.common.enums.State;
-import org.jboss.pnc.scheduler.rest.api.InternalEndpoint;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.jboss.pnc.scheduler.core.generation.RandomDAGGeneration.generateDAG;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,11 +11,33 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import javax.inject.Inject;
+import javax.transaction.RollbackException;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.client.hotrod.MetadataValue;
+import org.jboss.pnc.scheduler.common.enums.Mode;
+import org.jboss.pnc.scheduler.common.enums.State;
+import org.jboss.pnc.scheduler.common.exceptions.CircularDependencyException;
+import org.jboss.pnc.scheduler.core.api.TaskController;
+import org.jboss.pnc.scheduler.dto.CreateTaskDTO;
+import org.jboss.pnc.scheduler.dto.EdgeDTO;
+import org.jboss.pnc.scheduler.dto.RemoteLinksDTO;
+import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.scheduler.model.RemoteAPI;
+import org.jboss.pnc.scheduler.model.Task;
+import org.jboss.pnc.scheduler.rest.api.TaskEndpoint;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class)
 class TaskContainerImplTest {
 
     private static final Logger log = LoggerFactory.getLogger(TaskContainerImplTest.class);
@@ -48,20 +49,24 @@ class TaskContainerImplTest {
     TaskController controller;
 
     @Inject
-    ManagedExecutor executor;
+    TaskEndpoint taskEndpoint;
 
     @BeforeEach
     public void before() throws Exception {
         container.getCache().clear();
-        BatchTaskInstaller installer = container.addTasks();
-        installer
-                .addTask("omg.wtf.whatt")
-                .setPayload("{id: 100}")
-                .setRemoteEndpoints(getMockAPI())
-                .setInitialMode(Mode.IDLE)
-                .install();
-        installer.commit();
+        taskEndpoint.create(CreateGraphRequest.builder()
+                .vertex("omg.wtf.whatt", CreateTaskDTO.builder()
+                        .name("omg.wtf.whatt")
+                        .controllerMode(Mode.IDLE)
+                        .remoteLinks(getMockDTOAPI())
+                        .payload("{id: 100}")
+                        .build())
+                .build());
+    }
 
+    @AfterEach
+    public void after() throws Exception {
+        container.getCache().clear();
     }
 
     @Test
@@ -75,32 +80,33 @@ class TaskContainerImplTest {
     @Test
     public void testTransaction() throws Exception {
         TransactionManager tm = container.getCache().getTransactionManager();
+
         tm.begin();
         Task old = container.getTask("omg.wtf.whatt").toBuilder().payload("another useless string").build();
         container.getCache().put(old.getName(), old);
         tm.setRollbackOnly();
         assertThatThrownBy(tm::commit)
                 .isInstanceOf(RollbackException.class);
+
         assertThat(container.getTask("omg.wtf.whatt").getPayload()).isEqualTo("{id: 100}");
     }
 
     @Test
     public void testInstall() throws Exception {
-        BatchTaskInstaller installer = container.addTasks();
-        installer.addTask("service1")
-                .setInitialMode(Mode.IDLE)
-                .isRequiredBy("service2")
-                .setPayload("SAOIDHSAOIDHSALKDH LKSA")
-                .install();
+        taskEndpoint.create(CreateGraphRequest.builder()
+                .edge(new EdgeDTO("service2", "service1"))
+                .vertex("service1", CreateTaskDTO.builder()
+                        .name("service1")
+                        .controllerMode(Mode.IDLE)
+                        .payload("I am service1!")
+                        .build())
+                .vertex("service2", CreateTaskDTO.builder()
+                        .name("service2")
+                        .controllerMode(Mode.IDLE)
+                        .payload("I am service2!")
+                        .build())
+                .build());
 
-        installer.addTask("service2")
-                .setInitialMode(Mode.IDLE)
-                .requires("service1")
-                .setPayload("ASDLJSALKJDHSAKJDHLKJSAHDLKJSAHDK")
-                .install();
-
-
-        installer.commit();
         Task task1 = container.getTask("service1");
         assertThat(task1)
                 .isNotNull();
@@ -126,20 +132,20 @@ class TaskContainerImplTest {
         waitTillServicesAre(State.UP, container.getTask("omg.wtf.whatt"));
         Task task = container.getTask("omg.wtf.whatt");
         assertThat(task.getState()).isEqualTo(State.UP);
-
     }
 
     @Test
     public void testDependantWaiting() throws Exception {
-        BatchTaskInstaller batchTaskInstaller = container.addTasks();
         String dependant = "dependant.service";
-        batchTaskInstaller.addTask(dependant)
-                .setRemoteEndpoints(getMockAPI())
-                .requires("omg.wtf.whatt")
-                .setInitialMode(Mode.ACTIVE)
-                .setPayload("A Payload")
-                .install();
-        batchTaskInstaller.commit();
+        taskEndpoint.create(CreateGraphRequest.builder()
+                .edge(new EdgeDTO(dependant, "omg.wtf.whatt"))
+                .vertex(dependant, CreateTaskDTO.builder()
+                        .name(dependant)
+                        .payload("A payload")
+                        .controllerMode(Mode.ACTIVE)
+                        .build())
+                .build());
+
         Task task = container.getTask(dependant);
         assertThat(task)
                 .isNotNull();
@@ -149,15 +155,16 @@ class TaskContainerImplTest {
 
     @Test
     public void testDependantStartsThroughDependency() throws Exception {
-        BatchTaskInstaller batchTaskInstaller = container.addTasks();
         String dependant = "dependant.service";
-        batchTaskInstaller.addTask(dependant)
-                .setRemoteEndpoints(getMockAPI())
-                .requires("omg.wtf.whatt")
-                .setInitialMode(Mode.ACTIVE)
-                .setPayload("A Payload")
-                .install();
-        batchTaskInstaller.commit();
+        taskEndpoint.create(CreateGraphRequest.builder()
+                .edge(new EdgeDTO(dependant, "omg.wtf.whatt"))
+                .vertex(dependant, CreateTaskDTO.builder()
+                        .name(dependant)
+                        .payload("A payload")
+                        .controllerMode(Mode.ACTIVE)
+                        .remoteLinks(getMockDTOAPI())
+                        .build())
+                .build());
 
         container.getTransactionManager().begin();
         controller.setMode("omg.wtf.whatt", Mode.ACTIVE);
@@ -174,7 +181,6 @@ class TaskContainerImplTest {
 
     @Test
     public void testComplexInstallation() {
-        BatchTaskInstaller batchTaskInstaller = container.addTasks();
         String a = "a";
         String b = "b";
         String c = "c";
@@ -185,18 +191,31 @@ class TaskContainerImplTest {
         String h = "h";
         String i = "i";
         String j = "j";
-
-        installService(batchTaskInstaller, a, Mode.IDLE, new String[]{c, d}, null);
-        installService(batchTaskInstaller, b, Mode.IDLE, new String[]{d, e, h}, null);
-        installService(batchTaskInstaller, c, Mode.IDLE, new String[]{f}, new String[]{a});
-        installService(batchTaskInstaller, d, Mode.IDLE, new String[]{e}, new String[]{a, b});
-        installService(batchTaskInstaller, e, Mode.IDLE, new String[]{g, h}, new String[]{d, b});
-        installService(batchTaskInstaller, f, Mode.IDLE, new String[]{i}, new String[]{c});
-        installService(batchTaskInstaller, g, Mode.IDLE, new String[]{i, j}, new String[]{e});
-        installService(batchTaskInstaller, h, Mode.IDLE, new String[]{j}, new String[]{e, b});
-        installService(batchTaskInstaller, i, Mode.IDLE, null, new String[]{f, g});
-        installService(batchTaskInstaller, j, Mode.IDLE, null, new String[]{g, h});
-        batchTaskInstaller.commit();
+        taskEndpoint.create(CreateGraphRequest.builder()
+                .edge(new EdgeDTO(c, a))
+                .edge(new EdgeDTO(d, a))
+                .edge(new EdgeDTO(d, b))
+                .edge(new EdgeDTO(e, d))
+                .edge(new EdgeDTO(e, b))
+                .edge(new EdgeDTO(f, c))
+                .edge(new EdgeDTO(g, e))
+                .edge(new EdgeDTO(h, e))
+                .edge(new EdgeDTO(h, b))
+                .edge(new EdgeDTO(i, f))
+                .edge(new EdgeDTO(i, g))
+                .edge(new EdgeDTO(j, g))
+                .edge(new EdgeDTO(j, h))
+                .vertex(a, getMockTaskWithoutStart(a, Mode.IDLE))
+                .vertex(b, getMockTaskWithoutStart(b, Mode.IDLE))
+                .vertex(c, getMockTaskWithoutStart(c, Mode.IDLE))
+                .vertex(d, getMockTaskWithoutStart(d, Mode.IDLE))
+                .vertex(e, getMockTaskWithoutStart(e, Mode.IDLE))
+                .vertex(f, getMockTaskWithoutStart(f, Mode.IDLE))
+                .vertex(g, getMockTaskWithoutStart(g, Mode.IDLE))
+                .vertex(h, getMockTaskWithoutStart(h, Mode.IDLE))
+                .vertex(i, getMockTaskWithoutStart(i, Mode.IDLE))
+                .vertex(j, getMockTaskWithoutStart(j, Mode.IDLE))
+                .build());
 
         assertCorrectServiceRelations(container.getTask(a), 0, new String[]{c, d}, null);
         assertCorrectServiceRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
@@ -212,7 +231,6 @@ class TaskContainerImplTest {
 
     @Test
     public void testComplexInstallationWithAlreadyExistingService() throws Exception {
-        BatchTaskInstaller batchTaskInstaller = container.addTasks();
         String a = "a";
         String b = "b";
         String c = "c";
@@ -225,17 +243,34 @@ class TaskContainerImplTest {
         String j = "j";
         String existing = "omg.wtf.whatt";
 
-        installService(batchTaskInstaller, a, Mode.IDLE, new String[]{c, d}, null);
-        installService(batchTaskInstaller, b, Mode.IDLE, new String[]{d, e, h}, null);
-        installService(batchTaskInstaller, c, Mode.IDLE, new String[]{f, existing}, new String[]{a});
-        installService(batchTaskInstaller, d, Mode.IDLE, new String[]{e, existing}, new String[]{a, b});
-        installService(batchTaskInstaller, e, Mode.IDLE, new String[]{g, h}, new String[]{d, b});
-        installService(batchTaskInstaller, f, Mode.IDLE, new String[]{i}, new String[]{c, existing});
-        installService(batchTaskInstaller, g, Mode.IDLE, new String[]{i, j}, new String[]{e});
-        installService(batchTaskInstaller, h, Mode.IDLE, new String[]{j}, new String[]{e, b});
-        installService(batchTaskInstaller, i, Mode.IDLE, null, new String[]{f, g});
-        installService(batchTaskInstaller, j, Mode.IDLE, null, new String[]{g, h});
-        batchTaskInstaller.commit();
+        taskEndpoint.create(CreateGraphRequest.builder()
+                .edge(new EdgeDTO(c, a))
+                .edge(new EdgeDTO(d, a))
+                .edge(new EdgeDTO(d, b))
+                .edge(new EdgeDTO(e, d))
+                .edge(new EdgeDTO(e, b))
+                .edge(new EdgeDTO(f, c))
+                .edge(new EdgeDTO(f, existing))
+                .edge(new EdgeDTO(existing, c))
+                .edge(new EdgeDTO(existing, d))
+                .edge(new EdgeDTO(g, e))
+                .edge(new EdgeDTO(h, e))
+                .edge(new EdgeDTO(h, b))
+                .edge(new EdgeDTO(i, f))
+                .edge(new EdgeDTO(i, g))
+                .edge(new EdgeDTO(j, g))
+                .edge(new EdgeDTO(j, h))
+                .vertex(a, getMockTaskWithStart(a, Mode.IDLE))
+                .vertex(b, getMockTaskWithStart(b, Mode.IDLE))
+                .vertex(c, getMockTaskWithStart(c, Mode.IDLE))
+                .vertex(d, getMockTaskWithStart(d, Mode.IDLE))
+                .vertex(e, getMockTaskWithStart(e, Mode.IDLE))
+                .vertex(f, getMockTaskWithStart(f, Mode.IDLE))
+                .vertex(g, getMockTaskWithStart(g, Mode.IDLE))
+                .vertex(h, getMockTaskWithStart(h, Mode.IDLE))
+                .vertex(i, getMockTaskWithStart(i, Mode.IDLE))
+                .vertex(j, getMockTaskWithStart(j, Mode.IDLE))
+                .build());
 
         assertCorrectServiceRelations(container.getTask(a), 0, new String[]{c, d}, null);
         assertCorrectServiceRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
@@ -252,7 +287,6 @@ class TaskContainerImplTest {
 
     @Test
     public void testComplexWithCompletion() throws Exception {
-        BatchTaskInstaller batchTaskInstaller = container.addTasks();
         String a = "a";
         String b = "b";
         String c = "c";
@@ -270,17 +304,34 @@ class TaskContainerImplTest {
         Task updatedTask = existingTask.toBuilder().remoteEndpoints(getMockWithStart()).payload(existing).build();
         container.getCache().put(existing, updatedTask);
 
-        installService(batchTaskInstaller, a, Mode.IDLE, new String[]{c, d}, null, getMockWithStart(), a);
-        installService(batchTaskInstaller, b, Mode.IDLE, new String[]{d, e, h}, null, getMockWithStart(), b);
-        installService(batchTaskInstaller, c, Mode.IDLE, new String[]{f, existing}, new String[]{a}, getMockWithStart(), c);
-        installService(batchTaskInstaller, d, Mode.IDLE, new String[]{e, existing}, new String[]{a, b}, getMockWithStart(), d);
-        installService(batchTaskInstaller, e, Mode.IDLE, new String[]{g, h}, new String[]{d, b}, getMockWithStart(), e);
-        installService(batchTaskInstaller, f, Mode.IDLE, new String[]{i}, new String[]{c, existing}, getMockWithStart(), f);
-        installService(batchTaskInstaller, g, Mode.IDLE, new String[]{i, j}, new String[]{e}, getMockWithStart(), g);
-        installService(batchTaskInstaller, h, Mode.IDLE, new String[]{j}, new String[]{e, b}, getMockWithStart(), h);
-        installService(batchTaskInstaller, i, Mode.IDLE, null, new String[]{f, g}, getMockWithStart(), i);
-        installService(batchTaskInstaller, j, Mode.IDLE, null, new String[]{g, h}, getMockWithStart(), j);
-        batchTaskInstaller.commit();
+        taskEndpoint.create(CreateGraphRequest.builder()
+                .edge(new EdgeDTO(c, a))
+                .edge(new EdgeDTO(d, a))
+                .edge(new EdgeDTO(d, b))
+                .edge(new EdgeDTO(e, d))
+                .edge(new EdgeDTO(e, b))
+                .edge(new EdgeDTO(f, c))
+                .edge(new EdgeDTO(f, existing))
+                .edge(new EdgeDTO(existing, c))
+                .edge(new EdgeDTO(existing, d))
+                .edge(new EdgeDTO(g, e))
+                .edge(new EdgeDTO(h, e))
+                .edge(new EdgeDTO(h, b))
+                .edge(new EdgeDTO(i, f))
+                .edge(new EdgeDTO(i, g))
+                .edge(new EdgeDTO(j, g))
+                .edge(new EdgeDTO(j, h))
+                .vertex(a, getMockTaskWithStart(a, Mode.IDLE))
+                .vertex(b, getMockTaskWithStart(b, Mode.IDLE))
+                .vertex(c, getMockTaskWithStart(c, Mode.IDLE))
+                .vertex(d, getMockTaskWithStart(d, Mode.IDLE))
+                .vertex(e, getMockTaskWithStart(e, Mode.IDLE))
+                .vertex(f, getMockTaskWithStart(f, Mode.IDLE))
+                .vertex(g, getMockTaskWithStart(g, Mode.IDLE))
+                .vertex(h, getMockTaskWithStart(h, Mode.IDLE))
+                .vertex(i, getMockTaskWithStart(i, Mode.IDLE))
+                .vertex(j, getMockTaskWithStart(j, Mode.IDLE))
+                .build());
 
         container.getTransactionManager().begin();
         for (String name : services) {
@@ -293,7 +344,6 @@ class TaskContainerImplTest {
 
     @Test
     public void testCancellationWithDependencies() throws Exception {
-        BatchTaskInstaller batchTaskInstaller = container.addTasks();
         String a = "a";
         String b = "b";
         String c = "c";
@@ -307,48 +357,47 @@ class TaskContainerImplTest {
         String k = "k";
         String[] services = new String[]{a, b, c, d, e, f, g, h, i, j, k};
 
-        installService(batchTaskInstaller, a, Mode.IDLE, new String[]{b, c, d}, null, getMockWithStart(), a);
-        installService(batchTaskInstaller, b, Mode.IDLE, new String[]{e, f}, new String[]{a}, getMockWithStart(), b);
-        installService(batchTaskInstaller, c, Mode.IDLE, new String[]{f}, new String[]{a}, getMockWithStart(), c);
-        installService(batchTaskInstaller, d, Mode.IDLE, new String[]{f, g}, new String[]{a}, getMockWithStart(), d);
-        installService(batchTaskInstaller, e, Mode.IDLE, new String[]{h, f}, new String[]{b}, getMockWithStart(), e);
-        installService(batchTaskInstaller, f, Mode.IDLE, new String[]{g, h, i, j}, new String[]{e, b, c, d}, getMockWithStart(), f);
-        installService(batchTaskInstaller, g, Mode.IDLE, new String[]{i, k}, new String[]{f, d}, getMockWithStart(), g);
-        installService(batchTaskInstaller, h, Mode.IDLE, new String[]{j}, new String[]{e, f}, getMockWithStart(), h);
-        installService(batchTaskInstaller, i, Mode.IDLE, new String[]{k}, new String[]{f, g}, getMockWithStart(), i);
-        installService(batchTaskInstaller, j, Mode.IDLE, new String[]{k}, new String[]{h, f}, getMockWithStart(), j);
-        installService(batchTaskInstaller, k, Mode.IDLE, null, new String[]{g, j, i}, getMockWithStart(), j);
-        batchTaskInstaller.commit();
+        taskEndpoint.create(CreateGraphRequest.builder()
+                .edge(new EdgeDTO(b, a))
+                .edge(new EdgeDTO(c, a))
+                .edge(new EdgeDTO(d, a))
+                .edge(new EdgeDTO(e, b))
+                .edge(new EdgeDTO(f, c))
+                .edge(new EdgeDTO(f, e))
+                .edge(new EdgeDTO(f, b))
+                .edge(new EdgeDTO(f, d))
+                .edge(new EdgeDTO(g, f))
+                .edge(new EdgeDTO(g, d))
+                .edge(new EdgeDTO(h, e))
+                .edge(new EdgeDTO(h, f))
+                .edge(new EdgeDTO(i, f))
+                .edge(new EdgeDTO(i, g))
+                .edge(new EdgeDTO(j, h))
+                .edge(new EdgeDTO(j, f))
+                .edge(new EdgeDTO(k, g))
+                .edge(new EdgeDTO(k, j))
+                .edge(new EdgeDTO(k, i))
+                .vertex(a, getMockTaskWithStart(a, Mode.IDLE))
+                .vertex(b, getMockTaskWithStart(b, Mode.IDLE))
+                .vertex(c, getMockTaskWithStart(c, Mode.IDLE))
+                .vertex(d, getMockTaskWithStart(d, Mode.IDLE))
+                .vertex(e, getMockTaskWithStart(e, Mode.IDLE))
+                .vertex(f, getMockTaskWithStart(f, Mode.IDLE))
+                .vertex(g, getMockTaskWithStart(g, Mode.IDLE))
+                .vertex(h, getMockTaskWithStart(h, Mode.IDLE))
+                .vertex(i, getMockTaskWithStart(i, Mode.IDLE))
+                .vertex(j, getMockTaskWithStart(j, Mode.IDLE))
+                .vertex(k, getMockTaskWithStart(k, Mode.IDLE))
+                .build());
         container.getCache().getTransactionManager().begin();
         controller.setMode(a, Mode.CANCEL);
         container.getCache().getTransactionManager().commit();
 
         waitTillServicesAre(State.STOPPED, services);
-
-    }
-
-    @Test
-    public void testTransactionPropagation() throws Exception {
-        TransactionManager tm = container.getTransactionManager();
-        tm.begin();
-        executor.submit(
-                () -> {
-                    try {
-                        Transaction transaction = tm.getTransaction();
-                        assertThat(transaction).isNotNull();
-                        assertThat(transaction.getStatus())
-                                .isEqualTo(Status.STATUS_ACTIVE);
-                    } catch (SystemException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-        ).get();
-        tm.commit();
     }
 
     @Test
     public void testQuery() throws Exception {
-        BatchTaskInstaller batchTaskInstaller = container.addTasks();
         String a = "a";
         String b = "b";
         String c = "c";
@@ -360,24 +409,37 @@ class TaskContainerImplTest {
         String i = "i";
         String j = "j";
 
-        installService(batchTaskInstaller, a, Mode.IDLE, new String[]{c, d}, null);
-        installService(batchTaskInstaller, b, Mode.IDLE, new String[]{d, e, h}, null);
-        installService(batchTaskInstaller, c, Mode.IDLE, new String[]{f}, new String[]{a});
-        installService(batchTaskInstaller, d, Mode.IDLE, new String[]{e}, new String[]{a, b});
-        installService(batchTaskInstaller, e, Mode.IDLE, new String[]{g, h}, new String[]{d, b});
-        installService(batchTaskInstaller, f, Mode.IDLE, new String[]{i}, new String[]{c});
-        installService(batchTaskInstaller, g, Mode.IDLE, new String[]{i, j}, new String[]{e});
-        installService(batchTaskInstaller, h, Mode.IDLE, new String[]{j}, new String[]{e, b});
-        installService(batchTaskInstaller, i, Mode.IDLE, null, new String[]{f, g});
-        installService(batchTaskInstaller, j, Mode.IDLE, null, new String[]{g, h});
-        batchTaskInstaller.commit();
+        taskEndpoint.create(CreateGraphRequest.builder()
+                .edge(new EdgeDTO(c, a))
+                .edge(new EdgeDTO(d, a))
+                .edge(new EdgeDTO(d, b))
+                .edge(new EdgeDTO(e, d))
+                .edge(new EdgeDTO(e, b))
+                .edge(new EdgeDTO(f, c))
+                .edge(new EdgeDTO(g, e))
+                .edge(new EdgeDTO(h, e))
+                .edge(new EdgeDTO(h, b))
+                .edge(new EdgeDTO(i, f))
+                .edge(new EdgeDTO(i, g))
+                .edge(new EdgeDTO(j, g))
+                .edge(new EdgeDTO(j, h))
+                .vertex(a, getMockTaskWithoutStart(a, Mode.IDLE))
+                .vertex(b, getMockTaskWithoutStart(b, Mode.IDLE))
+                .vertex(c, getMockTaskWithoutStart(c, Mode.IDLE))
+                .vertex(d, getMockTaskWithoutStart(d, Mode.IDLE))
+                .vertex(e, getMockTaskWithoutStart(e, Mode.IDLE))
+                .vertex(f, getMockTaskWithoutStart(f, Mode.IDLE))
+                .vertex(g, getMockTaskWithoutStart(g, Mode.IDLE))
+                .vertex(h, getMockTaskWithoutStart(h, Mode.IDLE))
+                .vertex(i, getMockTaskWithoutStart(i, Mode.IDLE))
+                .vertex(j, getMockTaskWithoutStart(j, Mode.IDLE))
+                .build());
 
         assertThat(container.getTask(true, true, true)).hasSize(11);
     }
 
     @Test
     public void testCycle() throws Exception {
-        BatchTaskInstaller batchTaskInstaller = container.addTasks();
         String a = "a";
         String b = "b";
         String c = "c";
@@ -390,39 +452,66 @@ class TaskContainerImplTest {
         String j = "j";
 
         // a -> i creates a i->f->c->a->i cycle
-        installService(batchTaskInstaller, a, Mode.IDLE, new String[]{c, d}, new String[]{i});
-        installService(batchTaskInstaller, b, Mode.IDLE, new String[]{d, e, h}, null);
-        installService(batchTaskInstaller, c, Mode.IDLE, new String[]{f}, new String[]{a});
-        installService(batchTaskInstaller, d, Mode.IDLE, new String[]{e}, new String[]{a, b});
-        installService(batchTaskInstaller, e, Mode.IDLE, new String[]{g, h}, new String[]{d, b});
-        installService(batchTaskInstaller, f, Mode.IDLE, new String[]{i}, new String[]{c});
-        installService(batchTaskInstaller, g, Mode.IDLE, new String[]{i, j}, new String[]{e});
-        installService(batchTaskInstaller, h, Mode.IDLE, new String[]{j}, new String[]{e, b});
-        installService(batchTaskInstaller, i, Mode.IDLE, new String[]{a}, new String[]{f, g});
-        installService(batchTaskInstaller, j, Mode.IDLE, null, new String[]{g, h});
+        CreateGraphRequest request = CreateGraphRequest.builder()
+                .edge(new EdgeDTO(a, i))
+                .edge(new EdgeDTO(c, a))
+                .edge(new EdgeDTO(d, a))
+                .edge(new EdgeDTO(d, b))
+                .edge(new EdgeDTO(e, d))
+                .edge(new EdgeDTO(e, b))
+                .edge(new EdgeDTO(f, c))
+                .edge(new EdgeDTO(g, e))
+                .edge(new EdgeDTO(h, e))
+                .edge(new EdgeDTO(h, b))
+                .edge(new EdgeDTO(i, f))
+                .edge(new EdgeDTO(i, g))
+                .edge(new EdgeDTO(j, g))
+                .edge(new EdgeDTO(j, h))
+                .vertex(a, getMockTaskWithoutStart(a, Mode.IDLE))
+                .vertex(b, getMockTaskWithoutStart(b, Mode.IDLE))
+                .vertex(c, getMockTaskWithoutStart(c, Mode.IDLE))
+                .vertex(d, getMockTaskWithoutStart(d, Mode.IDLE))
+                .vertex(e, getMockTaskWithoutStart(e, Mode.IDLE))
+                .vertex(f, getMockTaskWithoutStart(f, Mode.IDLE))
+                .vertex(g, getMockTaskWithoutStart(g, Mode.IDLE))
+                .vertex(h, getMockTaskWithoutStart(h, Mode.IDLE))
+                .vertex(i, getMockTaskWithoutStart(i, Mode.IDLE))
+                .vertex(j, getMockTaskWithoutStart(j, Mode.IDLE))
+                .build();
 
-        assertThatThrownBy(batchTaskInstaller::commit)
+        assertThatThrownBy(() -> taskEndpoint.create(request))
                 .isInstanceOf(CircularDependencyException.class);
     }
 
-    private static void installService(BatchTaskInstaller batchTaskInstaller, String name, Mode mode, String[] dependants, String[] dependencies) {
-        installService(batchTaskInstaller, name, mode, dependants, dependencies, getMockAPI(), String.format("I'm an %s!", name));
+    /**
+     * Generates random DAG graph, and tests whether all Task have finished
+     *
+     * Great way to find running conditions
+     *
+     * Disabled for test determinism reasons
+     */
+    @RepeatedTest(100)
+    @Disabled
+    public void randomDAGTest() throws Exception {
+        CreateGraphRequest randomDAG = generateDAG(2, 10, 5, 10, 0.7F);
+        taskEndpoint.create(randomDAG);
+        waitTillServicesAre(State.SUCCESSFUL, randomDAG.getVertices().keySet().toArray(new String[0]));
     }
 
-    private static void installService(BatchTaskInstaller batchTaskInstaller, String name, Mode mode, String[] dependants, String[] dependencies, RemoteAPI remoteAPI, String payload) {
-        TaskBuilder builder = batchTaskInstaller.addTask(name)
-                .setPayload(payload)
-                .setInitialMode(mode)
-                .setRemoteEndpoints(remoteAPI);
-        if (dependants != null)
-            for (String dependant : dependants) {
-                builder.isRequiredBy(dependant);
-            }
-        if (dependencies != null)
-            for (String dependency : dependencies) {
-                builder.requires(dependency);
-            }
-        builder.install();
+    private CreateTaskDTO getMockTaskWithoutStart(String name, Mode mode) {
+        return getMockTask(name, mode, getMockDTOAPI(), String.format("I'm an %s!", name));
+    }
+    private CreateTaskDTO getMockTaskWithStart(String name, Mode mode) {
+        return getMockTask(name, mode, getStartingMockDTOAPI(), name);
+    }
+
+    private CreateTaskDTO getMockTask(String name, Mode mode, RemoteLinksDTO remoteLinks, String payload) {
+        return CreateTaskDTO.builder()
+                .name(name)
+                .controllerMode(mode)
+                .remoteLinks(remoteLinks)
+                .payload(payload)
+                .build();
     }
 
     private void assertCorrectServiceRelations(Task testing, int unfinishedDeps, String[] dependants, String[] dependencies) {
@@ -471,13 +560,18 @@ class TaskContainerImplTest {
         } while (!condition.get());
     }
 
-    private static RemoteAPI getMockAPI() {
-        return RemoteAPI.builder()
+    private static RemoteLinksDTO getMockDTOAPI() {
+        return RemoteLinksDTO.builder()
                 .startUrl("http://localhost:8081/test/accept")
                 .stopUrl("http://localhost:8081/test/stop")
                 .build();
     }
-
+    private static RemoteLinksDTO getStartingMockDTOAPI() {
+        return RemoteLinksDTO.builder()
+                .startUrl("http://localhost:8081/test/acceptAndStart")
+                .stopUrl("http://localhost:8081/test/stop")
+                .build();
+    }
     private static RemoteAPI getMockWithStart() {
         return RemoteAPI.builder()
                 .startUrl("http://localhost:8081/test/acceptAndStart")

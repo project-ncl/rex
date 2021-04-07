@@ -1,6 +1,5 @@
 package org.jboss.pnc.scheduler.core;
 
-import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.RetryException;
 import org.jboss.pnc.scheduler.core.api.TaskController;

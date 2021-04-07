@@ -8,16 +8,6 @@ import java.util.Set;
 
 public interface TaskProvider {
 
-    /**
-     * Creates and starts scheduling of a Set of services
-     *
-     * Services have to be new but they can have links to existing services and each other.
-     *
-     * @param services set of services to be scheduled
-     * @return list of created services
-     */
-    List<TaskDTO> create(List<TaskDTO> services);
-
     //todo document
     Set<TaskDTO> create(CreateGraphRequest request);
     /**

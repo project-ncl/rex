@@ -13,9 +13,9 @@ import org.jboss.pnc.scheduler.common.exceptions.CircularDependencyException;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.scheduler.common.exceptions.InvalidTaskDeclarationException;
 import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
 import org.jboss.pnc.scheduler.common.enums.Mode;
+import org.jboss.pnc.scheduler.core.api.TaskTarget;
 import org.jboss.pnc.scheduler.core.mapper.InitialTaskMapper;
 import org.jboss.pnc.scheduler.core.model.Edge;
 import org.jboss.pnc.scheduler.core.model.InitialTask;
@@ -24,11 +24,6 @@ import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
@@ -40,14 +35,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static javax.transaction.Transactional.TxType.MANDATORY;
-import static org.jboss.pnc.scheduler.core.TaskControllerImpl.newDependant;
-import static org.jboss.pnc.scheduler.core.TaskControllerImpl.newDependency;
 
 @ApplicationScoped
-public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
+public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     @ConfigProperty(name = "container.name", defaultValue = "undefined")
     String deploymentName;
@@ -66,6 +58,11 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
     public TaskContainerImpl(TaskController controller, InitialTaskMapper initialMapper) {
         this.controller = controller;
         this.initialMapper = initialMapper;
+    }
+
+    @Override
+    public void removeTask(String task) {
+        throw new UnsupportedOperationException("Currently not implemented");
     }
 
     // FIXME implement
@@ -110,113 +107,6 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
     }
 
     @Override
-    protected void install(BatchTaskInstallerImpl taskBuilder) {
-        try {
-            installInternal(taskBuilder);
-        } catch (RollbackException e) {
-            throw new IllegalStateException("Installation rolled back.", e);
-        } catch (HeuristicMixedException e) {
-            throw new IllegalStateException(
-                    "Part of transaction was committed and part rollback. Data corruption possible.",
-                    e);
-        } catch (SystemException | NotSupportedException | HeuristicRollbackException e) {
-            throw new IllegalStateException(
-                    "Cannot start Transaction, unexpected error was thrown while committing transactions",
-                    e);
-        }
-    }
-
-    private void installInternal(BatchTaskInstallerImpl taskBuilder) throws SystemException, NotSupportedException,
-            HeuristicRollbackException, HeuristicMixedException, RollbackException {
-        boolean joined = joinOrBeginTransaction();
-        try {
-            Set<String> installed = taskBuilder.getInstalledTasks();
-
-            for (TaskBuilderImpl declaration : taskBuilder.getTaskDeclarations()) {
-
-                Task newTask = declaration.toPartiallyFilledTask();
-                for (String dependant : declaration.getDependants()) {
-                    if (installed.contains(dependant)) {
-                        // get existing dependant
-                        MetadataValue<Task> dependantTaskMetadata = getWithMetadata(dependant);
-                        if (dependantTaskMetadata == null) {
-                            throw new TaskNotFoundException(
-                                    "Task " + dependant + " was not found while installing Batch");
-                        }
-                        Task dependantTask = dependantTaskMetadata.getValue();
-
-                        // add new task as dependency to existing dependant
-                        newDependency(dependantTask, newTask);
-
-                        // update the dependency
-                        if (!getCache()
-                                .replaceWithVersion(dependant, dependantTask, dependantTaskMetadata.getVersion())) {
-                            throw new ConcurrentUpdateException(
-                                    "Task " + dependant + " was remotely updated during the transaction");
-                        }
-                    }
-                    // dependants are already initialized in SBImpl::toPartiallyFilledTask
-                }
-
-                int unfinishedDependencies = 0;
-                for (String dependency : declaration.getDependencies()) {
-                    if (installed.contains(dependency)) {
-                        // get existing dependency
-                        MetadataValue<Task> dependencyTaskMetadata = getWithMetadata(dependency);
-                        if (dependencyTaskMetadata == null) {
-                            throw new TaskNotFoundException(
-                                    "Task " + dependency + " was not found while installing Batch");
-                        }
-
-                        // add new Task as dependant to existing dependency
-                        Task dependencyTask = dependencyTaskMetadata.getValue();
-                        newDependant(dependencyTask, newTask);
-
-                        // update the dependency
-                        if (!getCache()
-                                .replaceWithVersion(dependency, dependencyTask, dependencyTaskMetadata.getVersion())) {
-                            throw new ConcurrentUpdateException(
-                                    "Task " + dependency + " was remotely updated during the transaction");
-                        }
-                        if (dependencyTask.getState().isFinal()) {
-                            continue; // skip, unfinishedDep inc not needed
-                        }
-                    }
-                    unfinishedDependencies++;
-                }
-                newTask.setUnfinishedDependencies(unfinishedDependencies);
-
-                Task previousValue = getCache().withFlags(Flag.FORCE_RETURN_VALUE)
-                        .putIfAbsent(newTask.getName(), newTask);
-                if (previousValue != null) {
-                    throw new InvalidTaskDeclarationException("Task " + newTask.getName() + " already exists.");
-                }
-
-            }
-            // check for cycles using DFS
-            hasCycle(
-                    taskBuilder.getTaskDeclarations()
-                            .stream()
-                            .map(TaskBuilderImpl::getName)
-                            .collect(Collectors.toSet()));
-            // All services should be saved, now start up ones declared ACTIVE
-            for (TaskBuilderImpl taskDeclaration : taskBuilder.getTaskDeclarations()) {
-                String name = taskDeclaration.getName();
-                if (taskDeclaration.getInitialMode() == Mode.ACTIVE) {
-                    controller.setMode(name, Mode.ACTIVE);
-                }
-            }
-            if (!joined)
-                getTransactionManager().commit();
-        } catch (RuntimeException e) {
-            // rollback on failure
-            if (!joined)
-                getTransactionManager().rollback();
-            throw e;
-        }
-    }
-
-    @Override
     public List<Task> getTask(boolean waiting, boolean running, boolean finished) {
         if (!waiting && !running && !finished)
             return Collections.emptyList();
@@ -240,18 +130,6 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
 
     public String getBaseUrl() {
         return baseUrl;
-    }
-
-    /**
-     *
-     * @return returns true if joined
-     */
-    private boolean joinOrBeginTransaction() throws SystemException, NotSupportedException {
-        if (getTransactionManager().getTransaction() == null) {
-            getTransactionManager().begin();
-            return false;
-        }
-        return true;
     }
 
     private void hasCycle(Set<String> taskIds) throws CircularDependencyException {
@@ -298,11 +176,6 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
         destinationSet.add(name);
     }
 
-    // ###################
-    // #### V2 ####
-    // ###################
-
-    @Override
     @Transactional(MANDATORY)
     public Set<Task> install(TaskGraph taskGraph) {
         Set<Edge> edges = taskGraph.getEdges();
@@ -352,7 +225,7 @@ public class TaskContainerImpl extends TaskTargetImpl implements TaskContainer {
                 toReturn.add(task);
             } else {
                 // we have to get the previous version
-                MetadataValue<Task> versioned = getCache().getWithMetadata(entry.getKey());
+                MetadataValue<Task> versioned = getWithMetadata(entry.getKey());
                 // could be optimized by using #putAll method of remote cache (only 'else' part could be; the 'then'
                 // part required FORCE_RETURN_VALUE flag which is not available in putAll)
                 boolean success = getCache().replaceWithVersion(entry.getKey(), versioned.getValue(), versioned.getVersion());
