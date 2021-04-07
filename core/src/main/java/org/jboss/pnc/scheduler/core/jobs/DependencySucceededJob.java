@@ -1,18 +1,20 @@
-package org.jboss.pnc.scheduler.core.tasks;
+package org.jboss.pnc.scheduler.core.jobs;
+
+import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.event.TransactionPhase;
 import java.util.Set;
 
-public class DependencyCancelledJob extends DependentControllerJob {
+public class DependencySucceededJob extends DependentControllerJob {
 
     private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
 
-    public DependencyCancelledJob(Set<String> dependents) {
+    public DependencySucceededJob(Set<String> dependents) {
         super(dependents, INVOCATION_PHASE);
     }
 
     @Override
     void inform(String dependentName) {
-        dependentAPI.dependencyCancelled(dependentName);
+        dependentAPI.dependencySucceeded(dependentName);
     }
 }

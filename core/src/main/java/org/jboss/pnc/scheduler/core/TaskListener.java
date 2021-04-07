@@ -1,6 +1,6 @@
 package org.jboss.pnc.scheduler.core;
 
-import org.jboss.pnc.scheduler.core.tasks.ControllerJob;
+import org.jboss.pnc.scheduler.core.jobs.ControllerJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

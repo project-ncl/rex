@@ -1,4 +1,4 @@
-package org.jboss.pnc.scheduler.core.tasks;
+package org.jboss.pnc.scheduler.core.jobs;
 
 import org.jboss.pnc.scheduler.core.RemoteEntityClient;
 import org.jboss.pnc.scheduler.model.Task;

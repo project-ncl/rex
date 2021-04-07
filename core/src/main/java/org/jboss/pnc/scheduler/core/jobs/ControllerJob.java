@@ -1,4 +1,4 @@
-package org.jboss.pnc.scheduler.core.tasks;
+package org.jboss.pnc.scheduler.core.jobs;
 
 import javax.enterprise.event.TransactionPhase;
 
