@@ -13,7 +13,7 @@
     <module>model</module>
   </modules>
   <properties>
-    <quarkus.version>1.10.3.Final</quarkus.version>
+    <quarkus.version>1.10.5.Final</quarkus.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
@@ -25,7 +25,7 @@
     <slf4j.version>1.7.28</slf4j.version>
     <assertj.version>3.12.2</assertj.version>
     <restassured.version>4.1.1</restassured.version>
-    <mapstruct.version>1.4.1.Final</mapstruct.version>
+    <mapstruct.version>1.4.2.Final</mapstruct.version>
     <testcontainers.version>1.14.3</testcontainers.version>
     <jackson.version>2.11.2</jackson.version>
   </properties>
