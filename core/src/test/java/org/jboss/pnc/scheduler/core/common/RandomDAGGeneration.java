@@ -1,4 +1,4 @@
-package org.jboss.pnc.scheduler.core.generation;
+package org.jboss.pnc.scheduler.core.common;
 
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.dto.CreateTaskDTO;
@@ -86,9 +86,13 @@ public class RandomDAGGeneration {
                 .build();
     }
 
+    /**
+     * Generated output that can be pasted into http://dagitty.net/dags.html
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         for (int i = 0; i < 1; i++) {
-            System.out.println("HELLO");
             CreateGraphRequest request = generateDAG(1, 5, 5, 10, 0.7F);
             System.out.println(request.toString());
             for (String s : request.getVertices().keySet()) {
@@ -98,9 +102,6 @@ public class RandomDAGGeneration {
             for (EdgeDTO edge : request.getEdges()) {
                 System.out.println(edge.getSource() + ' ' + edge.getTarget());
             }
-            System.out.println("HELLO");
         }
-
-
     }
 }
