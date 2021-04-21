@@ -16,6 +16,7 @@ public interface InitialTaskMapper {
     @Mapping(target = "unfinishedDependencies", constant = "0")
     @Mapping(target = "stopFlag", constant = "NONE")
     @Mapping(target = "state", constant = "NEW")
+    @Mapping(target = "starting", constant = "false")
     // Singular additions
     @Mapping(target = "serverResponse", ignore = true)
     @Mapping(target = "dependant", ignore = true)

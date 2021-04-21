@@ -9,12 +9,14 @@ import org.jboss.pnc.scheduler.core.api.DependentMessenger;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
+import org.jboss.pnc.scheduler.core.jobs.DecreaseCounterJob;
 import org.jboss.pnc.scheduler.core.jobs.InvokeStartJob;
 import org.jboss.pnc.scheduler.core.jobs.InvokeStopJob;
 import org.jboss.pnc.scheduler.core.jobs.ControllerJob;
 import org.jboss.pnc.scheduler.core.jobs.DependencyCancelledJob;
 import org.jboss.pnc.scheduler.core.jobs.DependencyStoppedJob;
 import org.jboss.pnc.scheduler.core.jobs.DependencySucceededJob;
+import org.jboss.pnc.scheduler.core.jobs.PokeQueueJob;
 import org.jboss.pnc.scheduler.model.ServerResponse;
 import org.jboss.pnc.scheduler.model.Task;
 import org.slf4j.Logger;
@@ -35,9 +37,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskControllerImpl.class);
 
-    private TaskContainerImpl container;
+    private final TaskContainerImpl container;
 
-    private Event<ControllerJob> scheduleJob;
+    private final Event<ControllerJob> scheduleJob;
 
     public TaskControllerImpl(TaskContainerImpl container, Event<ControllerJob> scheduleJob) {
         this.container = container;
@@ -110,11 +112,11 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
         switch (transition) {
             case NEW_to_WAITING:
-                //no tasks
+            case NEW_to_ENQUEUED:
+            case WAITING_to_ENQUEUED:
                 break;
 
-            case NEW_to_STARTING:
-            case WAITING_to_STARTING:
+            case ENQUEUED_to_STARTING:
                 tasks.add(new InvokeStartJob(task));
                 break;
 
@@ -125,10 +127,13 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
             case STOPPING_to_STOPPED:
                 tasks.add(new DependencyCancelledJob(task));
+                tasks.add(new DecreaseCounterJob());
+                tasks.add(new PokeQueueJob());
                 break;
 
             case NEW_to_STOPPED:
             case WAITING_to_STOPPED:
+            case ENQUEUED_to_STOPPED:
                 switch (task.getStopFlag()) {
                     case CANCELLED:
                         tasks.add(new DependencyCancelledJob(task));
@@ -136,12 +141,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
                     case DEPENDENCY_FAILED:
                         tasks.add(new DependencyStoppedJob(task));
                         break;
-                };
+                }
+                break;
 
             case UP_to_FAILED:
             case STARTING_to_START_FAILED:
             case STOPPING_to_STOP_FAILED:
                 tasks.add(new DependencyStoppedJob(task));
+                tasks.add(new DecreaseCounterJob());
+                tasks.add(new PokeQueueJob());
                 break;
 
             case STARTING_to_UP:
@@ -150,6 +158,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
             case UP_to_SUCCESSFUL:
                 tasks.add(new DependencySucceededJob(task));
+                tasks.add(new DecreaseCounterJob());
+                tasks.add(new PokeQueueJob());
                 break;
             default:
                 throw new IllegalStateException("Controller returned unknown transition: " + transition);
@@ -164,16 +174,22 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
             case NEW: {
                 if (shouldStop(task))
                     return Transition.NEW_to_STOPPED;
-                if (shouldStart(task))
-                    return Transition.NEW_to_STARTING;
+                if (shouldQueue(task))
+                    return Transition.NEW_to_ENQUEUED;
                 if (mode == Mode.ACTIVE && task.getUnfinishedDependencies() > 0)
                     return Transition.NEW_to_WAITING;
             }
             case WAITING: {
                 if (shouldStop(task))
                     return Transition.WAITING_to_STOPPED;
+                if (shouldQueue(task))
+                    return Transition.WAITING_to_ENQUEUED;
+            }
+            case ENQUEUED: {
+                if (shouldStop(task))
+                    return Transition.ENQUEUED_to_STOPPED;
                 if (shouldStart(task))
-                    return Transition.WAITING_to_STARTING;
+                    return Transition.ENQUEUED_to_STARTING;
             }
             case STARTING: {
                 if (task.getStopFlag() == StopFlag.CANCELLED)
@@ -213,12 +229,16 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         return null;
     }
 
-    private boolean shouldStart(Task task) {
+    private boolean shouldQueue(Task task) {
         return task.getControllerMode() == Mode.ACTIVE && task.getUnfinishedDependencies() <= 0;
     }
 
     private boolean shouldStop(Task task) {
         return task.getStopFlag() != StopFlag.NONE;
+    }
+
+    private boolean shouldStart(Task task) {
+        return task.getStarting();
     }
 
     private static void assertCanAcceptDependencies(Task task) {
@@ -231,6 +251,12 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
     @Override
     @Transactional(MANDATORY)
     public void setMode(String name, Mode mode) {
+        setMode(name, mode, false);
+    }
+
+    @Override
+    @Transactional(MANDATORY)
+    public void setMode(String name, Mode mode, boolean pokeQueue) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
         Task task = taskMetadata.getValue();
@@ -247,6 +273,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         }
 
         List<ControllerJob> tasks = transition(task);
+        if (pokeQueue) {
+            tasks.add(new PokeQueueJob());
+        }
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
@@ -280,7 +309,6 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
     private void doExecute(List<ControllerJob> tasks) {
         for (ControllerJob task : tasks) {
-//            task.run();
             scheduleJob.fire(task);
         }
     }
@@ -313,6 +341,27 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
     @Override
     @Transactional(MANDATORY)
+    public void dequeue(String name) {
+        MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
+        assertNotNull(taskMetadata, new TaskNotFoundException("Service " + name + "not found"));
+        Task task = taskMetadata.getValue();
+
+        if (task.getState() == State.ENQUEUED) {
+            task.setStarting(true);
+        } else {
+            throw new IllegalStateException("Attempting to dequeue while not in a state to do. Service: " + task.getName() + " State: " + task.getState());
+        }
+
+        List<ControllerJob> tasks = transition(task);
+        doExecute(tasks);
+        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
+        if (!pushed) {
+            throw new ConcurrentUpdateException("Service " + task.getName() + " was remotely updated during the transaction");
+        }
+    }
+
+    @Override
+    @Transactional(MANDATORY)
     public void dependencySucceeded(String name) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
@@ -328,7 +377,6 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         if (!pushed) {
             throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
-
     }
 
     @Override

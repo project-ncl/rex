@@ -18,17 +18,23 @@ public enum Transition {
      */
     NEW_to_WAITING(State.NEW, State.WAITING),
     /**
-     * Created task is set to Mode.ACTIVE, has no unfinished dependencies and Container has room for an active task.
+     * Created task is set to Mode.ACTIVE and has no unfinished dependencies.
      *
-     * Controller invokes async http client to start execution of remote task.
+     * Controller places the Task into a queue.
      */
-    NEW_to_STARTING(State.NEW, State.STARTING),
+    NEW_to_ENQUEUED(State.NEW, State.ENQUEUED),
     /**
-     * Controller has dependencies successfully finished and Container had room for an active task.
+     * Controller has dependencies successfully finished.
      *
      * Controller invokes async http client to start execution of remote task.
      */
-    WAITING_to_STARTING(State.WAITING, State.STARTING),
+    WAITING_to_ENQUEUED(State.WAITING, State.ENQUEUED),
+    /**
+     * Container has found a room to start the Task.
+     *
+     * Controller invokes async http client to start execution of remote task.
+     */
+    ENQUEUED_to_STARTING(State.ENQUEUED, State.STARTING),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
@@ -63,6 +69,12 @@ public enum Transition {
      * Controller informs its dependants that it stopped.
      */
     WAITING_to_STOPPED(State.WAITING, State.STOPPED),
+    /**
+     * User has set Controllers mode to Mode.CANCEL.
+     *
+     * Controller informs its dependants that it stopped.
+     */
+    ENQUEUED_to_STOPPED(State.ENQUEUED, State.STOPPED),
     /**
      * Controller received positive callback that remote task has successfully started its execution.
      */

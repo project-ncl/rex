@@ -93,6 +93,9 @@ public class Task {
     @Getter(onMethod_ = @ProtoField(number = 10))
     private List<ServerResponse> serverResponses = new ArrayList<>();
 
+    @Getter(onMethod_ = @ProtoField(number = 11, defaultValue = "false"))
+    private Boolean starting;
+
     public void incUnfinishedDependencies() {
         unfinishedDependencies++;
     }

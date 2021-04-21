@@ -16,12 +16,22 @@ import org.jboss.pnc.scheduler.common.enums.State;
  */
 public interface TaskController {
     /**
-     * Sets mode of a Task. Needs to be called under a lock.
+     * Sets mode of a Task. Needs to be called in a transaction.
      *
      * @param name id of the Task
      * @param mode the mode
      */
     void setMode(String name, Mode mode);
+
+    /**
+     * Sets mode of a Task. Needs to be called in a transaction. Additionally pokes queue
+     * after transaction succeeds if specified.
+     *
+     * @param name id of the Task
+     * @param mode the mode
+     * @param pokeQueue should pokeQueue
+     */
+    void setMode(String name, Mode mode, boolean pokeQueue);
 
     /**
      * Method used for positive callback. Needs to be called in a transaction.
@@ -39,4 +49,5 @@ public interface TaskController {
      */
     void fail(String name);
 
+    void dequeue(String name);
 }
