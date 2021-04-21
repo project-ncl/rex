@@ -19,7 +19,7 @@ public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
     @Mapping(target = "links", source = "remoteEndpoints")
     @Mapping(target = "mode", source = "controllerMode")
     @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "serverResponses", "dependant",
-            "dependency", "serverResponse", "stringName", "stringDependencies", "stringDependants"})
+            "dependency", "serverResponse", "stringName", "stringDependencies", "stringDependants", "starting"})
     TaskDTO toDTO(Task dbEntity);
 
     @Override
@@ -31,17 +31,7 @@ public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
     @Mapping(target = "dependant", ignore = true)
     @Mapping(target = "dependency", ignore = true)
     @Mapping(target = "stopFlag", ignore = true)
+    @Mapping(target = "starting", ignore = true)
     @BeanMapping(ignoreUnmappedSourceProperties = {"stopFlag"})
     Task toDB(TaskDTO dtoEntity);
-
-    default Collection<Task> contextualToDB(Collection<TaskDTO> dtoCollection){
-        Map<String, TaskDTO> dtoMap = dtoCollection.stream().collect(Collectors.toMap(TaskDTO::getName, identity()));
-        for (TaskDTO taskDTO : dtoCollection) {
-            for (String dependency : taskDTO.getDependencies()) {
-                TaskDTO task = dtoMap.get(dependency);
-                if (task != null) task.getDependants().add(taskDTO.getName());
-            }
-        }
-        return dtoMap.values().stream().map(this::toDB).collect(Collectors.toSet());
-    }
 }

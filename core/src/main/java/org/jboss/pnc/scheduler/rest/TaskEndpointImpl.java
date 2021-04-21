@@ -3,7 +3,6 @@ package org.jboss.pnc.scheduler.rest;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
-import org.jboss.pnc.scheduler.dto.requests.CreateTaskRequest;
 import org.jboss.pnc.scheduler.facade.api.TaskProvider;
 import org.jboss.pnc.scheduler.rest.api.TaskEndpoint;
 import org.jboss.pnc.scheduler.rest.parameters.TaskFilterParameters;
@@ -24,11 +23,6 @@ public class TaskEndpointImpl implements TaskEndpoint {
     public TaskEndpointImpl(TaskProvider taskProvider) {
         this.taskProvider = taskProvider;
     }
-
-//    @Override
-//    public List<TaskDTO> create(@NotNull CreateTaskRequest request) {
-//        return taskProvider.create(request.getTasks());
-//    }
 
     @Override
     @Transactional
@@ -57,9 +51,4 @@ public class TaskEndpointImpl implements TaskEndpoint {
     public void cancel(String taskID) {
         taskProvider.cancel(taskID);
     }
-
- /*   @Override
-    public List<TaskDTO> getGraph(String serviceName) {
-        return serviceProvider.getAllRelated(serviceName);
-    }*/
 }

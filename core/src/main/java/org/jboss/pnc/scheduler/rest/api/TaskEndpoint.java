@@ -9,7 +9,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
-import org.jboss.pnc.scheduler.dto.requests.CreateTaskRequest;
 import org.jboss.pnc.scheduler.dto.responses.ErrorResponse;
 import org.jboss.pnc.scheduler.dto.responses.TaskListResponse;
 import org.jboss.pnc.scheduler.rest.parameters.TaskFilterParameters;
