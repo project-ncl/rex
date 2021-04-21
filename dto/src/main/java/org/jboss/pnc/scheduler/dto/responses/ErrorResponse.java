@@ -5,9 +5,9 @@ import lombok.Data;
 @Data
 public class ErrorResponse {
 
-    private String errorType;
+    public String errorType;
 
-    private String errorMessage;
+    public String errorMessage;
 
     public ErrorResponse(Exception e) {
         this.errorType = e.getClass().getSimpleName();

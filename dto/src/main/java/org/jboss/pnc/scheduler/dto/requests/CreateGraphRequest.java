@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateGraphRequest {
