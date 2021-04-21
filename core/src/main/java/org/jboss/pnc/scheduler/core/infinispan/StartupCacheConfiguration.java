@@ -25,10 +25,22 @@ public class StartupCacheConfiguration {
         try {
             cache = cacheManager.getCache("near-tasks", TransactionMode.NON_DURABLE_XA);
         } catch (Exception e) {
-            throw new IllegalStateException("Invalid configuration cannot get TransactionManager, ", e);
+            throw new IllegalStateException("Invalid tasks configuration cannot get TransactionManager, ", e);
         }
         if (cache == null) {
-            throw new IllegalStateException("Cannot retrieve needed cache. Check your Infinispan server configuration.");
+            log.error("near-tasks cache is null");
+//            throw new IllegalStateException("Cannot retrieve needed tasks cache. Check your Infinispan server configuration.");
+        }
+
+        RemoteCache counter;
+        try {
+            counter = cacheManager.getCache("counter", TransactionMode.NON_DURABLE_XA);
+        } catch (Exception e) {
+            throw new IllegalStateException("Invalid configuration cannot get TransactionManager, ", e);
+        }
+        if (counter == null) {
+            log.error("counter cache is null");
+//            throw new IllegalStateException("Cannot retrieve needed cache. Check your Infinispan server configuration.");
         }
 //        cache.addClientListener(new CacheListeners());
     }
