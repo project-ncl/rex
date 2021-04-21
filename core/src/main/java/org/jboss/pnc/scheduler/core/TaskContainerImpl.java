@@ -16,6 +16,8 @@ import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.core.api.TaskTarget;
+import org.jboss.pnc.scheduler.core.jobs.ControllerJob;
+import org.jboss.pnc.scheduler.core.jobs.PokeQueueJob;
 import org.jboss.pnc.scheduler.core.mapper.InitialTaskMapper;
 import org.jboss.pnc.scheduler.core.model.Edge;
 import org.jboss.pnc.scheduler.core.model.InitialTask;
@@ -123,7 +125,19 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                     EnumSet.of(State.STOPPED, State.SUCCESSFUL, State.FAILED, State.START_FAILED, State.START_FAILED));
         }
         QueryFactory factory = Search.getQueryFactory(tasks);
-        Query query = factory.from(Task.class).having("state").containsAny(states).build();
+        Query<Task> query = factory.from(Task.class).having("state").containsAny(states).build();
+
+        return query.list();
+    }
+
+    @Override
+    public List<Task> getEnqueuedTasks(long limit) {
+        QueryFactory factory = Search.getQueryFactory(tasks);
+        Query<Task> query = factory.from(Task.class)
+                .having("state")
+                .contains(State.ENQUEUED)
+                .maxResults((int) limit)
+                .build();
 
         return query.list();
     }
