@@ -1,8 +1,11 @@
 package org.jboss.pnc.scheduler.core;
 
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.scheduler.common.exceptions.RetryException;
 import org.jboss.pnc.scheduler.core.api.TaskController;
+import org.jboss.pnc.scheduler.core.counter.Counter;
+import org.jboss.pnc.scheduler.core.counter.Running;
 import org.jboss.pnc.scheduler.model.requests.StartRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +22,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Collection;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Path("/test")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -30,15 +34,25 @@ public class MockEndpoint {
     @Inject
     TaskController controller;
 
-    ExecutorService executor = Executors.newFixedThreadPool(4);
+    @Inject
+    ManagedExecutor executor;
 
     @Inject
     TransactionManager tm;
 
+    @Inject
+    @Running
+    Counter running;
+
+    private final Queue<Long> record = new ConcurrentLinkedQueue<>();
+
+    private boolean shouldRecord = false;
+
     @POST
     @Path("/accept")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response accept(String request){
+    public Response accept(String request) {
+        record();
         logger.debug("Mock 'accept' endpoint received a request: " + request);
         return Response.ok().build();
     }
@@ -46,7 +60,8 @@ public class MockEndpoint {
     @POST
     @Path("/stop")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response stop(String request){
+    public Response stop(String request) {
+        record();
         logger.info("Mock 'stop' endpoint received a request: " + request);
         return Response.ok().build();
     }
@@ -54,7 +69,8 @@ public class MockEndpoint {
     @POST
     @Path("/acceptAndStart")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response acceptAndStart(StartRequest request){
+    public Response acceptAndStart(StartRequest request) {
+        record();
         logger.info("Mock 'acceptAndStart' endpoint received a request from: " + request.getPayload());
         executor.submit(() -> retry(10, () -> invokeAccept(request)));
         return Response.ok().build();
@@ -95,5 +111,21 @@ public class MockEndpoint {
             }
         }
         throw new RetryException("Retrying didn't make effect.");
+    }
+
+    private void record() {
+        if (shouldRecord) {
+            record.offer(running.getValue());
+        }
+    }
+
+    public void startRecordingQueue() {
+        record.clear();
+        shouldRecord = true;
+    }
+
+    public Collection<Long> stopRecording() {
+        shouldRecord = false;
+        return record;
     }
 }
