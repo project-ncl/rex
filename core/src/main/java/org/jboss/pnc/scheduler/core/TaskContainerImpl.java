@@ -25,6 +25,7 @@ import org.jboss.pnc.scheduler.core.model.TaskGraph;
 import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.transaction.TransactionManager;
 import javax.transaction.Transactional;
@@ -56,10 +57,13 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     private final InitialTaskMapper initialMapper;
 
+    private final Event<ControllerJob> jobEvent;
+
     @Inject
-    public TaskContainerImpl(TaskController controller, InitialTaskMapper initialMapper) {
+    public TaskContainerImpl(TaskController controller, InitialTaskMapper initialMapper, Event<ControllerJob> jobEvent) {
         this.controller = controller;
         this.initialMapper = initialMapper;
+        this.jobEvent = jobEvent;
     }
 
     @Override
@@ -115,7 +119,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
         List<State> states = new ArrayList<>();
         if (waiting) {
-            states.addAll(EnumSet.of(State.NEW, State.WAITING));
+            states.addAll(EnumSet.of(State.NEW, State.WAITING, State.ENQUEUED));
         }
         if (running) {
             states.addAll(EnumSet.of(State.UP, State.STARTING, State.STOPPING));
@@ -221,6 +225,10 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             if (task.getControllerMode() == Mode.ACTIVE)
                 controller.setMode(task.getName(), Mode.ACTIVE);
         });
+
+        // poke the queue to start new ENQUEUED tasks if there is room (NOTE: queue is poked after current transaction
+        // succeeds
+        jobEvent.fire(new PokeQueueJob());
         return newTasks;
     }
 

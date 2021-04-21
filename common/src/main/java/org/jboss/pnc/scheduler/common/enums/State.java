@@ -21,44 +21,49 @@ public enum State {
     @ProtoEnumValue(number = 1)
     WAITING(StateGroup.IDLE),
     /**
-     * Controller requests remote Task to start and waits for callback to approve that remote job successfully started.
+     * Task is queued and can be started at any time.
      */
     @ProtoEnumValue(number = 2)
+    ENQUEUED(StateGroup.QUEUED),
+    /**
+     * Controller requests remote Task to start and waits for callback to approve that remote job successfully started.
+     */
+    @ProtoEnumValue(number = 3)
     STARTING(StateGroup.RUNNING),
     /**
      * Remote Task successfully started and is running.
      */
-    @ProtoEnumValue(number = 3)
+    @ProtoEnumValue(number = 4)
     UP(StateGroup.RUNNING),
     /**
      * Controller requests remote Task to stop and waits for a callback to approve that remote job successfully stopped.
      */
-    @ProtoEnumValue(number = 4)
+    @ProtoEnumValue(number = 5)
     STOPPING(StateGroup.RUNNING),
     /**
      * Received callback that remote Task failed to start.
      */
-    @ProtoEnumValue(number = 5)
+    @ProtoEnumValue(number = 6)
     START_FAILED(StateGroup.FINAL),
     /**
      * Received callback that remote Task failed to stop.
      */
-    @ProtoEnumValue(number = 6)
+    @ProtoEnumValue(number = 7)
     STOP_FAILED(StateGroup.FINAL),
     /**
      * Remote Task failed during execution.
      */
-    @ProtoEnumValue(number = 7)
+    @ProtoEnumValue(number = 8)
     FAILED(StateGroup.FINAL),
     /**
      * Remote Task ended successfully.
      */
-    @ProtoEnumValue(number = 8)
+    @ProtoEnumValue(number = 9)
     SUCCESSFUL(StateGroup.FINAL),
     /**
      * Remote Task stopped successfully.
      */
-    @ProtoEnumValue(number = 9)
+    @ProtoEnumValue(number = 10)
     STOPPED(StateGroup.FINAL);
 
     private final StateGroup type;
@@ -81,5 +86,9 @@ public enum State {
 
     public boolean isFinal() {
         return type.equals(StateGroup.FINAL);
+    }
+
+    public boolean isQueued() {
+        return type.equals(StateGroup.QUEUED);
     }
 }
