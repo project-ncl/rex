@@ -42,6 +42,8 @@ public interface TaskRegistry {
      */
     List<Task> getTask(boolean waiting, boolean running, boolean finished);
 
+    List<Task> getEnqueuedTasks(long limit);
+
     /**
      * Returns all task identifiers in clustered container.
      *

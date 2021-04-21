@@ -13,17 +13,20 @@ public class TransactionalTaskController implements TaskController {
 
     TaskController delegate;
 
-    TransactionManager manager;
-
-    public TransactionalTaskController(TaskController controller, TransactionManager manager) {
+    public TransactionalTaskController(TaskController controller) {
         this.delegate = controller;
-        this.manager = manager;
     }
 
     @Override
     @Transactional
     public void setMode(String name, Mode mode) {
         delegate.setMode(name, mode);
+    }
+
+    @Override
+    @Transactional
+    public void setMode(String name, Mode mode, boolean pokeQueue) {
+        delegate.setMode(name, mode, pokeQueue);
     }
 
     @Override
@@ -36,5 +39,11 @@ public class TransactionalTaskController implements TaskController {
     @Transactional
     public void fail(String name) {
         delegate.fail(name);
+    }
+
+    @Override
+    @Transactional
+    public void dequeue(String name) {
+        delegate.dequeue(name);
     }
 }
