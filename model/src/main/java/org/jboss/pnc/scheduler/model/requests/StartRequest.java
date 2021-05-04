@@ -9,7 +9,7 @@ import lombok.extern.jackson.Jacksonized;
 @Getter
 public class StartRequest {
 
-    private final String payload;
-
     private final String callback;
+
+    private final Object payload;
 }
