@@ -4,15 +4,12 @@ import org.jboss.pnc.scheduler.common.enums.Method;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.dto.CreateTaskDTO;
 import org.jboss.pnc.scheduler.dto.EdgeDTO;
-import org.jboss.pnc.scheduler.dto.HeaderDTO;
 import org.jboss.pnc.scheduler.dto.HttpRequest;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.model.Request;
 import org.jboss.pnc.scheduler.rest.parameters.TaskFilterParameters;
 
-import java.util.List;
-
-public class TestData {
+public class TestDataV2 {
 
     public static CreateTaskDTO getMockTaskWithoutStart(String name, Mode mode) {
         return getMockTaskWithoutStart(name, mode, false);
@@ -75,7 +72,7 @@ public class TestData {
 
     public static HttpRequest getRequestWithStart(String payload) {
         return HttpRequest.builder()
-                .url("http://localhost:8081/test/acceptAndStart")
+                .url("http://localhost:8081/v2/test/acceptAndStart")
                 .method(Method.POST)
                 .attachment(payload)
                 .build();
@@ -86,13 +83,12 @@ public class TestData {
                 .method(Method.POST)
                 .attachment("hello")
                 .url("http://localhost:8081/transition/record")
-                .headers(List.of(HeaderDTO.builder().name("Content-Type").value("application/json").build()))
                 .build();
     }
 
     public static Request getEndpointWithStart(String payload) {
         return Request.builder()
-                .url("http://localhost:8081/test/acceptAndStart")
+                .url("http://localhost:8081/v2/test/acceptAndStart")
                 .method(Method.POST)
                 .attachment(payload)
                 .build();
@@ -145,6 +141,44 @@ public class TestData {
                 .vertex(h, withStart ? getMockTaskWithStart(h, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(h, Mode.IDLE, withNotifications))
                 .vertex(i, withStart ? getMockTaskWithStart(i, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(i, Mode.IDLE, withNotifications))
                 .vertex(j, withStart ? getMockTaskWithStart(j, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(j, Mode.IDLE, withNotifications))
+                .build();
+    }
+
+    public static CreateGraphRequest getComplexGraphWithoutEnd(boolean withStart, boolean withNotifications) {
+        String a = "a";
+        String b = "b";
+        String c = "c";
+        String d = "d";
+        String e = "e";
+        String f = "f";
+        String g = "g";
+        String h = "h";
+        String i = "i";
+        String j = "j";
+        return CreateGraphRequest.builder()
+                .edge(new EdgeDTO(c, a))
+                .edge(new EdgeDTO(d, a))
+                .edge(new EdgeDTO(d, b))
+                .edge(new EdgeDTO(e, d))
+                .edge(new EdgeDTO(e, b))
+                .edge(new EdgeDTO(f, c))
+                .edge(new EdgeDTO(g, e))
+                .edge(new EdgeDTO(h, e))
+                .edge(new EdgeDTO(h, b))
+                .edge(new EdgeDTO(i, f))
+                .edge(new EdgeDTO(i, g))
+                .edge(new EdgeDTO(j, g))
+                .edge(new EdgeDTO(j, h))
+                .vertex(a, withStart ? getMockTaskWithoutStart(a, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(a, Mode.IDLE, withNotifications))
+                .vertex(b, withStart ? getMockTaskWithoutStart(b, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(b, Mode.IDLE, withNotifications))
+                .vertex(c, withStart ? getMockTaskWithoutStart(c, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(c, Mode.IDLE, withNotifications))
+                .vertex(d, withStart ? getMockTaskWithoutStart(d, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(d, Mode.IDLE, withNotifications))
+                .vertex(e, withStart ? getMockTaskWithoutStart(e, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(e, Mode.IDLE, withNotifications))
+                .vertex(f, withStart ? getMockTaskWithoutStart(f, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(f, Mode.IDLE, withNotifications))
+                .vertex(g, withStart ? getMockTaskWithoutStart(g, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(g, Mode.IDLE, withNotifications))
+                .vertex(h, withStart ? getMockTaskWithoutStart(h, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(h, Mode.IDLE, withNotifications))
+                .vertex(i, withStart ? getMockTaskWithoutStart(i, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(i, Mode.IDLE, withNotifications))
+                .vertex(j, withStart ? getMockTaskWithoutStart(j, Mode.ACTIVE, withNotifications) : getMockTaskWithoutStart(j, Mode.IDLE, withNotifications))
                 .build();
     }
 }

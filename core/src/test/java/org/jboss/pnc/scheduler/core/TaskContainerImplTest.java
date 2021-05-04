@@ -5,10 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.jboss.pnc.scheduler.core.common.Assertions.assertCorrectServiceRelations;
 import static org.jboss.pnc.scheduler.core.common.Assertions.waitTillServicesAre;
 import static org.jboss.pnc.scheduler.core.common.TestData.getComplexGraph;
-import static org.jboss.pnc.scheduler.core.common.TestData.getMockDTOAPI;
+import static org.jboss.pnc.scheduler.core.common.TestData.getEndpointWithStart;
 import static org.jboss.pnc.scheduler.core.common.TestData.getMockTaskWithStart;
-import static org.jboss.pnc.scheduler.core.common.TestData.getMockWithStart;
 import static org.jboss.pnc.scheduler.core.common.RandomDAGGeneration.generateDAG;
+import static org.jboss.pnc.scheduler.core.common.TestData.getRequestWithoutStart;
+import static org.jboss.pnc.scheduler.core.common.TestData.getStopRequest;
 
 import javax.inject.Inject;
 import javax.transaction.RollbackException;
@@ -25,9 +26,9 @@ import org.jboss.pnc.scheduler.core.counter.Running;
 import org.jboss.pnc.scheduler.dto.CreateTaskDTO;
 import org.jboss.pnc.scheduler.dto.EdgeDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.scheduler.model.Request;
 import org.jboss.pnc.scheduler.model.Task;
 import org.jboss.pnc.scheduler.rest.api.TaskEndpoint;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
@@ -70,8 +71,8 @@ class TaskContainerImplTest {
                 .vertex(EXISTING_KEY, CreateTaskDTO.builder()
                         .name(EXISTING_KEY)
                         .controllerMode(Mode.IDLE)
-                        .remoteLinks(getMockDTOAPI())
-                        .payload("{id: 100}")
+                        .remoteStart(getRequestWithoutStart("{id: 100}"))
+                        .remoteCancel(getStopRequest("{id: 100}"))
                         .build())
                 .build());
     }
@@ -89,14 +90,15 @@ class TaskContainerImplTest {
         TransactionManager tm = container.getCache().getTransactionManager();
 
         tm.begin();
-        Task old = container.getTask(EXISTING_KEY).toBuilder().payload("another useless string").build();
-        container.getCache().put(old.getName(), old);
+        Task old = container.getTask(EXISTING_KEY);
+        Request start = old.getRemoteStart().toBuilder().attachment("another useless string").build();
+        container.getCache().put(old.getName(), old.toBuilder().remoteStart(start).build());
         running.replaceValue(0L, 10L);
         tm.setRollbackOnly();
         assertThatThrownBy(tm::commit)
                 .isInstanceOf(RollbackException.class);
 
-        assertThat(container.getTask(EXISTING_KEY).getPayload()).isEqualTo("{id: 100}");
+        assertThat(container.getTask(EXISTING_KEY).getRemoteStart().getAttachment()).isEqualTo("{id: 100}");
         assertThat(running.getValue()).isEqualTo(0);
     }
 
@@ -107,12 +109,14 @@ class TaskContainerImplTest {
                 .vertex("service1", CreateTaskDTO.builder()
                         .name("service1")
                         .controllerMode(Mode.IDLE)
-                        .payload("I am service1!")
+                        .remoteStart(getRequestWithoutStart("I am service1!"))
+                        .remoteCancel(getStopRequest("I am service1!"))
                         .build())
                 .vertex("service2", CreateTaskDTO.builder()
                         .name("service2")
                         .controllerMode(Mode.IDLE)
-                        .payload("I am service2!")
+                        .remoteStart(getRequestWithoutStart("I am service2!"))
+                        .remoteCancel(getStopRequest("I am service2!"))
                         .build())
                 .build());
 
@@ -150,7 +154,8 @@ class TaskContainerImplTest {
                 .edge(new EdgeDTO(dependant, EXISTING_KEY))
                 .vertex(dependant, CreateTaskDTO.builder()
                         .name(dependant)
-                        .payload("A payload")
+                        .remoteStart(getRequestWithoutStart("A payload"))
+                        .remoteCancel(getStopRequest("A payload"))
                         .controllerMode(Mode.ACTIVE)
                         .build())
                 .build());
@@ -169,9 +174,9 @@ class TaskContainerImplTest {
                 .edge(new EdgeDTO(dependant, EXISTING_KEY))
                 .vertex(dependant, CreateTaskDTO.builder()
                         .name(dependant)
-                        .payload("A payload")
+                        .remoteStart(getRequestWithoutStart("A payload"))
+                        .remoteCancel(getStopRequest("A payload"))
                         .controllerMode(Mode.ACTIVE)
-                        .remoteLinks(getMockDTOAPI())
                         .build())
                 .build());
 
@@ -264,7 +269,7 @@ class TaskContainerImplTest {
         String[] services = new String[]{a, b, c, d, e, f, g, h, i, j, EXISTING_KEY};
 
         Task existingTask = container.getTask(EXISTING_KEY);
-        Task updatedTask = existingTask.toBuilder().remoteEndpoints(getMockWithStart()).payload(EXISTING_KEY).build();
+        Task updatedTask = existingTask.toBuilder().remoteStart(getEndpointWithStart(EXISTING_KEY)).build();
         container.getCache().put(EXISTING_KEY, updatedTask);
 
         CreateGraphRequest graph = getComplexGraph(true).toBuilder()

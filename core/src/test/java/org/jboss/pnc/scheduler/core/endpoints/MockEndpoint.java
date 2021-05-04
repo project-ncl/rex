@@ -1,4 +1,4 @@
-package org.jboss.pnc.scheduler.core;
+package org.jboss.pnc.scheduler.core.endpoints;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
@@ -81,7 +81,7 @@ public class MockEndpoint {
         try {
             tm.begin();
             //parse name out of request and call accept
-            controller.accept(request.getPayload());
+            controller.accept((String) request.getPayload());
             tm.commit();
         }catch (IllegalStateException e) {
             try {
