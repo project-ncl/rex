@@ -19,15 +19,15 @@ public class TaskDTO {
 
     public String name;
 
-    public RemoteLinksDTO links;
+    public HttpRequest remoteStart;
 
-    public Mode mode;
+    public HttpRequest remoteCancel;
+
+    public HttpRequest callerNotifications;
 
     public State state;
 
     public StopFlag stopFlag;
-
-    public String payload;
 
     public Set<String> dependants = new HashSet<>();
 

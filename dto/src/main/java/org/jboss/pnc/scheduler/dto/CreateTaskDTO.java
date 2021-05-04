@@ -6,17 +6,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 
-@NoArgsConstructor
 @Builder
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class CreateTaskDTO {
 
     public String name;
 
-    public RemoteLinksDTO remoteLinks;
+    public HttpRequest remoteStart;
 
-    public String payload;
+    public HttpRequest remoteCancel;
+
+    public HttpRequest callerNotifications;
 
     public Mode controllerMode;
 }

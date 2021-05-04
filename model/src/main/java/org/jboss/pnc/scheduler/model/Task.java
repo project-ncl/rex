@@ -9,6 +9,7 @@ import lombok.ToString;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.descriptors.Type;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
@@ -42,23 +43,33 @@ public class Task {
     private final String name;
 
     /**
-     * Holds data for communication with remote entity.
-     * <p>
-     * f.e. to start/stop remote execution
+     * Definition of a request to remote entity for starting a Task
      */
     @Getter(onMethod_ = @ProtoField(number = 2))
-    private RemoteAPI remoteEndpoints;
+    private Request remoteStart;
+
+    /**
+     * Definition of a request to remote entity for cancelling a Task
+     */
+    @Getter(onMethod_ = @ProtoField(number = 3))
+    private Request remoteCancel;
+
+    /**
+     * Definition of a request to the initial caller which is used for transition notifications
+     */
+    @Getter(onMethod_ = @ProtoField(number = 4))
+    private Request callerNotifications;
 
     /**
      * TaskController mode.
      */
-    @Getter(onMethod_ = @ProtoField(number = 3))
+    @Getter(onMethod_ = @ProtoField(number = 5))
     private Mode controllerMode;
 
     /**
      * Current state of a task. Default is State.IDLE.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 4), @ProtoDoc("@Field(store=Store.YES)")})
+    @Getter(onMethod_ = {@ProtoField(number = 6), @ProtoDoc("@Field(store=Store.YES)")})
     private State state;
 
     /**
@@ -67,33 +78,27 @@ public class Task {
      * Parents of this Service.
      */
     @Singular
-    @Getter(onMethod_ = @ProtoField(number = 5))
+    @Getter(onMethod_ = @ProtoField(number = 7))
     private Set<String> dependants = new HashSet<>();
 
     /**
      * Number of unfinishedDependencies. Task can't remotely start if the number is positive.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 6, defaultValue = "-1")})
+    @Getter(onMethod_ = {@ProtoField(number = 8, defaultValue = "-1")})
     private int unfinishedDependencies;
 
     @Singular
-    @Getter(onMethod_ = @ProtoField(number = 7))
+    @Getter(onMethod_ = @ProtoField(number = 9))
     private Set<String> dependencies = new HashSet<>();
 
-    /**
-     * Payload sent to remote entity.
-     */
-    @Getter(onMethod_ = @ProtoField(number = 8))
-    private String payload;
-
-    @Getter(onMethod_ = @ProtoField(number = 9))
+    @Getter(onMethod_ = @ProtoField(number = 10))
     private StopFlag stopFlag;
 
     @Singular
-    @Getter(onMethod_ = @ProtoField(number = 10))
+    @Getter(onMethod_ = @ProtoField(number = 11))
     private List<ServerResponse> serverResponses = new ArrayList<>();
 
-    @Getter(onMethod_ = @ProtoField(number = 11, defaultValue = "false"))
+    @Getter(onMethod_ = @ProtoField(number = 12, defaultValue = "false"))
     private Boolean starting;
 
     public void incUnfinishedDependencies() {

@@ -6,18 +6,13 @@ import lombok.Getter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-/**
- * Class that holds data for communicating with remote entity where a Task runs/is going to run.
- *
- * @author Jan Michalov <jmichalo@redhat.com>
- */
 @Builder
 @AllArgsConstructor(onConstructor_ = {@ProtoFactory})
-public class RemoteAPI {
+public class Header {
 
     @Getter(onMethod_ = {@ProtoField(number = 1)})
-    private String startUrl;
+    private final String name;
 
     @Getter(onMethod_ = {@ProtoField(number = 2)})
-    private String stopUrl;
+    private final String value;
 }

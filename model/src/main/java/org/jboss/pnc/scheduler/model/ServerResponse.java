@@ -14,6 +14,7 @@ public class ServerResponse {
 
     @Getter(onMethod_ = {@ProtoField(number = 1, type = Type.ENUM)})
     private State state;
+
     @Getter(onMethod_ = {@ProtoField(number = 2, defaultValue = "true")})
     private boolean positive;
 

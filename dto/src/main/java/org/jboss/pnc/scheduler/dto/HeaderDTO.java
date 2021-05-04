@@ -5,13 +5,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
-@Builder
 @NoArgsConstructor
+@Builder
+@Getter
 @AllArgsConstructor
-public class RemoteLinksDTO {
+public class HeaderDTO {
 
-    public String startUrl;
+    public String name;
 
-    public String stopUrl;
+    public String value;
 }
