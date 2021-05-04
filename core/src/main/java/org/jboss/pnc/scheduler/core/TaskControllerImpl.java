@@ -16,6 +16,7 @@ import org.jboss.pnc.scheduler.core.jobs.ControllerJob;
 import org.jboss.pnc.scheduler.core.jobs.DependencyCancelledJob;
 import org.jboss.pnc.scheduler.core.jobs.DependencyStoppedJob;
 import org.jboss.pnc.scheduler.core.jobs.DependencySucceededJob;
+import org.jboss.pnc.scheduler.core.jobs.NotifyCallerJob;
 import org.jboss.pnc.scheduler.core.jobs.PokeQueueJob;
 import org.jboss.pnc.scheduler.model.ServerResponse;
 import org.jboss.pnc.scheduler.model.Task;
@@ -165,6 +166,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
                 throw new IllegalStateException("Controller returned unknown transition: " + transition);
         }
         task.setState(transition.getAfter());
+
+        // notify the caller about a transition
+        tasks.add(new NotifyCallerJob(transition, task));
         return tasks;
     }
 

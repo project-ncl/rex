@@ -5,14 +5,12 @@ import org.jboss.pnc.scheduler.dto.CreateTaskDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(config = MapperCentralConfig.class, uses = {RemoteLinksMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = {RequestMapper.class})
 public interface CreateTaskMapper extends EntityMapper<CreateTaskDTO, InitialTask> {
 
     @Override
-    @Mapping(target = "remoteLinks", source = "remoteEndpoints")
     CreateTaskDTO toDTO(InitialTask dbEntity);
 
     @Override
-    @Mapping(target = "remoteEndpoints", source = "remoteLinks")
     InitialTask toDB(CreateTaskDTO dtoEntity);
 }

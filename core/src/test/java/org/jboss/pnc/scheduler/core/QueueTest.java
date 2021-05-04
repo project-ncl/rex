@@ -4,6 +4,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.core.counter.Counter;
 import org.jboss.pnc.scheduler.core.counter.Running;
+import org.jboss.pnc.scheduler.core.endpoints.MockEndpoint;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.rest.api.InternalEndpoint;

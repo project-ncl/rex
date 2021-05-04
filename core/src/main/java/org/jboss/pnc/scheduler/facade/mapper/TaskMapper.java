@@ -12,19 +12,17 @@ import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
 
-@Mapper(config = MapperCentralConfig.class, uses = {RemoteLinksMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = {RequestMapper.class})
 public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
 
     @Override
-    @Mapping(target = "links", source = "remoteEndpoints")
-    @Mapping(target = "mode", source = "controllerMode")
     @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "serverResponses", "dependant",
-            "dependency", "serverResponse", "stringName", "stringDependencies", "stringDependants", "starting"})
+            "dependency", "serverResponse", "stringName", "stringDependencies", "stringDependants", "starting",
+            "controllerMode"})
     TaskDTO toDTO(Task dbEntity);
 
     @Override
-    @Mapping(target = "controllerMode", source = "mode")
-    @Mapping(target = "remoteEndpoints", source = "links")
+    @Mapping(target = "controllerMode", ignore = true)
     @Mapping(target = "unfinishedDependencies", ignore = true)
     @Mapping(target = "serverResponses", ignore = true)
     @Mapping(target = "serverResponse", ignore = true)

@@ -3,7 +3,6 @@ package org.jboss.pnc.scheduler.core.common;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.dto.CreateTaskDTO;
 import org.jboss.pnc.scheduler.dto.EdgeDTO;
-import org.jboss.pnc.scheduler.dto.RemoteLinksDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import static org.jboss.pnc.scheduler.core.common.TestData.getRequestWithStart;
+import static org.jboss.pnc.scheduler.core.common.TestData.getStopRequest;
 
 public class RandomDAGGeneration {
 
@@ -65,8 +67,8 @@ public class RandomDAGGeneration {
             builder.vertex(string, CreateTaskDTO.builder()
                     .name(string)
                     .controllerMode(Mode.ACTIVE)
-                    .payload(string)
-                    .remoteLinks(getStartingMockDTOAPI())
+                    .remoteStart(getRequestWithStart(string))
+                    .remoteCancel(getStopRequest(string))
                     .build());
         }
         builder.edges(egdes);
@@ -78,12 +80,6 @@ public class RandomDAGGeneration {
         logger.info("Using a seed " + randomSeed + " to generate random DAG for testing");
 
         return generateDAG(randomSeed, minPerRank, maxPerRank, minRanks, maxRanks, edgeProbability);
-    }
-    private static RemoteLinksDTO getStartingMockDTOAPI() {
-        return RemoteLinksDTO.builder()
-                .startUrl("http://localhost:8081/test/acceptAndStart")
-                .stopUrl("http://localhost:8081/test/stop")
-                .build();
     }
 
     /**

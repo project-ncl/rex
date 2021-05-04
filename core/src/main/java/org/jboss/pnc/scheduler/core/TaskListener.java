@@ -1,5 +1,6 @@
 package org.jboss.pnc.scheduler.core;
 
+import io.smallrye.common.annotation.Blocking;
 import org.jboss.pnc.scheduler.core.jobs.ControllerJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

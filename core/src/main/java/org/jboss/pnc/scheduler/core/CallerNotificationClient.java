@@ -1,0 +1,68 @@
+package org.jboss.pnc.scheduler.core;
+
+import io.quarkus.arc.Unremovable;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.jboss.pnc.scheduler.common.enums.Transition;
+import org.jboss.pnc.scheduler.core.mapper.MiniTaskMapper;
+import org.jboss.pnc.scheduler.model.Request;
+import org.jboss.pnc.scheduler.model.Task;
+import org.jboss.pnc.scheduler.model.requests.NotificationRequest;
+
+import javax.enterprise.context.ApplicationScoped;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+@Unremovable
+@ApplicationScoped
+@Slf4j
+public class CallerNotificationClient {
+
+    private final MiniTaskMapper miniMapper;
+
+    private final GenericVertxHttpClient client;
+
+    public CallerNotificationClient(MiniTaskMapper miniMapper, GenericVertxHttpClient client) {
+        this.miniMapper = miniMapper;
+        this.client = client;
+    }
+
+    public void notifyCaller(Transition transition, Task task) {
+        Request requestDefinition = task.getCallerNotifications();
+
+        if (requestDefinition == null) {
+            log.warn("Task notifications disable for Task " + task.getName());
+            return;
+        }
+
+        URI uri;
+        try {
+            uri = new URI(requestDefinition.getUrl());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Url for notifications is not a valid URL for task with name "
+                    + task.getName(), e);
+        }
+
+        NotificationRequest request = NotificationRequest.builder()
+                .before(transition.getBefore())
+                .after(transition.getAfter())
+                .attachment(requestDefinition.getAttachment())
+                .task(miniMapper.minimize(task))
+                .build();
+
+        client.makeRequest(uri,
+                requestDefinition.getMethod(),
+                requestDefinition.getHeaders(),
+                request,
+                response -> handleResponse(response, transition, task));
+    }
+
+    private void handleResponse(HttpResponse<Buffer> response, Transition transition, Task task) {
+        if (200 <= response.statusCode() && response.statusCode() <= 299) {
+            log.debug("Caller successfully notified for task " + task.getName() + " and transition " + transition);
+        } else {
+            log.warn("Caller denied a notification for task " + task.getName() + " and transition " + transition);
+        }
+    }
+}
