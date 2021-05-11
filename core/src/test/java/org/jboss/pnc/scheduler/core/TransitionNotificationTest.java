@@ -7,6 +7,8 @@ import org.jboss.pnc.scheduler.core.common.TestDataV2;
 import org.jboss.pnc.scheduler.core.counter.Counter;
 import org.jboss.pnc.scheduler.core.counter.Running;
 import org.jboss.pnc.scheduler.core.endpoints.TransitionRecorderEndpoint;
+import org.jboss.pnc.scheduler.dto.ServerResponseDTO;
+import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.rest.api.InternalEndpoint;
 import org.jboss.pnc.scheduler.rest.api.TaskEndpoint;
@@ -15,8 +17,10 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.jboss.pnc.scheduler.common.enums.Transition.ENQUEUED_to_STARTING;
@@ -102,5 +106,27 @@ public class TransitionNotificationTest {
         assertThat(records.get("h")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("i")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("j")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
+    }
+
+    @Test
+    void testRecordedBodies() {
+        CreateGraphRequest request = TestDataV2.getComplexGraph(true, true);
+        endpoint.create(request);
+        waitTillServicesAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
+
+        List<TaskDTO> all = endpoint.getAll(TestDataV2.getAllParameters());
+        Predicate<TaskDTO> sizePredicate = (task) -> task.getServerResponses() != null
+                && task.getServerResponses().size() == 2;
+        Predicate<TaskDTO> responsePredicate = (task) -> {
+            var responses = task.getServerResponses();
+            boolean firstBody = responses.stream().anyMatch((response -> response.getState() == State.STARTING
+                    && response.getBody() instanceof Map
+                    && !((Map<String, String>) response.getBody()).get("task").isEmpty()));
+            boolean secondBody = responses.stream().anyMatch((response -> response.getState() == State.UP
+                    && response.getBody() instanceof String
+                    && response.getBody().equals("ALL IS OK")));
+            return firstBody && secondBody;
+        };
+        assertThat(all).allMatch(sizePredicate).allMatch(sizePredicate).allMatch(responsePredicate);
     }
 }
