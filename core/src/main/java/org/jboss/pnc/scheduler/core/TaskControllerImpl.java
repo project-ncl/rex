@@ -289,13 +289,13 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
     @Override
     @Transactional(MANDATORY)
-    public void accept(String name) {
+    public void accept(String name, Object response) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
         Task task = taskMetadata.getValue();
 
         if (EnumSet.of(State.STARTING,State.UP,State.STOPPING).contains(task.getState())){
-            ServerResponse positiveResponse = new ServerResponse(task.getState(), true);
+            ServerResponse positiveResponse = new ServerResponse(task.getState(), true, response);
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(positiveResponse);
             task.setServerResponses(responses); //probably unnecessary
@@ -319,15 +319,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
     @Override
     @Transactional(MANDATORY)
-    public void fail(String name) {
+    public void fail(String name, Object response) {
         MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
         assertNotNull(taskMetadata, new TaskNotFoundException("Service " + name + "not found"));
         Task task = taskMetadata.getValue();
 
-        if (EnumSet.of(State.STARTING,State.UP, State.STOPPING).contains(task.getState())){
-            ServerResponse positiveResponse = new ServerResponse(task.getState(), false);
+        if (EnumSet.of(State.STARTING, State.UP, State.STOPPING).contains(task.getState())){
+            ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response);
             List<ServerResponse> responses = task.getServerResponses();
-            responses.add(positiveResponse);
+            responses.add(negativeResponse);
             task.setServerResponses(responses); //probably unnecessary
             //maybe assert it was null before
             task.setStopFlag(StopFlag.UNSUCCESSFUL);

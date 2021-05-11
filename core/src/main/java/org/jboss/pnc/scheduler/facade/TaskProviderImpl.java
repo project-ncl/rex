@@ -73,11 +73,11 @@ public class TaskProviderImpl implements TaskProvider {
 
     @Override
     @Transactional
-    public void acceptRemoteResponse(String serviceName, boolean positive) {
+    public void acceptRemoteResponse(String serviceName, boolean positive, Object response) {
         if (positive) {
-            controller.accept(serviceName);
+            controller.accept(serviceName, response);
         } else {
-            controller.fail(serviceName);
+            controller.fail(serviceName, response);
         }
     }
 }

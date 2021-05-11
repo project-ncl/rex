@@ -48,5 +48,5 @@ public interface TaskProvider {
      *          true == remote entity responds that it has finished execution of the service
      *          false == remote entity responds that the service has failed its execution
      */
-    void acceptRemoteResponse(String serviceName, boolean positive);
+    void acceptRemoteResponse(String serviceName, boolean positive, Object response);
 }

@@ -11,6 +11,8 @@ public class FinishRequest {
 
     public Boolean status;
 
+    public Object response;
+
     public Boolean getStatus() {
         return status;
     }

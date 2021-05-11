@@ -33,7 +33,7 @@ public class HttpEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response acceptAndStart(StartRequest request) {
         executor.submit(() -> finishTask(request));
-        return Response.ok().build();
+        return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
 
     private void finishTask(StartRequest request) {
@@ -42,7 +42,7 @@ public class HttpEndpoint {
         } catch (InterruptedException e) {
             //ignore
         }
-        FinishRequest body = new FinishRequest(true);
+        FinishRequest body = new FinishRequest(true, "ALL IS OK");
         client.makeRequest(URI.create(request.getCallback()),
                 Method.POST,
                 Collections.emptyList(),

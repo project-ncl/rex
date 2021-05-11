@@ -31,14 +31,14 @@ public class TransactionalTaskController implements TaskController {
 
     @Override
     @Transactional
-    public void accept(String name) {
-        delegate.accept(name);
+    public void accept(String name, Object response) {
+        delegate.accept(name, response);
     }
 
     @Override
     @Transactional
-    public void fail(String name) {
-        delegate.fail(name);
+    public void fail(String name, Object response) {
+        delegate.fail(name, response);
     }
 
     @Override

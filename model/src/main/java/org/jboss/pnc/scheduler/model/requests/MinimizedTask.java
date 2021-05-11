@@ -6,7 +6,9 @@ import lombok.extern.jackson.Jacksonized;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
 import org.jboss.pnc.scheduler.model.Request;
+import org.jboss.pnc.scheduler.model.ServerResponse;
 
+import java.util.List;
 import java.util.Set;
 
 @Jacksonized
@@ -27,6 +29,8 @@ public class MinimizedTask {
     private final Set<String> dependencies;
 
     private final Set<String> dependants;
+
+    private final List<ServerResponse> serverResponses;
 
     private final StopFlag stopFlag;
 }

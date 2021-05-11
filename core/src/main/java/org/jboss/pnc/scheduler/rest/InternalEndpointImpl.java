@@ -26,7 +26,7 @@ public class InternalEndpointImpl implements InternalEndpoint {
     @Override
     @Retry(maxRetries = 5)
     public void finish(String serviceName, FinishRequest result) {
-        taskProvider.acceptRemoteResponse(serviceName, result.getStatus());
+        taskProvider.acceptRemoteResponse(serviceName, result.getStatus(), result.getResponse());
     }
 
     @Override
