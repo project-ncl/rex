@@ -12,10 +12,19 @@
     <artifactId>dto</artifactId>
 
     <dependencies>
+        <!-- Module inter-dependencies -->
         <dependency>
             <groupId>org.jboss.pnc.scheduler</groupId>
             <artifactId>common</artifactId>
         </dependency>
+
+        <!-- Quarkus extensions -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+
+        <!-- Regular dependencies -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
