@@ -187,7 +187,7 @@ class TaskContainerImplTest {
         waitTillServicesAre(State.UP, container, EXISTING_KEY);
 
         container.getTransactionManager().begin();
-        controller.accept(EXISTING_KEY);
+        controller.accept(EXISTING_KEY, null);
         container.getTransactionManager().commit();
 
         waitTillServicesAre(State.UP, container, dependant);

@@ -1,5 +1,7 @@
 package org.jboss.pnc.scheduler.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.arc.Unremovable;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
@@ -30,12 +32,15 @@ public class RemoteEntityClient {
 
     private final GenericVertxHttpClient client;
 
+    private final ObjectMapper mapper;
+
     @ConfigProperty(name = "scheduler.baseUrl", defaultValue = "http://localhost:8080")
     String baseUrl;
 
-    public RemoteEntityClient(GenericVertxHttpClient client, @WithTransactions TaskController controller) {
+    public RemoteEntityClient(GenericVertxHttpClient client, @WithTransactions TaskController controller, ObjectMapper mapper) {
         this.controller = controller;
         this.client = client;
+        this.mapper = mapper;
     }
 
     public void stopJob(Task task) {
@@ -87,10 +92,25 @@ public class RemoteEntityClient {
     private void handleResponse(HttpResponse<Buffer> response, Task task) {
         if (200 <= response.statusCode() && response.statusCode() <= 299) {
             log.info("Got positive response on " + task.getName());
-            controller.accept(task.getName());
+            // maybe record the response?
+            controller.accept(task.getName(), parseBody(response));
         } else {
             log.info("Got negative response on " + task.getName());
-            controller.fail(task.getName());
+            // maybe record the response?
+            controller.fail(task.getName(), parseBody(response));
         }
+    }
+
+    private Object parseBody(HttpResponse<Buffer> response) {
+        String body = response.bodyAsString();
+        Object objectResponse = null;
+        if (body != null) {
+            try {
+                objectResponse = mapper.readValue(body, Object.class);
+            } catch (JsonProcessingException ignored) {
+                log.warn("Response(statusCode: {}) could not be parsed. Response: {}", response.statusCode(), response.bodyAsString());
+            }
+        }
+        return objectResponse;
     }
 }

@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
 
-@Mapper(config = MapperCentralConfig.class, uses = {RequestMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = {RequestMapper.class, ServerResponseMapper.class})
 public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
 
     @Override
@@ -24,7 +24,6 @@ public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
     @Override
     @Mapping(target = "controllerMode", ignore = true)
     @Mapping(target = "unfinishedDependencies", ignore = true)
-    @Mapping(target = "serverResponses", ignore = true)
     @Mapping(target = "serverResponse", ignore = true)
     @Mapping(target = "dependant", ignore = true)
     @Mapping(target = "dependency", ignore = true)

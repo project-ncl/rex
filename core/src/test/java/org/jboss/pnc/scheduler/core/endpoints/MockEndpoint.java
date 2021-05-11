@@ -81,7 +81,7 @@ public class MockEndpoint {
         try {
             tm.begin();
             //parse name out of request and call accept
-            controller.accept((String) request.getPayload());
+            controller.accept((String) request.getPayload(), null);
             tm.commit();
         }catch (IllegalStateException e) {
             try {

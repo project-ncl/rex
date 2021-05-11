@@ -39,10 +39,7 @@ public class TransitionRecorderEndpoint {
         }
         return Response.serverError().build();
     }
-    
-    private Response lol(NotificationRequest request) {
-        return Response.serverError().build();
-    }
+
     public void flush() {
         recorder.clear();
     }

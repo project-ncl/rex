@@ -4,11 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.jboss.pnc.scheduler.common.enums.Mode;
+
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -28,6 +30,8 @@ public class TaskDTO {
     public State state;
 
     public StopFlag stopFlag;
+
+    public List<ServerResponseDTO> serverResponses = new ArrayList<>();
 
     public Set<String> dependants = new HashSet<>();
 

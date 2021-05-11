@@ -11,12 +11,11 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
 import org.jboss.pnc.scheduler.common.enums.Method;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.List;
+
+import static org.jboss.pnc.scheduler.common.util.SerializationUtils.convertToByteArray;
+import static org.jboss.pnc.scheduler.common.util.SerializationUtils.convertToObject;
 
 @ToString
 @Builder(toBuilder = true)
@@ -42,32 +41,25 @@ public class Request {
         this.url = url;
         this.method = method;
         this.headers = headers;
-        this.attachment = convertToObject(byteAttachment);
+        Object attachment;
+        try {
+            attachment = convertToObject(byteAttachment);
+        } catch (IOException exception) {
+            log.error("Unexpected IO error during construction of Request.class object. " + this, exception);
+            attachment = null;
+        } catch (ClassNotFoundException exception) {
+            log.error("Attachment byte array could not be casted into an existing class. " + this, exception);
+            attachment = null;
+        }
+        this.attachment = attachment;
     }
 
     @ProtoField(number = 4, type = Type.BYTES)
     public byte[] getByteAttachment() {
-        return convertToByteArray(attachment);
-    }
-
-    private byte[] convertToByteArray(Object object) {
-        ByteArrayOutputStream bStream = new ByteArrayOutputStream();
-        try (ObjectOutputStream stream = new ObjectOutputStream(bStream)) {
-            stream.writeObject(object);
-            stream.flush();
+        try {
+            return convertToByteArray(attachment);
         } catch (IOException exception) {
             log.error("Unexpected IO error when serializing Request.class attachment. " + this, exception);
-        }
-        return bStream.toByteArray();
-    }
-
-    private Object convertToObject(byte[] attachment) {
-        try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(attachment))) {
-            return stream.readObject();
-        } catch (IOException exception) {
-            log.error("Unexpected IO error during construction of Request.class object. " + this, exception);
-        } catch (ClassNotFoundException exception) {
-            log.error("Attachment byte array could not be casted into existing class. " + this, exception);
         }
         return null;
     }

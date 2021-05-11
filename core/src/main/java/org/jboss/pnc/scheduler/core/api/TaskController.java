@@ -39,7 +39,7 @@ public interface TaskController {
      * f.e. to signalize that remote Task has started/cancelled/finished.
      * @param name
      */
-    void accept(String name);
+    void accept(String name, Object response);
 
     /**
      * Method used for negative callback. Needs to be called in a transaction.
@@ -47,7 +47,7 @@ public interface TaskController {
      * f.e. to signalize that remote Task failed to start/cancel or failed during execution.
      * @param name
      */
-    void fail(String name);
+    void fail(String name, Object response);
 
     void dequeue(String name);
 }
