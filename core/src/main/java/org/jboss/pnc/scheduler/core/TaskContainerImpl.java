@@ -9,11 +9,13 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.pnc.scheduler.common.enums.State;
+import org.jboss.pnc.scheduler.common.exceptions.BadRequestException;
 import org.jboss.pnc.scheduler.common.exceptions.CircularDependencyException;
+import org.jboss.pnc.scheduler.common.exceptions.TaskConflictException;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
+import org.jboss.pnc.scheduler.common.exceptions.TaskMissingException;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.core.api.TaskTarget;
 import org.jboss.pnc.scheduler.core.jobs.ControllerJob;
@@ -88,10 +90,10 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         return tasks.get(task);
     }
 
-    public Task getRequiredTask(String task) throws TaskNotFoundException {
+    public Task getRequiredTask(String task) throws TaskMissingException {
         Task s = getCache().get(task);
         if (s == null) {
-            throw new TaskNotFoundException("Task with name " + task + " was not found");
+            throw new TaskMissingException("Task with name " + task + " was not found");
         }
         return s;
     }

@@ -20,26 +20,26 @@ public interface TaskProvider {
     /**
      * Cancels execution of the service and its dependants
      *
-     * @param serviceName existing service
+     * @param taskName existing service
      */
-    void cancel(String serviceName);
+    void cancel(String taskName);
 
     /**
      * Returns existing service based on param
      *
-     * @param serviceName name of existing service
+     * @param taskName name of existing service
      * @return service entity
      */
-    TaskDTO get(String serviceName);
+    TaskDTO get(String taskName);
 
     /**
      * Returns all related services
      * (all dependants, all dependencies, dependants of dependencies, dependencies of dependants)
      *
-     * @param serviceName name of existing service
+     * @param taskName name of existing service
      * @return set of related services
      */
-    List<TaskDTO> getAllRelated(String serviceName);
+    List<TaskDTO> getAllRelated(String taskName);
 
     /**
      * Used for communication with remote entity. Invoked by remote entity by provided callback.
@@ -48,5 +48,5 @@ public interface TaskProvider {
      *          true == remote entity responds that it has finished execution of the service
      *          false == remote entity responds that the service has failed its execution
      */
-    void acceptRemoteResponse(String serviceName, boolean positive, Object response);
+    void acceptRemoteResponse(String taskName, boolean positive, Object response);
 }

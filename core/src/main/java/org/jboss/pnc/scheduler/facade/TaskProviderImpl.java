@@ -57,27 +57,27 @@ public class TaskProviderImpl implements TaskProvider {
 
     @Override
     @Transactional
-    public void cancel(String serviceName) {
-        controller.setMode(serviceName, Mode.CANCEL);
+    public void cancel(String taskName) {
+        controller.setMode(taskName, Mode.CANCEL);
     }
 
     @Override
-    public TaskDTO get(String serviceName) {
-        return mapper.toDTO(registry.getTask(serviceName));
+    public TaskDTO get(String taskName) {
+        return mapper.toDTO(registry.getTask(taskName));
     }
 
     @Override
-    public List<TaskDTO> getAllRelated(String serviceName) {
+    public List<TaskDTO> getAllRelated(String taskName) {
         throw new UnsupportedOperationException("not yet implemented");
     }
 
     @Override
     @Transactional
-    public void acceptRemoteResponse(String serviceName, boolean positive, Object response) {
+    public void acceptRemoteResponse(String taskName, boolean positive, Object response) {
         if (positive) {
-            controller.accept(serviceName, response);
+            controller.accept(taskName, response);
         } else {
-            controller.fail(serviceName, response);
+            controller.fail(taskName, response);
         }
     }
 }

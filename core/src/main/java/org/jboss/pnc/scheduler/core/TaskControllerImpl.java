@@ -102,7 +102,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         Transition transition;
         transition = getTransition(task);
         if (transition != null)
-            logger.info(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(),transition.getAfter().toString(), task.getName()));
+            logger.info(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(), transition.getAfter().toString(), task.getName()));
 
         List<ControllerJob> tasks = new ArrayList<>();
 
@@ -331,14 +331,14 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
             //maybe assert it was null before
             task.setStopFlag(StopFlag.UNSUCCESSFUL);
         } else {
-            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Service: " + task.getName() + " State: " + task.getState());
+            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
         }
 
         List<ControllerJob> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Service " + task.getName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
     }
 
@@ -352,14 +352,14 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         if (task.getState() == State.ENQUEUED) {
             task.setStarting(true);
         } else {
-            throw new IllegalStateException("Attempting to dequeue while not in a state to do. Service: " + task.getName() + " State: " + task.getState());
+            throw new IllegalStateException("Attempting to dequeue while not in a state to do. Task: " + task.getName() + " State: " + task.getState());
         }
 
         List<ControllerJob> tasks = transition(task);
         doExecute(tasks);
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
-            throw new ConcurrentUpdateException("Service " + task.getName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
     }
 

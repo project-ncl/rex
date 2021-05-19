@@ -1,7 +1,7 @@
 
 package org.jboss.pnc.scheduler.core.api;
 
-import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
+import org.jboss.pnc.scheduler.common.exceptions.TaskMissingException;
 import org.jboss.pnc.scheduler.model.Task;
 
 import java.util.Collection;
@@ -26,9 +26,9 @@ public interface TaskRegistry {
      *
      * @param task the task name
      * @return the task
-     * @throws TaskNotFoundException the task was not found
+     * @throws TaskMissingException the task was not found
      */
-    Task getRequiredTask(String task) throws TaskNotFoundException;
+    Task getRequiredTask(String task) throws TaskMissingException;
 
     /**
      * Returns all Tasks present in the cache filtered by parameters

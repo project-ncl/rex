@@ -21,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.jboss.pnc.scheduler.common.enums.State.ENQUEUED;
-import static org.jboss.pnc.scheduler.core.common.Assertions.waitTillServicesAre;
+import static org.jboss.pnc.scheduler.core.common.Assertions.waitTillTasksAre;
 import static org.jboss.pnc.scheduler.core.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.scheduler.core.common.TestData.getAllParameters;
 import static org.jboss.pnc.scheduler.core.common.TestData.getComplexGraph;
@@ -60,7 +60,7 @@ public class QueueTest {
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.create(graph);
 
-        assertThatThrownBy(() -> waitTillServicesAre(
+        assertThatThrownBy(() -> waitTillTasksAre(
                 State.SUCCESSFUL,
                 container,
                 1,
@@ -74,7 +74,7 @@ public class QueueTest {
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.create(graph);
 
-        waitTillServicesAre(State.SUCCESSFUL, container, graph.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAre(State.SUCCESSFUL, container, graph.getVertices().keySet().toArray(new String[0]));
     }
 
     @Test
@@ -91,7 +91,7 @@ public class QueueTest {
                 .allMatch((state -> state.isIdle() || state.isQueued()));
 
         internalEndpoint.setConcurrent(2L);
-        waitTillServicesAre(State.SUCCESSFUL, container, graph.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAre(State.SUCCESSFUL, container, graph.getVertices().keySet().toArray(new String[0]));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class QueueTest {
         assertThat(task.getState()).isEqualTo(ENQUEUED);
 
         internalEndpoint.setConcurrent(1L);
-        waitTillServicesAre(State.UP, container, container.getTask(EXISTING_KEY));
+        waitTillTasksAre(State.UP, container, container.getTask(EXISTING_KEY));
     }
 
     @Test
@@ -123,7 +123,7 @@ public class QueueTest {
         CreateGraphRequest graph = generateDAG(seed, 2, 10, 5, 10, 0.7F);
         taskEndpoint.create(graph);
 
-        waitTillServicesAre(State.SUCCESSFUL, container, 20, graph.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAre(State.SUCCESSFUL, container, 20, graph.getVertices().keySet().toArray(new String[0]));
 
         Collection<Long> queueRecords = mockEndpoint.stopRecording();
         assertThat(queueRecords).allMatch(record -> record <=1);
