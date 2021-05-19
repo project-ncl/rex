@@ -162,18 +162,26 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     private void hasCycle(Set<String> taskIds) throws CircularDependencyException {
         Set<String> notVisited = new HashSet<String>(taskIds);
-        Set<String> visiting = new HashSet<>();
+        List<String> visiting = new ArrayList<>();
         Set<String> visited = new HashSet<>();
 
         while (notVisited.size() > 0) {
             String current = notVisited.iterator().next();
             if (dfs(current, notVisited, visiting, visited)) {
-                throw new CircularDependencyException("Cycle has been found on Task " + current);
+                throw new CircularDependencyException("Cycle has been found on Task " + current + " with loop: " + formatCycle(visiting, current));
             }
         }
     }
 
-    private boolean dfs(String current, Set<String> notVisited, Set<String> visiting, Set<String> visited) {
+    private String formatCycle(List<String> loopPath, String current) {
+        StringBuilder loop = new StringBuilder();
+        for (String node : loopPath) {
+            loop.append(node).append("->");
+        }
+        return loop.append(current).toString();
+    }
+
+    private boolean dfs(String current, Set<String> notVisited, List<String> visiting, Set<String> visited) {
         move(current, notVisited, visiting);
         Task currentTask = getTask(current);
         for (String dependency : currentTask.getDependencies()) {
@@ -199,7 +207,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         return false;
     }
 
-    private void move(String name, Set<String> sourceSet, Set<String> destinationSet) {
+    private void move(String name, Collection<String> sourceSet, Collection<String> destinationSet) {
         sourceSet.remove(name);
         destinationSet.add(name);
     }
