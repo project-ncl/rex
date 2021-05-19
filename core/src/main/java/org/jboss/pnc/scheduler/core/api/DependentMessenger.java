@@ -23,12 +23,4 @@ public interface DependentMessenger {
      * @param name
      */
     void dependencyCancelled(String name);
-
-    /**
-     * Notify this dependent that new dependency was created.
-     *
-     * @param name
-     * @param dependency name of added dependency
-     */
-    void dependencyCreated(String name, String dependency);
 }

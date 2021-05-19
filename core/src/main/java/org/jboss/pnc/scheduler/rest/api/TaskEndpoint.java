@@ -45,20 +45,6 @@ public interface TaskEndpoint {
 
     String TASK_ID = "Unique name of the task";
 
-/*    @Operation(summary = "Creates and starts scheduling of task")
-    @APIResponses(value = {
-                    @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
-                        content = @Content(schema = @Schema(implementation = TaskListResponse.class))),
-                    @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
-                        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
-                        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    List<TaskDTO> create(@NotNull CreateTaskRequest request);   */
-
     @Operation(summary = "Creates and starts scheduling of task")
     @APIResponses(value = {
                     @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,

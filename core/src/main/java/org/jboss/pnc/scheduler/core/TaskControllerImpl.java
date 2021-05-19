@@ -46,58 +46,6 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         this.scheduleJob = scheduleJob;
     }
 
-    @Override
-    @Transactional(MANDATORY)
-    public void dependencyCreated(String name, String dependencyName) {
-        MetadataValue<Task> taskMeta = container.getCache().getWithMetadata(name);
-        assertNotNull(taskMeta, new TaskNotFoundException("Task " + name + " not found!"));
-        Task task = taskMeta.getValue();
-        Task dependency = container.getTask(dependencyName);
-
-        newDependency(task, dependency);
-
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMeta.getVersion());
-        if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }
-        //Get get controller of the dependency and notify it that it has a new dependant
-        this.dependantCreated(dependencyName, name);
-    }
-
-    public static void newDependency(Task dependant, Task dependency) {
-        assertTaskNotNull(dependant, dependency);
-        assertDependantRelationships(dependant, dependency);
-        assertCanAcceptDependencies(dependant);
-        //if the supposed new dependency didn't finish, increase unfinishedDependencies counter
-        dependant.getDependencies().add(dependency.getName());
-        if (!dependency.getState().isFinal()) {
-            dependant.incUnfinishedDependencies();
-        }
-    }
-
-    public static void newDependant(Task dependency, Task dependant) {
-        assertTaskNotNull(dependant, dependency);
-        assertDependencyRelationships(dependency, dependant);
-        assertCanAcceptDependencies(dependant);
-        dependency.getDependants().add(dependant.getName());
-    }
-
-    @Transactional(MANDATORY)
-    public void dependantCreated(String name, String dependantName) {
-        MetadataValue<Task> taskMeta = container.getCache().getWithMetadata(name);
-        assertNotNull(taskMeta, new TaskNotFoundException("Task " + name + "not found"));
-        Task task = taskMeta.getValue();
-        Task dependant = container.getTask(dependantName);
-
-        newDependant(task, dependant);
-
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMeta.getVersion());
-        if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }
-    }
-
-    @Transactional(MANDATORY)
     private List<ControllerJob> transition(Task task) {
         Transition transition;
         transition = getTransition(task);
@@ -244,13 +192,6 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         return task.getStarting();
     }
 
-    private static void assertCanAcceptDependencies(Task task) {
-        if (!task.getState().isIdle()) {
-            throw new IllegalStateException(String.format("Task %s cannot accept a dependency",
-                    task.getName()));
-        }
-    }
-
     @Override
     @Transactional(MANDATORY)
     public void setMode(String name, Mode mode) {
@@ -297,7 +238,6 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
             ServerResponse positiveResponse = new ServerResponse(task.getState(), true, response);
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(positiveResponse);
-            task.setServerResponses(responses); //probably unnecessary
         } else {
             throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
         }
@@ -370,7 +310,6 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
         Task task = taskMetadata.getValue();
 
-        //maybe assert it was null before
         task.decUnfinishedDependencies();
 
         List<ControllerJob> tasks = transition(task);
@@ -418,48 +357,4 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
             throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
     }
-
-    private static void assertDependantRelationships(Task dependant, Task dependency){
-        String dependantName = dependant.getName();
-        String dependencyName = dependency.getName();
-
-        if (dependantName.equals(dependencyName)) {
-            throw new IllegalStateException("Task " + dependantName + " cannot depend on itself");
-        };
-
-        if (dependant.getDependants().contains(dependencyName)) {
-            throw new IllegalStateException("Task " + dependantName + " cannot depend and be dependant on the "+ dependencyName);
-        }
-    };
-
-    private static void assertDependencyRelationships(Task dependency, Task dependant){
-        String dependencyName = dependency.getName();
-        String dependantName = dependant.getName();
-
-        if (dependantName.equals(dependencyName)) {
-            throw new IllegalStateException("Task " + dependencyName + " cannot depend on itself");
-        };
-
-        if (dependant.getDependants().contains(dependencyName)) {
-            throw new IllegalStateException("Task " + dependencyName + " cannot depend and be dependant on the "+ dependantName);
-        }
-    };
-
-    private static void assertTaskNotNull(Task... tasks) {
-        for (Task task : tasks) {
-            assertNotNull(task, new TaskNotFoundException("Task " + task.getName() + "was not found!"));
-        }
-    }
-
-    private static <T> T assertNotNull(T object) {
-        return assertNotNull(object, new IllegalArgumentException("Parameter of class: "+ object.getClass().getCanonicalName() + " cannot be null."));
-    }
-
-    private static <T> T assertNotNull(T object, RuntimeException e) {
-        if (object == null) {
-            throw e;
-        }
-        return object;
-    }
-
 }
