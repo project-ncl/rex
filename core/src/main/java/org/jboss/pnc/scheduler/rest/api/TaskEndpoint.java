@@ -13,6 +13,8 @@ import org.jboss.pnc.scheduler.dto.responses.ErrorResponse;
 import org.jboss.pnc.scheduler.dto.responses.TaskListResponse;
 import org.jboss.pnc.scheduler.rest.parameters.TaskFilterParameters;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
@@ -69,7 +71,7 @@ public interface TaskEndpoint {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    Set<TaskDTO> create(@NotNull CreateGraphRequest request);
+    Set<TaskDTO> create(@Valid @NotNull CreateGraphRequest request);
 
     @Operation(summary = "Returns list of all tasks with optional filtering")
     @APIResponses(value = {
@@ -95,7 +97,7 @@ public interface TaskEndpoint {
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    TaskDTO getSpecific(@Parameter(description = TASK_ID) @PathParam("taskID") String taskID);
+    TaskDTO getSpecific(@Parameter(description = TASK_ID) @PathParam("taskID") @NotBlank String taskID);
 
     @Path("/{taskID}/cancel")
     @Operation(summary = "Cancels execution of a task and it's transitively dependant parents")
@@ -108,7 +110,7 @@ public interface TaskEndpoint {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PUT
-    void cancel(@Parameter(description = TASK_ID) @PathParam("taskID") String taskID);
+    void cancel(@Parameter(description = TASK_ID) @PathParam("taskID") @NotBlank String taskID);
 
   /*  @Path("/{serviceName}/graph")
     @APIResponses(value = {
