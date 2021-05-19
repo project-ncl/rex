@@ -8,6 +8,10 @@ import lombok.Singular;
 import org.jboss.pnc.scheduler.dto.CreateTaskDTO;
 import org.jboss.pnc.scheduler.dto.EdgeDTO;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,8 +22,8 @@ import java.util.Set;
 public class CreateGraphRequest {
 
     @Singular
-    public Set<EdgeDTO> edges;
+    public Set<@NotNull @Valid EdgeDTO> edges;
 
     @Singular
-    public Map<String, CreateTaskDTO> vertices;
+    public Map<@NotBlank String, @NotNull @Valid CreateTaskDTO> vertices;
 }
