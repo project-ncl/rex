@@ -32,7 +32,8 @@ import static org.jboss.pnc.scheduler.common.enums.Transition.UP_to_STOPPING;
 import static org.jboss.pnc.scheduler.common.enums.Transition.UP_to_SUCCESSFUL;
 import static org.jboss.pnc.scheduler.common.enums.Transition.WAITING_to_ENQUEUED;
 import static org.jboss.pnc.scheduler.common.enums.Transition.WAITING_to_STOPPED;
-import static org.jboss.pnc.scheduler.core.common.Assertions.waitTillServicesAre;
+import static org.jboss.pnc.scheduler.core.common.Assertions.waitTillTasksAre;
+import static org.jboss.pnc.scheduler.core.common.TestData.getComplexGraph;
 
 @QuarkusTest
 public class TransitionNotificationTest {
@@ -63,9 +64,9 @@ public class TransitionNotificationTest {
 
     @Test
     void testNotifications() throws InterruptedException {
-        CreateGraphRequest request = TestDataV2.getComplexGraph(true, true);
+        CreateGraphRequest request = getComplexGraph(true, true);
         endpoint.create(request);
-        waitTillServicesAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
         
         Thread.sleep(100);
         Map<String, Set<Transition>> records = recorderEndpoint.getRecords();
@@ -86,12 +87,12 @@ public class TransitionNotificationTest {
     void testNotificationOnCancel() throws InterruptedException {
         CreateGraphRequest request = TestDataV2.getComplexGraphWithoutEnd(true, true);
         endpoint.create(request);
-        waitTillServicesAre(State.UP, container, "a", "b");
+        waitTillTasksAre(State.UP, container, "a", "b");
 
         endpoint.cancel("a");
         endpoint.cancel("b");
 
-        waitTillServicesAre(State.STOPPED, container, request.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAre(State.STOPPED, container, request.getVertices().keySet().toArray(new String[0]));
 
         Thread.sleep(100);
         Map<String, Set<Transition>> records = recorderEndpoint.getRecords();
@@ -112,7 +113,7 @@ public class TransitionNotificationTest {
     void testRecordedBodies() {
         CreateGraphRequest request = TestDataV2.getComplexGraph(true, true);
         endpoint.create(request);
-        waitTillServicesAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
 
         List<TaskDTO> all = endpoint.getAll(TestDataV2.getAllParameters());
         Predicate<TaskDTO> sizePredicate = (task) -> task.getServerResponses() != null

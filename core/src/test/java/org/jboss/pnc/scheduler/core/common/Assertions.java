@@ -14,10 +14,10 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class Assertions {
-    public static void assertCorrectServiceRelations(Task testing,
-                                               int unfinishedDeps,
-                                               String[] dependants,
-                                               String[] dependencies) {
+    public static void assertCorrectTaskRelations(Task testing,
+                                                  int unfinishedDeps,
+                                                  String[] dependants,
+                                                  String[] dependencies) {
         assertThat(testing)
                 .isNotNull();
         assertThat(testing.getUnfinishedDependencies())
@@ -32,17 +32,17 @@ public class Assertions {
         }
     }
 
-    public static void waitTillServicesAre(State state, TaskContainer container, Task... tasks) {
-        waitTillServicesAre(state, container, 5, Arrays.stream(tasks).map(Task::getName).toArray(String[]::new));
+    public static void waitTillTasksAre(State state, TaskContainer container, Task... tasks) {
+        waitTillTasksAre(state, container, 5, Arrays.stream(tasks).map(Task::getName).toArray(String[]::new));
     }
-    public static void waitTillServicesAre(State state, TaskContainer container, int timeout, Task... tasks) {
-        waitTillServicesAre(state, container, timeout, Arrays.stream(tasks).map(Task::getName).toArray(String[]::new));
+    public static void waitTillTasksAre(State state, TaskContainer container, int timeout, Task... tasks) {
+        waitTillTasksAre(state, container, timeout, Arrays.stream(tasks).map(Task::getName).toArray(String[]::new));
     }
-    public static void waitTillServicesAre(State state, TaskContainer container, String... tasks) {
-        waitTillServicesAre(state, container, 5, tasks);
+    public static void waitTillTasksAre(State state, TaskContainer container, String... tasks) {
+        waitTillTasksAre(state, container, 10, tasks);
     }
 
-    public static void waitTillServicesAre(State state, TaskContainer container, int timeout, String... strings) {
+    public static void waitTillTasksAre(State state, TaskContainer container, int timeout, String... strings) {
         List<String> fine = new ArrayList<>(Arrays.asList(strings));
         waitSynchronouslyFor(() -> {
             Iterator<String> iterator = fine.iterator();

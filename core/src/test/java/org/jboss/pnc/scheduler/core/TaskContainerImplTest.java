@@ -2,8 +2,8 @@ package org.jboss.pnc.scheduler.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.jboss.pnc.scheduler.core.common.Assertions.assertCorrectServiceRelations;
-import static org.jboss.pnc.scheduler.core.common.Assertions.waitTillServicesAre;
+import static org.jboss.pnc.scheduler.core.common.Assertions.assertCorrectTaskRelations;
+import static org.jboss.pnc.scheduler.core.common.Assertions.waitTillTasksAre;
 import static org.jboss.pnc.scheduler.core.common.TestData.getComplexGraph;
 import static org.jboss.pnc.scheduler.core.common.TestData.getEndpointWithStart;
 import static org.jboss.pnc.scheduler.core.common.TestData.getMockTaskWithStart;
@@ -144,7 +144,7 @@ class TaskContainerImplTest {
         controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
         manager.commit();
 
-        waitTillServicesAre(State.UP, container, EXISTING_KEY);
+        waitTillTasksAre(State.UP, container, EXISTING_KEY);
         Task task = container.getTask(EXISTING_KEY);
         assertThat(task.getState()).isEqualTo(State.UP);
     }
@@ -186,13 +186,13 @@ class TaskContainerImplTest {
         controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
         container.getTransactionManager().commit();
 
-        waitTillServicesAre(State.UP, container, EXISTING_KEY);
+        waitTillTasksAre(State.UP, container, EXISTING_KEY);
 
         container.getTransactionManager().begin();
         controller.accept(EXISTING_KEY, null);
         container.getTransactionManager().commit();
 
-        waitTillServicesAre(State.UP, container, dependant);
+        waitTillTasksAre(State.UP, container, dependant);
     }
 
     @Test
@@ -210,16 +210,16 @@ class TaskContainerImplTest {
 
         taskEndpoint.create(getComplexGraph(false));
 
-        assertCorrectServiceRelations(container.getTask(a), 0, new String[]{c, d}, null);
-        assertCorrectServiceRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
-        assertCorrectServiceRelations(container.getTask(c), 1, new String[]{f}, new String[]{a});
-        assertCorrectServiceRelations(container.getTask(d), 2, new String[]{e}, new String[]{a, b});
-        assertCorrectServiceRelations(container.getTask(e), 2, new String[]{g, h}, new String[]{d, b});
-        assertCorrectServiceRelations(container.getTask(f), 1, new String[]{i}, new String[]{c});
-        assertCorrectServiceRelations(container.getTask(g), 1, new String[]{i, j}, new String[]{e});
-        assertCorrectServiceRelations(container.getTask(h), 2, new String[]{j}, new String[]{e, b});
-        assertCorrectServiceRelations(container.getTask(i), 2, null, new String[]{f, g});
-        assertCorrectServiceRelations(container.getTask(j), 2, null, new String[]{g, h});
+        assertCorrectTaskRelations(container.getTask(a), 0, new String[]{c, d}, null);
+        assertCorrectTaskRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
+        assertCorrectTaskRelations(container.getTask(c), 1, new String[]{f}, new String[]{a});
+        assertCorrectTaskRelations(container.getTask(d), 2, new String[]{e}, new String[]{a, b});
+        assertCorrectTaskRelations(container.getTask(e), 2, new String[]{g, h}, new String[]{d, b});
+        assertCorrectTaskRelations(container.getTask(f), 1, new String[]{i}, new String[]{c});
+        assertCorrectTaskRelations(container.getTask(g), 1, new String[]{i, j}, new String[]{e});
+        assertCorrectTaskRelations(container.getTask(h), 2, new String[]{j}, new String[]{e, b});
+        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[]{f, g});
+        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[]{g, h});
     }
 
     @Test
@@ -243,17 +243,17 @@ class TaskContainerImplTest {
 
         taskEndpoint.create(graph);
 
-        assertCorrectServiceRelations(container.getTask(a), 0, new String[]{c, d}, null);
-        assertCorrectServiceRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
-        assertCorrectServiceRelations(container.getTask(c), 1, new String[]{f, EXISTING_KEY}, new String[]{a});
-        assertCorrectServiceRelations(container.getTask(d), 2, new String[]{e, EXISTING_KEY}, new String[]{a, b});
-        assertCorrectServiceRelations(container.getTask(e), 2, new String[]{g, h}, new String[]{d, b});
-        assertCorrectServiceRelations(container.getTask(f), 2, new String[]{i}, new String[]{c, EXISTING_KEY});
-        assertCorrectServiceRelations(container.getTask(g), 1, new String[]{i, j}, new String[]{e});
-        assertCorrectServiceRelations(container.getTask(h), 2, new String[]{j}, new String[]{e, b});
-        assertCorrectServiceRelations(container.getTask(i), 2, null, new String[]{f, g});
-        assertCorrectServiceRelations(container.getTask(j), 2, null, new String[]{g, h});
-        assertCorrectServiceRelations(container.getTask(EXISTING_KEY), 2, new String[]{f}, new String[]{c, d});
+        assertCorrectTaskRelations(container.getTask(a), 0, new String[]{c, d}, null);
+        assertCorrectTaskRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
+        assertCorrectTaskRelations(container.getTask(c), 1, new String[]{f, EXISTING_KEY}, new String[]{a});
+        assertCorrectTaskRelations(container.getTask(d), 2, new String[]{e, EXISTING_KEY}, new String[]{a, b});
+        assertCorrectTaskRelations(container.getTask(e), 2, new String[]{g, h}, new String[]{d, b});
+        assertCorrectTaskRelations(container.getTask(f), 2, new String[]{i}, new String[]{c, EXISTING_KEY});
+        assertCorrectTaskRelations(container.getTask(g), 1, new String[]{i, j}, new String[]{e});
+        assertCorrectTaskRelations(container.getTask(h), 2, new String[]{j}, new String[]{e, b});
+        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[]{f, g});
+        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[]{g, h});
+        assertCorrectTaskRelations(container.getTask(EXISTING_KEY), 2, new String[]{f}, new String[]{c, d});
     }
 
     @Test
@@ -285,7 +285,7 @@ class TaskContainerImplTest {
         container.getCache().getTransactionManager().begin();
         controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
         container.getCache().getTransactionManager().commit();
-        waitTillServicesAre(State.SUCCESSFUL, container, services);
+        waitTillTasksAre(State.SUCCESSFUL, container, services);
 
         // sleep because running counter takes time to update
         Thread.sleep(100);
@@ -343,7 +343,7 @@ class TaskContainerImplTest {
         controller.setMode(a, Mode.CANCEL);
         container.getCache().getTransactionManager().commit();
 
-        waitTillServicesAre(State.STOPPED, container, services);
+        waitTillTasksAre(State.STOPPED, container, services);
     }
 
     @Test
@@ -379,7 +379,7 @@ class TaskContainerImplTest {
     public void randomDAGTest() throws Exception {
         CreateGraphRequest randomDAG = generateDAG(2, 10, 5, 10, 0.7F);
         taskEndpoint.create(randomDAG);
-        waitTillServicesAre(State.SUCCESSFUL, container, randomDAG.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAre(State.SUCCESSFUL, container, randomDAG.getVertices().keySet().toArray(new String[0]));
 
         // sleep because running counter takes time to update
         Thread.sleep(100);
