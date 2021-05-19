@@ -3,11 +3,10 @@ package org.jboss.pnc.scheduler.core;
 import io.quarkus.test.junit.QuarkusTest;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.Transition;
-import org.jboss.pnc.scheduler.core.common.TestDataV2;
+import org.jboss.pnc.scheduler.core.common.TestData;
 import org.jboss.pnc.scheduler.core.counter.Counter;
 import org.jboss.pnc.scheduler.core.counter.Running;
 import org.jboss.pnc.scheduler.core.endpoints.TransitionRecorderEndpoint;
-import org.jboss.pnc.scheduler.dto.ServerResponseDTO;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.rest.api.InternalEndpoint;
@@ -85,7 +84,7 @@ public class TransitionNotificationTest {
 
     @Test
     void testNotificationOnCancel() throws InterruptedException {
-        CreateGraphRequest request = TestDataV2.getComplexGraphWithoutEnd(true, true);
+        CreateGraphRequest request = TestData.getComplexGraphWithoutEnd(true, true);
         endpoint.create(request);
         waitTillTasksAre(State.UP, container, "a", "b");
 
@@ -111,19 +110,21 @@ public class TransitionNotificationTest {
 
     @Test
     void testRecordedBodies() {
-        CreateGraphRequest request = TestDataV2.getComplexGraph(true, true);
+        CreateGraphRequest request = getComplexGraph(true, true);
         endpoint.create(request);
         waitTillTasksAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
 
-        List<TaskDTO> all = endpoint.getAll(TestDataV2.getAllParameters());
+        List<TaskDTO> all = endpoint.getAll(TestData.getAllParameters());
         Predicate<TaskDTO> sizePredicate = (task) -> task.getServerResponses() != null
                 && task.getServerResponses().size() == 2;
         Predicate<TaskDTO> responsePredicate = (task) -> {
             var responses = task.getServerResponses();
-            boolean firstBody = responses.stream().anyMatch((response -> response.getState() == State.STARTING
+            boolean firstBody = responses.stream().anyMatch((response ->
+                    response.getState() == State.STARTING
                     && response.getBody() instanceof Map
                     && !((Map<String, String>) response.getBody()).get("task").isEmpty()));
-            boolean secondBody = responses.stream().anyMatch((response -> response.getState() == State.UP
+            boolean secondBody = responses.stream().anyMatch((response ->
+                    response.getState() == State.UP
                     && response.getBody() instanceof String
                     && response.getBody().equals("ALL IS OK")));
             return firstBody && secondBody;

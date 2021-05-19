@@ -4,7 +4,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.core.counter.Counter;
 import org.jboss.pnc.scheduler.core.counter.Running;
-import org.jboss.pnc.scheduler.core.endpoints.MockEndpoint;
+import org.jboss.pnc.scheduler.core.endpoints.HttpEndpoint;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.rest.api.InternalEndpoint;
@@ -46,7 +46,7 @@ public class QueueTest {
     InternalEndpoint internalEndpoint;
 
     @Inject
-    MockEndpoint mockEndpoint;
+    HttpEndpoint httpEndpoint;
 
     @BeforeEach
     void before() {
@@ -118,14 +118,14 @@ public class QueueTest {
 
         // to make the test deterministic
         int seed = 1000;
-        mockEndpoint.startRecordingQueue();
+        httpEndpoint.startRecordingQueue();
 
         CreateGraphRequest graph = generateDAG(seed, 2, 10, 5, 10, 0.7F);
         taskEndpoint.create(graph);
 
         waitTillTasksAre(State.SUCCESSFUL, container, 20, graph.getVertices().keySet().toArray(new String[0]));
 
-        Collection<Long> queueRecords = mockEndpoint.stopRecording();
+        Collection<Long> queueRecords = httpEndpoint.stopRecording();
         assertThat(queueRecords).allMatch(record -> record <=1);
     }
 }

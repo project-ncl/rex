@@ -89,7 +89,7 @@ public class RandomDAGGeneration {
      */
     public static void main(String[] args) {
         for (int i = 0; i < 1; i++) {
-            CreateGraphRequest request = generateDAG(1, 5, 5, 10, 0.7F);
+            CreateGraphRequest request = generateDAG(2, 10, 5, 10, 0.7F);
             System.out.println(request.toString());
             for (String s : request.getVertices().keySet()) {
                 System.out.println(s);
