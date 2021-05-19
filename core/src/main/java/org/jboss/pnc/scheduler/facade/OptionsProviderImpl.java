@@ -15,7 +15,7 @@ public class OptionsProviderImpl implements OptionsProvider {
     private final QueueManager manager;
 
     @Inject
-    public OptionsProviderImpl(@WithRetries QueueManager manager) {
+    public OptionsProviderImpl(QueueManager manager) {
         this.manager = manager;
     }
 
