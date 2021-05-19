@@ -41,6 +41,7 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Override
+    @Transactional
     public Set<TaskDTO> create(CreateGraphRequest request) {
         return target.install(graphMapper.toDB(request))
                 .stream()
