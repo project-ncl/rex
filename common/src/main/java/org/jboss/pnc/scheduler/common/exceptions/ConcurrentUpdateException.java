@@ -16,8 +16,4 @@ public class ConcurrentUpdateException extends RuntimeException {
     public ConcurrentUpdateException(Throwable cause) {
         super(cause);
     }
-
-    protected ConcurrentUpdateException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }
