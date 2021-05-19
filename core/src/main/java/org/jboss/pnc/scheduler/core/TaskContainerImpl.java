@@ -114,6 +114,14 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         return tasks.getWithMetadata(name);
     }
 
+    public MetadataValue<Task> getRequiredTaskWithMetadata(String name) {
+        MetadataValue<Task> meta = tasks.getWithMetadata(name);
+        if (meta == null) {
+            throw new TaskMissingException("Task with name " + name + " was not found");
+        }
+        return meta;
+    }
+
     @Override
     public List<Task> getTask(boolean waiting, boolean running, boolean finished) {
         if (!waiting && !running && !finished)
