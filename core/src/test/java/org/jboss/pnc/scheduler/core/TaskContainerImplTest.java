@@ -8,7 +8,9 @@ import static org.jboss.pnc.scheduler.core.common.TestData.getComplexGraph;
 import static org.jboss.pnc.scheduler.core.common.TestData.getEndpointWithStart;
 import static org.jboss.pnc.scheduler.core.common.TestData.getMockTaskWithStart;
 import static org.jboss.pnc.scheduler.core.common.RandomDAGGeneration.generateDAG;
+import static org.jboss.pnc.scheduler.core.common.TestData.getMockTaskWithoutStart;
 import static org.jboss.pnc.scheduler.core.common.TestData.getRequestWithoutStart;
+import static org.jboss.pnc.scheduler.core.common.TestData.getSingleWithoutStart;
 import static org.jboss.pnc.scheduler.core.common.TestData.getStopRequest;
 
 import javax.inject.Inject;
@@ -365,6 +367,51 @@ class TaskContainerImplTest {
 
         assertThatThrownBy(() -> taskEndpoint.create(request))
                 .isInstanceOf(CircularDependencyException.class);
+    }
+
+    @Test
+    public void shouldFailOnAddingDependencyToNonIdleTask() throws Exception {
+        TransactionManager manager = container.getTransactionManager();
+        manager.begin();
+        controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
+        manager.commit();
+
+        CreateGraphRequest request = getSingleWithoutStart("newDependency").toBuilder()
+                .edge(new EdgeDTO(EXISTING_KEY,"newDependency"))
+                .build();
+
+        assertThatThrownBy(() -> taskEndpoint.create(request))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    public void shouldFailOnTryingToScheduleExistingTask() {
+        CreateGraphRequest request = getSingleWithoutStart(EXISTING_KEY);
+
+        assertThatThrownBy(() -> taskEndpoint.create(request))
+                .isInstanceOf(TaskConflictException.class);
+    }
+
+    @Test
+    public void shouldFailOnTryingToCreateReflexiveEdge() {
+
+        CreateGraphRequest request = CreateGraphRequest.builder()
+                .edge(new EdgeDTO(EXISTING_KEY, EXISTING_KEY))
+                .build();
+
+        assertThatThrownBy(() -> taskEndpoint.create(request))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    public void shouldFailOnHavingATaskWithoutData() {
+        CreateGraphRequest request = CreateGraphRequest.builder()
+                .edge(new EdgeDTO(EXISTING_KEY, "task with no data"))
+                .vertex("ignore", getMockTaskWithoutStart("ignore", Mode.IDLE))
+                .build();
+
+        assertThatThrownBy(() -> taskEndpoint.create(request))
+                .isInstanceOf(BadRequestException.class);
     }
 
     /**
