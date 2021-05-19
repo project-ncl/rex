@@ -1,6 +1,10 @@
 package org.jboss.pnc.scheduler.rest;
 
 import org.eclipse.microprofile.faulttolerance.Retry;
+import org.jboss.pnc.scheduler.common.exceptions.BadRequestException;
+import org.jboss.pnc.scheduler.common.exceptions.CircularDependencyException;
+import org.jboss.pnc.scheduler.common.exceptions.TaskConflictException;
+import org.jboss.pnc.scheduler.common.exceptions.TaskMissingException;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.facade.api.TaskProvider;
@@ -9,8 +13,7 @@ import org.jboss.pnc.scheduler.rest.parameters.TaskFilterParameters;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Set;
 
@@ -25,8 +28,15 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
-    @Transactional
-    public Set<TaskDTO> create(@NotNull CreateGraphRequest request) {
+    @Retry(maxRetries = 5,
+            delay = 10,
+            jitter = 50,
+            abortOn = {ConstraintViolationException.class,
+                    TaskMissingException.class,
+                    CircularDependencyException.class,
+                    BadRequestException.class,
+                    TaskConflictException.class})
+    public Set<TaskDTO> create(CreateGraphRequest request) {
         return taskProvider.create(request);
     }
 
@@ -47,7 +57,13 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
-    @Retry(maxRetries = 5)
+    @Retry(maxRetries = 5,
+            delay = 10,
+            jitter = 50,
+            abortOn = {ConstraintViolationException.class,
+                    TaskMissingException.class,
+                    BadRequestException.class,
+                    TaskConflictException.class})
     public void cancel(String taskID) {
         taskProvider.cancel(taskID);
     }

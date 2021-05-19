@@ -239,7 +239,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             if (isNewTask(entry.getKey(), vertices)) {
                 Task previousValue = getCache().withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(task.getName(), task);
                 if (previousValue != null) {
-                    throw new IllegalArgumentException(
+                    throw new TaskConflictException(
                             "Task " + task.getName() + " declared as new in vertices already exists.");
                 }
 
@@ -310,8 +310,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             // task data for existing task should be retrieved from DB
             task = getTask(name);
             if (task == null) {
-                throw new IllegalArgumentException(
-                        "Either existing task" + name
+                throw new BadRequestException(
+                        "Either existing task " + name
                                 + " has incorrect identifier or data for a new task is not declared in vertices");
             }
         }
@@ -326,7 +326,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
      */
     private void assertDependantCanHaveDependency(Task dependant) {
         if (!dependant.getState().isIdle()) {
-            throw new IllegalArgumentException(
+            throw new BadRequestException(
                     "Existing task " + dependant.getName() + " is in " + dependant.getState()
                             + " state and cannot have more dependencies.");
         }

@@ -8,7 +8,6 @@ import org.jboss.pnc.scheduler.common.enums.Transition;
 import org.jboss.pnc.scheduler.core.api.DependentMessenger;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.common.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.scheduler.common.exceptions.TaskNotFoundException;
 import org.jboss.pnc.scheduler.core.jobs.DecreaseCounterJob;
 import org.jboss.pnc.scheduler.core.jobs.InvokeStartJob;
 import org.jboss.pnc.scheduler.core.jobs.InvokeStopJob;
