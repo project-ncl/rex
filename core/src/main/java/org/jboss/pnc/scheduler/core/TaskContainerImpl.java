@@ -220,6 +220,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
         // handle edge by edge
         for (Edge edge : edges) {
+            assertEdgeValidity(edge);
+
             String dependant = edge.getSource();
             Task dependantTask = addToCache(dependant, taskCache, vertices);
 
@@ -248,6 +250,12 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         // succeeds
         jobEvent.fire(new PokeQueueJob());
         return newTasks;
+    }
+
+    private void assertEdgeValidity(Edge edge) {
+        if (edge.getSource().equals(edge.getTarget())) {
+            throw new BadRequestException("Invalid edge. Task" + edge.getSource() + " cannot depend on itself.");
+        }
     }
 
     private Set<Task> storeTheTasks(Map<String, Task> taskCache, Map<String, InitialTask> vertices) {
