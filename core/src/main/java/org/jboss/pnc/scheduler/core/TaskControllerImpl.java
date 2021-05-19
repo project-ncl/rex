@@ -201,8 +201,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
     @Override
     @Transactional(MANDATORY)
     public void setMode(String name, Mode mode, boolean pokeQueue) {
-        MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
-        assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
+        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         Mode currentMode = task.getControllerMode();
@@ -230,8 +229,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
     @Override
     @Transactional(MANDATORY)
     public void accept(String name, Object response) {
-        MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
-        assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
+        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         if (EnumSet.of(State.STARTING,State.UP,State.STOPPING).contains(task.getState())){
@@ -259,8 +257,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
     @Override
     @Transactional(MANDATORY)
     public void fail(String name, Object response) {
-        MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
-        assertNotNull(taskMetadata, new TaskNotFoundException("Service " + name + "not found"));
+        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         if (EnumSet.of(State.STARTING, State.UP, State.STOPPING).contains(task.getState())){
@@ -268,7 +265,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(negativeResponse);
             task.setServerResponses(responses); //probably unnecessary
-            //maybe assert it was null before
+            //maybe assert it was NONE before
             task.setStopFlag(StopFlag.UNSUCCESSFUL);
         } else {
             throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
@@ -285,8 +282,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
     @Override
     @Transactional(MANDATORY)
     public void dequeue(String name) {
-        MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
-        assertNotNull(taskMetadata, new TaskNotFoundException("Service " + name + "not found"));
+        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         if (task.getState() == State.ENQUEUED) {
@@ -306,8 +302,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
     @Override
     @Transactional(MANDATORY)
     public void dependencySucceeded(String name) {
-        MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
-        assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
+        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         task.decUnfinishedDependencies();
@@ -324,11 +319,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
     @Override
     @Transactional(MANDATORY)
     public void dependencyStopped(String name) {
-        MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
-        assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
+        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
-        //maybe assert it was null before
+        //maybe assert it was NONE before
         task.setStopFlag(StopFlag.DEPENDENCY_FAILED);
 
         List<ControllerJob> tasks = transition(task);
@@ -343,11 +337,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
     @Override
     @Transactional(MANDATORY)
     public void dependencyCancelled(String name) {
-        MetadataValue<Task> taskMetadata = container.getCache().getWithMetadata(name);
-        assertNotNull(taskMetadata, new TaskNotFoundException("Task " + name + "not found"));
+        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
-        //maybe assert it was null before
+        //maybe assert it was NONE before
         task.setStopFlag(StopFlag.CANCELLED);
 
         List<ControllerJob> tasks = transition(task);
