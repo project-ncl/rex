@@ -7,7 +7,7 @@ import javax.enterprise.event.TransactionPhase;
 import javax.enterprise.inject.spi.CDI;
 import java.util.Set;
 
-public abstract class DependentControllerJob extends TransactionalControllerJob {
+public abstract class DependentControllerJob extends ControllerJob {
 
     private final Set<String> dependents;
 
@@ -28,4 +28,13 @@ public abstract class DependentControllerJob extends TransactionalControllerJob 
     }
 
     abstract void inform(final String dependentName);
+
+    @Override
+    void beforeExecute() {}
+
+    @Override
+    void afterExecute() {}
+
+    @Override
+    void onException(Throwable e) {}
 }
