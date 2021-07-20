@@ -32,7 +32,7 @@ public class CallerNotificationClient {
         Request requestDefinition = task.getCallerNotifications();
 
         if (requestDefinition == null) {
-            log.warn("Task notifications disable for Task " + task.getName());
+            log.warn("NOTIFICATION {}: DISABLED", task.getName());
             return;
         }
 
@@ -51,6 +51,11 @@ public class CallerNotificationClient {
                 .task(miniMapper.minimize(task))
                 .build();
 
+        log.info("NOTIFICATION {}: {} transition. Sending notification. REQUEST: {}.",
+                task.getName(),
+                transition,
+                request.toString());
+
         client.makeRequest(uri,
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
@@ -60,9 +65,12 @@ public class CallerNotificationClient {
 
     private void handleResponse(HttpResponse<Buffer> response, Transition transition, Task task) {
         if (200 <= response.statusCode() && response.statusCode() <= 299) {
-            log.debug("Caller successfully notified for task " + task.getName() + " and transition " + transition);
+            log.debug("NOTIFICATION {}: Successful for transition {} ", task.getName(), transition);
         } else {
-            log.warn("Caller denied a notification for task " + task.getName() + " and transition " + transition);
+            log.warn("NOTIFICATION {}: Failure while sending notification for transition {}. RESPONSE: {}",
+                    task.getName(),
+                    transition,
+                    response.bodyAsString());
         }
     }
 }

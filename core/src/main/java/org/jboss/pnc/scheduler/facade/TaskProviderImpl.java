@@ -21,15 +21,15 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class TaskProviderImpl implements TaskProvider {
 
-    private TaskTarget target;
+    private final TaskTarget target;
 
-    private TaskRegistry registry;
+    private final TaskRegistry registry;
 
-    private TaskMapper mapper;
+    private final TaskMapper mapper;
 
-    private GraphsMapper graphMapper;
+    private final GraphsMapper graphMapper;
 
-    private TaskController controller;
+    private final TaskController controller;
 
     @Inject
     public TaskProviderImpl(TaskContainer container, TaskController controller, TaskMapper mapper, GraphsMapper graphMapper) {

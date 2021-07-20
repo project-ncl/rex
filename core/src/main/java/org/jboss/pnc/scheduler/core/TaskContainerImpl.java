@@ -1,6 +1,7 @@
 package org.jboss.pnc.scheduler.core;
 
 import io.quarkus.infinispan.client.Remote;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -43,6 +44,7 @@ import java.util.Set;
 
 import static javax.transaction.Transactional.TxType.MANDATORY;
 
+@Slf4j
 @ApplicationScoped
 public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
@@ -117,6 +119,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     public MetadataValue<Task> getRequiredTaskWithMetadata(String name) {
         MetadataValue<Task> meta = tasks.getWithMetadata(name);
         if (meta == null) {
+            log.info("ERROR: couldn't find task {}", name);
             throw new TaskMissingException("Task with name " + name + " was not found");
         }
         return meta;
@@ -214,6 +217,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     @Transactional(MANDATORY)
     public Set<Task> install(TaskGraph taskGraph) {
+        log.info("Install requested: " + taskGraph.toString());
         Set<Edge> edges = taskGraph.getEdges();
         Map<String, InitialTask> vertices = taskGraph.getVertices();
         Map<String, Task> taskCache = new HashMap<>();

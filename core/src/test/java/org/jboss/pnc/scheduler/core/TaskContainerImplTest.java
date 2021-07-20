@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.transaction.RollbackException;
 import javax.transaction.TransactionManager;
 
+import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.enums.State;
@@ -37,15 +38,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
+@Slf4j
 class TaskContainerImplTest {
-
-    private static final Logger log = LoggerFactory.getLogger(TaskContainerImplTest.class);
 
     public static final String EXISTING_KEY = "omg.wtf.whatt";
 
@@ -68,6 +66,7 @@ class TaskContainerImplTest {
 
     @BeforeEach
     public void before() throws Exception {
+        log.info("Clearing cache and initializing counters");
         max.initialize(1000L);
         running.initialize(0L);
         container.getCache().clear();

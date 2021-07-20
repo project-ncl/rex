@@ -13,7 +13,7 @@ public class PokeQueueJob extends ControllerJob {
     private final QueueManager manager;
 
     public PokeQueueJob() {
-        super(INVOCATION_PHASE);
+        super(INVOCATION_PHASE, null);
         this.manager = CDI.current().select(QueueManager.class, () -> WithRetries.class).get();
     }
 

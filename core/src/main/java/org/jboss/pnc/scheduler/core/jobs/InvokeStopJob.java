@@ -14,8 +14,6 @@ public class InvokeStopJob extends ControllerJob {
 
     private final RemoteEntityClient client;
 
-    private final Task task;
-
     private static final Logger logger = LoggerFactory.getLogger(InvokeStopJob.class);
 
     @Override
@@ -28,15 +26,14 @@ public class InvokeStopJob extends ControllerJob {
     void onException(Throwable e) {}
 
     public InvokeStopJob(Task task) {
-        super(INVOCATION_PHASE);
-        this.task = task;
+        super(INVOCATION_PHASE, task);
         this.client = CDI.current().select(RemoteEntityClient.class).get();
     }
 
     @Override
     boolean execute() {
-        logger.info("Invoking StopJob for " + task.getName());
-        client.stopJob(task);
+        logger.info("STOP {}: STOPPING", context.getName());
+        client.stopJob(context);
         return true;
     }
 }
