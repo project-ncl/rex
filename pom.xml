@@ -13,7 +13,7 @@
     <module>model</module>
   </modules>
   <properties>
-    <quarkus.version>1.13.2.Final</quarkus.version>
+    <quarkus.version>2.0.2.Final</quarkus.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
@@ -27,7 +27,7 @@
     <restassured.version>4.1.1</restassured.version>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
     <testcontainers.version>1.14.3</testcontainers.version>
-    <jackson.version>2.11.2</jackson.version>
+    <jackson.version>2.12.4</jackson.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -84,11 +84,6 @@
         <artifactId>jackson-databind</artifactId>
         <version>${jackson.version}</version>
       </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
 
       <!-- Test dependencies -->
       <dependency>
@@ -114,20 +109,6 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-maven-plugin</artifactId>
-        <version>${quarkus.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate-code</goal>
-              <goal>generate-code-tests</goal>
-              <goal>build</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${compiler-plugin.version}</version>
       </plugin>
@@ -144,7 +125,6 @@
       </plugin>
     </plugins>
   </build>
-
   <profiles>
     <profile>
       <id>native</id>
