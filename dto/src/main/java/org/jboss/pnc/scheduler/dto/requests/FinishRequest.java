@@ -3,12 +3,14 @@ package org.jboss.pnc.scheduler.dto.requests;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class FinishRequest {
 
     @NotNull

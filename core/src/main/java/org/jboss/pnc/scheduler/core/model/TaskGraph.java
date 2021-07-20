@@ -4,12 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
+import lombok.ToString;
 
 import java.util.Map;
 import java.util.Set;
 
 @Builder
 @AllArgsConstructor
+@ToString
 public class TaskGraph {
 
     @Getter
