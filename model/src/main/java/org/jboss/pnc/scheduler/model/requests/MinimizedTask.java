@@ -2,6 +2,7 @@ package org.jboss.pnc.scheduler.model.requests;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
@@ -14,6 +15,7 @@ import java.util.Set;
 @Jacksonized
 @Builder
 @Getter
+@ToString
 public class MinimizedTask {
 
     private final String name;

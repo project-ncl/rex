@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import lombok.ToString;
 import org.jboss.pnc.scheduler.common.enums.State;
 import org.jboss.pnc.scheduler.common.enums.StopFlag;
 
@@ -17,6 +18,7 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class TaskDTO {
 
     public String name;
