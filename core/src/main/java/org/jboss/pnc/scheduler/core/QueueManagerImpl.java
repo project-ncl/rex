@@ -1,5 +1,6 @@
 package org.jboss.pnc.scheduler.core;
 
+import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.pnc.scheduler.core.api.QueueManager;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
@@ -16,13 +17,13 @@ import javax.transaction.Transactional;
 
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static javax.transaction.Transactional.TxType.MANDATORY;
 
+@Slf4j
 @ApplicationScoped
 public class QueueManagerImpl implements QueueManager {
-
-    private static final Logger log = LoggerFactory.getLogger(QueueManagerImpl.class);
 
     private final Counter max;
     private final Counter running;
@@ -39,6 +40,7 @@ public class QueueManagerImpl implements QueueManager {
     @Override
     @Transactional
     public void poke() {
+        log.info("QUEUE: Poking Task queue");
         MetadataValue<Long> maxMetadata = max.getMetadataValue();
         Long maxValue = maxMetadata.getValue();
 
@@ -46,7 +48,7 @@ public class QueueManagerImpl implements QueueManager {
         Long runningValue = runningMetadata.getValue();
 
         if (runningValue >= maxValue) {
-            // maximum amount of Tasks are running
+            log.debug("QUEUE: Maximum number of parallel builds reached.({} out of {})", runningValue, maxValue);
             return;
         }
 
@@ -57,11 +59,23 @@ public class QueueManagerImpl implements QueueManager {
         if (randomEnqueuedTasks.size() == 0) {
             return;
         }
+
+        log.info("QUEUE: Free space of {} found. Scheduling {} task(s) of {}",
+                freeSpace,
+                randomEnqueuedTasks.size(),
+                randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList())
+        );
+
         randomEnqueuedTasks.forEach(task -> controller.dequeue(task.getName()));
-        log.info("Increasing running with version " + runningMetadata.getVersion() + " counter from "
-                + runningValue + " to " + (runningValue + randomEnqueuedTasks.size()));
+
+        log.info("QUEUE: Increasing running counter. ({} to {}) [ISPN-VERSION:{}]",
+                runningValue,
+                (runningValue + randomEnqueuedTasks.size()),
+                runningMetadata.getVersion());
         if (!running.replaceValue(runningMetadata, runningValue + randomEnqueuedTasks.size())) {
-            throw new ConcurrentModificationException("Running cache was modified concurrently.");
+            RuntimeException e = new ConcurrentModificationException("Running counter was modified concurrently.");
+            log.error("QUEUE: Concurrent modification detected.", e);
+            throw e;
         }
     }
 
@@ -70,9 +84,14 @@ public class QueueManagerImpl implements QueueManager {
     public void decreaseRunningCounter() {
         MetadataValue<Long> runningMetadata = running.getMetadataValue();
         long runningValue = runningMetadata.getValue() - 1;
-        log.info("Decreasing running with version "+ runningMetadata.getVersion() + " from " + runningMetadata.getValue() + " to " + runningValue);
+        log.info("QUEUE: Decreasing running counter by one. ({} to {}) [ISPN-VERSION:{}]",
+                runningMetadata.getValue(),
+                runningValue,
+                runningMetadata.getVersion());
         if (!running.replaceValue(runningMetadata, runningValue)) {
-            throw new ConcurrentModificationException("Running cache was modified concurrently.");
+            RuntimeException e = new ConcurrentModificationException("Running counter was modified concurrently.");
+            log.error("QUEUE: Concurrent modification detected.", e);
+            throw e;
         }
     }
 

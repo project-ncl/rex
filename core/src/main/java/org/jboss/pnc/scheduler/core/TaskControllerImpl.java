@@ -1,5 +1,6 @@
 package org.jboss.pnc.scheduler.core;
 
+import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.pnc.scheduler.common.enums.Mode;
 import org.jboss.pnc.scheduler.common.enums.State;
@@ -26,16 +27,16 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static javax.transaction.Transactional.TxType.MANDATORY;
 
+@Slf4j
 @ApplicationScoped
 public class TaskControllerImpl implements TaskController, DependentMessenger {
-
-    private static final Logger logger = LoggerFactory.getLogger(TaskControllerImpl.class);
 
     private final TaskContainerImpl container;
 
@@ -50,7 +51,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         Transition transition;
         transition = getTransition(task);
         if (transition != null)
-            logger.info(String.format("Transitioning: before: %s after: %s for task: %s", transition.getBefore().toString(), transition.getAfter().toString(), task.getName()));
+            log.info("TRANSITION {}: before: {} after: {}", task.getName(), transition.getBefore().toString(), transition.getAfter().toString());
 
         List<ControllerJob> tasks = new ArrayList<>();
 
@@ -75,7 +76,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
             case STOPPING_to_STOPPED:
                 tasks.add(new DependencyCancelledJob(task));
-                tasks.add(new DecreaseCounterJob());
+                tasks.add(new DecreaseCounterJob(task));
                 tasks.add(new PokeQueueJob());
                 break;
 
@@ -96,7 +97,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
             case STARTING_to_START_FAILED:
             case STOPPING_to_STOP_FAILED:
                 tasks.add(new DependencyStoppedJob(task));
-                tasks.add(new DecreaseCounterJob());
+                tasks.add(new DecreaseCounterJob(task));
                 tasks.add(new PokeQueueJob());
                 break;
 
@@ -106,7 +107,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
             case UP_to_SUCCESSFUL:
                 tasks.add(new DependencySucceededJob(task));
-                tasks.add(new DecreaseCounterJob());
+                tasks.add(new DecreaseCounterJob(task));
                 tasks.add(new PokeQueueJob());
                 break;
             default:
@@ -116,6 +117,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
         // notify the caller about a transition
         tasks.add(new NotifyCallerJob(transition, task));
+        log.info("SCHEDULE {}: {}", task.getName(), tasks);
         return tasks;
     }
 
@@ -192,6 +194,34 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         return task.getStarting();
     }
 
+    private void handle(MetadataValue<Task> taskMetadata, Task task) {
+        handle(taskMetadata, task, null);
+    }
+    private void handle(MetadataValue<Task> taskMetadata, Task task, ControllerJob[] forcedJobs) {
+        List<ControllerJob> jobs = transition(task);
+        if (forcedJobs != null && forcedJobs.length != 0) {
+            jobs.addAll(Arrays.asList(forcedJobs));
+        }
+        doExecute(jobs);
+
+        log.debug("SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
+                task.getName(),
+                taskMetadata.getVersion(),
+                task);
+
+        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
+        if (!pushed) {
+            log.error("SAVE {}: Concurrent update detected. Transaction will fail.", task.getName());
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
+        }
+    }
+
+    private void doExecute(List<ControllerJob> jobs) {
+        for (ControllerJob job : jobs) {
+            scheduleJob.fire(job);
+        }
+    }
+
     @Override
     @Transactional(MANDATORY)
     public void setMode(String name, Mode mode) {
@@ -201,13 +231,18 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
     @Override
     @Transactional(MANDATORY)
     public void setMode(String name, Mode mode, boolean pokeQueue) {
+        // #1 PULL
         MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
+        // #2 ALTER
         Mode currentMode = task.getControllerMode();
         if (currentMode == Mode.CANCEL || (mode == Mode.IDLE && currentMode == Mode.ACTIVE)) {
             //no possible movement
-            //TODO log
+            log.error("SET-MODE {}: Incorrect request. (current-mode: {}, proposed-mode: {}) ",
+                    name,
+                    currentMode,
+                    mode);
             return;
         }
         task.setControllerMode(mode);
@@ -215,51 +250,44 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
             task.setStopFlag(StopFlag.CANCELLED);
         }
 
-        List<ControllerJob> tasks = transition(task);
+        // #3 HANDLE
         if (pokeQueue) {
-            tasks.add(new PokeQueueJob());
-        }
-        doExecute(tasks);
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
-        if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
+            handle(taskMetadata, task, new ControllerJob[]{new PokeQueueJob()});
+        } else {
+            handle(taskMetadata, task);
         }
     }
 
     @Override
     @Transactional(MANDATORY)
     public void accept(String name, Object response) {
+        // #1 PULL
         MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
+        // #2 ALTER
         if (EnumSet.of(State.STARTING,State.UP,State.STOPPING).contains(task.getState())){
             ServerResponse positiveResponse = new ServerResponse(task.getState(), true, response);
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(positiveResponse);
         } else {
-            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
+            RuntimeException exception = new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
+            log.error("ERROR: ", exception);
+            throw exception;
         }
 
-        List<ControllerJob> tasks = transition(task);
-        doExecute(tasks);
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
-        if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }
-    }
-
-    private void doExecute(List<ControllerJob> tasks) {
-        for (ControllerJob task : tasks) {
-            scheduleJob.fire(task);
-        }
+        // #3 HANDLE
+        handle(taskMetadata, task);
     }
 
     @Override
     @Transactional(MANDATORY)
     public void fail(String name, Object response) {
+        // #1 PULL
         MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
+        // #2 ALTER
         if (EnumSet.of(State.STARTING, State.UP, State.STOPPING).contains(task.getState())){
             ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response);
             List<ServerResponse> responses = task.getServerResponses();
@@ -271,83 +299,70 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
             throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
         }
 
-        List<ControllerJob> tasks = transition(task);
-        doExecute(tasks);
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
-        if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }
+        // #3 HANDLE
+        handle(taskMetadata, task);
     }
 
     @Override
     @Transactional(MANDATORY)
     public void dequeue(String name) {
+        // #1 PULL
         MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
+        // #2 ALTER
         if (task.getState() == State.ENQUEUED) {
             task.setStarting(true);
         } else {
             throw new IllegalStateException("Attempting to dequeue while not in a state to do. Task: " + task.getName() + " State: " + task.getState());
         }
 
-        List<ControllerJob> tasks = transition(task);
-        doExecute(tasks);
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
-        if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }
+        // #3 HANDLE
+        handle(taskMetadata, task);
     }
 
     @Override
     @Transactional(MANDATORY)
     public void dependencySucceeded(String name) {
+        // #1 PULL
         MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
+        // #2 ALTER
         task.decUnfinishedDependencies();
 
-        List<ControllerJob> tasks = transition(task);
-        doExecute(tasks);
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
-        logger.info("Called dep succeeded on " + name + " and pushed: " + pushed + " with prev version: " + taskMetadata.getVersion());
-        if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }
+        // #3 HANDLE
+        handle(taskMetadata, task);
     }
 
     @Override
     @Transactional(MANDATORY)
     public void dependencyStopped(String name) {
+        // #1 PULL
         MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
+        // #2 ALTER
         //maybe assert it was NONE before
         task.setStopFlag(StopFlag.DEPENDENCY_FAILED);
 
-        List<ControllerJob> tasks = transition(task);
-        doExecute(tasks);
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
-        if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }
+        // #3 HANDLE
+        handle(taskMetadata, task);
     }
 
 
     @Override
     @Transactional(MANDATORY)
     public void dependencyCancelled(String name) {
+        // #1 PULL
         MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
+        // #2 ALTER
         //maybe assert it was NONE before
         task.setStopFlag(StopFlag.CANCELLED);
 
-        List<ControllerJob> tasks = transition(task);
-        doExecute(tasks);
-        boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
-        if (!pushed) {
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }
+        // #3 HANDLE
+        handle(taskMetadata, task);
     }
 }

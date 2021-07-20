@@ -8,7 +8,6 @@ import org.jboss.pnc.scheduler.common.enums.Method;
 import org.jboss.pnc.scheduler.core.GenericVertxHttpClient;
 import org.jboss.pnc.scheduler.core.counter.Counter;
 import org.jboss.pnc.scheduler.core.counter.Running;
-import org.jboss.pnc.scheduler.dto.HeaderDTO;
 import org.jboss.pnc.scheduler.dto.requests.FinishRequest;
 import org.jboss.pnc.scheduler.model.Header;
 import org.jboss.pnc.scheduler.model.requests.StartRequest;
@@ -21,7 +20,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -71,7 +69,7 @@ public class HttpEndpoint {
 
     private void finishTask(StartRequest request) {
         try {
-            Thread.sleep(50);
+            Thread.sleep(30);
         } catch (InterruptedException e) {
             //ignore
         }
@@ -85,9 +83,9 @@ public class HttpEndpoint {
 
     private void onResponse(HttpResponse<Buffer> response) {
         if (response.statusCode() < 400) {
-            log.info("Positive response!");
+            log.info("Callback to scheduler positive!");
         } else {
-            log.warn("Negative response! " + response.body().toString());
+            log.warn("Callback to scheduler negative! " + response.body().toString());
         }
     }
 

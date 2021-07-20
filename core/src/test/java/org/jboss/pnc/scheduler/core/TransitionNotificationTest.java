@@ -129,6 +129,7 @@ public class TransitionNotificationTest {
                     && response.getBody().equals("ALL IS OK")));
             return firstBody && secondBody;
         };
-        assertThat(all).allMatch(sizePredicate).allMatch(sizePredicate).allMatch(responsePredicate);
+        assertThat(all).allMatch(sizePredicate);
+        assertThat(all).allMatch(responsePredicate);
     }
 }

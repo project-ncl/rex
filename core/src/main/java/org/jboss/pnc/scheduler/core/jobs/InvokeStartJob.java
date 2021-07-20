@@ -14,13 +14,10 @@ public class InvokeStartJob extends ControllerJob {
 
     private final RemoteEntityClient client;
 
-    private final Task task;
-
     private static final Logger logger = LoggerFactory.getLogger(InvokeStartJob.class);
 
     public InvokeStartJob(Task task) {
-        super(INVOCATION_PHASE);
-        this.task = task;
+        super(INVOCATION_PHASE, task);
         this.client = CDI.current().select(RemoteEntityClient.class).get();
     }
 
@@ -32,8 +29,8 @@ public class InvokeStartJob extends ControllerJob {
 
     @Override
     boolean execute() {
-        logger.info("Invoking StartJob for " + task.getName());
-        client.startJob(task);
+        logger.info("START {}: STARTING", context.getName());
+        client.startJob(context);
         return true;
     }
 

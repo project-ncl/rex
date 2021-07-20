@@ -1,9 +1,7 @@
 package org.jboss.pnc.scheduler.core;
 
-import io.smallrye.common.annotation.Blocking;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.scheduler.core.jobs.ControllerJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -13,9 +11,8 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 @ApplicationScoped
+@Slf4j
 public class TaskListener {
-
-    private static final Logger logger = LoggerFactory.getLogger(TaskListener.class);
 
     @Inject
     TransactionManager tm;
@@ -26,16 +23,18 @@ public class TaskListener {
             try {
                 tm.suspend();
             } catch (SystemException e) {
-                e.printStackTrace();
+                log.error("Could not disassociate from transaction.", e);
             }
-            logger.info("Running a " + task + " AFTER_SUCCESS");
+            String contextMessage = task.getContext().isPresent() ? ' ' + task.getContext().get().getName() : "";
+            log.debug("AFTER TRANSACTION{}: {}", contextMessage, task.getClass().getSimpleName());
             task.run();
         }
     }
 
     void onOngoingTransaction(@Observes(during = TransactionPhase.IN_PROGRESS) ControllerJob task) {
         if (task.getInvocationPhase() == TransactionPhase.IN_PROGRESS) {
-            logger.info("Running a " + task + " with IN_PROGRESS");
+            String contextMessage = task.getContext().isPresent() ? ' ' + task.getContext().get().getName() : "";
+            log.debug("WITHIN TRANSACTION{}: {}", contextMessage, task.getClass().getSimpleName());
             task.run();
         }
     }

@@ -2,11 +2,13 @@ package org.jboss.pnc.scheduler.core;
 
 
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.scheduler.common.enums.Method;
 import org.jboss.pnc.scheduler.model.Header;
 
@@ -15,6 +17,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.function.Consumer;
 
+@Slf4j
 @ApplicationScoped
 public class GenericVertxHttpClient {
 
