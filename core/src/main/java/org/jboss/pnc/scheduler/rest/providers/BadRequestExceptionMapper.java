@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestException> {
     @Override
     public Response toResponse(BadRequestException e) {
-        log.warn("Invalid request: " + e);
+        log.warn("Invalid request: " + e, e);
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(new ErrorResponse(e))
                 .type(MediaType.APPLICATION_JSON)

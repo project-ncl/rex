@@ -15,7 +15,7 @@ public class CircularDependencyExceptionMapper implements ExceptionMapper<Circul
     @Override
     public Response toResponse(CircularDependencyException e) {
         Response.Status status = Response.Status.BAD_REQUEST;
-        log.warn("Scheduling request results in circle: " + e);
+        log.warn("Scheduling request results in circle: " + e, e);
         return Response.status(status)
                 .entity(new ErrorResponse(e))
                 .type(MediaType.APPLICATION_JSON)

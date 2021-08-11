@@ -13,6 +13,7 @@ import org.jboss.pnc.scheduler.model.requests.NotificationRequest;
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.function.Consumer;
 
 @Unremovable
 @ApplicationScoped
@@ -60,7 +61,8 @@ public class CallerNotificationClient {
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
-                response -> handleResponse(response, transition, task));
+                response -> handleResponse(response, transition, task),
+                throwable -> onConnectionFailure(throwable, task));
     }
 
     private void handleResponse(HttpResponse<Buffer> response, Transition transition, Task task) {
@@ -72,5 +74,10 @@ public class CallerNotificationClient {
                     transition,
                     response.bodyAsString());
         }
+    }
+
+    private void onConnectionFailure(Throwable exception, Task task) {
+       log.error("NOTIFICATION {}: HTTP call to the Caller failed multiple times.", task, exception);
+       // IS THIS A FAIL STATE? SHOULD I THROW EXCEPTION? SHOULD FAILING BE CONFIGURABLE?
     }
 }
