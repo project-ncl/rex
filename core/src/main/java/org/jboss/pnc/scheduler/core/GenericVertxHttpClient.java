@@ -3,6 +3,7 @@ package org.jboss.pnc.scheduler.core;
 
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpRequest;
@@ -10,12 +11,15 @@ import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.scheduler.common.enums.Method;
+import org.jboss.pnc.scheduler.common.exceptions.BadRequestException;
+import org.jboss.pnc.scheduler.common.exceptions.TaskMissingException;
 import org.jboss.pnc.scheduler.model.Header;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 @Slf4j
 @ApplicationScoped
@@ -39,7 +43,8 @@ public class GenericVertxHttpClient {
                              Method method,
                              List<Header> headers,
                              Object requestBody,
-                             Consumer<HttpResponse<Buffer>> onResponse) {
+                             Consumer<HttpResponse<Buffer>> onResponse,
+                             Consumer<Throwable> onConnectionUnreachable) {
         HttpRequest<Buffer> request = client.request(toVertxMethod(method),
                 remoteEndpoint.getPort() == -1 ? 80 : remoteEndpoint.getPort(),
                 remoteEndpoint.getHost(),
@@ -52,12 +57,25 @@ public class GenericVertxHttpClient {
                 headers.toString(),
                 requestBody.toString());
 
-        Uni.createFrom().item(request.sendJsonAndAwait(requestBody))
+        Uni.createFrom().item(() -> request.sendJsonAndAwait(requestBody))
             .onItem().transformToUni(i -> Uni.createFrom()
-                .item(i).onItem().invoke(onResponse)
-                .onFailure().retry().atMost(5))
+                .item(i)
+                .onItem().invoke(onResponse)
+                .onFailure().retry().atMost(5)
+                .onFailure().recoverWithNull())
+            .onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
             .onFailure().retry().atMost(5)
+            .onFailure().invoke(onConnectionUnreachable)
+            // recover with null so that Uni doesn't propagate the exception
+            .onFailure().recoverWithNull()
             .await().indefinitely();
+    }
+    private <T> T wrapExceptions(Supplier<T> supplier) {
+        try {
+           return supplier.get();
+        } catch (Exception e) {
+            throw new BadRequestException(e);
+        }
     }
 
     private HttpMethod toVertxMethod(Method method) {

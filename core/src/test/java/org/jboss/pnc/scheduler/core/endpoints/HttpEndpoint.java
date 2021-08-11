@@ -78,7 +78,8 @@ public class HttpEndpoint {
                 Method.POST,
                 List.of(Header.builder().name("Content-Type").value("application/json").build()),
                 body,
-                this::onResponse);
+                this::onResponse,
+                throwable -> log.error("Couldn't reach local scheduler.", throwable));
     }
 
     private void onResponse(HttpResponse<Buffer> response) {

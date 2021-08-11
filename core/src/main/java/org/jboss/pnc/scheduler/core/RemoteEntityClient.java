@@ -3,6 +3,7 @@ package org.jboss.pnc.scheduler.core;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.arc.Unremovable;
+import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +64,8 @@ public class RemoteEntityClient {
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
-                response -> handleResponse(response, task));
+                response -> handleResponse(response, task),
+                throwable -> handleConnectionFailure(throwable, task));
     }
 
     public void startJob(Task task) {
@@ -86,19 +88,29 @@ public class RemoteEntityClient {
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
-                response -> handleResponse(response, task));
+                response -> handleResponse(response, task),
+                throwable -> handleConnectionFailure(throwable, task));
     }
 
     private void handleResponse(HttpResponse<Buffer> response, Task task) {
         if (200 <= response.statusCode() && response.statusCode() <= 299) {
-            log.info("Got positive response on " + task.getName());
-            // maybe record the response?
+            log.info("RESPONSE {}: Got positive response.", task.getName());
             controller.accept(task.getName(), parseBody(response));
         } else {
-            log.info("Got negative response on " + task.getName());
-            // maybe record the response?
+            log.info("RESPONSE {}: Got negative response. (STATUS CODE: {})", task.getName(), response.statusCode());
             controller.fail(task.getName(), parseBody(response));
         }
+    }
+
+    private void handleConnectionFailure(Throwable exception, Task task) {
+        log.error("ERROR " + task.getName() + ": Couldn't reach the remote entity.", exception);
+        // format of the simulated "response" could be better (mainly not String)
+        Uni.createFrom().voidItem()
+            .onItem().invoke(() -> controller.fail(task.getName(), "Remote entity failed to respond. Exception: " + exception.toString()))
+            .onFailure().retry().atMost(5)
+            .onFailure().invoke((throwable) -> log.error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
+            .onFailure().recoverWithNull()
+            .await().indefinitely();
     }
 
     private Object parseBody(HttpResponse<Buffer> response) {

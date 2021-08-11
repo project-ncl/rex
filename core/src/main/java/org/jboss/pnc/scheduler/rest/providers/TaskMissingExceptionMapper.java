@@ -16,7 +16,7 @@ public class TaskMissingExceptionMapper implements ExceptionMapper<TaskMissingEx
     @Override
     public Response toResponse(TaskMissingException e) {
         Response.Status status = Response.Status.BAD_REQUEST;
-        log.warn("Task missing in critical moment: " + e);
+        log.warn("Task missing in critical moment: " + e, e);
         return Response.status(status)
                 .entity(new ErrorResponse(e))
                 .type(MediaType.APPLICATION_JSON)

@@ -15,7 +15,7 @@ public class ConstraintValidationExceptionMapper implements ExceptionMapper<Cons
     @Override
     public Response toResponse(ConstraintViolationException e) {
         Response.Status status = Response.Status.BAD_REQUEST;
-        log.warn("DTO Validation failed: " + e);
+        log.warn("DTO Validation failed: " + e, e);
         return Response.status(status)
                 .entity(new ErrorResponse(e))
                 .type(MediaType.APPLICATION_JSON)
