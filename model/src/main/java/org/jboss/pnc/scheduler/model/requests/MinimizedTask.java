@@ -12,6 +12,9 @@ import org.jboss.pnc.scheduler.model.ServerResponse;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Stripped down Task model used for transition notifications.
+ */
 @Jacksonized
 @Builder
 @Getter

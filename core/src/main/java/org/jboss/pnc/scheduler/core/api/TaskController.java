@@ -6,11 +6,11 @@ import org.jboss.pnc.scheduler.common.enums.State;
 /**
  * This is API for TaskController.
  * <p>
- * TaskController is an main entity that manipulates and handles transitions for each scheduled remote Task.
+ * TaskController is the entity that handles transitions and schedules internal Jobs for each Task. It is a public API
+ * for interacting with Tasks.
  *
  * <p>
- * TaskController does not hold any data besides ServiceName key of a Task that it is associated with. Before each method
- * is invoked it loads updated data from Container.
+ * TaskController does not hold any data.
  *
  * @author Jan Michalov <jmichalo@redhat.com>
  */

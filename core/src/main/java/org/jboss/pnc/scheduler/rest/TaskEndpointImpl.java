@@ -14,7 +14,6 @@ import org.jboss.pnc.scheduler.rest.parameters.TaskFilterParameters;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
-import java.util.List;
 import java.util.Set;
 
 @ApplicationScoped
@@ -36,12 +35,12 @@ public class TaskEndpointImpl implements TaskEndpoint {
                     CircularDependencyException.class,
                     BadRequestException.class,
                     TaskConflictException.class})
-    public Set<TaskDTO> create(CreateGraphRequest request) {
+    public Set<TaskDTO> start(CreateGraphRequest request) {
         return taskProvider.create(request);
     }
 
     @Override
-    public List<TaskDTO> getAll(TaskFilterParameters filterParameters) {
+    public Set<TaskDTO> getAll(TaskFilterParameters filterParameters) {
         Boolean allFiltersAreFalse = !filterParameters.getFinished() && !filterParameters.getRunning() && !filterParameters.getWaiting();
 
         //If query is empty return all services

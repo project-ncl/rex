@@ -39,7 +39,7 @@ public class Task {
     /**
      * Uniquely identifies a Task and serves as a key in Infinispan cache.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 1), @ProtoDoc("@Field(store=Store.YES)")})
+    @Getter(onMethod_ = {@ProtoField(number = 1)})
     private final String name;
 
     /**
@@ -69,13 +69,13 @@ public class Task {
     /**
      * Current state of a task. Default is State.IDLE.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 6), @ProtoDoc("@Field(store=Store.YES)")})
+    @Getter(onMethod_ = {@ProtoField(number = 6), @ProtoDoc("@Field")})
     private State state;
 
     /**
-     * Tasks that are dependent on this task.
+     * Tasks that are dependent on this Task.
      * <p>
-     * Parents of this Service.
+     * Parents of this Task.
      */
     @Singular
     @Getter(onMethod_ = @ProtoField(number = 7))
@@ -87,17 +87,31 @@ public class Task {
     @Getter(onMethod_ = {@ProtoField(number = 8, defaultValue = "-1")})
     private int unfinishedDependencies;
 
+    /**
+     * Tasks that this Task depends on.
+     * <p>
+     * Children of this Task.
+     */
     @Singular
     @Getter(onMethod_ = @ProtoField(number = 9))
     private Set<String> dependencies = new HashSet<>();
 
+    /**
+     * Flag which signifies a reason why the Task stopped execution.
+     */
     @Getter(onMethod_ = @ProtoField(number = 10))
     private StopFlag stopFlag;
 
+    /**
+     * List of all responses(bodies) received from remote entity.
+     */
     @Singular
     @Getter(onMethod_ = @ProtoField(number = 11))
     private List<ServerResponse> serverResponses = new ArrayList<>();
 
+    /**
+     * This flag indicates whether task should be dropped from queue and start remote execution.
+     */
     @Getter(onMethod_ = @ProtoField(number = 12, defaultValue = "false"))
     private Boolean starting;
 

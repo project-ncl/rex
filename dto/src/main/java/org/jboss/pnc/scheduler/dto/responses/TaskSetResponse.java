@@ -6,13 +6,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 
-import java.util.List;
+import java.util.Set;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskListResponse {
+public class TaskSetResponse {
 
-    public List<TaskDTO> taskDTOS;
+    public Set<TaskDTO> taskDTOS;
 }

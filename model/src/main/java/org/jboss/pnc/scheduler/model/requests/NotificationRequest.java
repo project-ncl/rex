@@ -6,6 +6,9 @@ import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import org.jboss.pnc.scheduler.common.enums.State;
 
+/**
+ * Request sent to the initial caller to notify him of Task's state transitions.
+ */
 @Jacksonized
 @Builder
 @Getter

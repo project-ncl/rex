@@ -10,6 +10,9 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * ISPN Cache listener. Currently, not in use.
+ */
 @ClientListener
 public class CacheListeners {
     private static final Logger log = LoggerFactory.getLogger(CacheListeners.class);

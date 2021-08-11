@@ -7,6 +7,12 @@ import javax.enterprise.event.TransactionPhase;
 import javax.enterprise.inject.spi.CDI;
 import java.util.Set;
 
+/**
+ * Jobs implementing this abstract class are used for messaging all dependants about important changes(dependency has
+ * finished, failed...)
+ *
+ * @author Jan Michalov <jmichalo@redhat.com>
+ */
 public abstract class DependentControllerJob extends ControllerJob {
 
     private final Set<String> dependents;

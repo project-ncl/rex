@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 
+/**
+ * Request sent to the remote entity to start execution of remote Task.
+ */
 @Jacksonized
 @Builder
 @Getter
