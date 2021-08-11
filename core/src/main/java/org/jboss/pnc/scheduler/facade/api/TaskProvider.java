@@ -15,7 +15,7 @@ public interface TaskProvider {
      *
      * @return set of services
      */
-    List<TaskDTO> getAll(boolean waiting, boolean running, boolean finished);
+    Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished);
 
     /**
      * Cancels execution of the service and its dependants

@@ -70,7 +70,7 @@ class TaskContainerImplTest {
         max.initialize(1000L);
         running.initialize(0L);
         container.getCache().clear();
-        taskEndpoint.create(CreateGraphRequest.builder()
+        taskEndpoint.start(CreateGraphRequest.builder()
                 .vertex(EXISTING_KEY, CreateTaskDTO.builder()
                         .name(EXISTING_KEY)
                         .controllerMode(Mode.IDLE)
@@ -107,7 +107,7 @@ class TaskContainerImplTest {
 
     @Test
     public void testInstall() throws Exception {
-        taskEndpoint.create(CreateGraphRequest.builder()
+        taskEndpoint.start(CreateGraphRequest.builder()
                 .edge(new EdgeDTO("service2", "service1"))
                 .vertex("service1", CreateTaskDTO.builder()
                         .name("service1")
@@ -153,7 +153,7 @@ class TaskContainerImplTest {
     @Test
     public void testDependantWaiting() throws Exception {
         String dependant = "dependant.service";
-        taskEndpoint.create(CreateGraphRequest.builder()
+        taskEndpoint.start(CreateGraphRequest.builder()
                 .edge(new EdgeDTO(dependant, EXISTING_KEY))
                 .vertex(dependant, CreateTaskDTO.builder()
                         .name(dependant)
@@ -173,7 +173,7 @@ class TaskContainerImplTest {
     @Test
     public void testDependantStartsThroughDependency() throws Exception {
         String dependant = "dependant.service";
-        taskEndpoint.create(CreateGraphRequest.builder()
+        taskEndpoint.start(CreateGraphRequest.builder()
                 .edge(new EdgeDTO(dependant, EXISTING_KEY))
                 .vertex(dependant, CreateTaskDTO.builder()
                         .name(dependant)
@@ -209,7 +209,7 @@ class TaskContainerImplTest {
         String i = "i";
         String j = "j";
 
-        taskEndpoint.create(getComplexGraph(false));
+        taskEndpoint.start(getComplexGraph(false));
 
         assertCorrectTaskRelations(container.getTask(a), 0, new String[]{c, d}, null);
         assertCorrectTaskRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
@@ -242,7 +242,7 @@ class TaskContainerImplTest {
                 .edge(new EdgeDTO(EXISTING_KEY, d))
                 .build();
 
-        taskEndpoint.create(graph);
+        taskEndpoint.start(graph);
 
         assertCorrectTaskRelations(container.getTask(a), 0, new String[]{c, d}, null);
         assertCorrectTaskRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
@@ -281,7 +281,7 @@ class TaskContainerImplTest {
                 .edge(new EdgeDTO(EXISTING_KEY, d))
                 .build();
 
-        taskEndpoint.create(graph);
+        taskEndpoint.start(graph);
 
         container.getCache().getTransactionManager().begin();
         controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
@@ -308,7 +308,7 @@ class TaskContainerImplTest {
         String k = "k";
         String[] services = new String[]{a, b, c, d, e, f, g, h, i, j, k};
 
-        taskEndpoint.create(CreateGraphRequest.builder()
+        taskEndpoint.start(CreateGraphRequest.builder()
                 .edge(new EdgeDTO(b, a))
                 .edge(new EdgeDTO(c, a))
                 .edge(new EdgeDTO(d, a))
@@ -349,7 +349,7 @@ class TaskContainerImplTest {
 
     @Test
     public void testQuery() throws Exception {
-        taskEndpoint.create(getComplexGraph(false));
+        taskEndpoint.start(getComplexGraph(false));
 
         assertThat(container.getTask(true, true, true)).hasSize(11);
     }
@@ -364,7 +364,7 @@ class TaskContainerImplTest {
                 .edge(new EdgeDTO(a, i))
                 .build();
 
-        assertThatThrownBy(() -> taskEndpoint.create(request))
+        assertThatThrownBy(() -> taskEndpoint.start(request))
                 .isInstanceOf(CircularDependencyException.class);
     }
 
@@ -379,7 +379,7 @@ class TaskContainerImplTest {
                 .edge(new EdgeDTO(EXISTING_KEY,"newDependency"))
                 .build();
 
-        assertThatThrownBy(() -> taskEndpoint.create(request))
+        assertThatThrownBy(() -> taskEndpoint.start(request))
                 .isInstanceOf(BadRequestException.class);
     }
 
@@ -387,7 +387,7 @@ class TaskContainerImplTest {
     public void shouldFailOnTryingToScheduleExistingTask() {
         CreateGraphRequest request = getSingleWithoutStart(EXISTING_KEY);
 
-        assertThatThrownBy(() -> taskEndpoint.create(request))
+        assertThatThrownBy(() -> taskEndpoint.start(request))
                 .isInstanceOf(TaskConflictException.class);
     }
 
@@ -398,7 +398,7 @@ class TaskContainerImplTest {
                 .edge(new EdgeDTO(EXISTING_KEY, EXISTING_KEY))
                 .build();
 
-        assertThatThrownBy(() -> taskEndpoint.create(request))
+        assertThatThrownBy(() -> taskEndpoint.start(request))
                 .isInstanceOf(BadRequestException.class);
     }
 
@@ -409,7 +409,7 @@ class TaskContainerImplTest {
                 .vertex("ignore", getMockTaskWithoutStart("ignore", Mode.IDLE))
                 .build();
 
-        assertThatThrownBy(() -> taskEndpoint.create(request))
+        assertThatThrownBy(() -> taskEndpoint.start(request))
                 .isInstanceOf(BadRequestException.class);
     }
 
@@ -424,7 +424,7 @@ class TaskContainerImplTest {
     @Disabled
     public void randomDAGTest() throws Exception {
         CreateGraphRequest randomDAG = generateDAG(2, 10, 5, 10, 0.7F);
-        taskEndpoint.create(randomDAG);
+        taskEndpoint.start(randomDAG);
         waitTillTasksAre(State.SUCCESSFUL, container, randomDAG.getVertices().keySet().toArray(new String[0]));
 
         // sleep because running counter takes time to update

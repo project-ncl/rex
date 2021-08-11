@@ -1,4 +1,5 @@
 <infinispan>
+    <!-->Very basic cache configuration</-->
     <cache-container name="clustered">
         <distributed-cache name="near-tasks" mode="SYNC">
             <locking isolation="REPEATABLE_READ"/>

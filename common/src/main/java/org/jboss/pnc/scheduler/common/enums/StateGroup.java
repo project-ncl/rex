@@ -5,7 +5,7 @@ package org.jboss.pnc.scheduler.common.enums;
  */
 public enum StateGroup {
     /**
-     * Controller is idle and task hasn't started remote execution.
+     * Task is idle and has not started remote execution.
      * <p>
      * In this state you are able to add additional dependencies.
      */
@@ -24,6 +24,8 @@ public enum StateGroup {
     RUNNING,
     /**
      * Task has finished execution or failed.
+     * <p>
+     * Transitions from RUNNING group into FINAL group will poke queue to start new Tasks.
      * <p>
      * In this state you are unable to add additional dependencies and cannot transition to any other state.
      */

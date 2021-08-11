@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -58,7 +58,7 @@ public class QueueTest {
     void testNoServiceStartsWithMaxBeingZero() {
         internalEndpoint.setConcurrent(0L);
         CreateGraphRequest graph = getComplexGraph(true);
-        taskEndpoint.create(graph);
+        taskEndpoint.start(graph);
 
         assertThatThrownBy(() -> waitTillTasksAre(
                 State.SUCCESSFUL,
@@ -72,7 +72,7 @@ public class QueueTest {
     void testComplexStartsWithMaxBeingNonZero() {
         internalEndpoint.setConcurrent(1L);
         CreateGraphRequest graph = getComplexGraph(true);
-        taskEndpoint.create(graph);
+        taskEndpoint.start(graph);
 
         waitTillTasksAre(State.SUCCESSFUL, container, graph.getVertices().keySet().toArray(new String[0]));
     }
@@ -81,11 +81,11 @@ public class QueueTest {
     void testComplexGraphSucceedsAfterChangingMaxToNonZero() throws Exception{
         internalEndpoint.setConcurrent(0L);
         CreateGraphRequest graph = getComplexGraph(true);
-        taskEndpoint.create(graph);
+        taskEndpoint.start(graph);
 
         //wait a 1/10 sec
         Thread.sleep(100);
-        List<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
         assertThat(all)
                 .extracting("state", State.class)
                 .allMatch((state -> state.isIdle() || state.isQueued()));
@@ -98,10 +98,10 @@ public class QueueTest {
     void testChangingMaxCounterWillTriggerPoke() {
         internalEndpoint.setConcurrent(0L);
 
-        taskEndpoint.create(getSingleWithoutStart(EXISTING_KEY));
+        taskEndpoint.start(getSingleWithoutStart(EXISTING_KEY));
 
         TaskFilterParameters params = getAllParameters();
-        List<TaskDTO> tasks = taskEndpoint.getAll(params);
+        Set<TaskDTO> tasks = taskEndpoint.getAll(params);
         assertThat(tasks).hasSize(1);
 
         TaskDTO task = tasks.iterator().next();
@@ -121,7 +121,7 @@ public class QueueTest {
         httpEndpoint.startRecordingQueue();
 
         CreateGraphRequest graph = generateDAG(seed, 2, 10, 5, 10, 0.7F);
-        taskEndpoint.create(graph);
+        taskEndpoint.start(graph);
 
         waitTillTasksAre(State.SUCCESSFUL, container, 20, graph.getVertices().keySet().toArray(new String[0]));
 

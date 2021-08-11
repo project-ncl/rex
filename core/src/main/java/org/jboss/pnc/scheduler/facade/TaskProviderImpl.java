@@ -1,6 +1,7 @@
 package org.jboss.pnc.scheduler.facade;
 
 import org.jboss.pnc.scheduler.common.enums.Mode;
+import org.jboss.pnc.scheduler.common.exceptions.TaskMissingException;
 import org.jboss.pnc.scheduler.core.api.TaskContainer;
 import org.jboss.pnc.scheduler.core.api.TaskController;
 import org.jboss.pnc.scheduler.core.api.TaskRegistry;
@@ -10,10 +11,12 @@ import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.facade.api.TaskProvider;
 import org.jboss.pnc.scheduler.facade.mapper.GraphsMapper;
 import org.jboss.pnc.scheduler.facade.mapper.TaskMapper;
+import org.jboss.pnc.scheduler.model.Task;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,10 +53,10 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Override
-    public List<TaskDTO> getAll(boolean waiting, boolean running, boolean finished) {
+    public Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished) {
         return registry.getTask(waiting,running,finished).stream()
                 .map(mapper::toDTO)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -64,7 +67,13 @@ public class TaskProviderImpl implements TaskProvider {
 
     @Override
     public TaskDTO get(String taskName) {
-        return mapper.toDTO(registry.getTask(taskName));
+        Task task;
+        try {
+            task = registry.getRequiredTask(taskName);
+            return mapper.toDTO(task);
+        } catch (TaskMissingException e) {
+            throw new NotFoundException("Task " + taskName + " was not found.");
+        }
     }
 
     @Override

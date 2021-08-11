@@ -16,7 +16,7 @@ public class MaxConcurrentCounter implements Counter {
     @Remote("counter")
     RemoteCache<String, Long> counterCache;
 
-    @ConfigProperty(name = "container.options.concurrency.default", defaultValue = "5")
+    @ConfigProperty(name = "scheduler.options.concurrency.default", defaultValue = "5")
     String defaultMax;
 
     @Override

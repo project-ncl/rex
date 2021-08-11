@@ -48,7 +48,7 @@ import static javax.transaction.Transactional.TxType.MANDATORY;
 @ApplicationScoped
 public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
-    @ConfigProperty(name = "container.name", defaultValue = "undefined")
+    @ConfigProperty(name = "scheduler.name", defaultValue = "undefined")
     String deploymentName;
 
     @ConfigProperty(name = "scheduler.baseUrl")
@@ -139,7 +139,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         }
         if (finished) {
             states.addAll(
-                    EnumSet.of(State.STOPPED, State.SUCCESSFUL, State.FAILED, State.START_FAILED, State.START_FAILED));
+                    EnumSet.of(State.STOPPED, State.SUCCESSFUL, State.FAILED, State.START_FAILED, State.STOP_FAILED));
         }
         QueryFactory factory = Search.getQueryFactory(tasks);
         Query<Task> query = factory.from(Task.class).having("state").containsAny(states).build();
@@ -227,12 +227,12 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             assertEdgeValidity(edge);
 
             String dependant = edge.getSource();
-            Task dependantTask = addToCache(dependant, taskCache, vertices);
+            Task dependantTask = addToLocalCache(dependant, taskCache, vertices);
 
             assertDependantCanHaveDependency(dependantTask);
 
             String dependency = edge.getTarget();
-            Task dependencyTask = addToCache(dependency, taskCache, vertices);
+            Task dependencyTask = addToLocalCache(dependency, taskCache, vertices);
 
             updateTasks(dependencyTask, dependantTask);
         }
@@ -258,7 +258,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     private void assertEdgeValidity(Edge edge) {
         if (edge.getSource().equals(edge.getTarget())) {
-            throw new BadRequestException("Invalid edge. Task" + edge.getSource() + " cannot depend on itself.");
+            throw new BadRequestException("Invalid edge. Task " + edge.getSource() + " cannot depend on itself.");
         }
     }
 
@@ -294,7 +294,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         Set<String> newTasksWithoutEdges = new HashSet<>(vertices.keySet());
         newTasksWithoutEdges.removeAll(taskCache.keySet());
         for (String simpleTask : newTasksWithoutEdges) {
-            addToCache(simpleTask, taskCache, vertices);
+            addToLocalCache(simpleTask, taskCache, vertices);
         }
     }
 
@@ -323,7 +323,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         dependency.getDependants().add(dependant.getName());
     }
 
-    private Task addToCache(String name, Map<String, Task> taskCache, Map<String, InitialTask> vertices) {
+    private Task addToLocalCache(String name, Map<String, Task> taskCache, Map<String, InitialTask> vertices) {
         if (taskCache.containsKey(name)) {
             return taskCache.get(name);
         }

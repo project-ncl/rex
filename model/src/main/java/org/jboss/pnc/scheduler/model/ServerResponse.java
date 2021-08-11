@@ -21,6 +21,9 @@ import static org.jboss.pnc.scheduler.common.util.SerializationUtils.convertToOb
 @Jacksonized
 public class ServerResponse {
 
+    /**
+     * Task's state when the Response from remote entity arrived (before transition)
+     */
     @Getter(onMethod_ = {@ProtoField(number = 1, type = Type.ENUM)})
     private final State state;
 

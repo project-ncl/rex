@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * The registry used to retrieve Tasks.
+ * The registry is used to retrieve Tasks.
  *
  * @author Jan Michalov <jmichalo@redhat.com>
  */

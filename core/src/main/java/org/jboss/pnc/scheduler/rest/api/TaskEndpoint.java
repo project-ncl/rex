@@ -10,7 +10,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.scheduler.dto.TaskDTO;
 import org.jboss.pnc.scheduler.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.scheduler.dto.responses.ErrorResponse;
-import org.jboss.pnc.scheduler.dto.responses.TaskListResponse;
+import org.jboss.pnc.scheduler.dto.responses.TaskSetResponse;
 import org.jboss.pnc.scheduler.rest.parameters.TaskFilterParameters;
 
 import javax.validation.Valid;
@@ -25,9 +25,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 import java.util.Set;
 
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.CONFLICTED_CODE;
+import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.CONFLICTED_DESCRIPTION;
 import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.INVALID_CODE;
 import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.INVALID_DESCRIPTION;
 import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.NOT_FOUND_CODE;
@@ -39,45 +40,52 @@ import static org.jboss.pnc.scheduler.rest.openapi.OpenapiConstants.SUCCESS_DESC
 
 @Tag(name = "Task endpoint")
 @Path("/rest/tasks")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 public interface TaskEndpoint {
 
-    String TASK_ID = "Unique name of the task";
+    String TASK_ID = "Unique identifier of the task";
 
-    @Operation(summary = "Creates and starts scheduling of task")
+    @Operation(description = "This endpoint schedules graph of tasks. \n" +
+            " The request has a regular graph structure with edges and vertices. \n" +
+            " The tasks in edges are identified by their ID and can be either tasks EXISTING or NEW tasks referenced in vertices. " +
+            " Therefore, you can add an edge between already existing tasks, new tasks or between an existing task and new task referenced in vertices. " +
+            " Adding an edge where the dependant is running or has finished will result in failure. \n" +
+            " The tasks in vertices have to be strictly NEW tasks and referencing EXISTING ones will result in failure. \n",
+            summary = "An endpoint for starting a graph of tasks.")
     @APIResponses(value = {
-                    @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
-                        content = @Content(schema = @Schema(implementation = TaskListResponse.class))),
-                    @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
-                        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
-                        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
+                content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
+            @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    Set<TaskDTO> create(@Valid @NotNull CreateGraphRequest request);
+    Set<TaskDTO> start(@Valid @NotNull CreateGraphRequest request);
 
-    @Operation(summary = "Returns list of all tasks with optional filtering")
+    @Operation(summary = "Returns list of all tasks with optional filtering.")
     @APIResponses(value = {
             @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = TaskListResponse.class))),
+                    content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
             @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = CONFLICTED_CODE, description = CONFLICTED_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    List<TaskDTO> getAll(@BeanParam TaskFilterParameters filterParameters);
+    Set<TaskDTO> getAll(@BeanParam TaskFilterParameters filterParameters);
 
     @Path("/{taskID}")
-    @Operation(summary = "Gets specific task")
+    @Operation(summary = "Returns a specific task.")
     @APIResponses(value = {
             @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = TaskListResponse.class))),
-            @APIResponse(responseCode = NOT_FOUND_CODE, description = NOT_FOUND_DESCRIPTION),
+                    content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
+            @APIResponse(responseCode = NOT_FOUND_CODE, description = NOT_FOUND_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -86,10 +94,9 @@ public interface TaskEndpoint {
     TaskDTO getSpecific(@Parameter(description = TASK_ID) @PathParam("taskID") @NotBlank String taskID);
 
     @Path("/{taskID}/cancel")
-    @Operation(summary = "Cancels execution of a task and it's transitively dependant parents")
+    @Operation(summary = "Cancels execution of a task and the tasks which depend on it")
     @APIResponses(value = {
-            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = TaskListResponse.class))),
+            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,

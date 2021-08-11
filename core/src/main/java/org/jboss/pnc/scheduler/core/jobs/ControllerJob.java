@@ -5,6 +5,17 @@ import org.jboss.pnc.scheduler.model.Task;
 import javax.enterprise.event.TransactionPhase;
 import java.util.Optional;
 
+/**
+ * Template for creating Controller Jobs. Usually a ControllerJob is associated with a specific Task which triggered
+ * said Job.
+ *
+ * Each Controller Job has to have a TransactionPhase defined. TransactionPhase will determine in which
+ * transaction phase the Job is run (f.e. a Job should be executed only after a successful Transaction or a Job has to
+ * be executed within the bounds of the Transaction which scheduled the Job). Jobs that run after Transactions have to
+ * handle fault tolerance (Retries) and creating new transactions on their own.
+ *
+ * @author Jan Michalov <jmichalo@redhat.com>
+ */
 public abstract class ControllerJob implements Runnable {
 
     protected TransactionPhase invocationPhase;

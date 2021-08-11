@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -64,7 +63,7 @@ public class TransitionNotificationTest {
     @Test
     void testNotifications() throws InterruptedException {
         CreateGraphRequest request = getComplexGraph(true, true);
-        endpoint.create(request);
+        endpoint.start(request);
         waitTillTasksAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
         
         Thread.sleep(100);
@@ -85,7 +84,7 @@ public class TransitionNotificationTest {
     @Test
     void testNotificationOnCancel() throws InterruptedException {
         CreateGraphRequest request = TestData.getComplexGraphWithoutEnd(true, true);
-        endpoint.create(request);
+        endpoint.start(request);
         waitTillTasksAre(State.UP, container, "a", "b");
 
         endpoint.cancel("a");
@@ -111,10 +110,10 @@ public class TransitionNotificationTest {
     @Test
     void testRecordedBodies() {
         CreateGraphRequest request = getComplexGraph(true, true);
-        endpoint.create(request);
+        endpoint.start(request);
         waitTillTasksAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
 
-        List<TaskDTO> all = endpoint.getAll(TestData.getAllParameters());
+        Set<TaskDTO> all = endpoint.getAll(TestData.getAllParameters());
         Predicate<TaskDTO> sizePredicate = (task) -> task.getServerResponses() != null
                 && task.getServerResponses().size() == 2;
         Predicate<TaskDTO> responsePredicate = (task) -> {

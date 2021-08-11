@@ -3,28 +3,56 @@ Clusterable Task Scheduler
 # Running the scheduler
 
 ## Requirements
-- Apache Maven 3.6.3+
+- Apache Maven 3.8.1+
 - OpenJDK 11
-- Infinispan Server 9.4.16.Final (currently)
+- Infinispan Server 11.0.3.Final+ (tested)
 
 ## Setting up an Infinispan Server
-- `wget https://downloads.jboss.org/infinispan/9.4.16.Final/infinispan-server-9.4.16.Final.zip`
-- `unzip infinispan-server-9.4.16.Final.zip`
-- `infinispan-server-9.4.16.Final/bin/standalone.sh -c clustered.xml` 
+1. With script
+- Run a bash script in `scripts/run-ispn.sh`
+- The script 
+  - will download correct version of ISPN
+  - add a simple user "user" with password 1234 
+  - run the ISPN server
+- On repeated use, the server is started always fresh (no cache configurations) 
+2. Manually (out-of-date)
+- `wget https://downloads.jboss.org/infinispan/9.4.16.Final/infinispan-server-11.0.3.Final.zip`
+- `unzip infinispan-server-11.0.3.Final.zip`
+- `infinispan-server-11.0.3.Final/bin/standalone.sh -c clustered.xml` 
       (to make it available on LAN/WAN, supply the host/ip-address withan additional option -b="ip-address", 
       otherwise it defaults to "localhost")
 - wait until started
 - open new terminal
-- `infinispan-server-9.4.16.Final/bin/ispn-cli.sh --file="path/to/scheduler/server-config.cli"`
+- `infinispan-server-11.0.3.Final/bin/ispn-cli.sh --file="path/to/scheduler/server-config.cli"`
 - wait for the server to reload
 
+## Testing 
+- To run integration-tests (currently the only tests) you have to have Infinispan server running locally (`scripts/run-ispn.sh` is all that is needed)
+  - (for the future `testcontainers` are considered)
+- `mvn clean test` to run tests
+
 ## Compilation and starting
-- `mvn clean install -DskipTests` (tests require Inf. Server on localhost)
-- `java [-options] -jar core/target/core-<version>-runner.jar`
+- `mvn clean install -DskipTests`
+- `java [-options] -jar core/target/quarkus-app/quarkus-run.jar`
     * additional options
-       * -Dquarkus.infinispan-client.server-list=<ispn-ip-address>:11222:
-            Host/ip-address of InfinispanHot-Rod server. Default value is "localhost:11222"
-       * -Dscheduler.baseUrl=<scheduler-url>: 
-            URL address of thescheduler which is used for callbacks sent to remote enti-ties. Default value is "http://localhost:8080/"
+       * -Dquarkus.infinispan-client.server-list=<ispn-ip-address>:11222 (REQUIRED) 
+         * Host/ip-address of InfinispanHot-Rod server.
+         * ALTERNATIVE: `export ISPN_NODE=<ispn-ip-address>:11222`
+       * -Dscheduler.baseUrl=<scheduler-url>: (REQUIRED)
+         * URL address of thescheduler which is used for callbacks sent to remote entities.
+         * ALTERNATIVE: `export BASE_URL=<scheduler-url>`
        * -Dquarkus.http.port=<port>:
-            Port where the applicationis deployed on. Default value is 8080.
+         * Port where the application is deployed on. Default value is 80.
+       * -Dquarkus.infinispan-client.auth-username=<USER>
+         * username for authentication to ISPN server
+         * ALTERNATIVE: `export ISPN_USER=<USER>`
+       * -Dquarkus.infinispan-client.auth-password=<PASSWORD>
+         * password for authentication to ISPN server
+         * ALTERNATIVE: `export ISPN_PASSWORD=<USER>`
+- `/q/swagger-ui` is an OpenAPI endpoint
+
+## Native compilation with GraalVM/Mandrel
+- WARNING: scheduler will compile, but it was not tested properly
+- `mvn clean install -Pnative` 
+  - the compilation will take couple of minutes
+- To run the native app run `core/target/core-<version>-runner <options>`

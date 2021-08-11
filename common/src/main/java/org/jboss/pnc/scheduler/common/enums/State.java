@@ -15,8 +15,7 @@ public enum State {
     @ProtoEnumValue(number = 0)
     NEW(StateGroup.IDLE),
     /**
-     * Controller is waiting for either all dependencies to successfully complete
-     * or for room in the Container(limited number of active tasks).
+     * Controller is waiting for either all dependencies to successfully complete.
      */
     @ProtoEnumValue(number = 1)
     WAITING(StateGroup.IDLE),
@@ -26,7 +25,8 @@ public enum State {
     @ProtoEnumValue(number = 2)
     ENQUEUED(StateGroup.QUEUED),
     /**
-     * Controller requests remote Task to start and waits for callback to approve that remote job successfully started.
+     * Task is taken from a Queue and Controller makes a request to remote entity to start the Task remotely. Based on
+     * the status code in response, Task will transition to either UP or START_FAILED.
      */
     @ProtoEnumValue(number = 3)
     STARTING(StateGroup.RUNNING),
@@ -36,17 +36,20 @@ public enum State {
     @ProtoEnumValue(number = 4)
     UP(StateGroup.RUNNING),
     /**
-     * Controller requests remote Task to stop and waits for a callback to approve that remote job successfully stopped.
+     * Controller was requested for remote Task to stop and waits for a response from remote entity. Based on the
+     * status code in response, Task will transition to either STOPPED or STOP_FAILED.
      */
     @ProtoEnumValue(number = 5)
     STOPPING(StateGroup.RUNNING),
     /**
-     * Received callback that remote Task failed to start.
+     * Task failed to start. Remote entity was either unreachable, didn't respond with 2xx status code or unexpected
+     * error happened.
      */
     @ProtoEnumValue(number = 6)
     START_FAILED(StateGroup.FINAL),
     /**
-     * Received callback that remote Task failed to stop.
+     * Task failed to stop. Remote entity was either unreachable, didn't respond with 2xx status code or unexpected
+     * error happened.
      */
     @ProtoEnumValue(number = 7)
     STOP_FAILED(StateGroup.FINAL),
