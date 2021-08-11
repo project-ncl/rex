@@ -1,0 +1,75 @@
+
+container:
+  name: node
+
+scheduler:
+  baseUrl: ${BASE_URL}
+  name: node
+  options:
+    concurrency:
+      default: 5
+
+quarkus:
+  package:
+    type: fast-jar
+
+  http:
+    port: 80
+
+  infinispan-client:
+    server-list: ${ISPN_NODE}
+    use-schema-registration: false
+    use-auth: true
+    auth-username: ${ISPN_USER}
+    auth-password: ${ISPN_PASS}
+
+  swagger-ui:
+    always-include: true
+
+  log:
+    console:
+      format: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c{3.}] (%t) %s%e%n"
+    category:
+      "org.jboss.pnc":
+        level: DEBUG
+      "com.arjuna.ats.jta":
+        level: WARN
+
+  vertx:
+    max-event-loop-execute-time: 10s
+
+"%test":
+   scheduler:
+     baseUrl: http://localhost:8081
+   quarkus:
+     transaction-manager:
+       default-transaction-timeout: 10m
+     http:
+       port: 8081
+     infinispan-client:
+       server-list: localhost:11222
+       use-schema-registration: true
+       use-auth: true
+       auth-username: user
+       auth-password: 1234
+
+"%dev":
+   scheduler:
+     baseUrl: http://localhost:8181
+
+   quarkus:
+     transaction-manager:
+       default-transaction-timeout: 10m
+     http:
+       port: 8181
+     infinispan-client:
+       server-list: localhost:11222
+       use-schema-registration: true
+       use-auth: true
+       auth-username: user
+       auth-password: 1234
+
+     log:
+       category:
+         "org.jboss.pnc":
+           level: TRACE
