@@ -11,7 +11,7 @@ import org.jboss.pnc.scheduler.core.api.TaskController;
 @ApplicationScoped
 public class TransactionalTaskController implements TaskController {
 
-    TaskController delegate;
+    private final TaskController delegate;
 
     public TransactionalTaskController(TaskController controller) {
         this.delegate = controller;
