@@ -1,6 +1,16 @@
-Clusterable Task Scheduler
+# Rex - a clusterable scheduler
+**Rex** (rex meaning "king" in Latin, the one that imposes order) is a microservice which serves as HTTP scheduler. 
 
-# Running the scheduler
+**Rex** requires a graph of dependent tasks that need to be scheduled and ran in particular order. 
+
+Each task has a HTTP request definition to `start` and `cancel`. These definitions are later used by Rex to start and 
+cancel tasks remotely. Rex augments these requests with a callback for the remote service to report 
+successful/unsuccessful completion of remote tasks. Additionally, there is an option to define a notification request 
+for a task which will make Rex publish notifications as the task transitions between states.
+
+
+
+# Running rex
 
 ## Requirements
 - Apache Maven 3.8.1+
@@ -19,7 +29,7 @@ Clusterable Task Scheduler
 - `wget https://downloads.jboss.org/infinispan/9.4.16.Final/infinispan-server-11.0.3.Final.zip`
 - `unzip infinispan-server-11.0.3.Final.zip`
 - `infinispan-server-11.0.3.Final/bin/standalone.sh -c clustered.xml` 
-      (to make it available on LAN/WAN, supply the host/ip-address withan additional option -b="ip-address", 
+      (to make it available on LAN/WAN, supply the host/ip-address within additional option -b="ip-address", 
       otherwise it defaults to "localhost")
 - wait until started
 - open new terminal
