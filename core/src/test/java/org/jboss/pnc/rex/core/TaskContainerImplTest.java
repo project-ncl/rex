@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.transaction.RollbackException;
 import javax.transaction.TransactionManager;
 
+import io.quarkus.test.common.QuarkusTestResource;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.pnc.rex.common.enums.Mode;
@@ -34,6 +35,7 @@ import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
+import org.jboss.pnc.rex.test.infinispan.InfinispanResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
@@ -42,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
+@QuarkusTestResource(InfinispanResource.class)
 @Slf4j
 class TaskContainerImplTest {
 

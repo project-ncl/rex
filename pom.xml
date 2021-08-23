@@ -26,7 +26,7 @@
     <assertj.version>3.12.2</assertj.version>
     <restassured.version>4.1.1</restassured.version>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
-    <testcontainers.version>1.14.3</testcontainers.version>
+    <testcontainers.version>1.15.3</testcontainers.version>
     <jackson.version>2.12.4</jackson.version>
   </properties>
   <dependencyManagement>

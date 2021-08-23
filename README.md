@@ -16,6 +16,7 @@ for a task which will make Rex publish notifications as the task transitions bet
 - Apache Maven 3.8.1+
 - OpenJDK 11
 - Infinispan Server 11.0.3.Final+ (tested)
+- Podman 3.2.3+ or Docker (integration-tests)
 
 ## Setting up an Infinispan Server
 1. With script
@@ -36,10 +37,19 @@ for a task which will make Rex publish notifications as the task transitions bet
 - `infinispan-server-11.0.3.Final/bin/ispn-cli.sh --file="path/to/scheduler/server-config.cli"`
 - wait for the server to reload
 
-## Testing 
-- To run integration-tests (currently the only tests) you have to have Infinispan server running locally (`scripts/run-ispn.sh` is all that is needed)
-  - (for the future `testcontainers` are considered)
+## Testing
+- To run integration-tests (currently the only tests) you have to have Infinispan server running locally:
+  1. Automatic deployment of ISPN with `testcontainers`
+     - `testcontainers` require `podman` or `docker` to automatically run Infinispan in container
+     - `docker`: no setup required (you can find more info on
+     [testcontainers](https://www.testcontainers.org/supported_docker_environment/))
+     - `podman`: follow tutorial on [Wiki](https://github.com/project-ncl/rex/wiki/Podman-set-up)
+
+  2. Manual deployment of ISPN through script 
+     - `./run-ispn.sh` and comment out all of `@QuarkusTestResource(InfinispanResource.class)` in all test classes
+
 - `mvn clean test` to run tests
+- **[Quarkus continuous testing](https://quarkus.io/guides/continuous-testing) is also possibility with `cd code && mvn quarkus:test`**
 
 ## Compilation and starting
 - `mvn clean install -DskipTests`

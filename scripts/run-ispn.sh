@@ -8,6 +8,6 @@ fi
 rm -r infinispan-server-$ISPN_VERSION && \
 	unzip infinispan-server-$ISPN_VERSION.zip && \
 	cd infinispan-server-$ISPN_VERSION && \
-       	bin/cli.sh user create user -p "1234" && \
+       	bin/cli.sh user create user -p "a1234" && \
        	cd .. && \
        	infinispan-server-$ISPN_VERSION/bin/server.sh
