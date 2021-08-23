@@ -7,16 +7,16 @@ import java.util.Map;
 
 public class InfinispanResource implements QuarkusTestResourceLifecycleManager {
 
-    private final InfinispanContainer infinispan = new InfinispanContainer(true);
+    public final InfinispanContainer infinispan = new InfinispanContainer(false);
 
     @Override
     public Map<String, String> start() {
         infinispan.start();
-        return Collections.emptyMap();
+        return Map.of("quarkus.infinispan-client.server-list", infinispan.getIPAddress());
     }
 
     @Override
     public void stop() {
-        infinispan.close();
+        infinispan.stop();
     }
 }

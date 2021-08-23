@@ -1,6 +1,7 @@
 package org.jboss.pnc.rex.test.infinispan;
 
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 /**
  * Infinispan testcontainers container. Requires docker to be installed.
@@ -11,17 +12,18 @@ import org.testcontainers.containers.GenericContainer;
 public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
 
     private static final String INFINISPAN_USERNAME = "user";
-    private static final String INFINISPAN_PASSWORD = "1234";
-    private static final String INFINISPAN_VERSION = "11.0.3.Final";
+    private static final String INFINISPAN_PASSWORD = "a1234";
+    private static final String INFINISPAN_VERSION = "12.0.2.Final";
 
     public InfinispanContainer(boolean useNative) {
-        this("infinispan/server" + (useNative ? "" : "-native" + ":" + INFINISPAN_VERSION));
+        this("infinispan/server" + (useNative ? "-native" + ":" + INFINISPAN_VERSION : ":" + INFINISPAN_VERSION));
     }
 
     public InfinispanContainer(String imageName) {
         super(imageName);
         withExposedPorts(11222);
         addCredentials();
+        waitingFor(Wait.forLogMessage(".*ISPN080001.*", 1));
     }
 
     private void addCredentials() {
@@ -30,7 +32,8 @@ public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
     }
 
     public String getIPAddress() {
-        return getContainerIpAddress();
+        getMappedPort(11222);
+        return getContainerIpAddress() +':'+ getMappedPort(11222);
     }
 
 

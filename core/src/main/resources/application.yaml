@@ -1,7 +1,3 @@
-
-container:
-  name: node
-
 scheduler:
   baseUrl: ${BASE_URL}
   name: node
@@ -47,11 +43,12 @@ quarkus:
      http:
        port: 8081
      infinispan-client:
+       client-intelligence: BASIC
        server-list: localhost:11222
        use-schema-registration: true
        use-auth: true
        auth-username: user
-       auth-password: 1234
+       auth-password: a1234
 
 "%dev":
    scheduler:
@@ -67,7 +64,7 @@ quarkus:
        use-schema-registration: true
        use-auth: true
        auth-username: user
-       auth-password: 1234
+       auth-password: a1234
 
      log:
        category:

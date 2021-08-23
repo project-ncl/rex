@@ -1,5 +1,6 @@
 package org.jboss.pnc.rex.core;
 
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.Transition;
@@ -11,6 +12,7 @@ import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.rest.api.InternalEndpoint;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
+import org.jboss.pnc.rex.test.infinispan.InfinispanResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,6 +36,7 @@ import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAre;
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
 
 @QuarkusTest
+@QuarkusTestResource(InfinispanResource.class)
 public class TransitionNotificationTest {
 
     @Inject

@@ -1,5 +1,6 @@
 package org.jboss.pnc.rex.core;
 
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -10,6 +11,7 @@ import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.rest.api.InternalEndpoint;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
+import org.jboss.pnc.rex.test.infinispan.InfinispanResource;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -19,6 +21,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithoutStart;
 
 @QuarkusTest
+@QuarkusTestResource(InfinispanResource.class)
 public class ValidationTest {
 
     @TestHTTPEndpoint(TaskEndpoint.class)
