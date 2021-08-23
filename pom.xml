@@ -2,7 +2,7 @@
 <!--
 
     JBoss, Home of Professional Open Source.
-    Copyright 2021 Red Hat, Inc., and individual contributors
+    Copyright 2021-2021 Red Hat, Inc., and individual contributors
     as indicated by the @author tags.
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -155,8 +155,42 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  
+
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>2.11</version>
+          <configuration>
+            <properties>
+              <copyright-years>${project.inceptionYear}-2021</copyright-years>
+            </properties>
+            <header>./.license-header.txt</header>
+            <excludes>
+              <exclude>**/README.md</exclude>
+              <exclude>**/LICENSE</exclude>
+              <exclude>**/eclipse-codeStyle.xml</exclude>
+              <exclude>.license-header.txt</exclude>
+	          <exclude>**/Dockerfile</exclude>
+	          <exclude>**/scripts/**</exclude>
+	          <exclude>**/images/**</exclude>
+	          <exclude>**/.dockerignore</exclude>
+	          <exclude>**/.mvn/**</exclude>
+	          <exclude>**/mvnw*</exclude>
+              <exclude>**/*.properties</exclude>
+              <exclude>**/application.yaml</exclude>
+
+              <!-- Exclude downloaded/generated -->
+              <exclude>**/.cache/**</exclude>
+              <exclude>**/rest-config.json</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -173,9 +207,21 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
-  
+
   <profiles>
     <profile>
       <id>native</id>
@@ -201,6 +247,25 @@
                     <maven.home>${maven.home}</maven.home>
                   </systemPropertyVariables>
                 </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>license-format</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.mycila</groupId>
+            <artifactId>license-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>process-sources</phase>
+                <goals>
+                  <goal>format</goal>
+                </goals>
               </execution>
             </executions>
           </plugin>
