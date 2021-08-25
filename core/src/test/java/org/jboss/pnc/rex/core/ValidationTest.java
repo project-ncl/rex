@@ -21,6 +21,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.dto.EdgeDTO;
@@ -39,6 +40,7 @@ import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithoutStart;
 
 @QuarkusTest
 @QuarkusTestResource(InfinispanResource.class)
+@TestSecurity(authorizationEnabled = false)
 public class ValidationTest {
 
     @TestHTTPEndpoint(TaskEndpoint.class)

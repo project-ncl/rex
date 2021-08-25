@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.core;
 
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
@@ -48,6 +49,7 @@ import static org.jboss.pnc.rex.core.common.TestData.getSingleWithoutStart;
 
 @QuarkusTest
 @QuarkusTestResource(InfinispanResource.class)
+@TestSecurity(authorizationEnabled = false)
 public class QueueTest {
 
     public static final String EXISTING_KEY = "omg.wtf.whatt";
