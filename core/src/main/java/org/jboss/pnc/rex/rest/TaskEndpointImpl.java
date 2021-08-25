@@ -28,6 +28,7 @@ import org.jboss.pnc.rex.facade.api.TaskProvider;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
 import org.jboss.pnc.rex.rest.parameters.TaskFilterParameters;
 
+import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
@@ -52,6 +53,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
                     CircularDependencyException.class,
                     BadRequestException.class,
                     TaskConflictException.class})
+    @RolesAllowed("user")
     public Set<TaskDTO> start(CreateGraphRequest request) {
         return taskProvider.create(request);
     }
@@ -80,6 +82,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
                     TaskMissingException.class,
                     BadRequestException.class,
                     TaskConflictException.class})
+    @RolesAllowed("user")
     public void cancel(String taskID) {
         taskProvider.cancel(taskID);
     }

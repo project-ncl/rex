@@ -73,6 +73,6 @@ public class AllOtherExceptionMapper implements ExceptionMapper<Exception> {
         }
 
         builder.entity(new ErrorResponse(e)).type(MediaType.APPLICATION_JSON);
-        return null;
+        return builder.build();
     }
 }

@@ -27,6 +27,7 @@ import org.jboss.pnc.rex.facade.api.OptionsProvider;
 import org.jboss.pnc.rex.facade.api.TaskProvider;
 import org.jboss.pnc.rex.rest.api.InternalEndpoint;
 
+import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
@@ -52,6 +53,7 @@ public class InternalEndpointImpl implements InternalEndpoint {
                     TaskMissingException.class,
                     BadRequestException.class,
                     TaskConflictException.class})
+    @RolesAllowed("user")
     public void finish(String taskName, FinishRequest result) {
         taskProvider.acceptRemoteResponse(taskName, result.getStatus(), result.getResponse());
     }
@@ -64,6 +66,7 @@ public class InternalEndpointImpl implements InternalEndpoint {
                     TaskMissingException.class,
                     BadRequestException.class,
                     TaskConflictException.class})
+    @RolesAllowed("system-user")
     public void setConcurrent(Long amount) {
         optionsProvider.setConcurrency(amount);
     }

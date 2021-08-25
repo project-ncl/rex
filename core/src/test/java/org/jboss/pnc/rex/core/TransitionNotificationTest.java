@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.core;
 
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.core.common.TestData;
@@ -54,6 +55,7 @@ import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
 
 @QuarkusTest
 @QuarkusTestResource(InfinispanResource.class)
+@TestSecurity(authorizationEnabled = false)
 public class TransitionNotificationTest {
 
     @Inject

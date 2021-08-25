@@ -35,6 +35,7 @@ import javax.transaction.RollbackException;
 import javax.transaction.TransactionManager;
 
 import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.security.TestSecurity;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.jboss.pnc.rex.common.enums.Mode;
@@ -63,6 +64,7 @@ import io.quarkus.test.junit.QuarkusTest;
 @QuarkusTest
 @QuarkusTestResource(InfinispanResource.class)
 @Slf4j
+@TestSecurity(authorizationEnabled = false)
 class TaskContainerImplTest {
 
     public static final String EXISTING_KEY = "omg.wtf.whatt";

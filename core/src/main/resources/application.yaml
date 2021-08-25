@@ -10,7 +10,18 @@ quarkus:
     type: fast-jar
 
   http:
+    cors: true
     port: 80
+
+  oidc:
+    enabled: true
+    auth-server-url: https://keycloak.com/auth/realms/quarkus
+    client-id: client
+    credentials:
+      secret: secret
+    application-type: SERVICE
+    tls:
+      verification: none
 
   infinispan-client:
     server-list: ${ISPN_NODE}
@@ -38,6 +49,8 @@ quarkus:
    scheduler:
      baseUrl: http://localhost:8081
    quarkus:
+     oidc:
+       enabled: false
      transaction-manager:
        default-transaction-timeout: 10m
      http:
