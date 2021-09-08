@@ -36,6 +36,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
@@ -86,7 +88,7 @@ public class HttpEndpoint {
 
     private void finishTask(StartRequest request) {
         try {
-            Thread.sleep(30);
+            Thread.sleep(Duration.between(Instant.now(), Instant.now().plusMillis(20)).toMillis()+10);
         } catch (InterruptedException e) {
             //ignore
         }
