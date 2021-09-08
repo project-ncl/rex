@@ -26,13 +26,16 @@ import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.model.Header;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -73,17 +76,48 @@ public class GenericVertxHttpClient {
                 requestBody.toString());
 
         Uni.createFrom().item(() -> request.sendJsonAndAwait(requestBody))
-            .onItem().transformToUni(i -> Uni.createFrom()
-                .item(i)
-                .onItem().invoke(onResponse)
-                .onFailure().retry().atMost(5)
-                .onFailure().recoverWithNull())
-            .onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
-            .onFailure().retry().atMost(5)
-            .onFailure().invoke(onConnectionUnreachable)
-            // recover with null so that Uni doesn't propagate the exception
-            .onFailure().recoverWithNull()
-            .await().indefinitely();
+                .onItem().transformToUni(i -> Uni.createFrom()
+                        .item(i)
+                        .onItem().invoke(onResponse)
+                        .onFailure().retry().atMost(20)
+                        .onFailure().recoverWithNull())
+                .onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
+                .onFailure().retry().atMost(20)
+                .onFailure().invoke(onConnectionUnreachable)
+                // recover with null so that Uni doesn't propagate the exception
+                .onFailure().recoverWithNull()
+                .await().atMost(Duration.ofSeconds(5));
+    }
+
+    public Uni<HttpResponse<Buffer>> makeReactiveRequest(URI remoteEndpoint,
+                             Method method,
+                             List<Header> headers,
+                             Object requestBody,
+                             Consumer<HttpResponse<Buffer>> onResponse,
+                             Consumer<Throwable> onConnectionUnreachable) {
+        HttpRequest<Buffer> request = client.request(toVertxMethod(method),
+                remoteEndpoint.getPort() == -1 ? 80 : remoteEndpoint.getPort(),
+                remoteEndpoint.getHost(),
+                remoteEndpoint.getPath());
+        addHeaders(request, headers);
+
+        log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
+                remoteEndpoint,
+                method,
+                headers.toString(),
+                requestBody.toString());
+
+        return request.sendJson(requestBody)
+                .onItem().transformToUni(i -> Uni.createFrom()
+                        .item(i)
+                        .onItem().invoke(onResponse)
+                        .onFailure().retry().atMost(20)
+                        .onFailure().recoverWithNull())
+                .onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
+                .onFailure().retry().atMost(20)
+                .onFailure().invoke(onConnectionUnreachable)
+                // recover with null so that Uni doesn't propagate the exception
+                .onFailure().recoverWithNull();
     }
     private <T> T wrapExceptions(Supplier<T> supplier) {
         try {
