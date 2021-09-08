@@ -4,6 +4,11 @@ scheduler:
   options:
     concurrency:
       default: 5
+    retry-policy:
+      maxRetries: 15
+      delay: 10
+      jitter: 50
+      abortOn: javax.validation.ConstraintViolationException, org.jboss.pnc.rex.common.exceptions.TaskMissingException, org.jboss.pnc.rex.common.exceptions.BadRequestException, org.jboss.pnc.rex.common.exceptions.TaskConflictException
 
 quarkus:
   package:
@@ -47,6 +52,44 @@ quarkus:
 
   vertx:
     max-event-loop-execute-time: 10s
+
+org:
+  jboss:
+    pnc:
+      rex:
+        core:
+          delegates:
+            TolerantQueueManager/poke/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
+            TolerantQueueManager/poke/Retry/delay: ${scheduler.options.retry-policy.delay}
+            TolerantQueueManager/poke/Retry/jitter: ${scheduler.options.retry-policy.jitter}
+            TolerantQueueManager/poke/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+            TolerantQueueManager/decreaseRunningCounter/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
+            TolerantQueueManager/decreaseRunningCounter/Retry/delay: ${scheduler.options.retry-policy.delay}
+            TolerantQueueManager/decreaseRunningCounter/Retry/jitter: ${scheduler.options.retry-policy.jitter}
+            TolerantQueueManager/decreaseRunningCounter/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+            TolerantQueueManager/setMaximumConcurrency/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
+            TolerantQueueManager/setMaximumConcurrency/Retry/delay: ${scheduler.options.retry-policy.delay}
+            TolerantQueueManager/setMaximumConcurrency/Retry/jitter: ${scheduler.options.retry-policy.jitter}
+            TolerantQueueManager/setMaximumConcurrency/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+        rest:
+          InternalEndpointImpl/finish/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
+          InternalEndpointImpl/finish/Retry/delay: ${scheduler.options.retry-policy.delay}
+          InternalEndpointImpl/finish/Retry/jitter: ${scheduler.options.retry-policy.jitter}
+          InternalEndpointImpl/finish/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+          InternalEndpointImpl/setConcurrent/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
+          InternalEndpointImpl/setConcurrent/Retry/delay: ${scheduler.options.retry-policy.delay}
+          InternalEndpointImpl/setConcurrent/Retry/jitter: ${scheduler.options.retry-policy.jitter}
+          InternalEndpointImpl/setConcurrent/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+          TaskEndpointImpl/start/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
+          TaskEndpointImpl/start/Retry/delay: ${scheduler.options.retry-policy.delay}
+          TaskEndpointImpl/start/Retry/jitter: ${scheduler.options.retry-policy.jitter}
+          TaskEndpointImpl/start/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+          TaskEndpointImpl/cancel/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
+          TaskEndpointImpl/cancel/Retry/delay: ${scheduler.options.retry-policy.delay}
+          TaskEndpointImpl/cancel/Retry/jitter: ${scheduler.options.retry-policy.jitter}
+          TaskEndpointImpl/cancel/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+
+
 
 "%test":
    scheduler:
