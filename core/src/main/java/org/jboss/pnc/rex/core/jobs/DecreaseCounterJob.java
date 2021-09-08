@@ -30,7 +30,7 @@ public class DecreaseCounterJob extends ControllerJob {
     private final QueueManager queueManager;
 
     public DecreaseCounterJob(Task context) {
-        super(INVOCATION_PHASE, context);
+        super(INVOCATION_PHASE, context, false);
         this.queueManager = CDI.current().select(QueueManager.class).get();
     }
 

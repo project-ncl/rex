@@ -37,7 +37,7 @@ public abstract class DependentControllerJob extends ControllerJob {
     protected DependentMessenger dependentAPI;
 
     protected DependentControllerJob(Task task, TransactionPhase invocationPhase) {
-        super(invocationPhase, task);
+        super(invocationPhase, task, false);
         this.dependents = task.getDependants();
         this.dependentAPI = CDI.current().select(DependentMessenger.class).get();
     }

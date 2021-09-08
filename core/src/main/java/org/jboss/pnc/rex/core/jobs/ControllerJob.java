@@ -39,9 +39,12 @@ public abstract class ControllerJob implements Runnable {
 
     protected Task context;
 
-    protected ControllerJob(TransactionPhase invocationPhase, Task context) {
+    protected boolean async;
+
+    protected ControllerJob(TransactionPhase invocationPhase, Task context, boolean async) {
         this.invocationPhase = invocationPhase;
         this.context = context;
+        this.async = async;
     }
 
     @Override
@@ -61,6 +64,9 @@ public abstract class ControllerJob implements Runnable {
     abstract void afterExecute();
     abstract boolean execute();
     abstract void onException(Throwable e);
+    public boolean isAsync() {
+        return async;
+    }
     public TransactionPhase getInvocationPhase() {
         return invocationPhase;
     }

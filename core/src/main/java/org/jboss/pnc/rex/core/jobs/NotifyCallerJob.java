@@ -38,7 +38,7 @@ public class NotifyCallerJob extends ControllerJob {
     private final CallerNotificationClient client;
 
     public NotifyCallerJob(Transition transition, Task task) {
-        super(INVOCATION_PHASE, task);
+        super(INVOCATION_PHASE, task, true);
         this.transition = transition;
         this.client = CDI.current().select(CallerNotificationClient.class).get();
     }
