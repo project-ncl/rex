@@ -56,7 +56,7 @@ public class InvokeStopJob extends ControllerJob {
     }
 
     public InvokeStopJob(Task task) {
-        super(INVOCATION_PHASE, task);
+        super(INVOCATION_PHASE, task, false);
         this.client = CDI.current().select(RemoteEntityClient.class).get();
         this.controller = CDI.current().select(TaskController.class, () -> WithTransactions.class).get();
     }

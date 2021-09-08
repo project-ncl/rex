@@ -18,14 +18,23 @@
 package org.jboss.pnc.rex.core;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.rex.core.jobs.ControllerJob;
 
+import javax.annotation.Priority;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.BeforeDestroyed;
+import javax.enterprise.context.Destroyed;
+import javax.enterprise.context.Initialized;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.TransactionPhase;
 import javax.inject.Inject;
+import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
+import javax.transaction.TransactionScoped;
+
+import static javax.interceptor.Interceptor.Priority.APPLICATION;
 
 @ApplicationScoped
 @Slf4j
@@ -33,6 +42,9 @@ public class TaskListener {
 
     @Inject
     TransactionManager tm;
+
+    @Inject
+    ManagedExecutor executor;
 
     void onUnsuccessfulTransaction(@Observes(during = TransactionPhase.AFTER_SUCCESS) ControllerJob task) {
         if (task.getInvocationPhase() == TransactionPhase.AFTER_SUCCESS) {
@@ -44,7 +56,11 @@ public class TaskListener {
             }
             String contextMessage = task.getContext().isPresent() ? ' ' + task.getContext().get().getName() : "";
             log.debug("AFTER TRANSACTION{}: {}", contextMessage, task.getClass().getSimpleName());
-            task.run();
+            if (task.isAsync()) {
+                executor.execute(task);
+            } else {
+                task.run();
+            }
         }
     }
 
@@ -52,7 +68,10 @@ public class TaskListener {
         if (task.getInvocationPhase() == TransactionPhase.IN_PROGRESS) {
             String contextMessage = task.getContext().isPresent() ? ' ' + task.getContext().get().getName() : "";
             log.debug("WITHIN TRANSACTION{}: {}", contextMessage, task.getClass().getSimpleName());
-            task.run();
+            if (task.isAsync()) {
+                executor.execute(task);
+            } else {
+                task.run();
+            }
         }
     }
-}
