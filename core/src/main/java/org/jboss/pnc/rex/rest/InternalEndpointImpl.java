@@ -17,10 +17,11 @@
  */
 package org.jboss.pnc.rex.rest;
 
+import io.quarkus.arc.ArcUndeclaredThrowableException;
+import io.smallrye.mutiny.Uni;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.faulttolerance.Fallback;
 import org.eclipse.microprofile.faulttolerance.Retry;
-import org.jboss.pnc.rex.common.exceptions.BadRequestException;
-import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
-import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.dto.responses.LongResponse;
 import org.jboss.pnc.rex.facade.api.OptionsProvider;
@@ -30,8 +31,9 @@ import org.jboss.pnc.rex.rest.api.InternalEndpoint;
 import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.validation.ConstraintViolationException;
+import javax.transaction.RollbackException;
 
+@Slf4j
 @ApplicationScoped
 public class InternalEndpointImpl implements InternalEndpoint {
 
@@ -46,26 +48,15 @@ public class InternalEndpointImpl implements InternalEndpoint {
     }
 
     @Override
-    @Retry(maxRetries = 15,
-            delay = 10,
-            jitter = 50,
-            abortOn = {ConstraintViolationException.class,
-                    TaskMissingException.class,
-                    BadRequestException.class,
-                    TaskConflictException.class})
+    @Retry
+    @Fallback(fallbackMethod = "fallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
     @RolesAllowed("user")
     public void finish(String taskName, FinishRequest result) {
         taskProvider.acceptRemoteResponse(taskName, result.getStatus(), result.getResponse());
     }
 
     @Override
-    @Retry(maxRetries = 5,
-            delay = 10,
-            jitter = 50,
-            abortOn = {ConstraintViolationException.class,
-                    TaskMissingException.class,
-                    BadRequestException.class,
-                    TaskConflictException.class})
+    @Retry
     @RolesAllowed("system-user")
     public void setConcurrent(Long amount) {
         optionsProvider.setConcurrency(amount);
@@ -74,5 +65,16 @@ public class InternalEndpointImpl implements InternalEndpoint {
     @Override
     public LongResponse getConcurrent() {
         return optionsProvider.getConcurrency();
+    }
+
+    // once https://github.com/smallrye/smallrye-fault-tolerance/issues/492 is merged, use FallbackHandler
+    void fallback(String taskName, FinishRequest result) {
+        log.error("STOP " + taskName + ": UNEXPECTED exception has been thrown.");
+        Uni.createFrom().voidItem()
+                .onItem().invoke((ignore) -> taskProvider.acceptRemoteResponse(taskName, false,"ACCEPT : System failure."))
+                .onFailure().invoke((throwable) -> log.warn("ACCEPT " + taskName + ": Failed to transition task to FAILED state. Retrying.", throwable))
+                .onFailure().retry().atMost(5)
+                .onFailure().recoverWithNull()
+                .await().indefinitely();
     }
 }

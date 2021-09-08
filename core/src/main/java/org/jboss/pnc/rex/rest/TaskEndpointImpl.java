@@ -18,10 +18,6 @@
 package org.jboss.pnc.rex.rest;
 
 import org.eclipse.microprofile.faulttolerance.Retry;
-import org.jboss.pnc.rex.common.exceptions.BadRequestException;
-import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
-import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
-import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.facade.api.TaskProvider;
@@ -31,7 +27,6 @@ import org.jboss.pnc.rex.rest.parameters.TaskFilterParameters;
 import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.validation.ConstraintViolationException;
 import java.util.Set;
 
 @ApplicationScoped
@@ -45,14 +40,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
-    @Retry(maxRetries = 5,
-            delay = 10,
-            jitter = 50,
-            abortOn = {ConstraintViolationException.class,
-                    TaskMissingException.class,
-                    CircularDependencyException.class,
-                    BadRequestException.class,
-                    TaskConflictException.class})
+    @Retry
     @RolesAllowed("user")
     public Set<TaskDTO> start(CreateGraphRequest request) {
         return taskProvider.create(request);
@@ -75,13 +63,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
-    @Retry(maxRetries = 5,
-            delay = 10,
-            jitter = 50,
-            abortOn = {ConstraintViolationException.class,
-                    TaskMissingException.class,
-                    BadRequestException.class,
-                    TaskConflictException.class})
+    @Retry
     @RolesAllowed("user")
     public void cancel(String taskID) {
         taskProvider.cancel(taskID);
