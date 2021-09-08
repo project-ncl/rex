@@ -184,7 +184,8 @@
 
               <!-- Exclude downloaded/generated -->
               <exclude>**/.cache/**</exclude>
-              <exclude>**/rest-config.json</exclude>
+	      <exclude>**/rest-config.json</exclude>
+	      <exclude>**/Test*.html</exclude>
             </excludes>
           </configuration>
         </plugin>

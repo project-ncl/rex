@@ -40,7 +40,10 @@ quarkus:
       "org.jboss.pnc":
         level: DEBUG
       "com.arjuna.ats.jta":
-        level: WARN
+        # Set to WARN if you want to see all the exceptions
+        level: ERROR
+      "io.smallrye.faulttolerance.core":
+        level: TRACE
 
   vertx:
     max-event-loop-execute-time: 10s
