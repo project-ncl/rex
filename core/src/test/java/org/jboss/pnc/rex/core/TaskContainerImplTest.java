@@ -450,7 +450,7 @@ class TaskContainerImplTest {
         waitTillTasksAre(State.SUCCESSFUL, container, randomDAG.getVertices().keySet().toArray(new String[0]));
 
         // sleep because running counter takes time to update
-        Thread.sleep(100);
+        Thread.sleep(50);
         assertThat(running.getValue()).isEqualTo(0);
     }
 
