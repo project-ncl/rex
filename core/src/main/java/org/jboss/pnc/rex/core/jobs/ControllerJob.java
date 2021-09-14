@@ -73,4 +73,9 @@ public abstract class ControllerJob implements Runnable {
     public Optional<Task> getContext() {
         return context == null ? Optional.empty() : Optional.of(context);
     }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "(of = " + (context == null ? "NONE" : context.getName()) + ")";
+    }
 }

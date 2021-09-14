@@ -62,4 +62,10 @@ public class TransactionalTaskController implements TaskController {
     public void dequeue(String name) {
         delegate.dequeue(name);
     }
+
+    @Override
+    @Transactional
+    public void delete(String name) {
+        delegate.delete(name);
+    }
 }

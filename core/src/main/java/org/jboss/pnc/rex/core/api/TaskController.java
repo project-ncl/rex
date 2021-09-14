@@ -53,7 +53,7 @@ public interface TaskController {
      * Method used for positive callback. Needs to be called in a transaction.
      *
      * f.e. to signalize that remote Task has started/cancelled/finished.
-     * @param name
+     * @param name id of the Task
      */
     void accept(String name, Object response);
 
@@ -61,9 +61,16 @@ public interface TaskController {
      * Method used for negative callback. Needs to be called in a transaction.
      *
      * f.e. to signalize that remote Task failed to start/cancel or failed during execution.
-     * @param name
+     * @param name id of the Task
      */
     void fail(String name, Object response);
 
     void dequeue(String name);
+
+    /**
+     * Deletes a Task. The method deletes also cascades on dependencies.
+     *
+     * @param name id of the Task
+     */
+    void delete(String name);
 }

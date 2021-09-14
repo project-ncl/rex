@@ -87,11 +87,6 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         this.jobEvent = jobEvent;
     }
 
-    @Override
-    public void removeTask(String task) {
-        throw new UnsupportedOperationException("Currently not implemented");
-    }
-
     // FIXME implement
     public void shutdown() {
         throw new UnsupportedOperationException("Currently not implemented!");

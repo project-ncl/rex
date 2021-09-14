@@ -17,25 +17,18 @@
  */
 package org.jboss.pnc.rex.core.api;
 
-import org.jboss.pnc.rex.core.model.TaskGraph;
-import org.jboss.pnc.rex.model.Task;
-
-import java.util.Set;
-
 /**
- * Target where Tasks are installed into and removed from.
+ * Interface for communicating/messaging dependencies (tasks you depend on).
  *
  * @author Jan Michalov <jmichalo@redhat.com>
  */
-public interface TaskTarget {
+public interface DependencyMessenger {
 
     /**
-     * Starts scheduling a graph of Tasks. Vertices have to be NEW tasks. Edges can be between EXISTING or NEW tasks.
-     * If an edge would introduce dependency relationship where the dependant is an EXISTING Task in {@link FINAL} or
-     * {@link RUNNING} state, it will get rejected.
+     * Send a signal to your dependency that you have been removed. This usually means that you want your dependency
+     * also removed.
      *
-     * @param taskGraph graph of task consisting of edges and vertices
-     * @return new scheduled tasks
+     * @param name name of a dependency Task you send a message to
      */
-    Set<Task> install(TaskGraph taskGraph);
+    void dependantDeleted(String name, String deletedDependant);
 }

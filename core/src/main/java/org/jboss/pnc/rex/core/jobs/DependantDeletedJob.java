@@ -15,27 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.api;
+package org.jboss.pnc.rex.core.jobs;
 
-import org.jboss.pnc.rex.core.model.TaskGraph;
 import org.jboss.pnc.rex.model.Task;
 
-import java.util.Set;
+import javax.enterprise.event.TransactionPhase;
 
-/**
- * Target where Tasks are installed into and removed from.
- *
- * @author Jan Michalov <jmichalo@redhat.com>
- */
-public interface TaskTarget {
+public class DependantDeletedJob extends DependencyMessageJob {
 
-    /**
-     * Starts scheduling a graph of Tasks. Vertices have to be NEW tasks. Edges can be between EXISTING or NEW tasks.
-     * If an edge would introduce dependency relationship where the dependant is an EXISTING Task in {@link FINAL} or
-     * {@link RUNNING} state, it will get rejected.
-     *
-     * @param taskGraph graph of task consisting of edges and vertices
-     * @return new scheduled tasks
-     */
-    Set<Task> install(TaskGraph taskGraph);
+    private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
+
+    public DependantDeletedJob(Task task) {
+        super(task, INVOCATION_PHASE);
+    }
+
+    @Override
+    void inform(String dependencyName) {
+        dependencyAPI.dependantDeleted(dependencyName, context.getName());
+    }
 }
