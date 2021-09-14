@@ -8,7 +8,7 @@ scheduler:
       maxRetries: 15
       delay: 10
       jitter: 50
-      abortOn: javax.validation.ConstraintViolationException, org.jboss.pnc.rex.common.exceptions.TaskMissingException, org.jboss.pnc.rex.common.exceptions.BadRequestException, org.jboss.pnc.rex.common.exceptions.TaskConflictException
+      abortOn: javax.validation.ConstraintViolationException, org.jboss.pnc.rex.common.exceptions.TaskMissingException, org.jboss.pnc.rex.common.exceptions.BadRequestException, org.jboss.pnc.rex.common.exceptions.TaskConflictException, org.jboss.pnc.rex.common.exceptions.CircularDependencyException
 
 quarkus:
   package:

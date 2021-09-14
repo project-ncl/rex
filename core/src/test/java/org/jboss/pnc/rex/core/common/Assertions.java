@@ -19,12 +19,15 @@ package org.jboss.pnc.rex.core.common;
 
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.core.api.TaskContainer;
+import org.jboss.pnc.rex.core.common.TransitionRecorder.Tuple;
 import org.jboss.pnc.rex.model.Task;
 
+import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -84,5 +87,24 @@ public class Assertions {
                 throw new AssertionError("Timeout " + timeout + " " + timeUnit + " reached while waiting for condition");
             }
         } while (!condition.get());
+    }
+
+    public static void waitTillTasksAreFinishedWith(State state, String... tasks) {
+        TransitionRecorder recorder = CDI.current().select(TransitionRecorder.class).get();
+        BlockingQueue<Tuple<String, State>> queue = recorder.subscribe(List.of(tasks));
+        try {
+            for (int i = 0; i < tasks.length; i++) {
+                var tuple = queue.poll(10, TimeUnit.SECONDS);
+                if (tuple == null) {
+                    throw new AssertionError("Timeout " + 10 + " " + TimeUnit.SECONDS + " reached while waiting for some task to finish");
+                }
+                if (tuple.getSecond() != state) {
+                    throw new AssertionError("Task " + tuple.getFirst() + " didn't have correct state. (" + state + " vs. " + tuple.getSecond() + ")");
+                };
+            }
+        } catch (InterruptedException e) {
+            // shouldn't happen
+        }
+
     }
 }
