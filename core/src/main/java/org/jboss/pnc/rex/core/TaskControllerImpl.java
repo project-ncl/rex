@@ -23,10 +23,14 @@ import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
+import org.jboss.pnc.rex.core.api.DependencyMessenger;
 import org.jboss.pnc.rex.core.api.DependentMessenger;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.core.jobs.DecreaseCounterJob;
+import org.jboss.pnc.rex.core.jobs.DelegateJob;
+import org.jboss.pnc.rex.core.jobs.DeleteTaskJob;
+import org.jboss.pnc.rex.core.jobs.DependantDeletedJob;
 import org.jboss.pnc.rex.core.jobs.InvokeStartJob;
 import org.jboss.pnc.rex.core.jobs.InvokeStopJob;
 import org.jboss.pnc.rex.core.jobs.ControllerJob;
@@ -47,11 +51,12 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static javax.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
 import static javax.transaction.Transactional.TxType.MANDATORY;
 
 @Slf4j
 @ApplicationScoped
-public class TaskControllerImpl implements TaskController, DependentMessenger {
+public class TaskControllerImpl implements TaskController, DependentMessenger, DependencyMessenger {
 
     private final TaskContainerImpl container;
 
@@ -93,6 +98,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
                 tasks.add(new DependencyCancelledJob(task));
                 tasks.add(new DecreaseCounterJob(task));
                 tasks.add(new PokeQueueJob());
+                if (shouldDelete(task, transition))
+                    tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
                 break;
 
             case NEW_to_STOPPED:
@@ -106,6 +113,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
                         tasks.add(new DependencyStoppedJob(task));
                         break;
                 }
+                if (shouldDelete(task, transition))
+                    tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
                 break;
 
             case UP_to_FAILED:
@@ -114,6 +123,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
                 tasks.add(new DependencyStoppedJob(task));
                 tasks.add(new DecreaseCounterJob(task));
                 tasks.add(new PokeQueueJob());
+                if (shouldDelete(task, transition))
+                    tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
                 break;
 
             case STARTING_to_UP:
@@ -124,6 +135,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
                 tasks.add(new DependencySucceededJob(task));
                 tasks.add(new DecreaseCounterJob(task));
                 tasks.add(new PokeQueueJob());
+                if (shouldDelete(task, transition))
+                    tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
                 break;
             default:
                 throw new IllegalStateException("Controller returned unknown transition: " + transition);
@@ -134,6 +147,17 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         tasks.add(new NotifyCallerJob(transition, task));
         log.info("SCHEDULE {}: {}", task.getName(), tasks);
         return tasks;
+    }
+
+    private DelegateJob moveToTheEndOfTransaction(ControllerJob delegate) {
+        return DelegateJob.builder()
+                .async(false)
+                .invocationPhase(BEFORE_COMPLETION)
+                .tolerant(false)
+                .transactional(false)
+                .context(delegate.getContext().orElse(null))
+                .delegate(delegate)
+                .build();
     }
 
     private Transition getTransition(Task task) {
@@ -209,15 +233,19 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
         return task.getStarting();
     }
 
+    private boolean shouldDelete(Task task, Transition transition) {
+        return task.getDependants().size() == 0 && transition.getAfter().isFinal();
+    }
+
     private void handle(MetadataValue<Task> taskMetadata, Task task) {
         handle(taskMetadata, task, null);
     }
+
     private void handle(MetadataValue<Task> taskMetadata, Task task, ControllerJob[] forcedJobs) {
         List<ControllerJob> jobs = transition(task);
         if (forcedJobs != null && forcedJobs.length != 0) {
             jobs.addAll(Arrays.asList(forcedJobs));
         }
-        doExecute(jobs);
 
         log.debug("SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
                 task.getName(),
@@ -229,6 +257,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
             log.error("SAVE {}: Concurrent update detected. Transaction will fail.", task.getName());
             throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
+
+        doExecute(jobs);
     }
 
     private void doExecute(List<ControllerJob> jobs) {
@@ -379,5 +409,63 @@ public class TaskControllerImpl implements TaskController, DependentMessenger {
 
         // #3 HANDLE
         handle(taskMetadata, task);
+    }
+
+    @Override
+    @Transactional(MANDATORY)
+    public void dependantDeleted(String name, String deletedDependant) {
+        // #1 PULL
+        MetadataValue<Task> taskMetadata = container.getWithMetadata(name);
+        if (taskMetadata == null) {
+            // Task could have been already deleted DependantDeletedJob in the same transaction
+            return;
+        }
+        Task task = taskMetadata.getValue();
+
+        if (!task.getState().isFinal()) {
+            log.info("TASK {}: Not in final state, removing deleted dependant {} from the task.", name, deletedDependant);
+            //REMOVE dependant so it doesn't get referenced later
+            task.getDependants().remove(deletedDependant);
+
+            log.debug("SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
+                    task.getName(),
+                    taskMetadata.getVersion(),
+                    task);
+
+            boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
+            if (!pushed) {
+                log.error("SAVE {}: Concurrent update detected. Transaction will fail.", task.getName());
+                throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
+            }
+        } else {
+            // DELETE
+            doExecute(List.of(new DeleteTaskJob(task)));
+        }
+
+    }
+
+    @Override
+    @Transactional(MANDATORY)
+    public void delete(String name) {
+        // #1 PULL
+        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        Task task = taskMetadata.getValue();
+
+        // #2 DELETE
+        if (!task.getState().isFinal()) {
+            throw new IllegalStateException("Attempting to delete a task while not in a final state. Task: " + task.getName() + " State: " + task.getState());
+        }
+        log.debug("DELETE {}: Deleting task from ISPN. (ISPN-VERSION: {}) BODY: {}",
+                task.getName(),
+                taskMetadata.getVersion(),
+                task);
+        boolean deleted = container.getCache().removeWithVersion(name, taskMetadata.getVersion());
+        if (!deleted) {
+            log.error("DELETE {}: Concurrent update detected. Transaction will fail.", task.getName());
+            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
+        }
+
+        // #3 HANDLE (there is no transition) and CASCADE
+        doExecute(List.of(new DependantDeletedJob(task)));
     }
 }

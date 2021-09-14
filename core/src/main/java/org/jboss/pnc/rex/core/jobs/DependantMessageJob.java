@@ -30,13 +30,13 @@ import java.util.Set;
  *
  * @author Jan Michalov <jmichalo@redhat.com>
  */
-public abstract class DependentControllerJob extends ControllerJob {
+public abstract class DependantMessageJob extends ControllerJob {
 
     private final Set<String> dependents;
 
     protected DependentMessenger dependentAPI;
 
-    protected DependentControllerJob(Task task, TransactionPhase invocationPhase) {
+    protected DependantMessageJob(Task task, TransactionPhase invocationPhase) {
         super(invocationPhase, task, false);
         this.dependents = task.getDependants();
         this.dependentAPI = CDI.current().select(DependentMessenger.class).get();

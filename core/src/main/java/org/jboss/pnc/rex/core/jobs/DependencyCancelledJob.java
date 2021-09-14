@@ -21,7 +21,7 @@ import org.jboss.pnc.rex.model.Task;
 
 import javax.enterprise.event.TransactionPhase;
 
-public class DependencyCancelledJob extends DependentControllerJob {
+public class DependencyCancelledJob extends DependantMessageJob {
 
     private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
 

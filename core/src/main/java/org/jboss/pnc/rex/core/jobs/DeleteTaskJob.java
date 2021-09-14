@@ -17,20 +17,41 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
+import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.model.Task;
 
 import javax.enterprise.event.TransactionPhase;
+import javax.enterprise.inject.spi.CDI;
 
-public class DependencySucceededJob extends DependantMessageJob {
+public class DeleteTaskJob extends ControllerJob {
+
+    private final TaskController controller;
 
     private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
 
-    public DependencySucceededJob(Task task) {
-        super(task, INVOCATION_PHASE);
+    public DeleteTaskJob(Task context) {
+        super(INVOCATION_PHASE, context, false);
+        this.controller = CDI.current().select(TaskController.class).get();
     }
 
     @Override
-    void inform(String dependentName) {
-        dependentAPI.dependencySucceeded(dependentName);
+    boolean execute() {
+        controller.delete(context.getName());
+        return true;
+    }
+
+    @Override
+    void afterExecute() {
+
+    }
+
+    @Override
+    void beforeExecute() {
+
+    }
+
+    @Override
+    void onException(Throwable e) {
+
     }
 }

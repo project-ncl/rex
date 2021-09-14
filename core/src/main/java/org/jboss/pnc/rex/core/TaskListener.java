@@ -76,6 +76,18 @@ public class TaskListener {
         }
     }
 
+    void beforeCompletion(@Observes(during = TransactionPhase.BEFORE_COMPLETION) ControllerJob task) {
+        if (task.getInvocationPhase() == TransactionPhase.BEFORE_COMPLETION) {
+            String contextMessage = task.getContext().isPresent() ? ' ' + task.getContext().get().getName() : "";
+            log.debug("BEFORE COMPLETION: " + contextMessage);
+            if (task.isAsync()) {
+                executor.execute(task);
+            } else {
+                task.run();
+            }
+        }
+    }
+
     void failureListener(@Observes(during = TransactionPhase.AFTER_FAILURE) @BeforeDestroyed(TransactionScoped.class) @Priority(APPLICATION + 499) Object ignore) throws SystemException {
         log.error("AFTER FAILURE: Transaction failed " + tm.getTransaction().toString());
     }
