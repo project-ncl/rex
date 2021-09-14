@@ -138,7 +138,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     }
 
     @Override
-    public List<Task> getTask(boolean waiting, boolean running, boolean finished) {
+    public List<Task> getTasks(boolean waiting, boolean running, boolean finished) {
         if (!waiting && !running && !finished)
             return Collections.emptyList();
 
