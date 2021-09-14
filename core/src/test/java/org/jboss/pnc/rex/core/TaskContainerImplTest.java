@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.jboss.pnc.rex.core.common.Assertions.assertCorrectTaskRelations;
 import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAre;
+import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
 import static org.jboss.pnc.rex.core.common.TestData.getEndpointWithStart;
 import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithStart;
@@ -44,6 +45,7 @@ import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
 import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
 import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.core.common.TransitionRecorder;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.MaxConcurrent;
 import org.jboss.pnc.rex.core.counter.Running;
@@ -54,8 +56,8 @@ import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
 import org.jboss.pnc.rex.test.infinispan.InfinispanResource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
@@ -86,6 +88,9 @@ class TaskContainerImplTest {
     @MaxConcurrent
     Counter max;
 
+    @Inject
+    TransitionRecorder recorder;
+
     @BeforeEach
     public void before() throws Exception {
         log.info("Clearing cache and initializing counters");
@@ -100,6 +105,12 @@ class TaskContainerImplTest {
                         .remoteCancel(getStopRequest("{id: 100}"))
                         .build())
                 .build());
+    }
+
+    @AfterEach
+    public void after() throws InterruptedException {
+        recorder.clear();
+        Thread.sleep(100);
     }
 
     @Test
@@ -308,11 +319,13 @@ class TaskContainerImplTest {
         container.getCache().getTransactionManager().begin();
         controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
         container.getCache().getTransactionManager().commit();
-        waitTillTasksAre(State.SUCCESSFUL, container, services);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, services);
 
         // sleep because running counter takes time to update
         Thread.sleep(100);
         assertThat(running.getValue()).isEqualTo(0);
+        assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
+                .doesNotContain(services);
     }
 
     @Test
@@ -330,7 +343,7 @@ class TaskContainerImplTest {
         String k = "k";
         String[] services = new String[]{a, b, c, d, e, f, g, h, i, j, k};
 
-        taskEndpoint.start(CreateGraphRequest.builder()
+        CreateGraphRequest request = CreateGraphRequest.builder()
                 .edge(new EdgeDTO(b, a))
                 .edge(new EdgeDTO(c, a))
                 .edge(new EdgeDTO(d, a))
@@ -361,19 +374,22 @@ class TaskContainerImplTest {
                 .vertex(i, getMockTaskWithStart(i, Mode.IDLE))
                 .vertex(j, getMockTaskWithStart(j, Mode.IDLE))
                 .vertex(k, getMockTaskWithStart(k, Mode.IDLE))
-                .build());
+                .build();
+        taskEndpoint.start(request);
         container.getCache().getTransactionManager().begin();
         controller.setMode(a, Mode.CANCEL);
         container.getCache().getTransactionManager().commit();
 
-        waitTillTasksAre(State.STOPPED, container, services);
+        waitTillTasksAreFinishedWith(State.STOPPED, services);
+        assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
+                .doesNotContain(request.getVertices().keySet().toArray(new String[0]));
     }
 
     @Test
     public void testQuery() throws Exception {
         taskEndpoint.start(getComplexGraph(false));
 
-        assertThat(container.getTask(true, true, true)).hasSize(11);
+        assertThat(container.getTasks(true, true, true)).hasSize(11);
     }
 
     @Test
@@ -447,11 +463,13 @@ class TaskContainerImplTest {
     public void randomDAGTest() throws Exception {
         CreateGraphRequest randomDAG = generateDAG(2, 10, 5, 10, 0.7F);
         taskEndpoint.start(randomDAG);
-        waitTillTasksAre(State.SUCCESSFUL, container, randomDAG.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, randomDAG.getVertices().keySet().toArray(new String[0]));
 
         // sleep because running counter takes time to update
         Thread.sleep(50);
         assertThat(running.getValue()).isEqualTo(0);
+        assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
+                .doesNotContain(randomDAG.getVertices().keySet().toArray(new String[0]));
     }
 
 }

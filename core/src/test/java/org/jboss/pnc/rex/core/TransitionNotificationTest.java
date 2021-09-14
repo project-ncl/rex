@@ -23,6 +23,7 @@ import io.quarkus.test.security.TestSecurity;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.core.common.TestData;
+import org.jboss.pnc.rex.core.common.TransitionRecorder;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.core.endpoints.TransitionRecorderEndpoint;
@@ -31,6 +32,7 @@ import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.rest.api.InternalEndpoint;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
 import org.jboss.pnc.rex.test.infinispan.InfinispanResource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,6 +53,7 @@ import static org.jboss.pnc.rex.common.enums.Transition.UP_to_SUCCESSFUL;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_ENQUEUED;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_STOPPED;
 import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAre;
+import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
 
 @QuarkusTest
@@ -74,6 +77,9 @@ public class TransitionNotificationTest {
     @Inject
     TransitionRecorderEndpoint recorderEndpoint;
 
+    @Inject
+    TransitionRecorder recorder;
+
     @BeforeEach
     void before() {
         running.initialize(0L);
@@ -82,11 +88,17 @@ public class TransitionNotificationTest {
         container.getCache().clear();
     }
 
+    @AfterEach
+    public void after() throws InterruptedException {
+        recorder.clear();
+        Thread.sleep(100);
+    }
+
     @Test
     void testNotifications() throws InterruptedException {
         CreateGraphRequest request = getComplexGraph(true, true);
         endpoint.start(request);
-        waitTillTasksAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, request.getVertices().keySet().toArray(new String[0]));
         
         Thread.sleep(100);
         Map<String, Set<Transition>> records = recorderEndpoint.getRecords();
@@ -112,7 +124,7 @@ public class TransitionNotificationTest {
         endpoint.cancel("a");
         endpoint.cancel("b");
 
-        waitTillTasksAre(State.STOPPED, container, request.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAreFinishedWith(State.STOPPED, request.getVertices().keySet().toArray(new String[0]));
 
         Thread.sleep(100);
         Map<String, Set<Transition>> records = recorderEndpoint.getRecords();
@@ -133,7 +145,7 @@ public class TransitionNotificationTest {
     void testRecordedBodies() {
         CreateGraphRequest request = getComplexGraph(true, true);
         endpoint.start(request);
-        waitTillTasksAre(State.SUCCESSFUL, container, request.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, request.getVertices().keySet().toArray(new String[0]));
 
         Set<TaskDTO> all = endpoint.getAll(TestData.getAllParameters());
         Predicate<TaskDTO> sizePredicate = (task) -> task.getServerResponses() != null

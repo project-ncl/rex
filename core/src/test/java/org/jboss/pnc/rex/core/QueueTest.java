@@ -21,6 +21,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.core.common.TransitionRecorder;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.core.endpoints.HttpEndpoint;
@@ -30,6 +31,7 @@ import org.jboss.pnc.rex.rest.api.InternalEndpoint;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
 import org.jboss.pnc.rex.rest.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.test.infinispan.InfinispanResource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.jboss.pnc.rex.common.enums.State.ENQUEUED;
 import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAre;
+import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
 import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.core.common.TestData.getAllParameters;
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
@@ -70,10 +73,19 @@ public class QueueTest {
     @Inject
     HttpEndpoint httpEndpoint;
 
+    @Inject
+    TransitionRecorder recorder;
+
     @BeforeEach
     void before() {
         running.initialize(0L);
         container.getCache().clear();
+    }
+
+    @AfterEach
+    public void after() throws InterruptedException {
+        recorder.clear();
+        Thread.sleep(100);
     }
 
     @Test
@@ -96,7 +108,7 @@ public class QueueTest {
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.start(graph);
 
-        waitTillTasksAre(State.SUCCESSFUL, container, graph.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
     }
 
     @Test
@@ -113,7 +125,7 @@ public class QueueTest {
                 .allMatch((state -> state.isIdle() || state.isQueued()));
 
         internalEndpoint.setConcurrent(2L);
-        waitTillTasksAre(State.SUCCESSFUL, container, graph.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
     }
 
     @Test
@@ -145,7 +157,7 @@ public class QueueTest {
         CreateGraphRequest graph = generateDAG(seed, 2, 10, 5, 10, 0.7F);
         taskEndpoint.start(graph);
 
-        waitTillTasksAre(State.SUCCESSFUL, container, 20, graph.getVertices().keySet().toArray(new String[0]));
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
 
         Collection<Long> queueRecords = httpEndpoint.stopRecording();
         assertThat(queueRecords).allMatch(record -> record <=1);

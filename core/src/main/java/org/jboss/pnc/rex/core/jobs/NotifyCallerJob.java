@@ -59,4 +59,8 @@ public class NotifyCallerJob extends ControllerJob {
     void onException(Throwable e) {
         log.error("NOTIFICATION " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
     }
+
+    public Transition getTransition() {
+        return transition;
+    }
 }
