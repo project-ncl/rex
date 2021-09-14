@@ -56,7 +56,7 @@ public interface TaskRegistry {
      * @param finished is in StateGroup.FINAL state
      * @return list of filtered services
      */
-    List<Task> getTask(boolean waiting, boolean running, boolean finished);
+    List<Task> getTasks(boolean waiting, boolean running, boolean finished);
 
     List<Task> getEnqueuedTasks(long limit);
 
