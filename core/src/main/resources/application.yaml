@@ -95,6 +95,10 @@ org:
    scheduler:
      baseUrl: http://localhost:8081
    quarkus:
+     log:
+       category:
+         "org.testcontainers":
+           level: DEBUG
      oidc:
        enabled: false
      transaction-manager:
@@ -106,8 +110,8 @@ org:
        server-list: localhost:11222
        use-schema-registration: true
        use-auth: true
-       auth-username: user
-       auth-password: a1234
+       auth-username: admin
+       auth-password: password
 
 "%dev":
    scheduler:
@@ -119,11 +123,10 @@ org:
      http:
        port: 8181
      infinispan-client:
-       server-list: localhost:11222
        use-schema-registration: true
        use-auth: true
-       auth-username: user
-       auth-password: a1234
+       auth-username: admin
+       auth-password: password
 
      log:
        category:
