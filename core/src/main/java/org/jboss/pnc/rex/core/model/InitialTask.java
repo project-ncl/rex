@@ -33,6 +33,9 @@ public class InitialTask {
     private final String name;
 
     @Getter
+    private final String constraint;
+
+    @Getter
     private final Request remoteStart;
 
     @Getter

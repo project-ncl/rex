@@ -59,33 +59,39 @@ public class Task {
     private final String name;
 
     /**
+     * Unique constraint that ensures that
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 2)})
+    private final String constraint;
+
+    /**
      * Definition of a request to remote entity for starting a Task
      */
-    @Getter(onMethod_ = @ProtoField(number = 2))
+    @Getter(onMethod_ = @ProtoField(number = 3))
     private Request remoteStart;
 
     /**
      * Definition of a request to remote entity for cancelling a Task
      */
-    @Getter(onMethod_ = @ProtoField(number = 3))
+    @Getter(onMethod_ = @ProtoField(number = 4))
     private Request remoteCancel;
 
     /**
      * Definition of a request to the initial caller which is used for transition notifications
      */
-    @Getter(onMethod_ = @ProtoField(number = 4))
+    @Getter(onMethod_ = @ProtoField(number = 5))
     private Request callerNotifications;
 
     /**
      * TaskController mode.
      */
-    @Getter(onMethod_ = @ProtoField(number = 5))
+    @Getter(onMethod_ = @ProtoField(number = 6))
     private Mode controllerMode;
 
     /**
      * Current state of a task. Default is State.IDLE.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 6), @ProtoDoc("@Field")})
+    @Getter(onMethod_ = {@ProtoField(number = 7), @ProtoDoc("@Field(index=Index.YES)")})
     private State state;
 
     /**
@@ -94,13 +100,13 @@ public class Task {
      * Parents of this Task.
      */
     @Singular
-    @Getter(onMethod_ = @ProtoField(number = 7))
+    @Getter(onMethod_ = @ProtoField(number = 8))
     private Set<String> dependants = new HashSet<>();
 
     /**
      * Number of unfinishedDependencies. Task can't remotely start if the number is positive.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 8, defaultValue = "-1")})
+    @Getter(onMethod_ = {@ProtoField(number = 9, defaultValue = "-1")})
     private int unfinishedDependencies;
 
     /**
@@ -109,26 +115,26 @@ public class Task {
      * Children of this Task.
      */
     @Singular
-    @Getter(onMethod_ = @ProtoField(number = 9))
+    @Getter(onMethod_ = @ProtoField(number = 10))
     private Set<String> dependencies = new HashSet<>();
 
     /**
      * Flag which signifies a reason why the Task stopped execution.
      */
-    @Getter(onMethod_ = @ProtoField(number = 10))
+    @Getter(onMethod_ = @ProtoField(number = 11))
     private StopFlag stopFlag;
 
     /**
      * List of all responses(bodies) received from remote entity.
      */
     @Singular
-    @Getter(onMethod_ = @ProtoField(number = 11))
+    @Getter(onMethod_ = @ProtoField(number = 12))
     private List<ServerResponse> serverResponses = new ArrayList<>();
 
     /**
      * This flag indicates whether task should be dropped from queue and start remote execution.
      */
-    @Getter(onMethod_ = @ProtoField(number = 12, defaultValue = "false"))
+    @Getter(onMethod_ = @ProtoField(number = 13, defaultValue = "false"))
     private Boolean starting;
 
     public void incUnfinishedDependencies() {

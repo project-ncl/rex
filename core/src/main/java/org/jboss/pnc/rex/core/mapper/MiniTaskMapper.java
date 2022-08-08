@@ -26,8 +26,6 @@ import org.mapstruct.Mapper;
 @Mapper(config = MapperCentralConfig.class)
 public interface MiniTaskMapper {
 
-    @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "dependant",
-            "dependency", "serverResponse", "stringName", "stringDependencies", "stringDependants", "starting",
-            "controllerMode"})
+    @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "starting", "controllerMode"})
     MinimizedTask minimize(Task task);
 }

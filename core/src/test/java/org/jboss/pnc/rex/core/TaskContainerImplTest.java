@@ -56,10 +56,7 @@ import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
 import org.jboss.pnc.rex.test.infinispan.InfinispanResource;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import io.quarkus.test.junit.QuarkusTest;
 
@@ -451,6 +448,56 @@ class TaskContainerImplTest {
                 .isInstanceOf(BadRequestException.class);
     }
 
+
+    @Test
+    void shouldFailOnStartingTasksWithSameConstraint() {
+        CreateTaskDTO withConstraint1 = getMockTaskWithoutStart("with-constraint1", Mode.IDLE).toBuilder()
+                .constraint("common")
+                .build();
+        CreateTaskDTO withConstraint2 = getMockTaskWithoutStart("with-constraint2", Mode.IDLE).toBuilder()
+                .constraint("common")
+                .build();
+
+        CreateGraphRequest firstRequest =  CreateGraphRequest.builder()
+                .vertex("with-constraint1", withConstraint1)
+                .build();
+        CreateGraphRequest secondRequest =  CreateGraphRequest.builder()
+                .vertex("with-constraint2", withConstraint2)
+                .build();
+
+        taskEndpoint.start(firstRequest);
+
+        assertThatThrownBy(() -> taskEndpoint.start(secondRequest))
+                .isInstanceOf(TaskConflictException.class);
+
+    }
+
+    @Test
+    void testConstraintIsDeletedAfterTaskCompletes() {
+        String taskUno = "with-constraint1";
+        String taskDos = "with-constraint2";
+
+        CreateTaskDTO withConstraint1 = getMockTaskWithStart(taskUno, Mode.ACTIVE).toBuilder()
+                .build();
+
+        CreateGraphRequest firstRequest =  CreateGraphRequest.builder()
+                .vertex(taskUno, withConstraint1)
+                .build();
+        taskEndpoint.start(firstRequest);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskUno);
+
+
+        // DO SECOND REQUEST WITH THE SAME CONSTRAINT
+        CreateTaskDTO withConstraint2 = getMockTaskWithStart(taskDos, Mode.ACTIVE).toBuilder()
+                .constraint("common")
+                .build();
+        CreateGraphRequest secondRequest =  CreateGraphRequest.builder()
+                .vertex(taskDos, withConstraint2)
+                .build();
+        taskEndpoint.start(secondRequest);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskDos);
+    }
+
     /**
      * Generates random DAG graph, and tests whether all Task have finished
      * <p>
@@ -459,6 +506,7 @@ class TaskContainerImplTest {
      * Disabled for test determinism reasons
      */
     @RepeatedTest(100)
+    @Disabled
     public void randomDAGTest() throws Exception {
         CreateGraphRequest randomDAG = generateDAG(2, 10, 5, 10, 0.7F);
         taskEndpoint.start(randomDAG);
