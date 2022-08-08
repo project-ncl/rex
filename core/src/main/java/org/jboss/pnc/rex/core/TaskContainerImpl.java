@@ -74,6 +74,9 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     @Remote("near-tasks")
     RemoteCache<String, Task> tasks;
 
+    @Remote("near-constraints")
+    RemoteCache<String, String> constraints;
+
     private final TaskController controller;
 
     private final InitialTaskMapper initialMapper;
@@ -124,6 +127,10 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         return tasks;
     }
 
+    public RemoteCache<String, String> getConstraintCache() {
+        return constraints;
+    }
+
     public MetadataValue<Task> getWithMetadata(String name) {
         return tasks.getWithMetadata(name);
     }
@@ -156,7 +163,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         QueryFactory factory = Search.getQueryFactory(tasks);
         Query<Task> query = factory.from(Task.class).having("state").containsAny(states).build();
 
-        return query.list();
+        return query.execute().list();
     }
 
     @Override
@@ -263,7 +270,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         });
 
         // poke the queue to start new ENQUEUED tasks if there is room (NOTE: queue is poked after current transaction
-        // succeeds
+        // succeeds)
         jobEvent.fire(new PokeQueueJob());
         return newTasks;
     }
@@ -285,6 +292,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                             "Task " + task.getName() + " declared as new in vertices already exists.");
                 }
 
+                handleOptionalConstraint(task);
+
                 // return only new tasks
                 toReturn.add(task);
             } else {
@@ -300,6 +309,16 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             }
         }
         return toReturn;
+    }
+
+    private void handleOptionalConstraint(Task task) throws TaskConflictException {
+        String constraint = task.getConstraint();
+        if (constraint != null) {
+            String previousHolder = constraints.putIfAbsent(constraint, task.getName());
+            if (previousHolder != null) {
+                throw new TaskConflictException("Task " + task.getName() + " with constraint '" + task.getConstraint() +"' in conflict. Conflicting Task: " + previousHolder);
+            }
+        }
     }
 
     private void addTasksWithoutEdgesToCache(Map<String, Task> taskCache, Map<String, InitialTask> vertices) {

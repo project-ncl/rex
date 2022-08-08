@@ -40,6 +40,8 @@ public class MinimizedTask {
 
     private final String name;
 
+    private final String constraint;
+
     private final Request remoteStart;
 
     private final Request remoteCancel;

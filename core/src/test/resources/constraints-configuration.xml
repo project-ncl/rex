@@ -18,14 +18,8 @@
 
 -->
 <infinispan>
-    <!-->Very basic cache configuration</-->
     <cache-container name="clustered">
-        <distributed-cache name="near-tasks" mode="SYNC">
-            <indexing storage="local-heap">
-                <indexed-entities>
-                    <indexed-entity>rex_model.Task</indexed-entity>
-                </indexed-entities>
-            </indexing>
+        <distributed-cache name="near-constraints" mode="SYNC">
             <locking isolation="REPEATABLE_READ"/>
 	        <transaction locking="PESSIMISTIC" mode="NON_DURABLE_XA"/>
             <encoding media-type="application/x-protostream"/>

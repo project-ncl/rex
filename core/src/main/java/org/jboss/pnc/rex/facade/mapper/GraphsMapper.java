@@ -28,10 +28,9 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
 
     @Override
     @Mapping(target = "edge", ignore = true)
-    //@Mapping(target = "vertex", ignore = true)
     CreateGraphRequest toDTO(TaskGraph dbEntity);
 
     @Override
-    @BeanMapping(ignoreUnmappedSourceProperties = {"edge"/*, "vertex"*/})
+    @Mapping(target = "edge", ignore = true)
     TaskGraph toDB(CreateGraphRequest dtoEntity);
 }

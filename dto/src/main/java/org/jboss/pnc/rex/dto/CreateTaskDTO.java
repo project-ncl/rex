@@ -35,6 +35,8 @@ public class CreateTaskDTO {
     @NotBlank
     public String name;
 
+    public String constraint;
+
     @NotNull
     public HttpRequest remoteStart;
 

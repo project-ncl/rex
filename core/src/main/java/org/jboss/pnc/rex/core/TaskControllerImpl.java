@@ -465,7 +465,21 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
         }
 
+        handleOptionalConstraint(task);
+
         // #3 HANDLE (there is no transition) and CASCADE
         doExecute(List.of(new DependantDeletedJob(task)));
+    }
+
+    private void handleOptionalConstraint(Task task) {
+        String constraint = task.getConstraint();
+        if (constraint != null) {
+            MetadataValue<String> constraintMeta = container.getConstraintCache().getWithMetadata(constraint);
+            if (constraintMeta != null) {
+                log.debug("TASK {}: Removing constraint '{}' from cache.", task.getName(), constraint);
+                container.getConstraintCache().removeWithVersion(constraint, constraintMeta.getVersion());
+            }
+
+        }
     }
 }

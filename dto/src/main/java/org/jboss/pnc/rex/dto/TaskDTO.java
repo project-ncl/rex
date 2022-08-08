@@ -40,6 +40,8 @@ public class TaskDTO {
 
     public String name;
 
+    public String constraint;
+
     public HttpRequest remoteStart;
 
     public HttpRequest remoteCancel;
