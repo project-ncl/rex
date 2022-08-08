@@ -161,7 +161,12 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                     EnumSet.of(State.STOPPED, State.SUCCESSFUL, State.FAILED, State.START_FAILED, State.STOP_FAILED));
         }
         QueryFactory factory = Search.getQueryFactory(tasks);
-        Query<Task> query = factory.from(Task.class).having("state").containsAny(states).build();
+        // reduce to 'NEW','WAITING'.... format
+        String filter = states.stream()
+                .map(state -> "'" + state.toString() + "'")
+                .reduce((first, second) -> first + ',' + second)
+                .get();
+        Query<Task> query = factory.create("FROM rex_model.Task WHERE state IN (" + filter + ")");
 
         return query.execute().list();
     }
@@ -169,13 +174,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     @Override
     public List<Task> getEnqueuedTasks(long limit) {
         QueryFactory factory = Search.getQueryFactory(tasks);
-        Query<Task> query = factory.from(Task.class)
-                .having("state")
-                .contains(State.ENQUEUED)
-                .maxResults((int) limit)
-                .build();
-
-        return query.list();
+        Query<Task> query = factory.create("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "'");
+        return query.maxResults((int) limit).execute().list();
     }
 
     public String getBaseUrl() {
