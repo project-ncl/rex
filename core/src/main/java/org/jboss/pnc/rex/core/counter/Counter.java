@@ -17,7 +17,7 @@
  */
 package org.jboss.pnc.rex.core.counter;
 
-import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.VersionedValue;
 
 /**
  * Interface for interacting with counter. Use Metadata versions of get/replace methods to avoid concurrent updates in
@@ -25,9 +25,9 @@ import org.infinispan.client.hotrod.MetadataValue;
  */
 public interface Counter {
 
-    MetadataValue<Long> getMetadataValue();
+    VersionedValue<Long> getMetadataValue();
 
-    boolean replaceValue(MetadataValue<Long> previousValue, Long newValue);
+    boolean replaceValue(VersionedValue<Long> previousValue, Long newValue);
 
     @Deprecated
     Long getValue();

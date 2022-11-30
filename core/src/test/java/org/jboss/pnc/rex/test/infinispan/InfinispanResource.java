@@ -19,9 +19,12 @@ package org.jboss.pnc.rex.test.infinispan;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
-import java.util.Collections;
 import java.util.Map;
 
+/**
+ * @deprecated Infinispan Dev-services are used instead
+ */
+@Deprecated
 public class InfinispanResource implements QuarkusTestResourceLifecycleManager {
 
     public final InfinispanContainer infinispan = new InfinispanContainer(false);

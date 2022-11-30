@@ -25,7 +25,9 @@ import org.testcontainers.containers.wait.strategy.Wait;
  *
  * For further Image configuration:
  * @see <a href=https://github.com/infinispan/infinispan-images/blob/master/README.md>Infinispan Image GitHub</a>
+ * @deprecated Infinispan Dev-services are used instead
  */
+@Deprecated
 public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
 
     private static final String INFINISPAN_USERNAME = "admin";
@@ -50,7 +52,7 @@ public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
 
     public String getIPAddress() {
         getMappedPort(11222);
-        return getContainerIpAddress() +':'+ getMappedPort(11222);
+        return getHost() +':'+ getMappedPort(11222);
     }
 
 

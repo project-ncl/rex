@@ -19,7 +19,6 @@ package org.jboss.pnc.rex.facade.mapper;
 
 import org.jboss.pnc.rex.core.model.TaskGraph;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

@@ -29,7 +29,7 @@ quarkus:
       verification: none
 
   infinispan-client:
-    server-list: ${ISPN_NODE}
+#    server-list: ${ISPN_NODE}
     use-schema-registration: false
     use-auth: true
     auth-username: ${ISPN_USER}
@@ -92,43 +92,58 @@ org:
 
 
 "%test":
-   scheduler:
-     baseUrl: http://localhost:8081
-   quarkus:
-     log:
-       category:
-         "org.testcontainers":
-           level: DEBUG
-     oidc:
-       enabled: false
-     transaction-manager:
-       default-transaction-timeout: 10m
-     http:
-       port: 8081
-     infinispan-client:
-       client-intelligence: BASIC
-       server-list: localhost:11222
-       use-schema-registration: true
-       use-auth: true
-       auth-username: admin
-       auth-password: password
+  scheduler:
+    baseUrl: http://localhost:8081
+  quarkus:
+    log:
+      category:
+        "org.testcontainers":
+          level: DEBUG
+      min-level: FINEST
+    oidc:
+      enabled: false
+    transaction-manager:
+      default-transaction-timeout: 10m
+    http:
+      port: 8081
+    infinispan-client:
+      client-intelligence: BASIC
+      use-schema-registration: true
+      use-auth: true
+      auth-username: admin
+      auth-password: password
+      cache:
+        "counter":
+          configuration-uri: "counter-configuration.xml"
+          near-cache-mode: disabled
+          near-cache-max-entries: -1
+        "near-tasks":
+          configuration-uri: "task-configuration.xml"
+          near-cache-mode: invalidated
+          near-cache-max-entries: 100
+        "near-constraints":
+          configuration-uri: "constraints-configuration.xml"
+          near-cache-mode: invalidated
+          near-cache-max-entries: 100
+      devservices:
+#        image-name: "infinispan/server:13.0.5.Final-2"
+        image-name: "infinispan/server:14.0.2.Final"
 
 "%dev":
-   scheduler:
-     baseUrl: http://localhost:8181
+  scheduler:
+    baseUrl: http://localhost:8181
 
-   quarkus:
-     transaction-manager:
-       default-transaction-timeout: 10m
-     http:
-       port: 8181
-     infinispan-client:
-       use-schema-registration: true
-       use-auth: true
-       auth-username: admin
-       auth-password: password
-
-     log:
-       category:
-         "org.jboss.pnc":
-           level: TRACE
+  quarkus:
+    transaction-manager:
+      default-transaction-timeout: 10m
+    http:
+      port: 8181
+    infinispan-client:
+      use-schema-registration: true
+      use-auth: true
+      auth-username: admin
+      auth-password: password
+    log:
+      category:
+        "org.jboss.pnc":
+          level: TRACE

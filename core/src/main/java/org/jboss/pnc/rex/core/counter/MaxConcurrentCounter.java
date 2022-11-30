@@ -19,8 +19,8 @@ package org.jboss.pnc.rex.core.counter;
 
 import io.quarkus.infinispan.client.Remote;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
 
 import javax.enterprise.context.ApplicationScoped;
 
@@ -37,8 +37,8 @@ public class MaxConcurrentCounter implements Counter {
     String defaultMax;
 
     @Override
-    public MetadataValue<Long> getMetadataValue() {
-        MetadataValue<Long> metadata = counterCache.getWithMetadata(MAX_COUNTER_KEY);
+    public VersionedValue<Long> getMetadataValue() {
+        VersionedValue<Long> metadata = counterCache.getWithMetadata(MAX_COUNTER_KEY);
         if(metadata == null) {
             initialize(Long.valueOf(defaultMax));
             metadata = counterCache.getWithMetadata(MAX_COUNTER_KEY);
@@ -47,7 +47,7 @@ public class MaxConcurrentCounter implements Counter {
     }
 
     @Override
-    public boolean replaceValue(MetadataValue<Long> previousValue, Long value) {
+    public boolean replaceValue(VersionedValue<Long> previousValue, Long value) {
         return counterCache.replaceWithVersion(MAX_COUNTER_KEY, value, previousValue.getVersion());
     }
 

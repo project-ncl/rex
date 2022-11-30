@@ -21,9 +21,9 @@ import io.quarkus.infinispan.client.Remote;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.pnc.rex.common.enums.State;
@@ -131,12 +131,12 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         return constraints;
     }
 
-    public MetadataValue<Task> getWithMetadata(String name) {
+    public VersionedValue<Task> getWithMetadata(String name) {
         return tasks.getWithMetadata(name);
     }
 
-    public MetadataValue<Task> getRequiredTaskWithMetadata(String name) {
-        MetadataValue<Task> meta = tasks.getWithMetadata(name);
+    public VersionedValue<Task> getRequiredTaskWithMetadata(String name) {
+        VersionedValue<Task> meta = tasks.getWithMetadata(name);
         if (meta == null) {
             log.info("ERROR: couldn't find task {}", name);
             throw new TaskMissingException("Task with name " + name + " was not found");
@@ -183,7 +183,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     }
 
     private void hasCycle(Set<String> taskIds) throws CircularDependencyException {
-        Set<String> notVisited = new HashSet<String>(taskIds);
+        Set<String> notVisited = new HashSet<>(taskIds);
         List<String> visiting = new ArrayList<>();
         Set<String> visited = new HashSet<>();
 
@@ -298,7 +298,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                 toReturn.add(task);
             } else {
                 // we have to get the previous version
-                MetadataValue<Task> versioned = getWithMetadata(entry.getKey());
+                VersionedValue<Task> versioned = getWithMetadata(entry.getKey());
                 // could be optimized by using #putAll method of remote cache (only 'else' part could be; the 'then'
                 // part required FORCE_RETURN_VALUE flag which is not available in putAll)
                 boolean success = getCache().replaceWithVersion(entry.getKey(), versioned.getValue(), versioned.getVersion());

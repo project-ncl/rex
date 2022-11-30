@@ -35,10 +35,9 @@ import javax.inject.Inject;
 import javax.transaction.RollbackException;
 import javax.transaction.TransactionManager;
 
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.security.TestSecurity;
 import lombok.extern.slf4j.Slf4j;
-import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
@@ -55,13 +54,16 @@ import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
-import org.jboss.pnc.rex.test.infinispan.InfinispanResource;
-import org.junit.jupiter.api.*;
 
 import io.quarkus.test.junit.QuarkusTest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@QuarkusTestResource(InfinispanResource.class)
+//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @Slf4j
 @TestSecurity(authorizationEnabled = false)
 class TaskContainerImplTest {
@@ -114,7 +116,7 @@ class TaskContainerImplTest {
     public void testGet() {
         assertThat(container.getTask(EXISTING_KEY))
                 .isNotNull();
-        MetadataValue<Task> service = container.getCache().getWithMetadata(EXISTING_KEY);
+        VersionedValue<Task> service = container.getCache().getWithMetadata(EXISTING_KEY);
         assertThat(service.getVersion()).isNotZero();
     }
 

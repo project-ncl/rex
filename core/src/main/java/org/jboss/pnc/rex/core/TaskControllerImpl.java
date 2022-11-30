@@ -18,7 +18,7 @@
 package org.jboss.pnc.rex.core;
 
 import lombok.extern.slf4j.Slf4j;
-import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
@@ -237,11 +237,11 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         return task.getDependants().size() == 0 && transition.getAfter().isFinal();
     }
 
-    private void handle(MetadataValue<Task> taskMetadata, Task task) {
+    private void handle(VersionedValue<Task> taskMetadata, Task task) {
         handle(taskMetadata, task, null);
     }
 
-    private void handle(MetadataValue<Task> taskMetadata, Task task, ControllerJob[] forcedJobs) {
+    private void handle(VersionedValue<Task> taskMetadata, Task task, ControllerJob[] forcedJobs) {
         List<ControllerJob> jobs = transition(task);
         if (forcedJobs != null && forcedJobs.length != 0) {
             jobs.addAll(Arrays.asList(forcedJobs));
@@ -277,7 +277,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void setMode(String name, Mode mode, boolean pokeQueue) {
         // #1 PULL
-        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
@@ -307,7 +307,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void accept(String name, Object response) {
         // #1 PULL
-        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
@@ -329,7 +329,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void fail(String name, Object response) {
         // #1 PULL
-        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
@@ -352,7 +352,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void dequeue(String name) {
         // #1 PULL
-        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
@@ -370,7 +370,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void dependencySucceeded(String name) {
         // #1 PULL
-        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
@@ -384,7 +384,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void dependencyStopped(String name) {
         // #1 PULL
-        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
@@ -400,7 +400,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void dependencyCancelled(String name) {
         // #1 PULL
-        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
@@ -415,7 +415,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void dependantDeleted(String name, String deletedDependant) {
         // #1 PULL
-        MetadataValue<Task> taskMetadata = container.getWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
             // Task could have been already deleted DependantDeletedJob in the same transaction
             return;
@@ -448,7 +448,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void delete(String name) {
         // #1 PULL
-        MetadataValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 DELETE
