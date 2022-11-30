@@ -31,15 +31,16 @@ import javax.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-@Getter
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateGraphRequest {
 
+    @Getter
     @Singular
     public Set<@NotNull @Valid EdgeDTO> edges;
 
+    @Getter
     @Singular
     public Map<@NotBlank String, @NotNull @Valid CreateTaskDTO> vertices;
 }

@@ -17,7 +17,6 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import org.jboss.pnc.rex.common.enums.State;
@@ -31,7 +30,6 @@ import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.rest.api.InternalEndpoint;
 import org.jboss.pnc.rex.rest.api.TaskEndpoint;
-import org.jboss.pnc.rex.test.infinispan.InfinispanResource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,7 +55,7 @@ import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedW
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
 
 @QuarkusTest
-@QuarkusTestResource(InfinispanResource.class)
+//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
 public class TransitionNotificationTest {
 

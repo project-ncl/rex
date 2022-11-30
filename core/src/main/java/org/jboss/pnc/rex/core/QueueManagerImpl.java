@@ -18,7 +18,7 @@
 package org.jboss.pnc.rex.core;
 
 import lombok.extern.slf4j.Slf4j;
-import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.core.api.TaskContainer;
 import org.jboss.pnc.rex.core.api.TaskController;
@@ -56,10 +56,10 @@ public class QueueManagerImpl implements QueueManager {
     @Transactional
     public void poke() {
         log.info("QUEUE: Poking Task queue");
-        MetadataValue<Long> maxMetadata = max.getMetadataValue();
+        VersionedValue<Long> maxMetadata = max.getMetadataValue();
         Long maxValue = maxMetadata.getValue();
 
-        MetadataValue<Long> runningMetadata = running.getMetadataValue();
+        VersionedValue<Long> runningMetadata = running.getMetadataValue();
         Long runningValue = runningMetadata.getValue();
 
         if (runningValue >= maxValue) {
@@ -97,7 +97,7 @@ public class QueueManagerImpl implements QueueManager {
     @Override
     @Transactional(MANDATORY)
     public void decreaseRunningCounter() {
-        MetadataValue<Long> runningMetadata = running.getMetadataValue();
+        VersionedValue<Long> runningMetadata = running.getMetadataValue();
         long runningValue = runningMetadata.getValue() - 1;
         log.info("QUEUE: Decreasing running counter by one. ({} to {}) [ISPN-VERSION:{}]",
                 runningMetadata.getValue(),
@@ -113,7 +113,7 @@ public class QueueManagerImpl implements QueueManager {
     @Override
     @Transactional(MANDATORY)
     public void setMaximumConcurrency(Long amount) {
-        MetadataValue<Long> maxMetadata = max.getMetadataValue();
+        VersionedValue<Long> maxMetadata = max.getMetadataValue();
         if (maxMetadata == null) {
             max.initialize(amount);
         } else {
@@ -124,7 +124,7 @@ public class QueueManagerImpl implements QueueManager {
 
     @Override
     public Long getMaximumConcurrency() {
-        MetadataValue<Long> meta = max.getMetadataValue();
+        VersionedValue<Long> meta = max.getMetadataValue();
         return meta == null ? null : meta.getValue();
     }
 }

@@ -65,9 +65,8 @@ public class AuthenticationTest {
                 .contentType(ContentType.JSON)
                 .put(taskEndpointURI.getPath()+"/missing/cancel")
                 .then()
-                // 500 because ISPN resource is not started and scheduler will fail
-                .statusCode(500)
-                .body("errorType", containsString("RuntimeException"));
+                .statusCode(400)
+                .body("errorType", containsString("TaskMissingException"));
     }
 
     @Test
@@ -78,9 +77,7 @@ public class AuthenticationTest {
                 .contentType(ContentType.JSON)
                 .post(internalEndpointURI.getPath()+"/options/concurrency?amount=40")
                 .then()
-                // 500 because ISPN resource is not started and scheduler will fail
-                .statusCode(500)
-                .body("errorType", containsString("RuntimeException"));
+                .statusCode(204);
     }
 
     @Test

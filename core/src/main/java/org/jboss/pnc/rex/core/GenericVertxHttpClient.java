@@ -26,7 +26,6 @@ import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.model.Header;
@@ -35,7 +34,6 @@ import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -128,23 +126,15 @@ public class GenericVertxHttpClient {
     }
 
     private HttpMethod toVertxMethod(Method method) {
-        switch (method) {
-            case GET:
-                return HttpMethod.GET;
-            case POST:
-                return HttpMethod.POST;
-            case PUT:
-                return HttpMethod.PUT;
-            case PATCH:
-                return HttpMethod.PATCH;
-            case DELETE:
-                return HttpMethod.DELETE;
-            case HEAD:
-                return HttpMethod.HEAD;
-            case OPTIONS:
-                return HttpMethod.OPTIONS;
-        }
-        return null;
+        return switch (method) {
+            case GET -> HttpMethod.GET;
+            case POST -> HttpMethod.POST;
+            case PUT -> HttpMethod.PUT;
+            case PATCH -> HttpMethod.PATCH;
+            case DELETE -> HttpMethod.DELETE;
+            case HEAD -> HttpMethod.HEAD;
+            case OPTIONS -> HttpMethod.OPTIONS;
+        };
     }
 
     private void addHeaders(HttpRequest<Buffer> request, List<Header> headers) {

@@ -18,8 +18,8 @@
 package org.jboss.pnc.rex.core.counter;
 
 import io.quarkus.infinispan.client.Remote;
-import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
 
 import javax.enterprise.context.ApplicationScoped;
 
@@ -33,8 +33,8 @@ public class RunningCounter implements Counter {
     RemoteCache<String, Long> counterCache;
 
     @Override
-    public MetadataValue<Long> getMetadataValue() {
-        MetadataValue<Long> metadata = counterCache.getWithMetadata(RUNNING_KEY);
+    public VersionedValue<Long> getMetadataValue() {
+        VersionedValue<Long> metadata = counterCache.getWithMetadata(RUNNING_KEY);
         if (metadata == null) {
             initialize(0L);
             metadata = counterCache.getWithMetadata(RUNNING_KEY);
@@ -43,7 +43,7 @@ public class RunningCounter implements Counter {
     }
 
     @Override
-    public boolean replaceValue(MetadataValue<Long> previousValue, Long value) {
+    public boolean replaceValue(VersionedValue<Long> previousValue, Long value) {
         return counterCache.replaceWithVersion(RUNNING_KEY, value, previousValue.getVersion());
     }
 
