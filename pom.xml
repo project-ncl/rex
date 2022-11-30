@@ -61,20 +61,19 @@
   </modules>
 
   <properties>
-    <quarkus.version>2.10.2.Final</quarkus.version>
+    <quarkus.version>2.14.2.Final</quarkus.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <compiler-plugin.version>3.8.1</compiler-plugin.version>
+    <compiler-plugin.version>3.10.1</compiler-plugin.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
     <lombok.version>1.18.24</lombok.version>
     <slf4j.version>1.7.28</slf4j.version>
     <assertj.version>3.23.1</assertj.version>
     <restassured.version>4.1.1</restassured.version>
-    <mapstruct.version>1.5.2.Final</mapstruct.version>
-    <testcontainers.version>1.17.3</testcontainers.version>
+    <mapstruct.version>1.5.3.Final</mapstruct.version>
   </properties>
   
   <dependencyManagement>
@@ -103,7 +102,7 @@
 
       <!-- Quarkus dependencies -->
       <dependency>
-      <groupId>io.quarkus</groupId>
+        <groupId>io.quarkus.platform</groupId>
         <artifactId>quarkus-bom</artifactId>
         <version>${quarkus.version}</version>
         <type>pom</type>
@@ -133,18 +132,6 @@
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
         <version>${assertj.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.testcontainers</groupId>
-        <artifactId>testcontainers</artifactId>
-        <version>${testcontainers.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.testcontainers</groupId>
-        <artifactId>junit-jupiter</artifactId>
-        <version>${testcontainers.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -191,7 +178,12 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${compiler-plugin.version}</version>
         <configuration>
-            <forceJavacCompilerUse>true</forceJavacCompilerUse>
+          <compilerArgs>
+            <arg>
+              -parameters
+            </arg>
+          </compilerArgs>
+          <forceJavacCompilerUse>true</forceJavacCompilerUse>
         </configuration>
       </plugin>
       <plugin>

@@ -26,16 +26,15 @@ import lombok.ToString;
 import java.util.Map;
 import java.util.Set;
 
+@Getter
 @Builder
 @AllArgsConstructor
 @ToString
 public class TaskGraph {
 
-    @Getter
     @Singular
     private final Map<String, InitialTask> vertices;
 
-    @Getter
     @Singular
     private final Set<Edge> edges;
 }
