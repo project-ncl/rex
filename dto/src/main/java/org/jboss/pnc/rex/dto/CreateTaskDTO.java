@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.rex.common.enums.Mode;
 
 import javax.validation.constraints.NotBlank;
@@ -38,12 +39,12 @@ public class CreateTaskDTO {
     public String constraint;
 
     @NotNull
-    public HttpRequest remoteStart;
+    public Request remoteStart;
 
     @NotNull
-    public HttpRequest remoteCancel;
+    public Request remoteCancel;
 
-    public HttpRequest callerNotifications;
+    public Request callerNotifications;
 
     public Mode controllerMode;
 }

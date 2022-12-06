@@ -17,16 +17,16 @@
  */
 package org.jboss.pnc.rex.facade.mapper;
 
-import org.jboss.pnc.rex.dto.HeaderDTO;
+import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.rex.model.Header;
 import org.mapstruct.Mapper;
 
 @Mapper(config = MapperCentralConfig.class)
-public interface HeaderMapper extends EntityMapper<HeaderDTO, Header> {
+public interface HeaderMapper extends EntityMapper<Request.Header, Header> {
 
     @Override
-    HeaderDTO toDTO(Header dbEntity);
+    Request.Header toDTO(Header dbEntity);
 
     @Override
-    Header toDB(HeaderDTO dtoEntity);
+    Header toDB(Request.Header dtoEntity);
 }
