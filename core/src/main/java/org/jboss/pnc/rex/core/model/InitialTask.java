@@ -24,26 +24,23 @@ import lombok.ToString;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.model.Request;
 
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @ToString
+@Getter
 public class InitialTask {
 
-    @Getter
     private final String name;
 
-    @Getter
     private final String constraint;
 
-    @Getter
+    private final String correlationID;
+
     private final Request remoteStart;
 
-    @Getter
     private final Request remoteCancel;
 
-    @Getter
     private final Request callerNotifications;
 
-    @Getter
     private final Mode controllerMode;
 }

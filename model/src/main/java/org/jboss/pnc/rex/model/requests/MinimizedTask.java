@@ -42,6 +42,8 @@ public class MinimizedTask {
 
     private final String constraint;
 
+    private final String correlationID;
+
     private final Request remoteStart;
 
     private final Request remoteCancel;

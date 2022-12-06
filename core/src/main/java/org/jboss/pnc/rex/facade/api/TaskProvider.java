@@ -49,6 +49,8 @@ public interface TaskProvider {
      */
     TaskDTO get(String taskName);
 
+    Set<TaskDTO> getByCorrelationID(String correlationID);
+
     /**
      * Returns all related services
      * (all dependants, all dependencies, dependants of dependencies, dependencies of dependants)

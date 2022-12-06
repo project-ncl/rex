@@ -98,9 +98,9 @@ public class Assertions {
                 if (tuple == null) {
                     throw new AssertionError("Timeout " + 10 + " " + TimeUnit.SECONDS + " reached while waiting for some task to finish");
                 }
-                if (tuple.getSecond() != state) {
-                    throw new AssertionError("Task " + tuple.getFirst() + " didn't have correct state. (" + state + " vs. " + tuple.getSecond() + ")");
-                };
+                if (tuple.second() != state) {
+                    throw new AssertionError("Task " + tuple.first() + " didn't have correct state. (" + state + " vs. " + tuple.second() + ")");
+                }
             }
         } catch (InterruptedException e) {
             // shouldn't happen

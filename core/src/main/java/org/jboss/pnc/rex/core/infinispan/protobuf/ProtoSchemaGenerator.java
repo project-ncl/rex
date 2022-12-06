@@ -43,5 +43,5 @@ import org.jboss.pnc.rex.model.Task;
                 State.class,
                 StopFlag.class,
                 Request.class})
-interface TaskSchemaGenerator extends GeneratedSchema {
+interface ProtoSchemaGenerator extends GeneratedSchema {
 }

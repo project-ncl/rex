@@ -47,8 +47,6 @@ quarkus:
       "com.arjuna.ats.jta":
         # Set to WARN if you want to see all the exceptions
         level: ERROR
-      "io.smallrye.faulttolerance.core":
-        level: TRACE
 
   vertx:
     max-event-loop-execute-time: 10s
@@ -134,16 +132,35 @@ org:
     baseUrl: http://localhost:8181
 
   quarkus:
+    oidc:
+      enabled: false
     transaction-manager:
       default-transaction-timeout: 10m
     http:
       port: 8181
     infinispan-client:
+      client-intelligence: BASIC
       use-schema-registration: true
       use-auth: true
       auth-username: admin
       auth-password: password
+      cache:
+        "counter":
+          configuration-uri: "counter-configuration.xml"
+          near-cache-mode: disabled
+          near-cache-max-entries: -1
+        "near-tasks":
+          configuration-uri: "task-configuration.xml"
+          near-cache-mode: invalidated
+          near-cache-max-entries: 100
+        "near-constraints":
+          configuration-uri: "constraints-configuration.xml"
+          near-cache-mode: invalidated
+          near-cache-max-entries: 100
     log:
       category:
         "org.jboss.pnc":
           level: TRACE
+        "io.quarkus.infinispan":
+          level: TRACE
+      min-level: FINEST

@@ -60,6 +60,8 @@ public interface TaskRegistry {
 
     List<Task> getEnqueuedTasks(long limit);
 
+    List<Task> getTasksByCorrelationID(String correlationID);
+
     /**
      * Returns all task identifiers in clustered container.
      *

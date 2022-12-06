@@ -94,6 +94,13 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Override
+    public Set<TaskDTO> getByCorrelationID(String correlationID) {
+        return registry.getTasksByCorrelationID(correlationID).stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public List<TaskDTO> getAllRelated(String taskName) {
         throw new UnsupportedOperationException("not yet implemented");
     }
