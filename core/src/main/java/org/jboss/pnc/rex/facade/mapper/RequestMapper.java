@@ -17,18 +17,22 @@
  */
 package org.jboss.pnc.rex.facade.mapper;
 
-import org.jboss.pnc.rex.dto.HttpRequest;
 import org.jboss.pnc.rex.model.Request;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Mapper(config = MapperCentralConfig.class, uses = {HeaderMapper.class})
-public interface RequestMapper extends EntityMapper<HttpRequest, Request> {
+@Mapper(config = MapperCentralConfig.class, uses = {HeaderMapper.class, UriMapper.class})
+public interface RequestMapper extends EntityMapper<org.jboss.pnc.api.dto.Request, Request> {
 
     @Override
     @BeanMapping(ignoreUnmappedSourceProperties = "byteAttachment")
-    HttpRequest toDTO(Request dbEntity);
+    @Mapping(target = "uri", source = "url")
+    @Mapping(target = "header", ignore = true)
+    @Mapping(target = "authTokenHeader", ignore = true)
+    org.jboss.pnc.api.dto.Request toDTO(Request dbEntity);
 
     @Override
-    Request toDB(HttpRequest dtoEntity);
+    @Mapping(target = "url", source = "uri")
+    Request toDB(org.jboss.pnc.api.dto.Request dtoEntity);
 }

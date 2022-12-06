@@ -31,8 +31,10 @@ import org.jboss.pnc.rex.model.Task;
 /**
  * Generates .proto schemas and infinispan protobuf marshallers of proto-annotated classes in includeClasses
  */
-@AutoProtoSchemaBuilder(schemaPackageName = "rex_model",
+@AutoProtoSchemaBuilder(
+        schemaPackageName = "rex_model",
         schemaFilePath = "META-INF/",
+        schemaFileName = "RexModel.proto",
         includeClasses = {ServerResponse.class,
                 Task.class,
                 Header.class,

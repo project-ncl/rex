@@ -474,7 +474,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     private void handleOptionalConstraint(Task task) {
         String constraint = task.getConstraint();
         if (constraint != null) {
-            MetadataValue<String> constraintMeta = container.getConstraintCache().getWithMetadata(constraint);
+            VersionedValue<String> constraintMeta = container.getConstraintCache().getWithMetadata(constraint);
             if (constraintMeta != null) {
                 log.debug("TASK {}: Removing constraint '{}' from cache.", task.getName(), constraint);
                 container.getConstraintCache().removeWithVersion(constraint, constraintMeta.getVersion());

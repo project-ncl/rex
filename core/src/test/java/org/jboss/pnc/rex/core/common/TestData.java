@@ -21,13 +21,12 @@ import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;
-import org.jboss.pnc.rex.dto.HeaderDTO;
-import org.jboss.pnc.rex.dto.HttpRequest;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.rest.parameters.TaskFilterParameters;
 
+import java.net.URI;
 import java.util.List;
 
 public class TestData {
@@ -65,7 +64,7 @@ public class TestData {
                 .build();
     }
 
-    public static CreateTaskDTO getMockTask(String name, Mode mode, HttpRequest startRequest, HttpRequest stopRequest, HttpRequest notificationsRequest) {
+    public static CreateTaskDTO getMockTask(String name, Mode mode, org.jboss.pnc.api.dto.Request startRequest, org.jboss.pnc.api.dto.Request stopRequest, org.jboss.pnc.api.dto.Request notificationsRequest) {
         return CreateTaskDTO.builder()
                 .name(name)
                 .controllerMode(mode)
@@ -75,51 +74,39 @@ public class TestData {
                 .build();
     }
 
-    public static HttpRequest getRequestWithoutStart(String payload) {
-        return HttpRequest.builder()
-                .url("http://localhost:8081/test/accept")
-                .method(Method.POST)
-                .headers(List.of(HeaderDTO.builder()
-                        .name("Content-Type")
-                        .value("application/json")
-                        .build()))
+    public static org.jboss.pnc.api.dto.Request getRequestWithoutStart(String payload) {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/test/accept"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
                 .attachment(payload)
                 .build();
     }
 
-    public static HttpRequest getStopRequest(String payload) {
-        return HttpRequest.builder()
-                .url("http://localhost:8081/test/stop")
-                .method(Method.POST)
-                .headers(List.of(HeaderDTO.builder()
-                        .name("Content-Type")
-                        .value("application/json")
-                        .build()))
+    public static org.jboss.pnc.api.dto.Request getStopRequest(String payload) {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/test/stop"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
                 .attachment(payload)
                 .build();
     }
 
-    public static HttpRequest getRequestWithStart(String payload) {
-        return HttpRequest.builder()
-                .url("http://localhost:8081/test/acceptAndStart")
-                .method(Method.POST)
-                .headers(List.of(HeaderDTO.builder()
-                        .name("Content-Type")
-                        .value("application/json")
-                        .build()))
+    public static org.jboss.pnc.api.dto.Request getRequestWithStart(String payload) {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/test/acceptAndStart"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
                 .attachment(payload)
                 .build();
     }
 
-    public static HttpRequest getNotificationsRequest() {
-        return HttpRequest.builder()
-                .method(Method.POST)
-                .headers(List.of(HeaderDTO.builder()
-                        .name("Content-Type")
-                        .value("application/json")
-                        .build()))
+    public static org.jboss.pnc.api.dto.Request getNotificationsRequest() {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/transition/record"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
                 .attachment("hello")
-                .url("http://localhost:8081/transition/record")
                 .build();
     }
 
