@@ -44,12 +44,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.Set;
 
+import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.ACCEPTED_CODE;
 import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.CONFLICTED_CODE;
 import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.CONFLICTED_DESCRIPTION;
 import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.INVALID_CODE;
 import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.INVALID_DESCRIPTION;
 import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.NOT_FOUND_CODE;
 import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.NOT_FOUND_DESCRIPTION;
+import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.NO_CONTENT_CODE;
+import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.NO_CONTENT_DESCRIPTION;
 import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SERVER_ERROR_CODE;
 import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SERVER_ERROR_DESCRIPTION;
 import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SUCCESS_CODE;
@@ -85,6 +88,7 @@ public interface TaskEndpoint {
     @APIResponses(value = {
             @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
+            @APIResponse(responseCode = NO_CONTENT_CODE, description = NO_CONTENT_DESCRIPTION),
             @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = CONFLICTED_CODE, description = CONFLICTED_DESCRIPTION,
@@ -100,7 +104,7 @@ public interface TaskEndpoint {
     @Operation(summary = "Returns a specific task.")
     @APIResponses(value = {
             @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
+                    content = @Content(schema = @Schema(implementation = TaskDTO.class))),
             @APIResponse(responseCode = NOT_FOUND_CODE, description = NOT_FOUND_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
@@ -113,7 +117,7 @@ public interface TaskEndpoint {
     @Path("/{taskID}/cancel")
     @Operation(summary = "Cancels execution of a task and the tasks which depend on it")
     @APIResponses(value = {
-            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION),
+            @APIResponse(responseCode = ACCEPTED_CODE, description = ACCEPTED_CODE),
             @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
@@ -121,6 +125,21 @@ public interface TaskEndpoint {
     })
     @PUT
     void cancel(@Parameter(description = TASK_ID) @PathParam("taskID") @NotBlank String taskID);
+
+    @GET
+    @Operation(summary = "Returns tasks grouped by correlation ID.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
+            @APIResponse(responseCode = NO_CONTENT_CODE, description = NO_CONTENT_DESCRIPTION),
+            @APIResponse(responseCode = CONFLICTED_CODE, description = CONFLICTED_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @Path("/by-correlation/{correlationID}")
+    @Produces(MediaType.APPLICATION_JSON)
+    Set<TaskDTO> byCorrelation(@PathParam("correlationID") String correlationID);
 
   /*  @Path("/{serviceName}/graph")
     @APIResponses(value = {

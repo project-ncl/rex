@@ -178,6 +178,14 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         return query.maxResults((int) limit).execute().list();
     }
 
+    @Override
+    public List<Task> getTasksByCorrelationID(String correlationID) {
+        QueryFactory factory = Search.getQueryFactory(tasks);
+        Query<Task> taskQuery = factory.create("FROM rex_model.Task WHERE correlationID = :correlationID");
+        taskQuery.setParameter("correlationID", correlationID);
+        return taskQuery.execute().list();
+    }
+
     public String getBaseUrl() {
         return baseUrl;
     }

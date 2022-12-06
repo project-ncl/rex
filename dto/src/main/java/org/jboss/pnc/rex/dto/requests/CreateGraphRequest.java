@@ -37,6 +37,9 @@ import java.util.Set;
 public class CreateGraphRequest {
 
     @Getter
+    public String correlationID;
+
+    @Getter
     @Singular
     public Set<@NotNull @Valid EdgeDTO> edges;
 

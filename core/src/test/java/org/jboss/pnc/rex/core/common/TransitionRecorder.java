@@ -74,54 +74,12 @@ public class TransitionRecorder {
 
         // go through all records up until now to make sure subscriber didn't miss a transition
         for (var record : records) {
-            if (subscription.contains(record.getFirst())) {
+            if (subscription.contains(record.first())) {
                 queue.add(record);
             }
         }
         return queue;
     }
 
-    public static class Tuple<T1, T2> {
-        private final T1 first;
-        private final T2 second;
-
-        public Tuple(T1 first, T2 second) {
-            this.first = first;
-            this.second = second;
-        }
-
-        public T1 getFirst() {
-            return first;
-        }
-
-        public T2 getSecond() {
-            return second;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Tuple<?, ?> tuple = (Tuple<?, ?>) o;
-
-            if (getFirst() != null ? !getFirst().equals(tuple.getFirst()) : tuple.getFirst() != null) return false;
-            return getSecond() != null ? getSecond().equals(tuple.getSecond()) : tuple.getSecond() == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = getFirst() != null ? getFirst().hashCode() : 0;
-            result = 31 * result + (getSecond() != null ? getSecond().hashCode() : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "Tuple{" +
-                    "first=" + first +
-                    ", second=" + second +
-                    '}';
-        }
-    }
+    public record Tuple<T1, T2>(T1 first, T2 second) {}
 }

@@ -480,6 +480,7 @@ class TaskContainerImplTest {
         String taskDos = "with-constraint2";
 
         CreateTaskDTO withConstraint1 = getMockTaskWithStart(taskUno, Mode.ACTIVE).toBuilder()
+                .constraint("common")
                 .build();
 
         CreateGraphRequest firstRequest =  CreateGraphRequest.builder()

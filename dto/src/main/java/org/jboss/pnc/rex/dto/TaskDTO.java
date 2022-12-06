@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import lombok.ToString;
+import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 
@@ -42,11 +43,13 @@ public class TaskDTO {
 
     public String constraint;
 
-    public HttpRequest remoteStart;
+    public String correlationID;
 
-    public HttpRequest remoteCancel;
+    public Request remoteStart;
 
-    public HttpRequest callerNotifications;
+    public Request remoteCancel;
+
+    public Request callerNotifications;
 
     public State state;
 

@@ -19,17 +19,41 @@ package org.jboss.pnc.rex.facade.mapper;
 
 import org.jboss.pnc.rex.core.model.TaskGraph;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+
+import java.util.HashMap;
 
 @Mapper(config = MapperCentralConfig.class, uses = {EdgeMapper.class, CreateTaskMapper.class})
 public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph> {
 
     @Override
     @Mapping(target = "edge", ignore = true)
+    @Mapping(target = "correlationID", ignore = true)
     CreateGraphRequest toDTO(TaskGraph dbEntity);
 
     @Override
     @Mapping(target = "edge", ignore = true)
+    //correlationID is used in applyCorrelationID method
+    @BeanMapping(ignoreUnmappedSourceProperties = {"correlationID"})
     TaskGraph toDB(CreateGraphRequest dtoEntity);
+
+    @AfterMapping
+    default void applyCorrelationID(CreateGraphRequest source, @MappingTarget TaskGraph.TaskGraphBuilder target) {
+        if (source.correlationID != null && !source.correlationID.isBlank()) {
+            var vertices = new HashMap<>(target.build().getVertices());
+            for (var entry : vertices.entrySet()) {
+                entry.setValue(entry.getValue()
+                        .toBuilder()
+                        .correlationID(source.correlationID)
+                        .build());
+            }
+
+            //apply changes
+            target.vertices(vertices);
+        }
+    }
 }

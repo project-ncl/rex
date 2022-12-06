@@ -63,6 +63,11 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
+    public Set<TaskDTO> byCorrelation(String correlationID) {
+        return taskProvider.getByCorrelationID(correlationID);
+    }
+
+    @Override
     @Retry
     @RolesAllowed("user")
     public void cancel(String taskID) {
