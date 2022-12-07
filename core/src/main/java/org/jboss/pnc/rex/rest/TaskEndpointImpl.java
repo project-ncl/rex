@@ -18,11 +18,11 @@
 package org.jboss.pnc.rex.rest;
 
 import org.eclipse.microprofile.faulttolerance.Retry;
+import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.facade.api.TaskProvider;
-import org.jboss.pnc.rex.rest.api.TaskEndpoint;
-import org.jboss.pnc.rex.rest.parameters.TaskFilterParameters;
 
 import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.ApplicationScoped;

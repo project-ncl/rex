@@ -24,8 +24,8 @@ import java.net.URI;
 import java.util.Set;
 
 import io.smallrye.jwt.build.Jwt;
-import org.jboss.pnc.rex.rest.api.InternalEndpoint;
-import org.jboss.pnc.rex.rest.api.TaskEndpoint;
+import org.jboss.pnc.rex.api.InternalEndpoint;
+import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.test.profile.WithWiremockOpenId;
 import org.junit.jupiter.api.Test;
 

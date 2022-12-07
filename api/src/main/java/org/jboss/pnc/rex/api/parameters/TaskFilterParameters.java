@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.rest.parameters;
+package org.jboss.pnc.rex.api.parameters;
 
 import lombok.Data;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;

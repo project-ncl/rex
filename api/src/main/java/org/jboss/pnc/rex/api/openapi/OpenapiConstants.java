@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.rest.openapi;
+package org.jboss.pnc.rex.api.openapi;
 
 public class OpenapiConstants {
     public static final String SUCCESS_DESCRIPTION = "Success with results";

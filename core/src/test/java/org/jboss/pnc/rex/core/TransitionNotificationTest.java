@@ -19,6 +19,8 @@ package org.jboss.pnc.rex.core;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import org.jboss.pnc.rex.api.InternalEndpoint;
+import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.core.common.TestData;
@@ -28,8 +30,6 @@ import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.core.endpoints.TransitionRecorderEndpoint;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.jboss.pnc.rex.rest.api.InternalEndpoint;
-import org.jboss.pnc.rex.rest.api.TaskEndpoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

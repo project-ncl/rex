@@ -28,7 +28,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>dto</artifactId>
+    <artifactId>rex-api</artifactId>
+    <packaging>jar</packaging>
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
@@ -38,23 +39,14 @@
         <!-- Module inter-dependencies -->
         <dependency>
             <groupId>org.jboss.pnc.rex</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>dto</artifactId>
         </dependency>
 
         <!-- Quarkus extensions -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-validator</artifactId>
-        </dependency>
-
-        <!-- Regular dependencies -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.pnc</groupId>
-            <artifactId>pnc-api</artifactId>
+            <artifactId>quarkus-smallrye-openapi</artifactId>
         </dependency>
     </dependencies>
+
 </project>

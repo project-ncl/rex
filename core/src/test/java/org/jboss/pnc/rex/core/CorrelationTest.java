@@ -19,11 +19,11 @@ package org.jboss.pnc.rex.core;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import org.jboss.pnc.rex.api.InternalEndpoint;
+import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.jboss.pnc.rex.rest.api.InternalEndpoint;
-import org.jboss.pnc.rex.rest.api.TaskEndpoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

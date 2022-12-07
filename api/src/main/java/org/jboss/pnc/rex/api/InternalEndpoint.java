@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.rest.api;
+package org.jboss.pnc.rex.api;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -23,6 +23,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.jboss.pnc.rex.api.openapi.OpenapiConstants;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
 import org.jboss.pnc.rex.dto.responses.LongResponse;
@@ -40,13 +41,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.INVALID_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.INVALID_DESCRIPTION;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SERVER_ERROR_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SERVER_ERROR_DESCRIPTION;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SUCCESS_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SUCCESS_DESCRIPTION;
-
 @Tag(name = "Internal endpoint")
 @Path("/rest/internal")
 @Produces(MediaType.APPLICATION_JSON)
@@ -56,10 +50,10 @@ public interface InternalEndpoint {
     @Path("/{taskName}/finish")
     @Operation(summary = "[ADMIN] Used by remote entity to report Task completion.")
     @APIResponses(value = {
-            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @POST
@@ -68,10 +62,10 @@ public interface InternalEndpoint {
     @Path("/options/concurrency")
     @Operation(summary = "[ADMIN] Sets the amount of possible concurrent builds. Tasks that are currently running are never affected.")
     @APIResponses(value = {
-            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @POST
@@ -80,11 +74,11 @@ public interface InternalEndpoint {
     @Path("/options/concurrency")
     @Operation(summary = "Returns amount of possible concurrent builds.")
     @APIResponses(value = {
-            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = LongResponse.class))),
-            @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GET
