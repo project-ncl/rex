@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.rest.api;
+package org.jboss.pnc.rex.api;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -24,11 +24,12 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.jboss.pnc.rex.api.openapi.OpenapiConstants;
+import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
 import org.jboss.pnc.rex.dto.responses.TaskSetResponse;
-import org.jboss.pnc.rex.rest.parameters.TaskFilterParameters;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -44,20 +45,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.Set;
 
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.ACCEPTED_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.CONFLICTED_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.CONFLICTED_DESCRIPTION;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.INVALID_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.INVALID_DESCRIPTION;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.NOT_FOUND_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.NOT_FOUND_DESCRIPTION;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.NO_CONTENT_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.NO_CONTENT_DESCRIPTION;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SERVER_ERROR_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SERVER_ERROR_DESCRIPTION;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SUCCESS_CODE;
-import static org.jboss.pnc.rex.rest.openapi.OpenapiConstants.SUCCESS_DESCRIPTION;
-
 @Tag(name = "Task endpoint")
 @Path("/rest/tasks")
 public interface TaskEndpoint {
@@ -72,11 +59,11 @@ public interface TaskEndpoint {
             " The tasks in vertices have to be strictly NEW tasks and referencing EXISTING ones will result in failure. \n",
             summary = "An endpoint for starting a graph of tasks.")
     @APIResponses(value = {
-            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
                 content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
-            @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                 content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @POST
@@ -86,14 +73,14 @@ public interface TaskEndpoint {
 
     @Operation(summary = "Returns list of all tasks with optional filtering.")
     @APIResponses(value = {
-            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
-            @APIResponse(responseCode = NO_CONTENT_CODE, description = NO_CONTENT_DESCRIPTION),
-            @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = CONFLICTED_CODE, description = CONFLICTED_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.CONFLICTED_CODE, description = OpenapiConstants.CONFLICTED_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GET
@@ -103,11 +90,11 @@ public interface TaskEndpoint {
     @Path("/{taskID}")
     @Operation(summary = "Returns a specific task.")
     @APIResponses(value = {
-            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = TaskDTO.class))),
-            @APIResponse(responseCode = NOT_FOUND_CODE, description = NOT_FOUND_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.NOT_FOUND_CODE, description = OpenapiConstants.NOT_FOUND_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GET
@@ -117,10 +104,10 @@ public interface TaskEndpoint {
     @Path("/{taskID}/cancel")
     @Operation(summary = "Cancels execution of a task and the tasks which depend on it")
     @APIResponses(value = {
-            @APIResponse(responseCode = ACCEPTED_CODE, description = ACCEPTED_CODE),
-            @APIResponse(responseCode = INVALID_CODE, description = INVALID_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.ACCEPTED_CODE, description = OpenapiConstants.ACCEPTED_CODE),
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PUT
@@ -129,12 +116,12 @@ public interface TaskEndpoint {
     @GET
     @Operation(summary = "Returns tasks grouped by correlation ID.")
     @APIResponses(value = {
-            @APIResponse(responseCode = SUCCESS_CODE, description = SUCCESS_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
-            @APIResponse(responseCode = NO_CONTENT_CODE, description = NO_CONTENT_DESCRIPTION),
-            @APIResponse(responseCode = CONFLICTED_CODE, description = CONFLICTED_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
+            @APIResponse(responseCode = OpenapiConstants.CONFLICTED_CODE, description = OpenapiConstants.CONFLICTED_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = SERVER_ERROR_CODE, description = SERVER_ERROR_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @Path("/by-correlation/{correlationID}")

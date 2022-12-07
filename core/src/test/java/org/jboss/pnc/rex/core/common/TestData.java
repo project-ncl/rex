@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.core.common;
 
+import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
@@ -24,7 +25,6 @@ import org.jboss.pnc.rex.dto.EdgeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
-import org.jboss.pnc.rex.rest.parameters.TaskFilterParameters;
 
 import java.net.URI;
 import java.util.List;

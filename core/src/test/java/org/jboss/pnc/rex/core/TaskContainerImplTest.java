@@ -38,6 +38,7 @@ import javax.transaction.TransactionManager;
 import io.quarkus.test.security.TestSecurity;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
@@ -53,7 +54,6 @@ import org.jboss.pnc.rex.dto.EdgeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
-import org.jboss.pnc.rex.rest.api.TaskEndpoint;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.AfterEach;
