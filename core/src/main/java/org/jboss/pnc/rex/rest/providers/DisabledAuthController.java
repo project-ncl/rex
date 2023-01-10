@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.rest.providers;
 
+import io.quarkus.arc.profile.UnlessBuildProfile;
 import io.quarkus.security.spi.runtime.AuthorizationController;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -33,6 +34,8 @@ import javax.interceptor.Interceptor;
 @Alternative
 @Priority(Interceptor.Priority.LIBRARY_AFTER)
 @ApplicationScoped
+// tests have their own mechanism for disabling authorization
+@UnlessBuildProfile("test")
 public class DisabledAuthController extends AuthorizationController {
     @ConfigProperty(name = "disable.authorization", defaultValue = "false")
     boolean disableAuthorization;
