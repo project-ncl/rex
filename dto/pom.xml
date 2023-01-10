@@ -41,10 +41,10 @@
             <artifactId>common</artifactId>
         </dependency>
 
-        <!-- Quarkus extensions -->
+        <!-- Spec dependencies -->
         <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-validator</artifactId>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
         </dependency>
 
         <!-- Regular dependencies -->
