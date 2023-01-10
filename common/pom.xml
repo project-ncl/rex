@@ -37,6 +37,7 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-infinispan-client</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 </project>
