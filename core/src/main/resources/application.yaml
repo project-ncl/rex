@@ -130,7 +130,8 @@ org:
 "%dev":
   scheduler:
     baseUrl: http://localhost:8181
-
+  disable:
+    authorization: true
   quarkus:
     oidc:
       enabled: false

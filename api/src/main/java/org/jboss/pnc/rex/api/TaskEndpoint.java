@@ -63,6 +63,8 @@ public interface TaskEndpoint {
                 content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                 content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.CONFLICTED_CODE, description = OpenapiConstants.CONFLICTED_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                 content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -78,8 +80,6 @@ public interface TaskEndpoint {
             @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.CONFLICTED_CODE, description = OpenapiConstants.CONFLICTED_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -92,6 +92,8 @@ public interface TaskEndpoint {
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = TaskDTO.class))),
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = OpenapiConstants.NOT_FOUND_CODE, description = OpenapiConstants.NOT_FOUND_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
@@ -107,6 +109,8 @@ public interface TaskEndpoint {
             @APIResponse(responseCode = OpenapiConstants.ACCEPTED_CODE, description = OpenapiConstants.ACCEPTED_CODE),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.NOT_FOUND_CODE, description = OpenapiConstants.NOT_FOUND_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -119,14 +123,16 @@ public interface TaskEndpoint {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
             @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.CONFLICTED_CODE, description = OpenapiConstants.CONFLICTED_DESCRIPTION,
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.NOT_FOUND_CODE, description = OpenapiConstants.NOT_FOUND_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @Path("/by-correlation/{correlationID}")
     @Produces(MediaType.APPLICATION_JSON)
-    Set<TaskDTO> byCorrelation(@PathParam("correlationID") String correlationID);
+    Set<TaskDTO> byCorrelation(@PathParam("correlationID") @NotBlank String correlationID);
 
   /*  @Path("/{serviceName}/graph")
     @APIResponses(value = {

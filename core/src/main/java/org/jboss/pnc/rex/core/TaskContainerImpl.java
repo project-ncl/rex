@@ -29,6 +29,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
+import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
 import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
 import org.jboss.pnc.rex.core.api.TaskContainer;
 import org.jboss.pnc.rex.core.api.TaskController;
@@ -110,7 +111,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     public Task getRequiredTask(String task) throws TaskMissingException {
         Task s = getCache().get(task);
         if (s == null) {
-            throw new TaskMissingException("Task with name " + task + " was not found");
+            throw new TaskMissingException("Task with name " + task + " was not found", task);
         }
         return s;
     }
@@ -139,7 +140,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         VersionedValue<Task> meta = tasks.getWithMetadata(name);
         if (meta == null) {
             log.info("ERROR: couldn't find task {}", name);
-            throw new TaskMissingException("Task with name " + name + " was not found");
+            throw new TaskMissingException("Task with name " + name + " was not found", name);
         }
         return meta;
     }
@@ -297,7 +298,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                 Task previousValue = getCache().withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(task.getName(), task);
                 if (previousValue != null) {
                     throw new TaskConflictException(
-                            "Task " + task.getName() + " declared as new in vertices already exists.");
+                            "Task " + task.getName() + " declared as new in vertices already exists.", previousValue.getName());
                 }
 
                 handleOptionalConstraint(task);
@@ -319,12 +320,12 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         return toReturn;
     }
 
-    private void handleOptionalConstraint(Task task) throws TaskConflictException {
+    private void handleOptionalConstraint(Task task) throws ConstraintConflictException {
         String constraint = task.getConstraint();
         if (constraint != null) {
             String previousHolder = constraints.putIfAbsent(constraint, task.getName());
             if (previousHolder != null) {
-                throw new TaskConflictException("Task " + task.getName() + " with constraint '" + task.getConstraint() +"' in conflict. Conflicting Task: " + previousHolder);
+                throw new ConstraintConflictException("Task " + task.getName() + " with constraint '" + task.getConstraint() +"' in conflict. Conflicting Task: " + previousHolder, constraint);
             }
         }
     }

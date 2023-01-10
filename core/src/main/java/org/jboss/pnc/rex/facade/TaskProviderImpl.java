@@ -25,6 +25,7 @@ import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.core.api.TaskTarget;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.rex.dto.responses.ErrorResponse;
 import org.jboss.pnc.rex.facade.api.TaskProvider;
 import org.jboss.pnc.rex.facade.mapper.GraphsMapper;
 import org.jboss.pnc.rex.facade.mapper.TaskMapper;
@@ -34,6 +35,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -89,7 +91,9 @@ public class TaskProviderImpl implements TaskProvider {
             task = registry.getRequiredTask(taskName);
             return mapper.toDTO(task);
         } catch (TaskMissingException e) {
-            throw new NotFoundException("Task " + taskName + " was not found.");
+            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse(e, e.getTaskName()))
+                    .build());
         }
     }
 
