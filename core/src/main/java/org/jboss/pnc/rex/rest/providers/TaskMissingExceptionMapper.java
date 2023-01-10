@@ -35,7 +35,7 @@ public class TaskMissingExceptionMapper implements ExceptionMapper<TaskMissingEx
         Response.Status status = Response.Status.BAD_REQUEST;
         log.warn("Task missing in critical moment: " + e, e);
         return Response.status(status)
-                .entity(new ErrorResponse(e))
+                .entity(new ErrorResponse(e, e.getTaskName()))
                 .type(MediaType.APPLICATION_JSON)
                 .build();
     }

@@ -23,7 +23,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.jboss.pnc.rex</groupId>
   <artifactId>parent</artifactId>
-  <version>0.1-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Rex</name>
@@ -172,7 +172,7 @@
 	          <exclude>**/.dockerignore</exclude>
 	          <exclude>**/.mvn/**</exclude>
 	          <exclude>**/mvnw*</exclude>
-              <exclude>**/*.properties</exclude>
+              <exclude>**/**.properties</exclude>
               <exclude>**/application.yaml</exclude>
 
               <!-- Exclude downloaded/generated -->

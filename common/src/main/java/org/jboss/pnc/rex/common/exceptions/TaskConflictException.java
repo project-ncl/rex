@@ -18,19 +18,29 @@
 package org.jboss.pnc.rex.common.exceptions;
 
 public class TaskConflictException extends RuntimeException {
+
+    private String conflictId;
+
     public TaskConflictException() {
         super();
     }
 
-    public TaskConflictException(String message) {
+    public TaskConflictException(String message, String conflictId) {
         super(message);
+        this.conflictId = conflictId;
     }
 
-    public TaskConflictException(String message, Throwable cause) {
+    public TaskConflictException(String message, Throwable cause, String conflictId) {
         super(message, cause);
+        this.conflictId = conflictId;
     }
 
-    public TaskConflictException(Throwable cause) {
+    public TaskConflictException(Throwable cause, String conflictId) {
         super(cause);
+        this.conflictId = conflictId;
+    }
+
+    public String getConflictId() {
+        return conflictId;
     }
 }

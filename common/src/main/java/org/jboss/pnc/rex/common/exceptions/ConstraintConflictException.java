@@ -17,30 +17,32 @@
  */
 package org.jboss.pnc.rex.common.exceptions;
 
-public class TaskMissingException extends RuntimeException {
+public class ConstraintConflictException extends RuntimeException {
 
-    private final String taskName;
+    private final String constraint;
 
-    public TaskMissingException(String taskName) {
-        this.taskName = taskName;
+    public ConstraintConflictException(String constraint) {
+        super();
+        this.constraint = constraint;
     }
 
-    public TaskMissingException(final String msg, String taskName) {
-        super(msg);
-        this.taskName = taskName;
+    public ConstraintConflictException(String message, String constraint) {
+        super(message);
+        this.constraint = constraint;
     }
 
-    public TaskMissingException(final Throwable cause, String taskName) {
+    public ConstraintConflictException(String message, Throwable cause, String constraint) {
+        super(message, cause);
+        this.constraint = constraint;
+    }
+
+    public ConstraintConflictException(Throwable cause, String constraint) {
         super(cause);
-        this.taskName = taskName;
+        this.constraint = constraint;
     }
 
-    public TaskMissingException(final String msg, final Throwable cause, String taskName) {
-        super(msg, cause);
-        this.taskName = taskName;
+    public String getConstraint() {
+        return constraint;
     }
 
-    public String getTaskName() {
-        return taskName;
-    }
 }

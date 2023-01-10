@@ -43,6 +43,7 @@ import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
+import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
 import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.common.TransitionRecorder;
@@ -470,7 +471,7 @@ class TaskContainerImplTest {
         taskEndpoint.start(firstRequest);
 
         assertThatThrownBy(() -> taskEndpoint.start(secondRequest))
-                .isInstanceOf(TaskConflictException.class);
+                .isInstanceOf(ConstraintConflictException.class);
 
     }
 

@@ -35,7 +35,7 @@ public class TaskConflictExceptionMapper implements ExceptionMapper<TaskConflict
         Response.Status status = Response.Status.CONFLICT;
         log.warn("Task conflict found: " + e, e);
         return Response.status(status)
-                .entity(new ErrorResponse(e))
+                .entity(new ErrorResponse(e, e.getConflictId()))
                 .type(MediaType.APPLICATION_JSON)
                 .build();
     }

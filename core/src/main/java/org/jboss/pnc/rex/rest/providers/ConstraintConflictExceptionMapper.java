@@ -18,32 +18,23 @@
 package org.jboss.pnc.rex.rest.providers;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Provider
-public class ConstraintValidationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
+public class ConstraintConflictExceptionMapper implements ExceptionMapper<ConstraintConflictException> {
     @Override
-    public Response toResponse(ConstraintViolationException e) {
-        Response.Status status = Response.Status.BAD_REQUEST;
-        var detailMessage = e.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage)
-                .collect(Collectors.joining(", "));
-
-        var response = new ErrorResponse(e, detailMessage);
-
-        log.warn("DTO Validation failed: " + detailMessage);
-
+    public Response toResponse(ConstraintConflictException e) {
+        Response.Status status = Response.Status.CONFLICT;
+        log.warn("Task conflict found: " + e, e);
         return Response.status(status)
-                .entity(response)
+                .entity(new ErrorResponse(e, e.getConstraint()))
                 .type(MediaType.APPLICATION_JSON)
                 .build();
     }
