@@ -99,6 +99,10 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-client-jackson</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-container-image-jib</artifactId>
+        </dependency>
 
         <!-- Regular dependencies -->
         <dependency>
@@ -167,6 +171,11 @@
                             <goal>generate-code</goal>
                             <goal>generate-code-tests</goal>
                         </goals>
+                        <configuration>
+                            <systemProperties>
+                                <quarkus.bootstrap.workspace-discovery>true</quarkus.bootstrap.workspace-discovery>
+                            </systemProperties>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

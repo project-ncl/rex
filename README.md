@@ -76,3 +76,6 @@ for a task which will make Rex publish notifications as the task transitions bet
 - `mvn clean install -Pnative` 
   - the compilation will take couple of minutes
 - To run the native app run `core/target/core-<version>-runner <options>`
+
+## Container image build
+- mvn clean install -Dquarkus.container-image.build=true
