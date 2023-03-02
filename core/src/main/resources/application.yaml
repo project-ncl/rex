@@ -15,6 +15,7 @@ quarkus:
     type: fast-jar
   container-image:
     name: rex
+    group: rh-newcastle
     tag: latest
     registry: quay.io
 
