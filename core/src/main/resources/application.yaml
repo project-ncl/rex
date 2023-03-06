@@ -34,6 +34,7 @@ quarkus:
     use-auth: true
     auth-username: ${ISPN_USER}
     auth-password: ${ISPN_PASS}
+    near-cache-max-entries: 100
 
   swagger-ui:
     always-include: true
@@ -97,7 +98,7 @@ org:
       category:
         "org.testcontainers":
           level: DEBUG
-      min-level: FINEST
+      min-level: TRACE
     oidc:
       enabled: false
     transaction-manager:
