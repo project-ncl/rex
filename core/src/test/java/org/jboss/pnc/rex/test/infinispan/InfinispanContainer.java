@@ -35,7 +35,7 @@ public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
     private static final String INFINISPAN_VERSION = "13.0.5.Final-2";
 
     public InfinispanContainer(boolean useNative) {
-        this("infinispan/server" + (useNative ? "-native" + ":" + INFINISPAN_VERSION : ":" + INFINISPAN_VERSION));
+        this("quay.io/infinispan/server" + (useNative ? "-native" + ":" + INFINISPAN_VERSION : ":" + INFINISPAN_VERSION));
     }
 
     public InfinispanContainer(String imageName) {
