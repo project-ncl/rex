@@ -78,4 +78,4 @@ for a task which will make Rex publish notifications as the task transitions bet
 - To run the native app run `core/target/core-<version>-runner <options>`
 
 ## Container image build
-- mvn clean install -Dquarkus.container-image.build=true
+- mvn clean install -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true
