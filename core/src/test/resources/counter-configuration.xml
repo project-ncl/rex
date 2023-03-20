@@ -19,7 +19,7 @@
 -->
 <infinispan>
     <cache-container name="clustered">
-        <distributed-cache name="counter" mode="SYNC">
+        <distributed-cache name="rex-counter" mode="SYNC">
             <locking isolation="REPEATABLE_READ"/>
 	        <transaction locking="PESSIMISTIC" mode="NON_DURABLE_XA"/>
             <encoding media-type="application/x-protostream"/>
