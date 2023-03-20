@@ -29,7 +29,7 @@ public class RunningCounter implements Counter {
 
     public static final String RUNNING_KEY = "RUNNING";
 
-    @Remote("counter")
+    @Remote("rex-counter")
     RemoteCache<String, Long> counterCache;
 
     @Override

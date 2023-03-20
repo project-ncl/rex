@@ -112,15 +112,15 @@ org:
       auth-username: admin
       auth-password: password
       cache:
-        "counter":
+        "rex-counter":
           configuration-uri: "counter-configuration.xml"
           near-cache-mode: disabled
           near-cache-max-entries: -1
-        "near-tasks":
+        "rex-tasks":
           configuration-uri: "task-configuration.xml"
           near-cache-mode: invalidated
           near-cache-max-entries: 100
-        "near-constraints":
+        "rex-constraints":
           configuration-uri: "constraints-configuration.xml"
           near-cache-mode: invalidated
           near-cache-max-entries: 100

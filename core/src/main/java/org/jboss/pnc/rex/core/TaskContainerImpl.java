@@ -72,10 +72,10 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     @ConfigProperty(name = "scheduler.baseUrl")
     String baseUrl;
 
-    @Remote("near-tasks")
+    @Remote("rex-tasks")
     RemoteCache<String, Task> tasks;
 
-    @Remote("near-constraints")
+    @Remote("rex-constraints")
     RemoteCache<String, String> constraints;
 
     private final TaskController controller;

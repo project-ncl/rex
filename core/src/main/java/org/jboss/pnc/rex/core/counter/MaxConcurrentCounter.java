@@ -30,7 +30,7 @@ public class MaxConcurrentCounter implements Counter {
 
     public static final String MAX_COUNTER_KEY = "MAX_CONCURRENT";
 
-    @Remote("counter")
+    @Remote("rex-counter")
     RemoteCache<String, Long> counterCache;
 
     @ConfigProperty(name = "scheduler.options.concurrency.default", defaultValue = "5")

@@ -20,7 +20,7 @@
 <infinispan>
     <!-->Very basic cache configuration</-->
     <cache-container name="clustered">
-        <distributed-cache name="near-tasks" mode="SYNC">
+        <distributed-cache name="rex-tasks" mode="SYNC">
             <indexing storage="local-heap">
                 <indexed-entities>
                     <indexed-entity>rex_model.Task</indexed-entity>
