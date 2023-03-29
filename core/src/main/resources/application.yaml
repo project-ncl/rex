@@ -29,7 +29,7 @@ quarkus:
       verification: none
 
   infinispan-client:
-#    server-list: ${ISPN_NODE}
+#    hosts: ${ISPN_NODE}
     use-schema-registration: false
     use-auth: true
     auth-username: ${ISPN_USER}
