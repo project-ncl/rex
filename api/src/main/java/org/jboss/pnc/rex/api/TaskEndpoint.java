@@ -24,6 +24,8 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.jboss.pnc.rex.api.openapi.OpenapiConstants;
 import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.dto.TaskDTO;
@@ -47,6 +49,8 @@ import java.util.Set;
 
 @Tag(name = "Task endpoint")
 @Path("/rest/tasks")
+@RegisterRestClient(configKey="rex-api")
+@RegisterClientHeaders
 public interface TaskEndpoint {
 
     String TASK_ID = "Unique identifier of the task";

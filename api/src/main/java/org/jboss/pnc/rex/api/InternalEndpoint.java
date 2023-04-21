@@ -23,6 +23,8 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.pnc.rex.api.openapi.OpenapiConstants;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
@@ -45,6 +47,8 @@ import javax.ws.rs.core.MediaType;
 @Path("/rest/internal")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@RestClient
+@RegisterClientHeaders
 public interface InternalEndpoint {
 
     @Path("/{taskName}/finish")
