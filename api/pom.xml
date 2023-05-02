@@ -48,14 +48,6 @@
             <artifactId>quarkus-smallrye-openapi</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-rest-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-rest-client-jackson</artifactId>
-        </dependency>
     </dependencies>
 
 </project>
