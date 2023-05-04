@@ -33,7 +33,7 @@ import java.util.Set;
  * Stripped down Task model used for transition notifications.
  */
 @Jacksonized
-@Builder
+@Builder(toBuilder = true)
 @Getter
 @ToString
 public class MinimizedTask {
