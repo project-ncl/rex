@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -71,6 +72,7 @@ public class Request {
         this.attachment = attachment;
     }
 
+    @JsonIgnore
     @ProtoField(number = 4, type = Type.BYTES)
     public byte[] getByteAttachment() {
         try {

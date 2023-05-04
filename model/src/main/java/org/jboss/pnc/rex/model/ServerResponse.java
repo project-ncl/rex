@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -67,10 +68,12 @@ public class ServerResponse {
         this.body = body;
     }
 
+    @JsonIgnore
     public boolean isNegative() {
         return !positive;
     }
 
+    @JsonIgnore
     @ProtoField(number = 3, type = Type.BYTES)
     public byte[] getByteBody() {
         try {

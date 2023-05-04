@@ -32,8 +32,8 @@ quarkus:
 #    hosts: ${ISPN_NODE}
     use-schema-registration: false
     use-auth: true
-    auth-username: ${ISPN_USER}
-    auth-password: ${ISPN_PASS}
+    username: ${ISPN_USER}
+    password: ${ISPN_PASS}
     near-cache-max-entries: 100
 
   swagger-ui:
@@ -48,6 +48,7 @@ quarkus:
       "com.arjuna.ats.jta":
         # Set to WARN if you want to see all the exceptions
         level: ERROR
+    min-level: FINEST
 
   vertx:
     max-event-loop-execute-time: 10s
@@ -144,8 +145,8 @@ org:
       client-intelligence: BASIC
       use-schema-registration: true
       use-auth: true
-      auth-username: admin
-      auth-password: password
+      username: admin
+      password: password
       cache:
         "counter":
           configuration-uri: "counter-configuration.xml"
