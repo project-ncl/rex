@@ -459,11 +459,13 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 task.getName(),
                 taskMetadata.getVersion(),
                 task);
-        boolean deleted = container.getCache().removeWithVersion(name, taskMetadata.getVersion());
+
+        // TODO Uncomment once NCL-7520 is completed
+        /* boolean deleted = container.getCache().removeWithVersion(name, taskMetadata.getVersion());
         if (!deleted) {
             log.error("DELETE {}: Concurrent update detected. Transaction will fail.", task.getName());
             throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }
+        }*/
 
         handleOptionalConstraint(task);
 
