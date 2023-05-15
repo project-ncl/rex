@@ -28,22 +28,22 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>core</artifactId>
+    <artifactId>rex-core</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
         <!-- Module inter-dependencies -->
         <dependency>
             <groupId>org.jboss.pnc.rex</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>rex-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jboss.pnc.rex</groupId>
-            <artifactId>dto</artifactId>
+            <artifactId>rex-dto</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jboss.pnc.rex</groupId>
-            <artifactId>model</artifactId>
+            <artifactId>rex-model</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jboss.pnc.rex</groupId>
