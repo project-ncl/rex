@@ -39,7 +39,7 @@
         <!-- Module inter-dependencies -->
         <dependency>
             <groupId>org.jboss.pnc.rex</groupId>
-            <artifactId>dto</artifactId>
+            <artifactId>rex-dto</artifactId>
         </dependency>
 
         <!-- Quarkus extensions -->
