@@ -28,7 +28,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>dto</artifactId>
+    <artifactId>rex-dto</artifactId>
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
@@ -38,7 +38,7 @@
         <!-- Module inter-dependencies -->
         <dependency>
             <groupId>org.jboss.pnc.rex</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>rex-common</artifactId>
         </dependency>
 
         <!-- Spec dependencies -->
