@@ -21,6 +21,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import org.jboss.pnc.rex.api.InternalEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.core.common.TestData;
@@ -28,6 +29,7 @@ import org.jboss.pnc.rex.core.common.TransitionRecorder;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.core.endpoints.TransitionRecorderEndpoint;
+import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.junit.jupiter.api.AfterEach;
@@ -36,6 +38,8 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -52,12 +56,19 @@ import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_ENQUEUED;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_STOPPED;
 import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAre;
 import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
+import static org.jboss.pnc.rex.core.common.TestData.getAllParameters;
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
+import static org.jboss.pnc.rex.core.common.TestData.getMockTask;
+import static org.jboss.pnc.rex.core.common.TestData.getNaughtyNotificationsRequest;
+import static org.jboss.pnc.rex.core.common.TestData.getNotificationsRequest;
+import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
+import static org.jboss.pnc.rex.core.common.TestData.getStopRequest;
 
 @QuarkusTest
 //@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
-public class TransitionNotificationTest {
+public class NotificationTest {
 
     @Inject
     TaskContainerImpl container;
@@ -140,27 +151,77 @@ public class TransitionNotificationTest {
     }
 
     @Test
-    void testRecordedBodies() {
-        CreateGraphRequest request = getComplexGraph(true, true);
-        endpoint.start(request);
-        waitTillTasksAreFinishedWith(State.SUCCESSFUL, request.getVertices().keySet().toArray(new String[0]));
+    void testDeletionAfterNotificationWithVeryComplexGraph() throws InterruptedException {
+        // to make the test deterministic
+        int seed = 1000;
+        CreateGraphRequest graph = generateDAG(seed, 2, 10, 5, 10, 0.7F, true);
 
-        Set<TaskDTO> all = endpoint.getAll(TestData.getAllParameters());
-        Predicate<TaskDTO> sizePredicate = (task) -> task.getServerResponses() != null
-                && task.getServerResponses().size() == 2;
-        Predicate<TaskDTO> responsePredicate = (task) -> {
-            var responses = task.getServerResponses();
-            boolean firstBody = responses.stream().anyMatch((response ->
-                    response.getState() == State.STARTING
-                    && response.getBody() instanceof Map
-                    && !((Map<String, String>) response.getBody()).get("task").isEmpty()));
-            boolean secondBody = responses.stream().anyMatch((response ->
-                    response.getState() == State.UP
-                    && response.getBody() instanceof String
-                    && response.getBody().equals("ALL IS OK")));
-            return firstBody && secondBody;
-        };
-        assertThat(all).allMatch(sizePredicate);
-        assertThat(all).allMatch(responsePredicate);
+        // when
+        endpoint.start(graph);
+
+        String[] taskNames = graph.getVertices().keySet().toArray(new String[0]);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskNames);
+        Thread.sleep(100);
+
+        Map<String, Set<Transition>> records = new HashMap<>(recorderEndpoint.getRecords());
+
+        // then
+        var firstTasks = new String[]{"15","52","75","76","77","78","79","80"};
+        assertThat(records)
+                .extractingByKeys(firstTasks)
+                .allSatisfy((firstTransitions) -> {
+                    assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                            Set.of(NEW_to_ENQUEUED,
+                                    ENQUEUED_to_STARTING,
+                                    STARTING_to_UP,
+                                    UP_to_SUCCESSFUL));
+                });
+
+        // remove first tasks
+        records.keySet().removeAll(Arrays.asList(firstTasks));
+        assertThat(records)
+                .allSatisfy((remainingTasks, transitions) -> {
+                    assertThat(transitions).containsExactlyInAnyOrderElementsOf(
+                            Set.of(NEW_to_WAITING,
+                                    WAITING_to_ENQUEUED,
+                                    ENQUEUED_to_STARTING,
+                                    STARTING_to_UP,
+                                    UP_to_SUCCESSFUL));
+                });
+
+        assertThat(endpoint.getAll(getAllParameters())).isEmpty();
+    }
+
+    @Test
+    void testDeletionDoesntHappenOnFailedFinalNotification() throws InterruptedException {
+        String taskName = "task";
+        var okNotificationTask = getMockTask(
+                taskName,
+                Mode.ACTIVE,
+                getRequestWithStart(taskName),
+                getStopRequest(taskName),
+                getNotificationsRequest());
+        var failingNotificationTask = getMockTask(
+                taskName,
+                Mode.ACTIVE,
+                getRequestWithStart(taskName),
+                getStopRequest(taskName),
+                getNaughtyNotificationsRequest());
+
+        var reqGoodNot = CreateGraphRequest.builder().vertex(taskName, okNotificationTask).build();
+        var reqBadNot = CreateGraphRequest.builder().vertex(taskName, failingNotificationTask).build();
+
+        endpoint.start(reqGoodNot);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskName);
+        Thread.sleep(100);
+
+        // assert task was deleted
+        assertThat(endpoint.getAll(getAllParameters())).extracting(TaskDTO::getName).doesNotContain(taskName);
+
+        endpoint.start(reqBadNot);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskName);
+        Thread.sleep(100);
+
+        assertThat(endpoint.getSpecific(taskName)).isNotNull();
     }
 }

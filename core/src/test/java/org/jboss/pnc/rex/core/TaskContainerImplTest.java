@@ -331,7 +331,6 @@ class TaskContainerImplTest {
     }
 
     @Test
-    @Disabled
     public void testCancellationWithDependencies() throws Exception {
         String a = "a";
         String b = "b";
@@ -524,7 +523,6 @@ class TaskContainerImplTest {
         // sleep because running counter takes time to update
         Thread.sleep(50);
         assertThat(running.getValue()).isEqualTo(0);
-        // TODO Uncomment once NCL-7520 is completed
         assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
                 .doesNotContain(randomDAG.getVertices().keySet().toArray(new String[0]));
     }

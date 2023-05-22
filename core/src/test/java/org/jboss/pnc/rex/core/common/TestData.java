@@ -109,6 +109,14 @@ public class TestData {
                 .attachment("hello")
                 .build();
     }
+    public static org.jboss.pnc.api.dto.Request getNaughtyNotificationsRequest() {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/transition/fail"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
+                .attachment("hello")
+                .build();
+    }
 
     public static Request getEndpointWithStart(String payload) {
         return Request.builder()

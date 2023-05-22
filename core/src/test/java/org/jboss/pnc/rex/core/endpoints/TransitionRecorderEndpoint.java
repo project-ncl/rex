@@ -57,6 +57,16 @@ public class TransitionRecorderEndpoint {
         return Response.serverError().build();
     }
 
+    @POST
+    @Path("/fail")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response beBad(NotificationRequest request) {
+        if (request.getAfter().isFinal()) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+        return Response.ok().build();
+    }
+
     public void flush() {
         recorder.clear();
     }
