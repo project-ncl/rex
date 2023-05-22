@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static org.jboss.pnc.rex.core.common.TestData.getNotificationsRequest;
 import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
 import static org.jboss.pnc.rex.core.common.TestData.getStopRequest;
 
@@ -48,6 +49,21 @@ public class RandomDAGGeneration {
      * @return randomly generated DAG
      */
     public static CreateGraphRequest generateDAG(int seed, int minPerRank, int maxPerRank, int minRanks, int maxRanks, float edgeProbability) {
+        return generateDAG(seed, minPerRank, maxPerRank, minRanks, maxRanks, edgeProbability, false);
+    }
+
+    /**
+     * @param seed              seed used in pseudo-random generator
+     * @param minPerRank        minimum amount of nodes at a particular height of DAG
+     * @param maxPerRank        maximum amount of nodes at a particular height of DAG
+     * @param minRanks          minimum height of DAG
+     * @param maxRanks          maximum height of DAG
+     * @param edgeProbability   probability of an edge between node of lower rank and a node of a higher rank
+     * @param withNotifications
+     * @return randomly generated DAG
+     * @see <a href="https://stackoverflow.com/a/57321815">Link to algorithm rewritten from python to java</a>
+     */
+    public static CreateGraphRequest generateDAG(int seed, int minPerRank, int maxPerRank, int minRanks, int maxRanks, float edgeProbability, boolean withNotifications) {
         Random random = new Random(seed);
         int nodes = 0;
         int nodeCounter = 0;
@@ -86,6 +102,7 @@ public class RandomDAGGeneration {
                     .controllerMode(Mode.ACTIVE)
                     .remoteStart(getRequestWithStart(string))
                     .remoteCancel(getStopRequest(string))
+                    .callerNotifications(withNotifications ? getNotificationsRequest() : null)
                     .build());
         }
         builder.edges(egdes);

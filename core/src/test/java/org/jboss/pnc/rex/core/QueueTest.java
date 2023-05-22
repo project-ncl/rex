@@ -31,7 +31,6 @@ import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -146,7 +145,6 @@ public class QueueTest {
     }
 
     @Test
-    @Disabled
     void testRunningQueue() {
         internalEndpoint.setConcurrent(1L);
 
