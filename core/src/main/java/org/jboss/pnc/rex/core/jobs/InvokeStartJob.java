@@ -58,6 +58,9 @@ public class InvokeStartJob extends ControllerJob {
     }
 
     @Override
+    void onFailure() {}
+
+    @Override
     void onException(Throwable e) {
         logger.error("STOP " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
         Uni.createFrom().voidItem()

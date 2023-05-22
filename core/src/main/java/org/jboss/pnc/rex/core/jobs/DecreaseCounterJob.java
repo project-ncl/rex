@@ -47,5 +47,8 @@ public class DecreaseCounterJob extends ControllerJob {
     }
 
     @Override
+    void onFailure() {}
+
+    @Override
     void onException(Throwable e) {}
 }

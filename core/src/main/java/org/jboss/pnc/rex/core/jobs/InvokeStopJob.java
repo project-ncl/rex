@@ -67,4 +67,7 @@ public class InvokeStopJob extends ControllerJob {
         client.stopJob(context);
         return true;
     }
+
+    @Override
+    void onFailure() {}
 }

@@ -48,4 +48,7 @@ public class PokeQueueJob extends ControllerJob {
 
     @Override
     void onException(Throwable e) {}
+
+    @Override
+    void onFailure() {}
 }

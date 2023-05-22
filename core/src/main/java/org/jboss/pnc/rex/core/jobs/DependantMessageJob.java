@@ -59,5 +59,8 @@ public abstract class DependantMessageJob extends ControllerJob {
     void afterExecute() {}
 
     @Override
+    void onFailure() {}
+
+    @Override
     void onException(Throwable e) {}
 }

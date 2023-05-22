@@ -51,9 +51,11 @@ public class NotifyCallerJob extends ControllerJob {
 
     @Override
     boolean execute() {
-        client.notifyCaller(transition, context);
-        return true;
+        return client.notifyCaller(transition, context);
     }
+
+    @Override
+    void onFailure() {}
 
     @Override
     void onException(Throwable e) {
