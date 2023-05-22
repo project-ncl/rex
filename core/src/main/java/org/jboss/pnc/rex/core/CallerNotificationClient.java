@@ -30,6 +30,7 @@ import org.jboss.pnc.rex.model.requests.NotificationRequest;
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Unremovable
 @ApplicationScoped
@@ -45,12 +46,12 @@ public class CallerNotificationClient {
         this.client = client;
     }
 
-    public void notifyCaller(Transition transition, Task task) {
+    public boolean notifyCaller(Transition transition, Task task) {
         Request requestDefinition = task.getCallerNotifications();
 
         if (requestDefinition == null) {
             log.warn("NOTIFICATION {}: DISABLED", task.getName());
-            return;
+            return false;
         }
 
         URI uri;
@@ -73,27 +74,41 @@ public class CallerNotificationClient {
                 transition,
                 request.toString());
 
+        AtomicBoolean result = new AtomicBoolean(false);
         client.makeRequest(uri,
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
-                response -> handleResponse(response, transition, task),
-                throwable -> onConnectionFailure(throwable, task));
+                response -> handleResponse(response, transition, task, result),
+                throwable -> onConnectionFailure(throwable, task, result));
+        return result.get();
     }
 
-    private void handleResponse(HttpResponse<Buffer> response, Transition transition, Task task) {
+    private void handleResponse(HttpResponse<Buffer> response, Transition transition, Task task, AtomicBoolean result) {
         if (200 <= response.statusCode() && response.statusCode() <= 299) {
             log.debug("NOTIFICATION {}: Successful for transition {} ", task.getName(), transition);
-        } else {
+
+            result.set(true);
+        } else if (300 <= response.statusCode() && response.statusCode() <= 499) {
             log.warn("NOTIFICATION {}: Failure while sending notification for transition {}. RESPONSE: {}",
                     task.getName(),
                     transition,
                     response.bodyAsString());
+
+            result.set(false);
+        } else {
+            // trigger retry
+            log.warn("NOTIFICATION {}: System Failure while sending notification for transition {}. RESPONSE: {}",
+                    task.getName(),
+                    transition,
+                    response.bodyAsString());
+            throw new RuntimeException("Retrying");
         }
     }
 
-    private void onConnectionFailure(Throwable exception, Task task) {
-       log.error("NOTIFICATION {}: HTTP call to the Caller failed multiple times.", task, exception);
-       // IS THIS A FAIL STATE? SHOULD I THROW EXCEPTION? SHOULD FAILING BE CONFIGURABLE?
+    private void onConnectionFailure(Throwable exception, Task task, AtomicBoolean result) {
+        log.error("NOTIFICATION {}: HTTP call to the Caller failed multiple times.", task, exception);
+        // IS THIS A FAIL STATE? SHOULD I THROW EXCEPTION? SHOULD FAILING BE CONFIGURABLE?
+        result.set(false);
     }
 }

@@ -41,6 +41,10 @@ public abstract class ControllerJob implements Runnable {
 
     protected boolean async;
 
+    private boolean completed = false;
+
+    private boolean failed = false;
+
     protected ControllerJob(TransactionPhase invocationPhase, Task context, boolean async) {
         this.invocationPhase = invocationPhase;
         this.context = context;
@@ -51,11 +55,16 @@ public abstract class ControllerJob implements Runnable {
     public void run() {
         try {
             beforeExecute();
-            if (!execute()) return;
+            if (!execute()) {
+                failed = true;
+                onFailure();
+            }
         } catch (RuntimeException e) {
+            failed = true;
             onException(e);
             throw e;
         } finally {
+            completed = true;
             afterExecute();
         }
     }
@@ -63,15 +72,41 @@ public abstract class ControllerJob implements Runnable {
     abstract void beforeExecute();
     abstract void afterExecute();
     abstract boolean execute();
+
+    abstract void onFailure();
     abstract void onException(Throwable e);
+
     public boolean isAsync() {
         return async;
     }
     public TransactionPhase getInvocationPhase() {
         return invocationPhase;
     }
+
     public Optional<Task> getContext() {
         return context == null ? Optional.empty() : Optional.of(context);
+    }
+
+    public boolean isFinished() {
+        return completed;
+    }
+
+    public boolean isSuccessful() {
+        assertTaskIsCompleted();
+
+        return !failed;
+    }
+
+    public boolean hasFailed() {
+        assertTaskIsCompleted();
+
+        return failed;
+    }
+
+    private void assertTaskIsCompleted() {
+        if (!isFinished()) {
+            throw new IllegalStateException(this + " is not yet completed");
+        }
     }
 
     @Override

@@ -2,13 +2,15 @@ scheduler:
   baseUrl: ${BASE_URL}
   name: node
   options:
+    task-configuration:
+      clean: true
     concurrency:
       default: 5
     retry-policy:
       maxRetries: 15
       delay: 10
       jitter: 50
-      abortOn: javax.validation.ConstraintViolationException, org.jboss.pnc.rex.common.exceptions.TaskMissingException, org.jboss.pnc.rex.common.exceptions.BadRequestException, org.jboss.pnc.rex.common.exceptions.TaskConflictException, org.jboss.pnc.rex.common.exceptions.CircularDependencyException
+      abortOn: javax.validation.ConstraintViolationException, org.jboss.pnc.rex.common.exceptions.TaskMissingException, org.jboss.pnc.rex.common.exceptions.BadRequestException, org.jboss.pnc.rex.common.exceptions.TaskConflictException, org.jboss.pnc.rex.common.exceptions.CircularDependencyException, org.jboss.pnc.rex.common.exceptions.ConstraintConflictException
 
 quarkus:
   package:
@@ -110,8 +112,8 @@ org:
       client-intelligence: BASIC
       use-schema-registration: true
       use-auth: true
-      auth-username: admin
-      auth-password: password
+      username: admin
+      password: password
       cache:
         "rex-counter":
           configuration-uri: "counter-configuration.xml"
@@ -160,6 +162,9 @@ org:
           configuration-uri: "constraints-configuration.xml"
           near-cache-mode: invalidated
           near-cache-max-entries: 100
+      devservices:
+        #        image-name: "infinispan/server:13.0.5.Final-2"
+        image-name: "infinispan/server:14.0.2.Final"
     log:
       category:
         "org.jboss.pnc":

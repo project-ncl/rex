@@ -17,7 +17,9 @@
  */
 package org.jboss.pnc.rex.core;
 
+import io.quarkus.narayana.jta.TransactionSemantics;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
@@ -27,6 +29,7 @@ import org.jboss.pnc.rex.core.api.DependencyMessenger;
 import org.jboss.pnc.rex.core.api.DependentMessenger;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.rex.core.jobs.ChainingJob;
 import org.jboss.pnc.rex.core.jobs.DecreaseCounterJob;
 import org.jboss.pnc.rex.core.jobs.DelegateJob;
 import org.jboss.pnc.rex.core.jobs.DeleteTaskJob;
@@ -52,6 +55,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static javax.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
+import static javax.enterprise.event.TransactionPhase.IN_PROGRESS;
 import static javax.transaction.Transactional.TxType.MANDATORY;
 
 @Slf4j
@@ -62,9 +66,16 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     private final Event<ControllerJob> scheduleJob;
 
-    public TaskControllerImpl(TaskContainerImpl container, Event<ControllerJob> scheduleJob) {
+    private final boolean cleanTasks;
+
+    public TaskControllerImpl(TaskContainerImpl container,
+                              Event<ControllerJob> scheduleJob,
+                              @ConfigProperty(
+                                      name = "scheduler.options.task-configuration.clean",
+                                      defaultValue = "true") boolean cleanTasks) {
         this.container = container;
         this.scheduleJob = scheduleJob;
+        this.cleanTasks = cleanTasks;
     }
 
     private List<ControllerJob> transition(Task task) {
@@ -98,7 +109,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 tasks.add(new DependencyCancelledJob(task));
                 tasks.add(new DecreaseCounterJob(task));
                 tasks.add(new PokeQueueJob());
-                if (shouldDelete(task, transition))
+                if (shouldDeleteImmediately(task, transition))
                     tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
                 break;
 
@@ -113,7 +124,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                         tasks.add(new DependencyStoppedJob(task));
                         break;
                 }
-                if (shouldDelete(task, transition))
+                if (shouldDeleteImmediately(task, transition))
                     tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
                 break;
 
@@ -123,7 +134,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 tasks.add(new DependencyStoppedJob(task));
                 tasks.add(new DecreaseCounterJob(task));
                 tasks.add(new PokeQueueJob());
-                if (shouldDelete(task, transition))
+                if (shouldDeleteImmediately(task, transition))
                     tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
                 break;
 
@@ -135,7 +146,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 tasks.add(new DependencySucceededJob(task));
                 tasks.add(new DecreaseCounterJob(task));
                 tasks.add(new PokeQueueJob());
-                if (shouldDelete(task, transition))
+                if (shouldDeleteImmediately(task, transition))
                     tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
                 break;
             default:
@@ -144,7 +155,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         task.setState(transition.getAfter());
 
         // notify the caller about a transition
-        tasks.add(new NotifyCallerJob(transition, task));
+        var notifyJob = new NotifyCallerJob(transition, task);
+        if (shouldDeleteOnNotification(task, transition)) {
+            // send notification and delete jobs after a success
+            tasks.add(ChainingJob.of(notifyJob).chainOnSuccess(withTransactionAndTolerance(new DeleteTaskJob(task))));
+        } else {
+            // send notification
+            tasks.add(notifyJob);
+        }
+
         log.info("SCHEDULE {}: {}", task.getName(), tasks);
         return tasks;
     }
@@ -154,7 +173,19 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 .async(false)
                 .invocationPhase(BEFORE_COMPLETION)
                 .tolerant(false)
-                .transactional(false)
+                .transactional(true)
+                .transactionSemantics(TransactionSemantics.JOIN_EXISTING)
+                .context(delegate.getContext().orElse(null))
+                .delegate(delegate)
+                .build();
+    }
+    private DelegateJob withTransactionAndTolerance(ControllerJob delegate) {
+        return DelegateJob.builder()
+                .async(false)
+                .invocationPhase(IN_PROGRESS)
+                .tolerant(true)
+                .transactional(true)
+                .transactionSemantics(TransactionSemantics.REQUIRE_NEW)
                 .context(delegate.getContext().orElse(null))
                 .delegate(delegate)
                 .build();
@@ -233,8 +264,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         return task.getStarting();
     }
 
+    private boolean shouldDeleteImmediately(Task task, Transition transition) {
+        return shouldDelete(task, transition) && task.getCallerNotifications() == null;
+    }
+
+    private boolean shouldDeleteOnNotification(Task task, Transition transition) {
+        return shouldDelete(task, transition) && task.getCallerNotifications() != null;
+    }
     private boolean shouldDelete(Task task, Transition transition) {
-        return task.getDependants().size() == 0 && transition.getAfter().isFinal();
+        return cleanTasks && task.getDependants().size() == 0 && transition.getAfter().isFinal();
     }
 
     private void handle(VersionedValue<Task> taskMetadata, Task task) {
@@ -460,12 +498,11 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 taskMetadata.getVersion(),
                 task);
 
-        // TODO Uncomment once NCL-7520 is completed
-        /* boolean deleted = container.getCache().removeWithVersion(name, taskMetadata.getVersion());
+        boolean deleted = container.getCache().removeWithVersion(name, taskMetadata.getVersion());
         if (!deleted) {
             log.error("DELETE {}: Concurrent update detected. Transaction will fail.", task.getName());
             throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
-        }*/
+        }
 
         handleOptionalConstraint(task);
 

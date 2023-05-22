@@ -33,9 +33,12 @@ import org.jboss.pnc.rex.model.Header;
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static java.time.Duration.of;
 
 @Slf4j
 @ApplicationScoped
@@ -77,7 +80,9 @@ public class GenericVertxHttpClient {
                 .onItem().transformToUni(i -> Uni.createFrom()
                         .item(i)
                         .onItem().invoke(onResponse)
-                        .onFailure().retry().atMost(20)
+                        .onFailure().retry()
+                            .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
+                            .atMost(20)
                         .onFailure().recoverWithNull())
                 .onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
                 .onFailure().retry().atMost(20)

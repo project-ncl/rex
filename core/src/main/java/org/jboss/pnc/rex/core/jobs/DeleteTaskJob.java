@@ -41,17 +41,14 @@ public class DeleteTaskJob extends ControllerJob {
     }
 
     @Override
-    void afterExecute() {
-
-    }
+    void afterExecute() {}
 
     @Override
-    void beforeExecute() {
-
-    }
+    void beforeExecute() {}
 
     @Override
-    void onException(Throwable e) {
+    void onFailure() {}
 
-    }
+    @Override
+    void onException(Throwable e) {}
 }

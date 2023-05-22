@@ -17,18 +17,13 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.narayana.jta.TransactionSemantics;
 import io.smallrye.mutiny.Uni;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.model.Task;
 
 import javax.enterprise.event.TransactionPhase;
-import javax.enterprise.inject.spi.CDI;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
 
 @Slf4j
 public class DelegateJob extends ControllerJob {
@@ -37,22 +32,24 @@ public class DelegateJob extends ControllerJob {
 
     private final boolean tolerant;
 
-    private final TransactionManager manager;
-
-    private final boolean alreadyInTransaction;
+    private final TransactionSemantics txType;
 
     private final boolean transactional;
 
-    private DelegateJob(TransactionPhase invocationPhase, Task context, boolean async, boolean tolerant, boolean transactional, ControllerJob delegate) {
+    private DelegateJob(TransactionPhase invocationPhase,
+                        Task context,
+                        boolean async,
+                        boolean tolerant,
+                        boolean transactional,
+                        TransactionSemantics transactionSemantics,
+                        ControllerJob delegate) {
         super(invocationPhase, context, async);
         this.delegate = delegate;
         this.tolerant = tolerant;
+        this.txType = transactionSemantics;
         this.transactional = transactional;
-        this.manager = CDI.current().select(TransactionManager.class).get();
-        try {
-            this.alreadyInTransaction = !async && manager.getTransaction() != null;
-        } catch (SystemException e) {
-            throw new IllegalStateException("SystemError", e);
+        if (transactional && transactionSemantics == null) {
+            throw new IllegalArgumentException("Transaction semantics null while delegate declared transactional");
         }
     }
 
@@ -69,20 +66,8 @@ public class DelegateJob extends ControllerJob {
     @Override
     boolean execute() {
         Uni<Boolean> uni = Uni.createFrom().voidItem()
-                .onItem().transform(ignore -> {
-                    boolean ret = false;
-                    try {
-                        startOrJoin();
-                        ret = delegate.execute();
-                        commit();
-                    } catch (RollbackException e) {
-                        throw new IllegalStateException("Transaction rolled back", e);
-                    } catch (Exception e) {
-                        rollback(e);
-                        throw e;
-                    }
-                    return ret;
-                });
+                .onItem()
+                .transform(this::delegateExecute);
 
         if (tolerant) {
             uni = uni.onFailure().retry().atMost(15);
@@ -91,45 +76,16 @@ public class DelegateJob extends ControllerJob {
         return uni.await().indefinitely();
     }
 
-    void startOrJoin() {
+    boolean delegateExecute(Void ignore) {
         if (!transactional) {
-            return;
+            return delegate.execute();
         }
-        if (!alreadyInTransaction) {
-            try {
-                manager.begin();
-            } catch (NotSupportedException | SystemException e) {
-                //should not happen, thrown when attempting f.e. nested transaction
-                throw new IllegalStateException("Cannot start Transaction, unexpected error was thrown", e);
-            }
-        }
+
+        return QuarkusTransaction.runner(txType).call(delegate::execute);
     }
 
-    void rollback(Throwable e) {
-        if (!transactional) {
-            return;
-        }
-        try {
-            //transaction initiator should handle the rollback
-            if (!alreadyInTransaction) manager.rollback();
-        } catch (SystemException ex) {
-            throw new IllegalStateException("Cannot rollback Transaction, unexpected error was thrown", ex);
-        }
-    }
-
-    void commit() throws RollbackException {
-        if (!transactional) {
-            return;
-        }
-        if (!alreadyInTransaction) {
-            try {
-                manager.commit();
-            } catch (SystemException | HeuristicRollbackException | HeuristicMixedException e) {
-                //should not happen, thrown when attempting f.e. nested transaction
-                throw new IllegalStateException("Unexpected error was thrown while committing transaction", e);
-            }
-        }
-    }
+    @Override
+    void onFailure() {delegate.onFailure();}
 
     @Override
     void onException(Throwable e) {
@@ -147,6 +103,7 @@ public class DelegateJob extends ControllerJob {
         private ControllerJob delegate;
         private boolean tolerant;
         private boolean transactional;
+        private TransactionSemantics semantics;
 
         DelegateJobBuilder() {
         }
@@ -170,8 +127,14 @@ public class DelegateJob extends ControllerJob {
             this.async = async;
             return this;
         }
+
         public DelegateJob.DelegateJobBuilder transactional(boolean transactional) {
             this.transactional = transactional;
+            return this;
+        }
+
+        public DelegateJob.DelegateJobBuilder transactionSemantics(TransactionSemantics semantics) {
+            this.semantics = semantics;
             return this;
         }
 
@@ -181,52 +144,8 @@ public class DelegateJob extends ControllerJob {
         }
 
         public DelegateJob build() {
-            return new DelegateJob(invocationPhase, context, async, tolerant, transactional, delegate);
+            return new DelegateJob(invocationPhase, context, async, tolerant, transactional, semantics, delegate);
         }
-    }
-
-    public static void main(String[] args) {
-//        Uni.createFrom().item(DelegateJob::method)
-//                .invoke(DelegateJob::method2)
-//                .onItem().invoke(() -> System.out.println("!"))
-//                .onFailure().retry()
-//                .atMost(16)
-//                .await().indefinitely();
-        boolean tolerant = true;
-        Uni<Object> uni = Uni.createFrom().voidItem()
-                .invoke(DelegateJob::method)
-                .onItem().transformToUni(ignore -> Uni.createFrom().item(DelegateJob::executoring))
-                .invoke(DelegateJob::method2)
-                .onFailure().invoke(DelegateJob::method3);
-        if (tolerant) {
-            uni = uni.onFailure().invoke(() -> System.out.println()).onFailure().retry().atMost(15);
-        }
-        uni.await().indefinitely();
-    }
-
-    private static Object executoring() {
-        System.out.println("executing delegate");
-                throw new IllegalArgumentException();
-//        return null;
-    }
-
-    private static Object method3() {
-        System.out.println("would rollback");
-
-        return null;
-    }
-
-    private static Object method() {
-        System.out.println("would start transaction");
-
-//        throw new IllegalArgumentException();
-        return Object.class;
-    }
-    private static Object method2() {
-        System.out.println("would commit");
-
-//        throw new IllegalArgumentException();
-        return Object.class;
     }
 }
 
