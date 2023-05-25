@@ -52,7 +52,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static javax.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
 import static javax.enterprise.event.TransactionPhase.IN_PROGRESS;
@@ -90,68 +89,64 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             return tasks;
         }
 
-        switch (transition) {
-            case NEW_to_WAITING:
-            case NEW_to_ENQUEUED:
-            case WAITING_to_ENQUEUED:
-                break;
+        tasks.addAll(switch (transition) {
+            //no tasks
+            case NEW_to_WAITING, NEW_to_ENQUEUED, WAITING_to_ENQUEUED -> List.of();
 
-            case ENQUEUED_to_STARTING:
-                tasks.add(new InvokeStartJob(task));
-                break;
+            case ENQUEUED_to_STARTING -> List.of(new InvokeStartJob(task));
 
-            case UP_to_STOPPING:
-            case STARTING_to_STOPPING:
-                tasks.add(new InvokeStopJob(task));
-                break;
+            case UP_to_STOP_REQUESTED, STARTING_to_STOP_REQUESTED -> List.of(new InvokeStopJob(task));
 
-            case STOPPING_to_STOPPED:
-                tasks.add(new DependencyCancelledJob(task));
-                tasks.add(new DecreaseCounterJob(task));
-                tasks.add(new PokeQueueJob());
+            case STOPPING_TO_STOPPED -> {
+                var jobs = new ArrayList<ControllerJob>();
+                jobs.add(new DependencyCancelledJob(task));
+                jobs.add(new DecreaseCounterJob(task));
+                jobs.add(new PokeQueueJob());
                 if (shouldDeleteImmediately(task, transition))
-                    tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
-                break;
+                    jobs.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
 
-            case NEW_to_STOPPED:
-            case WAITING_to_STOPPED:
-            case ENQUEUED_to_STOPPED:
+                yield jobs;
+            }
+
+            case NEW_to_STOPPED, WAITING_to_STOPPED, ENQUEUED_to_STOPPED -> {
+                var jobs = new ArrayList<ControllerJob>();
                 switch (task.getStopFlag()) {
-                    case CANCELLED:
-                        tasks.add(new DependencyCancelledJob(task));
-                        break;
-                    case DEPENDENCY_FAILED:
-                        tasks.add(new DependencyStoppedJob(task));
-                        break;
+                    case CANCELLED -> jobs.add(new DependencyCancelledJob(task));
+                    case DEPENDENCY_FAILED -> jobs.add(new DependencyStoppedJob(task));
+                    // UNSUCCESSFUL is in FAILED transitions
+                    case UNSUCCESSFUL, NONE -> {}
                 }
                 if (shouldDeleteImmediately(task, transition))
-                    tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
-                break;
+                    jobs.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
 
-            case UP_to_FAILED:
-            case STARTING_to_START_FAILED:
-            case STOPPING_to_STOP_FAILED:
-                tasks.add(new DependencyStoppedJob(task));
-                tasks.add(new DecreaseCounterJob(task));
-                tasks.add(new PokeQueueJob());
+                yield jobs;
+            }
+
+            case UP_to_FAILED, STARTING_to_START_FAILED, STOPPING_TO_STOP_FAILED, STOP_REQUESTED_to_STOP_FAILED -> {
+                var jobs = new ArrayList<ControllerJob>();
+                jobs.add(new DependencyStoppedJob(task));
+                jobs.add(new DecreaseCounterJob(task));
+                jobs.add(new PokeQueueJob());
                 if (shouldDeleteImmediately(task, transition))
-                    tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
-                break;
+                    jobs.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
 
-            case STARTING_to_UP:
-                //no tasks
-                break;
+                yield jobs;
+            }
 
-            case UP_to_SUCCESSFUL:
-                tasks.add(new DependencySucceededJob(task));
-                tasks.add(new DecreaseCounterJob(task));
-                tasks.add(new PokeQueueJob());
+            //no tasks
+            case STOP_REQUESTED_to_STOPPING, STARTING_to_UP -> List.of();
+
+            case UP_to_SUCCESSFUL -> {
+                var jobs = new ArrayList<ControllerJob>();
+                jobs.add(new DependencySucceededJob(task));
+                jobs.add(new DecreaseCounterJob(task));
+                jobs.add(new PokeQueueJob());
                 if (shouldDeleteImmediately(task, transition))
-                    tasks.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
-                break;
-            default:
-                throw new IllegalStateException("Controller returned unknown transition: " + transition);
-        }
+                    jobs.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
+
+                yield jobs;
+            }
+        });
         task.setState(transition.getAfter());
 
         // notify the caller about a transition
@@ -193,63 +188,69 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     private Transition getTransition(Task task) {
         Mode mode = task.getControllerMode();
-        switch (task.getState()) {
-            case NEW: {
+        return switch (task.getState()) {
+            case NEW -> {
                 if (shouldStop(task))
-                    return Transition.NEW_to_STOPPED;
+                    yield Transition.NEW_to_STOPPED;
                 if (shouldQueue(task))
-                    return Transition.NEW_to_ENQUEUED;
+                    yield Transition.NEW_to_ENQUEUED;
                 if (mode == Mode.ACTIVE && task.getUnfinishedDependencies() > 0)
-                    return Transition.NEW_to_WAITING;
+                    yield Transition.NEW_to_WAITING;
+                yield null;
             }
-            case WAITING: {
+            case WAITING -> {
                 if (shouldStop(task))
-                    return Transition.WAITING_to_STOPPED;
+                    yield Transition.WAITING_to_STOPPED;
                 if (shouldQueue(task))
-                    return Transition.WAITING_to_ENQUEUED;
+                    yield Transition.WAITING_to_ENQUEUED;
+                yield null;
             }
-            case ENQUEUED: {
+            case ENQUEUED -> {
                 if (shouldStop(task))
-                    return Transition.ENQUEUED_to_STOPPED;
+                    yield Transition.ENQUEUED_to_STOPPED;
                 if (shouldStart(task))
-                    return Transition.ENQUEUED_to_STARTING;
+                    yield Transition.ENQUEUED_to_STARTING;
+                yield null;
             }
-            case STARTING: {
+            case STARTING -> {
                 if (task.getStopFlag() == StopFlag.CANCELLED)
-                    return Transition.STARTING_to_STOPPING;
-                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STARTING).collect(Collectors.toList());
+                    yield Transition.STARTING_to_STOP_REQUESTED;
+                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STARTING).toList();
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
-                    return Transition.STARTING_to_UP;
+                    yield Transition.STARTING_to_UP;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
-                    return Transition.STARTING_to_START_FAILED;
+                    yield Transition.STARTING_to_START_FAILED;
+                yield null;
             }
-            case UP: {
+            case UP -> {
                 if (task.getStopFlag() == StopFlag.CANCELLED)
-                    return Transition.UP_to_STOPPING;
-                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.UP).collect(Collectors.toList());
+                    yield Transition.UP_to_STOP_REQUESTED;
+                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.UP).toList();
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
-                    return Transition.UP_to_SUCCESSFUL;
+                    yield Transition.UP_to_SUCCESSFUL;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
-                    return Transition.UP_to_FAILED;
+                    yield Transition.UP_to_FAILED;
+                yield null;
             }
-            case STOPPING: {
-                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STOPPING).collect(Collectors.toList());
+            case STOP_REQUESTED -> {
+                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STOP_REQUESTED).toList();
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
-                    return Transition.STOPPING_to_STOPPED;
+                    yield Transition.STOP_REQUESTED_to_STOPPING;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
-                    return Transition.STOPPING_to_STOP_FAILED;
+                    yield Transition.STOP_REQUESTED_to_STOP_FAILED;
+                yield null;
+            }
+            case STOPPING -> {
+                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STOPPING).toList();
+                if (responses.stream().anyMatch(ServerResponse::isPositive))
+                    yield Transition.STOPPING_TO_STOPPED;
+                if (responses.stream().anyMatch(ServerResponse::isNegative))
+                    yield Transition.STOPPING_TO_STOP_FAILED;
+                yield null;
             }
             // final states have no possible transitions
-            case START_FAILED:
-            case STOP_FAILED:
-            case FAILED:
-            case SUCCESSFUL:
-            case STOPPED:
-                break;
-            default:
-                throw new IllegalStateException("Task is in unrecognized state.");
-        }
-        return null;
+            case START_FAILED, STOP_FAILED, FAILED, SUCCESSFUL, STOPPED -> null;
+        };
     }
 
     private boolean shouldQueue(Task task) {
@@ -349,12 +350,12 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        if (EnumSet.of(State.STARTING,State.UP,State.STOPPING).contains(task.getState())){
+        if (EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED, State.STOPPING).contains(task.getState())) {
             ServerResponse positiveResponse = new ServerResponse(task.getState(), true, response);
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(positiveResponse);
         } else {
-            RuntimeException exception = new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
+            var exception = new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
             log.error("ERROR: ", exception);
             throw exception;
         }
@@ -371,7 +372,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        if (EnumSet.of(State.STARTING, State.UP, State.STOPPING).contains(task.getState())){
+        if (EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED).contains(task.getState())){
             ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response);
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(negativeResponse);
