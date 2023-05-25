@@ -381,8 +381,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             task = getTask(name);
             if (task == null) {
                 throw new BadRequestException(
-                        "Either existing task " + name
-                                + " has incorrect identifier or data for a new task is not declared in vertices");
+                        "Either task with the identifier " + name
+                                + " is not present or data for a new task is not declared in vertices");
             }
         }
         taskCache.put(name, task);
