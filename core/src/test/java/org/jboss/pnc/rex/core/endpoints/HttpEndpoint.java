@@ -28,6 +28,7 @@ import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.requests.StartRequest;
+import org.jboss.pnc.rex.model.requests.StopRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -78,22 +79,31 @@ public class HttpEndpoint {
     }
 
     @POST
+    @Path("/stopAndCallback")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response stopAndCallback(StopRequest request) {
+        record();
+        executor.submit(() -> finishTask(request.getCallback()));
+        return Response.ok().build();
+    }
+
+    @POST
     @Path("/acceptAndStart")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response acceptAndStart(StartRequest request) {
         record();
-        executor.submit(() -> finishTask(request));
+        executor.submit(() -> finishTask(request.getCallback()));
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
 
-    private void finishTask(StartRequest request) {
+    private void finishTask(String callback) {
         try {
             Thread.sleep(Duration.between(Instant.now(), Instant.now().plusMillis(20)).toMillis()+10);
         } catch (InterruptedException e) {
             //ignore
         }
         FinishRequest body = new FinishRequest(true, "ALL IS OK");
-        client.makeRequest(URI.create(request.getCallback()),
+        client.makeRequest(URI.create(callback),
                 Method.POST,
                 List.of(Header.builder().name("Content-Type").value("application/json").build()),
                 body,
