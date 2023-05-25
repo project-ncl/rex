@@ -325,9 +325,8 @@ class TaskContainerImplTest {
         // sleep because running counter takes time to update
         Thread.sleep(100);
         assertThat(running.getValue()).isEqualTo(0);
-        // TODO Uncomment once NCL-7520 is completed
-        /* assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
-                .doesNotContain(services); */
+        assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
+                .doesNotContain(services);
     }
 
     @Test
@@ -384,9 +383,8 @@ class TaskContainerImplTest {
 
         waitTillTasksAreFinishedWith(State.STOPPED, services);
 
-        // TODO Uncomment once NCL-7520 is completed
-        /* assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
-                .doesNotContain(request.getVertices().keySet().toArray(new String[0])); */
+        assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
+                .doesNotContain(request.getVertices().keySet().toArray(new String[0]));
     }
 
     @Test

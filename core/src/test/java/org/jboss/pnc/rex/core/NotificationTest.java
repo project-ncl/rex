@@ -29,7 +29,6 @@ import org.jboss.pnc.rex.core.common.TransitionRecorder;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.core.endpoints.TransitionRecorderEndpoint;
-import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.junit.jupiter.api.AfterEach;
@@ -42,15 +41,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.jboss.pnc.rex.common.enums.Transition.ENQUEUED_to_STARTING;
 import static org.jboss.pnc.rex.common.enums.Transition.NEW_to_ENQUEUED;
 import static org.jboss.pnc.rex.common.enums.Transition.NEW_to_WAITING;
 import static org.jboss.pnc.rex.common.enums.Transition.STARTING_to_UP;
-import static org.jboss.pnc.rex.common.enums.Transition.STOPPING_to_STOPPED;
-import static org.jboss.pnc.rex.common.enums.Transition.UP_to_STOPPING;
+import static org.jboss.pnc.rex.common.enums.Transition.STOPPING_TO_STOPPED;
+import static org.jboss.pnc.rex.common.enums.Transition.STOP_REQUESTED_to_STOPPING;
+import static org.jboss.pnc.rex.common.enums.Transition.UP_to_STOP_REQUESTED;
 import static org.jboss.pnc.rex.common.enums.Transition.UP_to_SUCCESSFUL;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_ENQUEUED;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_STOPPED;
@@ -63,7 +62,7 @@ import static org.jboss.pnc.rex.core.common.TestData.getMockTask;
 import static org.jboss.pnc.rex.core.common.TestData.getNaughtyNotificationsRequest;
 import static org.jboss.pnc.rex.core.common.TestData.getNotificationsRequest;
 import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
-import static org.jboss.pnc.rex.core.common.TestData.getStopRequest;
+import static org.jboss.pnc.rex.core.common.TestData.getStopRequestWithCallback;
 
 @QuarkusTest
 //@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
@@ -138,8 +137,8 @@ public class NotificationTest {
         Thread.sleep(100);
         Map<String, Set<Transition>> records = recorderEndpoint.getRecords();
         assertThat(records.keySet()).containsExactlyInAnyOrderElementsOf(request.getVertices().keySet());
-        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_STOPPING, STOPPING_to_STOPPED));
-        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_STOPPING, STOPPING_to_STOPPED));
+        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_STOP_REQUESTED, STOP_REQUESTED_to_STOPPING, STOPPING_TO_STOPPED));
+        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_STOP_REQUESTED, STOP_REQUESTED_to_STOPPING, STOPPING_TO_STOPPED));
         assertThat(records.get("c")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("d")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("e")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
@@ -199,13 +198,13 @@ public class NotificationTest {
                 taskName,
                 Mode.ACTIVE,
                 getRequestWithStart(taskName),
-                getStopRequest(taskName),
+                getStopRequestWithCallback(taskName),
                 getNotificationsRequest());
         var failingNotificationTask = getMockTask(
                 taskName,
                 Mode.ACTIVE,
                 getRequestWithStart(taskName),
-                getStopRequest(taskName),
+                getStopRequestWithCallback(taskName),
                 getNaughtyNotificationsRequest());
 
         var reqGoodNot = CreateGraphRequest.builder().vertex(taskName, okNotificationTask).build();

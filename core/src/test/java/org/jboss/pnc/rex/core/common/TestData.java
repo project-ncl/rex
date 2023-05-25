@@ -34,12 +34,13 @@ public class TestData {
     public static CreateTaskDTO getMockTaskWithoutStart(String name, Mode mode) {
         return getMockTaskWithoutStart(name, mode, false);
     }
+
     public static CreateTaskDTO getMockTaskWithoutStart(String name, Mode mode, boolean withNotifications) {
         String payload = String.format("I'm an %s!", name);
         if (withNotifications) {
-            return getMockTask(name, mode, getRequestWithoutStart(payload), getStopRequest(payload), getNotificationsRequest());
+            return getMockTask(name, mode, getRequestWithoutStart(payload), getStopRequestWithCallback(payload), getNotificationsRequest());
         }
-        return getMockTask(name, mode, getRequestWithoutStart(payload), getStopRequest(payload), null);
+        return getMockTask(name, mode, getRequestWithoutStart(payload), getStopRequestWithCallback(payload), null);
     }
 
     public static CreateTaskDTO getMockTaskWithStart(String name, Mode mode) {
@@ -48,9 +49,9 @@ public class TestData {
 
     public static CreateTaskDTO getMockTaskWithStart(String name, Mode mode, boolean withNotifications) {
         if (withNotifications) {
-            return getMockTask(name, mode, getRequestWithStart(name), getStopRequest(name), getNotificationsRequest());
+            return getMockTask(name, mode, getRequestWithStart(name), getStopRequestWithCallback(name), getNotificationsRequest());
         }
-        return getMockTask(name, mode, getRequestWithStart(name), getStopRequest(name), null);
+        return getMockTask(name, mode, getRequestWithStart(name), getStopRequestWithCallback(name), null);
     }
 
     public static CreateGraphRequest getSingleWithoutStart(String name) {
@@ -86,6 +87,15 @@ public class TestData {
     public static org.jboss.pnc.api.dto.Request getStopRequest(String payload) {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/test/stop"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
+                .attachment(payload)
+                .build();
+    }
+
+    public static org.jboss.pnc.api.dto.Request getStopRequestWithCallback(String payload) {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/test/stopAndCallback"))
                 .method(org.jboss.pnc.api.dto.Request.Method.POST)
                 .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
                 .attachment(payload)
