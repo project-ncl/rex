@@ -155,7 +155,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             states.addAll(EnumSet.of(State.NEW, State.WAITING, State.ENQUEUED));
         }
         if (running) {
-            states.addAll(EnumSet.of(State.UP, State.STARTING, State.STOPPING));
+            states.addAll(EnumSet.of(State.UP, State.STARTING, State.STOP_REQUESTED));
         }
         if (finished) {
             states.addAll(

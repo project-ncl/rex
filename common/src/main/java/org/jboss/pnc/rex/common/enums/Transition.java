@@ -23,7 +23,7 @@ package org.jboss.pnc.rex.common.enums;
  * Transition is a process where there could be a number of Jobs that need to be executed before a transition is
  * completed. Another transition cannot be initiated until these tasks are completed.
  * <p>
- * F.e. Transition between UP and STOPPING State creates a Job for each dependant Task to stop and another Job to send a
+ * F.e. Transition between UP and STOP_REQUESTED State creates a Job for each dependant Task to stop and another Job to send a
  * request to remote entity to stop the Task's remote execution. After these Jobs are completed, Task can complete its
  * Transition to STOPPED/STOP_FAILED (based on remote entity's response).
  * <p>
@@ -57,23 +57,36 @@ public enum Transition {
      *
      * Controller requests remote entity to stop execution of remote Task and informs dependants that it's stopping.
      */
-    UP_to_STOPPING(State.UP,State.STOPPING),
+    UP_to_STOP_REQUESTED(State.UP,State.STOP_REQUESTED),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
      * Controller requests remote entity to stop execution of remote Task and informs dependants that it's stopping.
      */
-    STARTING_to_STOPPING(State.STARTING, State.STOPPING),
+    STARTING_to_STOP_REQUESTED(State.STARTING, State.STOP_REQUESTED),
     /**
-     * Controller has received positive response that remote Task stopped its execution.
+     * Controller has received positive response that remote Task began process of stopping its execution.
      */
-    STOPPING_to_STOPPED(State.STOPPING, State.STOPPED),
+    STOP_REQUESTED_to_STOPPING(State.STOP_REQUESTED, State.STOPPING),
     /**
      * Controller has received negative response and remote Task failed to stop(could be f.e. unavailable).
      *
-     * Controller informs Task's dependants that the Task failed.
+     * Controller informs Task's dependants that the Task failed to stop.
      */
-    STOPPING_to_STOP_FAILED(State.STOPPING,State.STOP_FAILED),
+    STOP_REQUESTED_to_STOP_FAILED(State.STOP_REQUESTED,State.STOP_FAILED),
+    /**
+     * Controller has received negative callback from remote entity and remote Task failed to stop.
+     *
+     * Controller informs Task's dependants that the Task failed to stop.
+     */
+    STOPPING_TO_STOP_FAILED(State.STOPPING, State.STOP_FAILED),
+
+    /**
+     * Controller received a callback that remote Task has successfully stopped its execution.
+     *
+     * Controller informs Task's dependants that the Task stopped.
+     */
+    STOPPING_TO_STOPPED(State.STOPPING,State.STOPPED),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *

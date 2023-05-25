@@ -53,39 +53,43 @@ public enum State {
     @ProtoEnumValue(number = 4)
     UP(StateGroup.RUNNING),
     /**
-     * Controller was requested for remote Task to stop and waits for a response from remote entity. Based on the
-     * status code in response, Task will transition to either STOPPED or STOP_FAILED.
+     * Controller was requested to stop the remote Task and waits for a response from remote entity. Based on the
+     * status code in response, Task will transition to either STOPPING or STOP_FAILED.
      */
     @ProtoEnumValue(number = 5)
+    STOP_REQUESTED(StateGroup.RUNNING),
+    /**
+     * Remote Task started the cancellation process and is running.
+     */
+    @ProtoEnumValue(number = 6)
     STOPPING(StateGroup.RUNNING),
     /**
      * Task failed to start. Remote entity was either unreachable, didn't respond with 2xx status code or unexpected
      * error happened.
      */
-    @ProtoEnumValue(number = 6)
+    @ProtoEnumValue(number = 7)
     START_FAILED(StateGroup.FINAL),
     /**
      * Task failed to stop. Remote entity was either unreachable, didn't respond with 2xx status code or unexpected
      * error happened.
      */
-    @ProtoEnumValue(number = 7)
+    @ProtoEnumValue(number = 8)
     STOP_FAILED(StateGroup.FINAL),
     /**
      * Remote Task failed during execution.
      */
-    @ProtoEnumValue(number = 8)
+    @ProtoEnumValue(number = 9)
     FAILED(StateGroup.FINAL),
     /**
      * Remote Task ended successfully.
      */
-    @ProtoEnumValue(number = 9)
+    @ProtoEnumValue(number = 10)
     SUCCESSFUL(StateGroup.FINAL),
     /**
      * Remote Task stopped successfully.
      */
-    @ProtoEnumValue(number = 10)
+    @ProtoEnumValue(number = 11)
     STOPPED(StateGroup.FINAL);
-
     private final StateGroup type;
 
     State(StateGroup type) {

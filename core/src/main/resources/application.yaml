@@ -104,6 +104,7 @@ org:
       min-level: TRACE
     oidc:
       enabled: false
+      auth-server-url: ""
     transaction-manager:
       default-transaction-timeout: 10m
     http:
@@ -139,6 +140,7 @@ org:
   quarkus:
     oidc:
       enabled: false
+      auth-server-url: ""
     transaction-manager:
       default-transaction-timeout: 10m
     http:
