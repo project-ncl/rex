@@ -12,3 +12,6 @@ bin
 # IntelliJ
 *.iml
 .idea
+
+# Generic
+env.prop
