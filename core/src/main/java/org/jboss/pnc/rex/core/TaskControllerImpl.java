@@ -78,8 +78,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     }
 
     private List<ControllerJob> transition(Task task) {
-        Transition transition;
-        transition = getTransition(task);
+        Transition transition = getTransition(task);
         if (transition != null)
             log.info("TRANSITION {}: before: {} after: {}", task.getName(), transition.getBefore().toString(), transition.getAfter().toString());
 
@@ -409,7 +408,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void dependencySucceeded(String name) {
         // #1 PULL
-        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
+        if (taskMetadata == null) {
+            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+        }
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
@@ -423,7 +425,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void dependencyStopped(String name) {
         // #1 PULL
-        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
+        if (taskMetadata == null) {
+            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+        }
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
@@ -439,7 +444,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     @Transactional(MANDATORY)
     public void dependencyCancelled(String name) {
         // #1 PULL
-        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
+        if (taskMetadata == null) {
+            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+        }
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
