@@ -26,6 +26,7 @@ import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.model.Header;
@@ -45,9 +46,12 @@ import static java.time.Duration.of;
 public class GenericVertxHttpClient {
 
     private final WebClient client;
+    private final List<Throwable> failFast;
 
-    public GenericVertxHttpClient(Vertx vertx) {
+
+    public GenericVertxHttpClient(Vertx vertx, @ConfigProperty(name = "scheduler.options.retry-policy.abortOn") List<Throwable> abortOn) {
         this.client = WebClient.create(vertx);
+        this.failFast = abortOn;
     }
 
     /**
@@ -80,9 +84,10 @@ public class GenericVertxHttpClient {
                 .onItem().transformToUni(i -> Uni.createFrom()
                         .item(i)
                         .onItem().invoke(onResponse)
-                        .onFailure().retry()
-                            .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
-                            .atMost(20)
+                        .onFailure(th -> !failFast.contains(th))
+                            .retry()
+                                .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
+                                .atMost(20)
                         .onFailure().recoverWithNull())
                 .onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
                 .onFailure().retry().atMost(20)
@@ -114,7 +119,8 @@ public class GenericVertxHttpClient {
                 .onItem().transformToUni(i -> Uni.createFrom()
                         .item(i)
                         .onItem().invoke(onResponse)
-                        .onFailure().retry().atMost(20)
+                        .onFailure(th -> !failFast.contains(th))
+                            .retry().atMost(20)
                         .onFailure().recoverWithNull())
                 .onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
                 .onFailure().retry().atMost(20)
