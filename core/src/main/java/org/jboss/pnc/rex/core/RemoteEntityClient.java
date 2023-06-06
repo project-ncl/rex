@@ -25,9 +25,11 @@ import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.pnc.rex.core.api.TaskContainer;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
 import org.jboss.pnc.rex.model.Request;
+import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.jboss.pnc.rex.model.requests.StopRequest;
@@ -35,6 +37,8 @@ import org.jboss.pnc.rex.model.requests.StopRequest;
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TODO: Possibly convert to JAX-RS RestClient builder to enable dynamic url
@@ -48,6 +52,8 @@ public class RemoteEntityClient {
 
     private final TaskController controller;
 
+    private final TaskContainer container;
+
     private final GenericVertxHttpClient client;
 
     private final ObjectMapper mapper;
@@ -55,8 +61,9 @@ public class RemoteEntityClient {
     @ConfigProperty(name = "scheduler.baseUrl", defaultValue = "http://localhost:8080")
     String baseUrl;
 
-    public RemoteEntityClient(GenericVertxHttpClient client, @WithTransactions TaskController controller, ObjectMapper mapper) {
+    public RemoteEntityClient(GenericVertxHttpClient client, @WithTransactions TaskController controller, TaskContainer container, ObjectMapper mapper) {
         this.controller = controller;
+        this.container = container;
         this.client = client;
         this.mapper = mapper;
     }
@@ -72,8 +79,11 @@ public class RemoteEntityClient {
                     task.getName(), e);
         }
 
+
+        Object payload = getPayload(requestDefinition);
+
         StopRequest request = StopRequest.builder()
-                .payload(requestDefinition.getAttachment())
+                .payload(payload)
                 .callback(baseUrl + "/rest/internal/"+ task.getName() + "/finish")
                 .build();
 
@@ -142,4 +152,43 @@ public class RemoteEntityClient {
         }
         return objectResponse;
     }
+
+    /**
+     * Get payload to send from the Request.
+     *
+     * If previousTaskNames is not set in the request, use the 'attachment' as payload.
+     * If previousTaskNames is set, ignore the 'attachment' value and instead insert the results of the tasks mentioned
+     * in the previousTaskNames into the payload
+     *
+     * @param requestDefinition
+     * @return payload to use
+     */
+    private Object getPayload(Request requestDefinition) {
+
+        Object payload = null;
+
+        List<String> previousTaskNames = requestDefinition.getPreviousTaskNames();
+
+        if (previousTaskNames == null || previousTaskNames.isEmpty()) {
+            payload = requestDefinition.getAttachment();
+        } else {
+            List<Object> dataToSend = new ArrayList<>();
+
+            for (String taskName : previousTaskNames) {
+
+                List<ServerResponse> serverResponses = container.getTask(taskName).getServerResponses();
+
+                if (serverResponses != null && !serverResponses.isEmpty()) {
+                    // add last positive server response to the data to send
+                    dataToSend.add(serverResponses.get(serverResponses.size() - 1));
+                } else {
+                    // just add an empty object?
+                    dataToSend.add(new Object());
+                }
+            }
+            payload = dataToSend;
+        }
+        return payload;
+    }
+
 }

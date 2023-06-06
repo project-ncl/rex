@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.core.jobs;
 
 import io.smallrye.mutiny.Uni;
 import org.jboss.pnc.rex.core.RemoteEntityClient;
+import org.jboss.pnc.rex.core.api.TaskContainer;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
 import org.jboss.pnc.rex.model.Task;
@@ -36,12 +37,15 @@ public class InvokeStartJob extends ControllerJob {
 
     private final TaskController controller;
 
+    private final TaskContainer container;
+
     private static final Logger logger = LoggerFactory.getLogger(InvokeStartJob.class);
 
     public InvokeStartJob(Task task) {
         super(INVOCATION_PHASE, task, false);
         this.client = CDI.current().select(RemoteEntityClient.class).get();
         this.controller = CDI.current().select(TaskController.class, () -> WithTransactions.class).get();
+        this.container = CDI.current().select(TaskContainer.class).get();
     }
 
     @Override

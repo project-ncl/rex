@@ -54,11 +54,15 @@ public class Request {
     @Getter
     private final Object attachment;
 
+    @Getter(onMethod_ = {@ProtoField(number = 5)})
+    private final List<String> previousTaskNames;
+
     @ProtoFactory
-    public Request(String url, Method method, List<Header> headers, byte[] byteAttachment) {
+    public Request(String url, Method method, List<Header> headers, byte[] byteAttachment, List<String> previousTaskNames) {
         this.url = url;
         this.method = method;
         this.headers = headers;
+        this.previousTaskNames = previousTaskNames;
         Object attachment;
         try {
             attachment = convertToObject(byteAttachment);
