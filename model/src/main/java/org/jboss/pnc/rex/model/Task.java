@@ -143,6 +143,10 @@ public class Task {
     @Getter(onMethod_ = @ProtoField(number = 14, defaultValue = "false"))
     private Boolean starting;
 
+    @Getter(onMethod_ = @ProtoField(number = 15))
+    private List<String> previousTaskNameResults = new ArrayList<>();
+
+
     public void incUnfinishedDependencies() {
         unfinishedDependencies++;
     }
