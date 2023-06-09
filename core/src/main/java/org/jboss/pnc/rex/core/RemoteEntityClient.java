@@ -80,7 +80,7 @@ public class RemoteEntityClient {
         }
 
 
-        Object payload = getPayload(requestDefinition);
+        Object payload = getPayload(requestDefinition, task.getPreviousTaskNameResults());
 
         StopRequest request = StopRequest.builder()
                 .payload(payload)
@@ -107,7 +107,7 @@ public class RemoteEntityClient {
         }
 
         StartRequest request = StartRequest.builder()
-                .payload(requestDefinition.getAttachment())
+                .payload(getPayload(requestDefinition, task.getPreviousTaskNameResults()))
                 .callback(baseUrl + "/rest/internal/"+ task.getName() + "/finish")
                 .build();
 
@@ -163,11 +163,9 @@ public class RemoteEntityClient {
      * @param requestDefinition
      * @return payload to use
      */
-    private Object getPayload(Request requestDefinition) {
+    private Object getPayload(Request requestDefinition, List<String> previousTaskNames) {
 
         Object payload = null;
-
-        List<String> previousTaskNames = requestDefinition.getPreviousTaskNames();
 
         if (previousTaskNames == null || previousTaskNames.isEmpty()) {
             payload = requestDefinition.getAttachment();

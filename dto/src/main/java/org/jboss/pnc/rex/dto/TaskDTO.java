@@ -60,4 +60,6 @@ public class TaskDTO {
     public Set<String> dependants = new HashSet<>();
 
     public Set<String> dependencies = new HashSet<>();
+
+    private List<String> previousTaskNameResults = new ArrayList<>();
 }

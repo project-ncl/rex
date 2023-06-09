@@ -59,4 +59,6 @@ public class MinimizedTask {
     private final List<ServerResponse> serverResponses;
 
     private final StopFlag stopFlag;
+
+    private final List<String> previousTaskNameResults;
 }

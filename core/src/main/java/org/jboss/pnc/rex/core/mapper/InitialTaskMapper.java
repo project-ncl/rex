@@ -39,5 +39,6 @@ public interface InitialTaskMapper {
     @Mapping(target = "serverResponse", ignore = true)
     @Mapping(target = "dependant", ignore = true)
     @Mapping(target = "dependency", ignore = true)
+    @Mapping(target = "previousTaskNameResults", ignore = true)
     Task fromInitialTask(InitialTask initialTask);
 }
