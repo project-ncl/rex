@@ -25,8 +25,8 @@ import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.pnc.rex.core.api.TaskContainer;
 import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.ServerResponse;
@@ -52,7 +52,7 @@ public class RemoteEntityClient {
 
     private final TaskController controller;
 
-    private final TaskContainer container;
+    private final TaskRegistry taskRegistry;
 
     private final GenericVertxHttpClient client;
 
@@ -61,9 +61,9 @@ public class RemoteEntityClient {
     @ConfigProperty(name = "scheduler.baseUrl", defaultValue = "http://localhost:8080")
     String baseUrl;
 
-    public RemoteEntityClient(GenericVertxHttpClient client, @WithTransactions TaskController controller, TaskContainer container, ObjectMapper mapper) {
+    public RemoteEntityClient(GenericVertxHttpClient client, @WithTransactions TaskController controller, TaskRegistry taskRegistry, ObjectMapper mapper) {
         this.controller = controller;
-        this.container = container;
+        this.taskRegistry = taskRegistry;
         this.client = client;
         this.mapper = mapper;
     }
@@ -80,7 +80,7 @@ public class RemoteEntityClient {
         }
 
 
-        Object payload = getPayload(requestDefinition, task.getPreviousTaskNameResults());
+        Object payload = getPayload(requestDefinition, task);
 
         StopRequest request = StopRequest.builder()
                 .payload(payload)
@@ -107,7 +107,7 @@ public class RemoteEntityClient {
         }
 
         StartRequest request = StartRequest.builder()
-                .payload(getPayload(requestDefinition, task.getPreviousTaskNameResults()))
+                .payload(getPayload(requestDefinition, task))
                 .callback(baseUrl + "/rest/internal/"+ task.getName() + "/finish")
                 .build();
 
@@ -157,24 +157,34 @@ public class RemoteEntityClient {
      * Get payload to send from the Request.
      *
      * If previousTaskNames is not set in the request, use the 'attachment' as payload.
-     * If previousTaskNames is set, ignore the 'attachment' value and instead insert the results of the tasks mentioned
-     * in the previousTaskNames into the payload
+     * If previousTaskNames is set, return a list the results of the tasks mentioned
+     * in the previousTaskNames into the payload, and the attachment
      *
-     * @param requestDefinition
+     * @param requestDefinition request object
+     * @param currentTask task whose payload is being generated
+     *
      * @return payload to use
      */
-    private Object getPayload(Request requestDefinition, List<String> previousTaskNames) {
+    private Object getPayload(Request requestDefinition, Task currentTask) {
 
-        Object payload = null;
+        List<Object> dataToSend = new ArrayList<>();
+        List<String> previousTaskNames = currentTask.getPreviousTaskNameResults();
 
-        if (previousTaskNames == null || previousTaskNames.isEmpty()) {
-            payload = requestDefinition.getAttachment();
-        } else {
-            List<Object> dataToSend = new ArrayList<>();
+        if (previousTaskNames != null) {
 
             for (String taskName : previousTaskNames) {
 
-                List<ServerResponse> serverResponses = container.getTask(taskName).getServerResponses();
+                Task previousTask = taskRegistry.getTask(taskName);
+
+                if (previousTask == null) {
+                    // TODO: error checking
+                } else if (!previousTask.getState().isFinal()) {
+                    // TODO: error checking
+                } else if (!previousTask.getCorrelationID().equals(currentTask.getCorrelationID())) {
+                    // TODO: make sure the task is from the same graph request
+                }
+
+                List<ServerResponse> serverResponses = previousTask.getServerResponses();
 
                 if (serverResponses != null && !serverResponses.isEmpty()) {
                     // add last positive server response to the data to send
@@ -184,9 +194,14 @@ public class RemoteEntityClient {
                     dataToSend.add(new Object());
                 }
             }
-            payload = dataToSend;
         }
-        return payload;
-    }
 
+        dataToSend.add(requestDefinition.getAttachment());
+
+        if (dataToSend.size() == 1) {
+            return dataToSend.get(0);
+        } else {
+            return dataToSend;
+        }
+    }
 }
