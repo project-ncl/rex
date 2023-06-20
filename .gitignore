@@ -15,3 +15,6 @@ bin
 
 # Generic
 env.prop
+
+# auto-generated java code
+/common/src/main/java/org/jboss/pnc/rex/common/Constants.java
