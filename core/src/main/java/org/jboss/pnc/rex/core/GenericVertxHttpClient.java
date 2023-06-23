@@ -73,6 +73,7 @@ public class GenericVertxHttpClient {
                 remoteEndpoint.getHost(),
                 remoteEndpoint.getPath());
         addHeaders(request, headers);
+        request.followRedirects(true);
 
         log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
                 remoteEndpoint,
@@ -108,6 +109,7 @@ public class GenericVertxHttpClient {
                 remoteEndpoint.getHost(),
                 remoteEndpoint.getPath());
         addHeaders(request, headers);
+        request.followRedirects(true);
 
         log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
                 remoteEndpoint,
