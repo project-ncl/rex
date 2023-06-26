@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.model.Task;
 
 import javax.enterprise.event.TransactionPhase;
+import java.time.Duration;
 
 @Slf4j
 public class DelegateJob extends ControllerJob {
@@ -70,7 +71,10 @@ public class DelegateJob extends ControllerJob {
                 .transform(this::delegateExecute);
 
         if (tolerant) {
-            uni = uni.onFailure().retry().atMost(15);
+            uni = uni.onFailure().retry()
+                    .withBackOff(Duration.ofMillis(10), Duration.ofMillis(100))
+                    .withJitter(0.5)
+                    .atMost(15);
         }
 
         return uni.await().indefinitely();
