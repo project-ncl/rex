@@ -187,6 +187,7 @@ public class NotificationTest {
                                     STARTING_to_UP,
                                     UP_to_SUCCESSFUL));
                 });
+        Thread.sleep(100);
 
         assertThat(endpoint.getAll(getAllParameters())).isEmpty();
     }
