@@ -70,7 +70,7 @@ public class GenericVertxHttpClient {
                              Consumer<HttpResponse<Buffer>> onResponse,
                              Consumer<Throwable> onConnectionUnreachable) {
         HttpRequest<Buffer> request = client.request(toVertxMethod(method),
-                remoteEndpoint.getPort() == -1 ? 80 : remoteEndpoint.getPort(),
+                getPort(remoteEndpoint),
                 remoteEndpoint.getHost(),
                 remoteEndpoint.getPath());
         addHeaders(request, headers);
@@ -85,6 +85,22 @@ public class GenericVertxHttpClient {
         var uni = Uni.createFrom().item(() -> request.sendJsonAndAwait(requestBody));
 
         handleRequest(uni, onResponse, onConnectionUnreachable).await().atMost(Duration.ofSeconds(5));
+    }
+
+    private static int getPort(URI remoteEndpoint) {
+        if (remoteEndpoint.getPort() == -1) {
+            if (remoteEndpoint.getScheme().equals("http")) {
+                return 80;
+            }
+
+            if (remoteEndpoint.getScheme().equals("https")) {
+                return 443;
+            }
+
+            return 80;
+        }
+
+        return remoteEndpoint.getPort();
     }
 
     private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Consumer<Throwable> onConnectionUnreachable) {
@@ -120,7 +136,7 @@ public class GenericVertxHttpClient {
                              Consumer<HttpResponse<Buffer>> onResponse,
                              Consumer<Throwable> onConnectionUnreachable) {
         HttpRequest<Buffer> request = client.request(toVertxMethod(method),
-                remoteEndpoint.getPort() == -1 ? 80 : remoteEndpoint.getPort(),
+                getPort(remoteEndpoint),
                 remoteEndpoint.getHost(),
                 remoteEndpoint.getPath());
         addHeaders(request, headers);
