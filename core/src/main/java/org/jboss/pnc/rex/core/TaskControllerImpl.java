@@ -186,14 +186,13 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     }
 
     private Transition getTransition(Task task) {
-        Mode mode = task.getControllerMode();
         return switch (task.getState()) {
             case NEW -> {
                 if (shouldStop(task))
                     yield Transition.NEW_to_STOPPED;
                 if (shouldQueue(task))
                     yield Transition.NEW_to_ENQUEUED;
-                if (mode == Mode.ACTIVE && task.getUnfinishedDependencies() > 0)
+                if (shouldWait(task))
                     yield Transition.NEW_to_WAITING;
                 yield null;
             }
@@ -250,6 +249,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             // final states have no possible transitions
             case START_FAILED, STOP_FAILED, FAILED, SUCCESSFUL, STOPPED -> null;
         };
+    }
+
+    private static boolean shouldWait(Task task) {
+        return task.getControllerMode() == Mode.ACTIVE && task.getUnfinishedDependencies() > 0;
     }
 
     private boolean shouldQueue(Task task) {
@@ -371,7 +374,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        if (EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED).contains(task.getState())){
+        if (EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED, State.STOPPING).contains(task.getState())){
             ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response);
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(negativeResponse);
