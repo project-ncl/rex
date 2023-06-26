@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.core;
 
 
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
@@ -28,8 +29,8 @@ import io.vertx.mutiny.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.pnc.rex.common.enums.Method;
-import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.model.Header;
+import org.jboss.resteasy.spi.HttpResponseCodes;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
@@ -81,21 +82,35 @@ public class GenericVertxHttpClient {
                 headers.toString(),
                 requestBody.toString());
 
-        Uni.createFrom().item(() -> request.sendJsonAndAwait(requestBody))
-                .onItem().transformToUni(i -> Uni.createFrom()
-                        .item(i)
-                        .onItem().invoke(onResponse)
-                        .onFailure(th -> !failFast.contains(th))
-                            .retry()
-                                .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
-                                .atMost(20)
-                        .onFailure().recoverWithNull())
-                .onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
+        var uni = Uni.createFrom().item(() -> request.sendJsonAndAwait(requestBody));
+
+        handleRequest(uni, onResponse, onConnectionUnreachable).await().atMost(Duration.ofSeconds(5));
+    }
+
+    private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Consumer<Throwable> onConnectionUnreachable) {
+        // case when http request succeeds and a body is received
+        uni = uni.onItem()
+                // create a separate uni to decouple internal failure tolerance
+                .transformToUni(i -> Uni.createFrom()
+                    .item(i)
+                    .invoke(onResponse)
+                    .onFailure(th -> !failFast.contains(th))
+                        .retry()
+                            .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
+                            .atMost(20)
+                    .onFailure()
+                        // recover with null so that Uni doesn't trigger outer onFailure() handlers
+                        .recoverWithNull()
+                );
+
+        // cases when http request method itself fails (unreachable host)
+        uni = uni.onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
                 .onFailure().retry().atMost(20)
                 .onFailure().invoke(onConnectionUnreachable)
                 // recover with null so that Uni doesn't propagate the exception
-                .onFailure().recoverWithNull()
-                .await().atMost(Duration.ofSeconds(5));
+                .onFailure().recoverWithNull();
+
+        return uni;
     }
 
     public Uni<HttpResponse<Buffer>> makeReactiveRequest(URI remoteEndpoint,
@@ -117,25 +132,7 @@ public class GenericVertxHttpClient {
                 headers.toString(),
                 requestBody.toString());
 
-        return request.sendJson(requestBody)
-                .onItem().transformToUni(i -> Uni.createFrom()
-                        .item(i)
-                        .onItem().invoke(onResponse)
-                        .onFailure(th -> !failFast.contains(th))
-                            .retry().atMost(20)
-                        .onFailure().recoverWithNull())
-                .onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
-                .onFailure().retry().atMost(20)
-                .onFailure().invoke(onConnectionUnreachable)
-                // recover with null so that Uni doesn't propagate the exception
-                .onFailure().recoverWithNull();
-    }
-    private <T> T wrapExceptions(Supplier<T> supplier) {
-        try {
-           return supplier.get();
-        } catch (Exception e) {
-            throw new BadRequestException(e);
-        }
+        return handleRequest(request.sendJson(requestBody), onResponse, onConnectionUnreachable);
     }
 
     private HttpMethod toVertxMethod(Method method) {

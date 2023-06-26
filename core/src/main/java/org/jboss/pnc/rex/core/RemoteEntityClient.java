@@ -113,6 +113,10 @@ public class RemoteEntityClient {
         if (200 <= response.statusCode() && response.statusCode() <= 299) {
             log.info("RESPONSE {}: Got positive response.", task.getName());
             controller.accept(task.getName(), parseBody(response));
+        } else if (300 <= response.statusCode() && response.statusCode() <= 399) {
+            log.info("RESPONSE {}: Got redirect to {}", task.getName(), response.getHeader("Location"));
+            // TODO do not fail after proper redirect handling
+            controller.fail(task.getName(), parseBody(response));
         } else {
             log.info("RESPONSE {}: Got negative response. (STATUS CODE: {})", task.getName(), response.statusCode());
             controller.fail(task.getName(), parseBody(response));

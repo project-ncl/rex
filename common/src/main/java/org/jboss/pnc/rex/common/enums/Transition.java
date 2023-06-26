@@ -57,7 +57,7 @@ public enum Transition {
      *
      * Controller requests remote entity to stop execution of remote Task and informs dependants that it's stopping.
      */
-    UP_to_STOP_REQUESTED(State.UP,State.STOP_REQUESTED),
+    UP_to_STOP_REQUESTED(State.UP, State.STOP_REQUESTED),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
@@ -73,7 +73,7 @@ public enum Transition {
      *
      * Controller informs Task's dependants that the Task failed to stop.
      */
-    STOP_REQUESTED_to_STOP_FAILED(State.STOP_REQUESTED,State.STOP_FAILED),
+    STOP_REQUESTED_to_STOP_FAILED(State.STOP_REQUESTED, State.STOP_FAILED),
     /**
      * Controller has received negative callback from remote entity and remote Task failed to stop.
      *
@@ -86,7 +86,7 @@ public enum Transition {
      *
      * Controller informs Task's dependants that the Task stopped.
      */
-    STOPPING_TO_STOPPED(State.STOPPING,State.STOPPED),
+    STOPPING_TO_STOPPED(State.STOPPING, State.STOPPED),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
