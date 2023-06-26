@@ -120,7 +120,7 @@ public class GenericVertxHttpClient {
                 );
 
         // cases when http request method itself fails (unreachable host)
-        uni = uni.onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: {}", t.toString()))
+        uni = uni.onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: ", t))
                 .onFailure().retry().atMost(20)
                 .onFailure().invoke(onConnectionUnreachable)
                 // recover with null so that Uni doesn't propagate the exception
