@@ -21,6 +21,7 @@ import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.core.GenericVertxHttpClient;
 import org.jboss.pnc.rex.core.counter.Counter;
@@ -36,9 +37,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
@@ -96,16 +97,26 @@ public class HttpEndpoint {
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
 
-    private void finishTask(String callback) {
+    private void finishTask(Request callback) {
         try {
             Thread.sleep(Duration.between(Instant.now(), Instant.now().plusMillis(20)).toMillis()+10);
         } catch (InterruptedException e) {
             //ignore
         }
         FinishRequest body = new FinishRequest(true, "ALL IS OK");
-        client.makeRequest(URI.create(callback),
-                Method.POST,
-                List.of(Header.builder().name("Content-Type").value("application/json").build()),
+
+        List<Header> callbackHeaders = new ArrayList<>();
+        callbackHeaders.add(Header.builder().name("Content-Type").value("application/json").build());
+
+        if (callback.getHeaders() != null) {
+            for (Request.Header header: callback.getHeaders()) {
+                callbackHeaders.add(Header.builder().name(header.getName()).value(header.getValue()).build());
+            }
+        }
+
+        client.makeRequest(callback.getUri(),
+                Method.valueOf(callback.getMethod().toString()),
+                callbackHeaders,
                 body,
                 this::onResponse,
                 throwable -> log.error("Couldn't reach local scheduler.", throwable));

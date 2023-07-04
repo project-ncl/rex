@@ -35,6 +35,10 @@ import org.jboss.pnc.rex.model.requests.StopRequest;
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * TODO: Possibly convert to JAX-RS RestClient builder to enable dynamic url
@@ -65,6 +69,7 @@ public class RemoteEntityClient {
         Request requestDefinition = task.getRemoteCancel();
 
         URI url;
+        org.jboss.pnc.api.dto.Request callbackRequest;
         try {
             url = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
@@ -72,9 +77,13 @@ public class RemoteEntityClient {
                     task.getName(), e);
         }
 
+        String callback = baseUrl + "/rest/internal/"+ task.getName() + "/finish";
+
+        callbackRequest = getCallbackRequest(callback, task.getName());
+
         StopRequest request = StopRequest.builder()
                 .payload(requestDefinition.getAttachment())
-                .callback(baseUrl + "/rest/internal/"+ task.getName() + "/finish")
+                .callback(callbackRequest)
                 .build();
 
         client.makeRequest(url,
@@ -85,10 +94,13 @@ public class RemoteEntityClient {
                 throwable -> handleConnectionFailure(throwable, task));
     }
 
+
     public void startJob(Task task) {
         Request requestDefinition = task.getRemoteStart();
 
         URI uri;
+        org.jboss.pnc.api.dto.Request callbackRequest;
+
         try {
             uri = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
@@ -96,9 +108,12 @@ public class RemoteEntityClient {
                     task.getName(), e);
         }
 
+        String callback = baseUrl + "/rest/internal/"+ task.getName() + "/finish";
+        callbackRequest = getCallbackRequest(callback, task.getName());
+
         StartRequest request = StartRequest.builder()
                 .payload(requestDefinition.getAttachment())
-                .callback(baseUrl + "/rest/internal/"+ task.getName() + "/finish")
+                .callback(callbackRequest)
                 .build();
 
         client.makeRequest(uri,
@@ -145,5 +160,17 @@ public class RemoteEntityClient {
             }
         }
         return objectResponse;
+    }
+
+    private org.jboss.pnc.api.dto.Request getCallbackRequest(String callback, String taskName) {
+        org.jboss.pnc.api.dto.Request callbackRequest;
+        try {
+            URI callbackUri = new URI(callback);
+            List<org.jboss.pnc.api.dto.Request.Header> headers = List.of(new org.jboss.pnc.api.dto.Request.Header(CONTENT_TYPE, APPLICATION_JSON));
+            callbackRequest = new org.jboss.pnc.api.dto.Request(org.jboss.pnc.api.dto.Request.Method.POST, callbackUri, headers);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("callbackUri " + callback + " is not a valid URL for task with name " + taskName, e);
+        }
+        return callbackRequest;
     }
 }
