@@ -31,7 +31,7 @@ import lombok.extern.jackson.Jacksonized;
 @ToString
 public class StopRequest {
 
-    private final String callback;
+    private final org.jboss.pnc.api.dto.Request callback;
 
     private final Object payload;
 }
