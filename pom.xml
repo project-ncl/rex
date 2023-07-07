@@ -75,7 +75,7 @@
     <assertj.version>3.23.1</assertj.version>
     <restassured.version>4.1.1</restassured.version>
     <mapstruct.version>1.5.3.Final</mapstruct.version>
-    <pnc-api.version>2.4.5-SNAPSHOT</pnc-api.version>
+    <pnc-api.version>2.5.0-SNAPSHOT</pnc-api.version>
   </properties>
   
   <dependencyManagement>
