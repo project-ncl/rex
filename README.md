@@ -9,7 +9,6 @@ successful/unsuccessful completion of remote tasks. Additionally, there is an op
 for a task which will make Rex publish notifications as the task transitions between states.
 
 
-
 # Running rex
 
 ## Requirements
@@ -79,3 +78,47 @@ for a task which will make Rex publish notifications as the task transitions bet
 
 ## Container image build
 - mvn clean install -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true
+
+## Consuming rex-api in a Quarkus 3 application
+Rex is currently based on Quarkus 2 which uses Jakarta EE 8. For any
+application built on top of Quarkus 3 and/or Jakarta EE 9+ and consuming the
+rex-api library, the following changes are needed in the application's pom.xml:
+
+```xml
+<dependency>
+  <groupId>org.jboss.pnc.rex</groupId>
+  <artifactId>rex-api</artifactId>
+  <version>LATEST</version>
+  <classifier>jakarta</classifier>
+  <exclusions>
+    <exclusion>
+      <groupId>org.jboss.pnc.rex</groupId>
+      <artifactId>rex-dto</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+<dependency>
+  <groupId>org.jboss.pnc.rex</groupId>
+  <artifactId>rex-dto</artifactId>
+  <version>LATEST</version>
+  <classifier>jakarta</classifier>
+  <exclusions>
+    <exclusion>
+      <groupId>org.jboss.pnc</groupId>
+      <artifactId>pnc-api</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+<dependency>
+  <groupId>org.jboss.pnc</groupId>
+  <artifactId>pnc-api</artifactId>
+  <version>LATEST</version>
+  <classifier>jakarta</classifier>
+</dependency>
+```
+The rex-api with classifier `jakarta` is produced by the eclipse-transformer
+maven plugin to modify the rex-api jar to port to `jakarta` import statements.
+However this transformation doesn't take care of transitive dependencies. Since rex-dto also uses `javax` import statements, we need to:
+- explicitly exclude rex-dto when using rex-api
+- explicitly specify that we want to use the rex-dto with classifier `jakarta` and explicity exclude pnc-api
+- explicitly specify that we want to use pnc-api with classifier `jakarta`
