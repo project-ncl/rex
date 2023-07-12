@@ -13,6 +13,22 @@ scheduler:
       abortOn: javax.validation.ConstraintViolationException, org.jboss.pnc.rex.common.exceptions.TaskMissingException, org.jboss.pnc.rex.common.exceptions.BadRequestException, org.jboss.pnc.rex.common.exceptions.TaskConflictException, org.jboss.pnc.rex.common.exceptions.CircularDependencyException, org.jboss.pnc.rex.common.exceptions.ConstraintConflictException
 
 quarkus:
+  application:
+    name: rex
+
+  opentelemetry:
+    enabled: true
+    tracer:
+      enabled: true
+      # reflect sampling on collector
+      resource-attributes: "sampler_ratio=0.05,service.name=rex"
+      sampler:
+        ratio: 0.05
+      exporter:
+        otlp:
+          # Send telemetry data to an opentelemetry-collector
+          #endpoint: http://localhost:4317
+
   package:
     type: fast-jar
 
