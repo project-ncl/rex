@@ -21,45 +21,17 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import lombok.ToString;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.common.enums.StopFlag;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+/**
+ * Class to specify metadata for a Task.
+ */
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class TaskDTO {
+public class ConfigurationDTO {
 
-    public String name;
-
-    public String constraint;
-
-    public String correlationID;
-
-    public Request remoteStart;
-
-    public Request remoteCancel;
-
-    public Request callerNotifications;
-
-    public State state;
-
-    public StopFlag stopFlag;
-
-    public List<ServerResponseDTO> serverResponses = new ArrayList<>();
-
-    public Set<String> dependants = new HashSet<>();
-
-    public Set<String> dependencies = new HashSet<>();
-
-    public ConfigurationDTO configuration = new ConfigurationDTO();
+    public boolean provideDependencyResults = false;
 }

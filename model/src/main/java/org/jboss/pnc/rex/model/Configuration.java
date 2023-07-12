@@ -15,27 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.model.requests;
+package org.jboss.pnc.rex.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
-
-import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
- * Request sent to the remote entity to start execution of remote Task.
+ * Class to specify metadata for a Task.
  */
-@Jacksonized
 @Builder
-@Getter
-@ToString
-public class StartRequest {
+@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@Slf4j
+@Jacksonized
+public class Configuration {
 
-    private final String callback;
+    /**
+     * Specify whether we want to send the direct dependency results in the StartRequest
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 1, defaultValue = "false")})
+    private final boolean provideDependencyResults;
 
-    private final Object payload;
-
-    private final Map<String, Object> taskResults;
 }

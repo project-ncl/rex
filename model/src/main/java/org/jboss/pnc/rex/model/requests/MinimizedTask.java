@@ -23,6 +23,7 @@ import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
+import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.ServerResponse;
 
@@ -59,4 +60,6 @@ public class MinimizedTask {
     private final List<ServerResponse> serverResponses;
 
     private final StopFlag stopFlag;
+
+    private final Configuration configuration;
 }

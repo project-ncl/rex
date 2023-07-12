@@ -29,6 +29,7 @@ public interface InitialTaskMapper {
     @Mapping(target = "serverResponses", ignore = true)
     @Mapping(target = "dependants", ignore = true)
     @Mapping(target = "dependencies", ignore = true)
+    @Mapping(target = "configuration", ignore = true)
     // initial values
     @Mapping(target = "controllerMode", source = "controllerMode", defaultValue = "ACTIVE")
     @Mapping(target = "unfinishedDependencies", constant = "0")

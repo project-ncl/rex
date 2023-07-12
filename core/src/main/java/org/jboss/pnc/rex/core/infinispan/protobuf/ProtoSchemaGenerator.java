@@ -23,6 +23,7 @@ import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
+import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.ServerResponse;
@@ -42,6 +43,7 @@ import org.jboss.pnc.rex.model.Task;
                 Mode.class,
                 State.class,
                 StopFlag.class,
-                Request.class})
+                Request.class,
+                Configuration.class})
 interface ProtoSchemaGenerator extends GeneratedSchema {
 }

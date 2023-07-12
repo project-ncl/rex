@@ -15,27 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.model.requests;
+package org.jboss.pnc.rex.facade.mapper;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.extern.jackson.Jacksonized;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
+import org.jboss.pnc.rex.model.Configuration;
+import org.mapstruct.Mapper;
 
-import java.util.Map;
+@Mapper(config = MapperCentralConfig.class)
+public interface ConfigurationMapper extends EntityMapper<ConfigurationDTO, Configuration> {
 
-/**
- * Request sent to the remote entity to start execution of remote Task.
- */
-@Jacksonized
-@Builder
-@Getter
-@ToString
-public class StartRequest {
+    @Override
+    ConfigurationDTO toDTO(Configuration dbEntity);
 
-    private final String callback;
-
-    private final Object payload;
-
-    private final Map<String, Object> taskResults;
+    @Override
+    Configuration toDB(ConfigurationDTO dtoEntity);
 }
