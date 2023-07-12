@@ -19,7 +19,6 @@ package org.jboss.pnc.rex.core;
 
 
 import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.unchecked.Unchecked;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
@@ -30,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.model.Header;
-import org.jboss.resteasy.spi.HttpResponseCodes;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
@@ -38,7 +36,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static java.time.Duration.of;
 
@@ -74,7 +71,9 @@ public class GenericVertxHttpClient {
                 remoteEndpoint.getHost(),
                 remoteEndpoint.getPath());
         addHeaders(request, headers);
+        request.ssl(isSSL(remoteEndpoint));
         request.followRedirects(true);
+
 
         log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
                 remoteEndpoint,
@@ -85,6 +84,10 @@ public class GenericVertxHttpClient {
         var uni = Uni.createFrom().item(() -> request.sendJsonAndAwait(requestBody));
 
         handleRequest(uni, onResponse, onConnectionUnreachable).await().atMost(Duration.ofSeconds(5));
+    }
+
+    private boolean isSSL(URI remoteEndpoint) {
+        return remoteEndpoint.getScheme().equals("https");
     }
 
     private static int getPort(URI remoteEndpoint) {
@@ -140,6 +143,7 @@ public class GenericVertxHttpClient {
                 remoteEndpoint.getHost(),
                 remoteEndpoint.getPath());
         addHeaders(request, headers);
+        request.ssl(isSSL(remoteEndpoint));
         request.followRedirects(true);
 
         log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
