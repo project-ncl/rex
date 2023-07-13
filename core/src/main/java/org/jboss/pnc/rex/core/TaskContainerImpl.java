@@ -59,6 +59,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static javax.transaction.Transactional.TxType.MANDATORY;
 
@@ -152,14 +153,19 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
         List<State> states = new ArrayList<>();
         if (waiting) {
-            states.addAll(EnumSet.of(State.NEW, State.WAITING, State.ENQUEUED));
+            states.addAll(EnumSet.allOf(State.class).stream()
+                    .filter(state -> state.isIdle() || state.isQueued())
+                    .collect(Collectors.toSet()));
         }
         if (running) {
-            states.addAll(EnumSet.of(State.UP, State.STARTING, State.STOP_REQUESTED));
+            states.addAll(EnumSet.allOf(State.class).stream()
+                    .filter(State::isRunning)
+                    .collect(Collectors.toSet()));
         }
         if (finished) {
-            states.addAll(
-                    EnumSet.of(State.STOPPED, State.SUCCESSFUL, State.FAILED, State.START_FAILED, State.STOP_FAILED));
+            states.addAll(EnumSet.allOf(State.class).stream()
+                    .filter(State::isFinal)
+                    .collect(Collectors.toSet()));
         }
         QueryFactory factory = Search.getQueryFactory(tasks);
         // reduce to 'NEW','WAITING'.... format
