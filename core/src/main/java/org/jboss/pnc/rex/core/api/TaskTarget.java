@@ -30,8 +30,8 @@ import java.util.Set;
 public interface TaskTarget {
 
     /**
-     * Starts scheduling a graph of Tasks. Vertices have to be NEW tasks. Edges can be between EXISTING or NEW tasks.
-     * If an edge would introduce dependency relationship where the dependant is an EXISTING Task in {@link FINAL} or
+     * Starts scheduling a graph of Tasks. Vertices have to be NEW tasks. Edges can be between EXISTING or NEW tasks. If
+     * an edge would introduce dependency relationship where the dependant is an EXISTING Task in {@link FINAL} or
      * {@link RUNNING} state, it will get rejected.
      *
      * @param taskGraph graph of task consisting of edges and vertices

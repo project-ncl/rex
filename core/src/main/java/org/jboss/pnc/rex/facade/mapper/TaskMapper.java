@@ -23,11 +23,16 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(config = MapperCentralConfig.class, uses = {RequestMapper.class, ServerResponseMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = { RequestMapper.class, ServerResponseMapper.class })
 public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
 
     @Override
-    @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "serverResponses", "starting", "controllerMode"})
+    @BeanMapping(
+            ignoreUnmappedSourceProperties = {
+                    "unfinishedDependencies",
+                    "serverResponses",
+                    "starting",
+                    "controllerMode" })
     TaskDTO toDTO(Task dbEntity);
 
     @Override
@@ -37,6 +42,6 @@ public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
     @Mapping(target = "dependant", ignore = true)
     @Mapping(target = "dependency", ignore = true)
     @Mapping(target = "starting", ignore = true)
-    @BeanMapping(ignoreUnmappedSourceProperties = {"stopFlag"})
+    @BeanMapping(ignoreUnmappedSourceProperties = { "stopFlag" })
     Task toDB(TaskDTO dtoEntity);
 }

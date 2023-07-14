@@ -49,38 +49,57 @@ public interface InternalEndpoint {
 
     @Path("/{taskName}/finish")
     @Operation(summary = "[ADMIN] Used by remote entity to report Task completion.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SUCCESS_CODE,
+                            description = OpenapiConstants.SUCCESS_DESCRIPTION),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.INVALID_CODE,
+                            description = OpenapiConstants.INVALID_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SERVER_ERROR_CODE,
+                            description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))) })
     @POST
     void finish(@PathParam("taskName") @NotEmpty String taskName, @Valid @NotNull FinishRequest result);
 
     @Path("/options/concurrency")
-    @Operation(summary = "[ADMIN] Sets the amount of possible concurrent builds. Tasks that are currently running are never affected.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @Operation(
+            summary = "[ADMIN] Sets the amount of possible concurrent builds. Tasks that are currently running are never affected.")
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SUCCESS_CODE,
+                            description = OpenapiConstants.SUCCESS_DESCRIPTION),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.INVALID_CODE,
+                            description = OpenapiConstants.INVALID_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SERVER_ERROR_CODE,
+                            description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))) })
     @POST
     void setConcurrent(@QueryParam("amount") @NotNull @Min(0) Long amount);
 
     @Path("/options/concurrency")
     @Operation(summary = "Returns amount of possible concurrent builds.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = LongResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SUCCESS_CODE,
+                            description = OpenapiConstants.SUCCESS_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = LongResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.INVALID_CODE,
+                            description = OpenapiConstants.INVALID_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SERVER_ERROR_CODE,
+                            description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))) })
     @GET
     LongResponse getConcurrent();
 }

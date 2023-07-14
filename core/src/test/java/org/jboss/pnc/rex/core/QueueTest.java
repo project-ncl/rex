@@ -49,7 +49,7 @@ import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
 import static org.jboss.pnc.rex.core.common.TestData.getSingleWithoutStart;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
+// @QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
 public class QueueTest {
 
@@ -92,12 +92,13 @@ public class QueueTest {
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.start(graph);
 
-        assertThatThrownBy(() -> waitTillTasksAre(
-                State.SUCCESSFUL,
-                container,
-                1,
-                graph.getVertices().keySet().toArray(new String[0]))
-        ).isInstanceOf(AssertionError.class);
+        assertThatThrownBy(
+                () -> waitTillTasksAre(
+                        State.SUCCESSFUL,
+                        container,
+                        1,
+                        graph.getVertices().keySet().toArray(new String[0])))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -110,17 +111,15 @@ public class QueueTest {
     }
 
     @Test
-    void testComplexGraphSucceedsAfterChangingMaxToNonZero() throws Exception{
+    void testComplexGraphSucceedsAfterChangingMaxToNonZero() throws Exception {
         internalEndpoint.setConcurrent(0L);
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.start(graph);
 
-        //wait a 1/10 sec
+        // wait a 1/10 sec
         Thread.sleep(100);
         Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
-        assertThat(all)
-                .extracting("state", State.class)
-                .allMatch((state -> state.isIdle() || state.isQueued()));
+        assertThat(all).extracting("state", State.class).allMatch((state -> state.isIdle() || state.isQueued()));
 
         internalEndpoint.setConcurrent(2L);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
@@ -158,6 +157,6 @@ public class QueueTest {
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
 
         Collection<Long> queueRecords = httpEndpoint.stopRecording();
-        assertThat(queueRecords).allMatch(record -> record <=1);
+        assertThat(queueRecords).allMatch(record -> record <= 1);
     }
 }

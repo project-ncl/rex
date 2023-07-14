@@ -55,8 +55,7 @@ public class TransitionRecorder {
     private void extractTransitionAndRecord(NotifyCallerJob transitionJob) {
         Tuple<String, State> state = new Tuple<>(
                 transitionJob.getContext().get().getName(),
-                transitionJob.getTransition().getAfter()
-        );
+                transitionJob.getTransition().getAfter());
 
         if (transitionJob.getTransition().getAfter().isFinal()) {
             log.info("Adding state {}", state.toString());
@@ -92,5 +91,8 @@ public class TransitionRecorder {
         return queue;
     }
 
-    public record Tuple<T1, T2>(T1 first, T2 second) {}
+    public record Tuple<T1,T2>(
+    T1 first, T2 second)
+    {
+    }
 }

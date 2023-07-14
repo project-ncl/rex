@@ -44,6 +44,7 @@ public class ErrorResponse {
         pw.flush();
         this.stackTrace = w.toString();
     }
+
     public ErrorResponse(Exception e, Object object) {
         this(e);
         this.object = object;

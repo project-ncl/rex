@@ -65,7 +65,7 @@ import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
 import static org.jboss.pnc.rex.core.common.TestData.getStopRequestWithCallback;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
+// @QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
 public class NotificationTest {
 
@@ -107,20 +107,30 @@ public class NotificationTest {
         CreateGraphRequest request = getComplexGraph(true, true);
         endpoint.start(request);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, request.getVertices().keySet().toArray(new String[0]));
-        
+
         Thread.sleep(100);
         Map<String, Set<Transition>> records = recorderEndpoint.getRecords();
         assertThat(records.keySet()).containsExactlyInAnyOrderElementsOf(request.getVertices().keySet());
-        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("c")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("d")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("e")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("f")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("g")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("h")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("i")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("j")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("c")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("d")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("e")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("f")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("g")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("h")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("i")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("j")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
     }
 
     @Test
@@ -137,8 +147,22 @@ public class NotificationTest {
         Thread.sleep(100);
         Map<String, Set<Transition>> records = recorderEndpoint.getRecords();
         assertThat(records.keySet()).containsExactlyInAnyOrderElementsOf(request.getVertices().keySet());
-        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_STOP_REQUESTED, STOP_REQUESTED_to_STOPPING, STOPPING_TO_STOPPED));
-        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_STOP_REQUESTED, STOP_REQUESTED_to_STOPPING, STOPPING_TO_STOPPED));
+        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(
+                Set.of(
+                        NEW_to_ENQUEUED,
+                        ENQUEUED_to_STARTING,
+                        STARTING_to_UP,
+                        UP_to_STOP_REQUESTED,
+                        STOP_REQUESTED_to_STOPPING,
+                        STOPPING_TO_STOPPED));
+        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(
+                Set.of(
+                        NEW_to_ENQUEUED,
+                        ENQUEUED_to_STARTING,
+                        STARTING_to_UP,
+                        UP_to_STOP_REQUESTED,
+                        STOP_REQUESTED_to_STOPPING,
+                        STOPPING_TO_STOPPED));
         assertThat(records.get("c")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("d")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("e")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
@@ -165,28 +189,23 @@ public class NotificationTest {
         Map<String, Set<Transition>> records = new HashMap<>(recorderEndpoint.getRecords());
 
         // then
-        var firstTasks = new String[]{"15","52","75","76","77","78","79","80"};
-        assertThat(records)
-                .extractingByKeys(firstTasks)
-                .allSatisfy((firstTransitions) -> {
-                    assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
-                            Set.of(NEW_to_ENQUEUED,
-                                    ENQUEUED_to_STARTING,
-                                    STARTING_to_UP,
-                                    UP_to_SUCCESSFUL));
-                });
+        var firstTasks = new String[] { "15", "52", "75", "76", "77", "78", "79", "80" };
+        assertThat(records).extractingByKeys(firstTasks).allSatisfy((firstTransitions) -> {
+            assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                    Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        });
 
         // remove first tasks
         records.keySet().removeAll(Arrays.asList(firstTasks));
-        assertThat(records)
-                .allSatisfy((remainingTasks, transitions) -> {
-                    assertThat(transitions).containsExactlyInAnyOrderElementsOf(
-                            Set.of(NEW_to_WAITING,
-                                    WAITING_to_ENQUEUED,
-                                    ENQUEUED_to_STARTING,
-                                    STARTING_to_UP,
-                                    UP_to_SUCCESSFUL));
-                });
+        assertThat(records).allSatisfy((remainingTasks, transitions) -> {
+            assertThat(transitions).containsExactlyInAnyOrderElementsOf(
+                    Set.of(
+                            NEW_to_WAITING,
+                            WAITING_to_ENQUEUED,
+                            ENQUEUED_to_STARTING,
+                            STARTING_to_UP,
+                            UP_to_SUCCESSFUL));
+        });
         Thread.sleep(100);
 
         assertThat(endpoint.getAll(getAllParameters())).isEmpty();

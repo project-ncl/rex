@@ -42,13 +42,13 @@ import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToObject;
 @Slf4j
 public class Request {
 
-    @Getter(onMethod_ = {@ProtoField(number = 1)})
+    @Getter(onMethod_ = { @ProtoField(number = 1) })
     private final String url;
 
-    @Getter(onMethod_ = {@ProtoField(number = 2)})
+    @Getter(onMethod_ = { @ProtoField(number = 2) })
     private final Method method;
 
-    @Getter(onMethod_ = {@ProtoField(number = 3)})
+    @Getter(onMethod_ = { @ProtoField(number = 3) })
     private final List<Header> headers;
 
     @Getter

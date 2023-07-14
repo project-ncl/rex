@@ -54,7 +54,11 @@ public class TaskProviderImpl implements TaskProvider {
     private final TaskController controller;
 
     @Inject
-    public TaskProviderImpl(TaskContainer container, TaskController controller, TaskMapper mapper, GraphsMapper graphMapper) {
+    public TaskProviderImpl(
+            TaskContainer container,
+            TaskController controller,
+            TaskMapper mapper,
+            GraphsMapper graphMapper) {
         this.target = container;
         this.registry = container;
         this.controller = controller;
@@ -65,17 +69,12 @@ public class TaskProviderImpl implements TaskProvider {
     @Override
     @Transactional
     public Set<TaskDTO> create(CreateGraphRequest request) {
-        return target.install(graphMapper.toDB(request))
-                .stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toSet());
+        return target.install(graphMapper.toDB(request)).stream().map(mapper::toDTO).collect(Collectors.toSet());
     }
 
     @Override
     public Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished) {
-        return registry.getTasks(waiting,running,finished).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toSet());
+        return registry.getTasks(waiting, running, finished).stream().map(mapper::toDTO).collect(Collectors.toSet());
     }
 
     @Override
@@ -91,17 +90,14 @@ public class TaskProviderImpl implements TaskProvider {
             task = registry.getRequiredTask(taskName);
             return mapper.toDTO(task);
         } catch (TaskMissingException e) {
-            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse(e, e.getTaskName()))
-                    .build());
+            throw new NotFoundException(
+                    Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse(e, e.getTaskName())).build());
         }
     }
 
     @Override
     public Set<TaskDTO> getByCorrelationID(String correlationID) {
-        return registry.getTasksByCorrelationID(correlationID).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toSet());
+        return registry.getTasksByCorrelationID(correlationID).stream().map(mapper::toDTO).collect(Collectors.toSet());
     }
 
     @Override

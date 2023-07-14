@@ -22,7 +22,7 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(config = MapperCentralConfig.class, uses = {HeaderMapper.class, UriMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = { HeaderMapper.class, UriMapper.class })
 public interface RequestMapper extends EntityMapper<org.jboss.pnc.api.dto.Request, Request> {
 
     @Override

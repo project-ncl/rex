@@ -35,10 +35,12 @@ public class PokeQueueJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {}
+    void beforeExecute() {
+    }
 
     @Override
-    void afterExecute() {}
+    void afterExecute() {
+    }
 
     @Override
     boolean execute() {
@@ -47,8 +49,10 @@ public class PokeQueueJob extends ControllerJob {
     }
 
     @Override
-    void onException(Throwable e) {}
+    void onException(Throwable e) {
+    }
 
     @Override
-    void onFailure() {}
+    void onFailure() {
+    }
 }

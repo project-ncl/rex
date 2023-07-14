@@ -25,8 +25,9 @@ import java.util.Set;
 
 public interface TaskProvider {
 
-    //todo document
+    // todo document
     Set<TaskDTO> create(CreateGraphRequest request);
+
     /**
      * returns all services based on filter
      *
@@ -52,8 +53,8 @@ public interface TaskProvider {
     Set<TaskDTO> getByCorrelationID(String correlationID);
 
     /**
-     * Returns all related services
-     * (all dependants, all dependencies, dependants of dependencies, dependencies of dependants)
+     * Returns all related services (all dependants, all dependencies, dependants of dependencies, dependencies of
+     * dependants)
      *
      * @param taskName name of existing service
      * @return set of related services
@@ -63,9 +64,8 @@ public interface TaskProvider {
     /**
      * Used for communication with remote entity. Invoked by remote entity by provided callback.
      *
-     * @param positive callback is positive or negative
-     *          true == remote entity responds that it has finished execution of the service
-     *          false == remote entity responds that the service has failed its execution
+     * @param positive callback is positive or negative true == remote entity responds that it has finished execution of
+     *        the service false == remote entity responds that the service has failed its execution
      */
     void acceptRemoteResponse(String taskName, boolean positive, Object response);
 }

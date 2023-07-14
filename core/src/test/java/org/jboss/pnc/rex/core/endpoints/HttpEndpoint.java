@@ -99,9 +99,9 @@ public class HttpEndpoint {
 
     private void finishTask(Request callback) {
         try {
-            Thread.sleep(Duration.between(Instant.now(), Instant.now().plusMillis(20)).toMillis()+10);
+            Thread.sleep(Duration.between(Instant.now(), Instant.now().plusMillis(20)).toMillis() + 10);
         } catch (InterruptedException e) {
-            //ignore
+            // ignore
         }
         FinishRequest body = new FinishRequest(true, "ALL IS OK");
 
@@ -109,12 +109,13 @@ public class HttpEndpoint {
         callbackHeaders.add(Header.builder().name("Content-Type").value("application/json").build());
 
         if (callback.getHeaders() != null) {
-            for (Request.Header header: callback.getHeaders()) {
+            for (Request.Header header : callback.getHeaders()) {
                 callbackHeaders.add(Header.builder().name(header.getName()).value(header.getValue()).build());
             }
         }
 
-        client.makeRequest(callback.getUri(),
+        client.makeRequest(
+                callback.getUri(),
                 Method.valueOf(callback.getMethod().toString()),
                 callbackHeaders,
                 body,

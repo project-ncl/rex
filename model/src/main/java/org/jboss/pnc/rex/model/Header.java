@@ -26,13 +26,13 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 @Builder
 @Jacksonized
-@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@AllArgsConstructor(onConstructor_ = { @ProtoFactory })
 public class Header {
 
-    @Getter(onMethod_ = {@ProtoField(number = 1)})
+    @Getter(onMethod_ = { @ProtoField(number = 1) })
     private final String name;
 
-    @Getter(onMethod_ = {@ProtoField(number = 2)})
+    @Getter(onMethod_ = { @ProtoField(number = 2) })
     private final String value;
 
     @Override

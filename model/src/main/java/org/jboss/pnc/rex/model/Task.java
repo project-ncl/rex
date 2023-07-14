@@ -41,8 +41,8 @@ import java.util.Set;
  * <p>
  * TaskController manipulates Task's data.
  * <p>
- * Task has to be installed through BatchTaskInstaller that is provided by TaskTarget. After installation, Task's
- * data is held by Infinispan cache inside TaskRegistry/TaskContainer.
+ * Task has to be installed through BatchTaskInstaller that is provided by TaskTarget. After installation, Task's data
+ * is held by Infinispan cache inside TaskRegistry/TaskContainer.
  *
  * @author Jan Michalov <jmichalo@redhat.com>
  */
@@ -50,24 +50,24 @@ import java.util.Set;
 @ToString
 @Builder(toBuilder = true)
 @ProtoDoc("@Indexed")
-@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@AllArgsConstructor(onConstructor_ = { @ProtoFactory })
 public class Task {
     /**
      * Uniquely identifies a Task and serves as a key in Infinispan cache.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 1)})
+    @Getter(onMethod_ = { @ProtoField(number = 1) })
     private final String name;
 
     /**
      * Second unique constraint alongside Task.name
      */
-    @Getter(onMethod_ = {@ProtoField(number = 2)})
+    @Getter(onMethod_ = { @ProtoField(number = 2) })
     private final String constraint;
 
     /*
      * Correlation ID between tasks that were triggered at the same time.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 3), @ProtoDoc("@Field(index=Index.YES)")})
+    @Getter(onMethod_ = { @ProtoField(number = 3), @ProtoDoc("@Field(index=Index.YES)") })
     private final String correlationID;
 
     /**
@@ -97,7 +97,7 @@ public class Task {
     /**
      * Current state of a task. Default is State.IDLE.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 8), @ProtoDoc("@Field(index=Index.YES)")})
+    @Getter(onMethod_ = { @ProtoField(number = 8), @ProtoDoc("@Field(index=Index.YES)") })
     private State state;
 
     /**
@@ -112,7 +112,7 @@ public class Task {
     /**
      * Number of unfinishedDependencies. Task can't remotely start if the number is positive.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 10, defaultValue = "-1")})
+    @Getter(onMethod_ = { @ProtoField(number = 10, defaultValue = "-1") })
     private int unfinishedDependencies;
 
     /**
@@ -153,8 +153,10 @@ public class Task {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Task task = (Task) o;
         return name.equals(task.name);
     }

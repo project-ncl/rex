@@ -23,9 +23,9 @@ package org.jboss.pnc.rex.common.enums;
  * Transition is a process where there could be a number of Jobs that need to be executed before a transition is
  * completed. Another transition cannot be initiated until these tasks are completed.
  * <p>
- * F.e. Transition between UP and STOP_REQUESTED State creates a Job for each dependant Task to stop and another Job to send a
- * request to remote entity to stop the Task's remote execution. After these Jobs are completed, Task can complete its
- * Transition to STOPPED/STOP_FAILED (based on remote entity's response).
+ * F.e. Transition between UP and STOP_REQUESTED State creates a Job for each dependant Task to stop and another Job to
+ * send a request to remote entity to stop the Task's remote execution. After these Jobs are completed, Task can
+ * complete its Transition to STOPPED/STOP_FAILED (based on remote entity's response).
  * <p>
  * Transition is an edge in state-machine diagram.
  */

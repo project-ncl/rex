@@ -47,7 +47,7 @@ import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
+// @QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks
 public class NotificationDisableCleanTest {
@@ -97,14 +97,14 @@ public class NotificationDisableCleanTest {
                 && task.getServerResponses().size() == 2;
         Predicate<TaskDTO> responsePredicate = (task) -> {
             var responses = task.getServerResponses();
-            boolean firstBody = responses.stream().anyMatch((response ->
-                    response.getState() == State.STARTING
-                    && response.getBody() instanceof Map
-                    && !((Map<String, String>) response.getBody()).get("task").isEmpty()));
-            boolean secondBody = responses.stream().anyMatch((response ->
-                    response.getState() == State.UP
-                    && response.getBody() instanceof String
-                    && response.getBody().equals("ALL IS OK")));
+            boolean firstBody = responses.stream()
+                    .anyMatch(
+                            (response -> response.getState() == State.STARTING && response.getBody() instanceof Map
+                                    && !((Map<String, String>) response.getBody()).get("task").isEmpty()));
+            boolean secondBody = responses.stream()
+                    .anyMatch(
+                            (response -> response.getState() == State.UP && response.getBody() instanceof String
+                                    && response.getBody().equals("ALL IS OK")));
             return firstBody && secondBody;
         };
         assertThat(all).isNotEmpty();

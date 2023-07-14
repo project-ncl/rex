@@ -40,8 +40,8 @@ public interface TaskController {
     void setMode(String name, Mode mode);
 
     /**
-     * Sets mode of a Task. Needs to be called in a transaction. Additionally pokes queue
-     * after transaction succeeds if specified.
+     * Sets mode of a Task. Needs to be called in a transaction. Additionally pokes queue after transaction succeeds if
+     * specified.
      *
      * @param name id of the Task
      * @param mode the mode
@@ -53,6 +53,7 @@ public interface TaskController {
      * Method used for positive callback. Needs to be called in a transaction.
      *
      * f.e. to signalize that remote Task has started/cancelled/finished.
+     *
      * @param name id of the Task
      */
     void accept(String name, Object response);
@@ -61,6 +62,7 @@ public interface TaskController {
      * Method used for negative callback. Needs to be called in a transaction.
      *
      * f.e. to signalize that remote Task failed to start/cancel or failed during execution.
+     *
      * @param name id of the Task
      */
     void fail(String name, Object response);

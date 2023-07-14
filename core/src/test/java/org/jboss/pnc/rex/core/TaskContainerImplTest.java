@@ -65,7 +65,7 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
+// @QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @Slf4j
 @TestSecurity(authorizationEnabled = false)
 class TaskContainerImplTest {
@@ -98,14 +98,17 @@ class TaskContainerImplTest {
         max.initialize(1000L);
         running.initialize(0L);
         container.getCache().clear();
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .vertex(EXISTING_KEY, CreateTaskDTO.builder()
-                        .name(EXISTING_KEY)
-                        .controllerMode(Mode.IDLE)
-                        .remoteStart(getRequestWithoutStart("{id: 100}"))
-                        .remoteCancel(getStopRequest("{id: 100}"))
-                        .build())
-                .build());
+        taskEndpoint.start(
+                CreateGraphRequest.builder()
+                        .vertex(
+                                EXISTING_KEY,
+                                CreateTaskDTO.builder()
+                                        .name(EXISTING_KEY)
+                                        .controllerMode(Mode.IDLE)
+                                        .remoteStart(getRequestWithoutStart("{id: 100}"))
+                                        .remoteCancel(getStopRequest("{id: 100}"))
+                                        .build())
+                        .build());
     }
 
     @AfterEach
@@ -116,8 +119,7 @@ class TaskContainerImplTest {
 
     @Test
     public void testGet() {
-        assertThat(container.getTask(EXISTING_KEY))
-                .isNotNull();
+        assertThat(container.getTask(EXISTING_KEY)).isNotNull();
         VersionedValue<Task> service = container.getCache().getWithMetadata(EXISTING_KEY);
         assertThat(service.getVersion()).isNotZero();
     }
@@ -132,8 +134,7 @@ class TaskContainerImplTest {
         container.getCache().put(old.getName(), old.toBuilder().remoteStart(start).build());
         running.replaceValue(0L, 10L);
         tm.setRollbackOnly();
-        assertThatThrownBy(tm::commit)
-                .isInstanceOf(RollbackException.class);
+        assertThatThrownBy(tm::commit).isInstanceOf(RollbackException.class);
 
         assertThat(container.getTask(EXISTING_KEY).getRemoteStart().getAttachment()).isEqualTo("{id: 100}");
         assertThat(running.getValue()).isEqualTo(0);
@@ -141,35 +142,35 @@ class TaskContainerImplTest {
 
     @Test
     public void testInstall() throws Exception {
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .edge(new EdgeDTO("service2", "service1"))
-                .vertex("service1", CreateTaskDTO.builder()
-                        .name("service1")
-                        .controllerMode(Mode.IDLE)
-                        .remoteStart(getRequestWithoutStart("I am service1!"))
-                        .remoteCancel(getStopRequest("I am service1!"))
-                        .build())
-                .vertex("service2", CreateTaskDTO.builder()
-                        .name("service2")
-                        .controllerMode(Mode.IDLE)
-                        .remoteStart(getRequestWithoutStart("I am service2!"))
-                        .remoteCancel(getStopRequest("I am service2!"))
-                        .build())
-                .build());
+        taskEndpoint.start(
+                CreateGraphRequest.builder()
+                        .edge(new EdgeDTO("service2", "service1"))
+                        .vertex(
+                                "service1",
+                                CreateTaskDTO.builder()
+                                        .name("service1")
+                                        .controllerMode(Mode.IDLE)
+                                        .remoteStart(getRequestWithoutStart("I am service1!"))
+                                        .remoteCancel(getStopRequest("I am service1!"))
+                                        .build())
+                        .vertex(
+                                "service2",
+                                CreateTaskDTO.builder()
+                                        .name("service2")
+                                        .controllerMode(Mode.IDLE)
+                                        .remoteStart(getRequestWithoutStart("I am service2!"))
+                                        .remoteCancel(getStopRequest("I am service2!"))
+                                        .build())
+                        .build());
 
         Task task1 = container.getTask("service1");
-        assertThat(task1)
-                .isNotNull();
-        assertThat(task1.getDependants())
-                .containsOnly("service2");
+        assertThat(task1).isNotNull();
+        assertThat(task1.getDependants()).containsOnly("service2");
 
         Task task2 = container.getTask("service2");
-        assertThat(task2)
-                .isNotNull();
-        assertThat(task2.getDependencies())
-                .containsOnly("service1");
-        assertThat(task2.getUnfinishedDependencies())
-                .isEqualTo(1);
+        assertThat(task2).isNotNull();
+        assertThat(task2.getDependencies()).containsOnly("service1");
+        assertThat(task2.getUnfinishedDependencies()).isEqualTo(1);
     }
 
     @Test
@@ -187,35 +188,39 @@ class TaskContainerImplTest {
     @Test
     public void testDependantWaiting() throws Exception {
         String dependant = "dependant.service";
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .edge(new EdgeDTO(dependant, EXISTING_KEY))
-                .vertex(dependant, CreateTaskDTO.builder()
-                        .name(dependant)
-                        .remoteStart(getRequestWithoutStart("A payload"))
-                        .remoteCancel(getStopRequest("A payload"))
-                        .controllerMode(Mode.ACTIVE)
-                        .build())
-                .build());
+        taskEndpoint.start(
+                CreateGraphRequest.builder()
+                        .edge(new EdgeDTO(dependant, EXISTING_KEY))
+                        .vertex(
+                                dependant,
+                                CreateTaskDTO.builder()
+                                        .name(dependant)
+                                        .remoteStart(getRequestWithoutStart("A payload"))
+                                        .remoteCancel(getStopRequest("A payload"))
+                                        .controllerMode(Mode.ACTIVE)
+                                        .build())
+                        .build());
 
         Task task = container.getTask(dependant);
-        assertThat(task)
-                .isNotNull();
-        assertThat(task.getState())
-                .isEqualTo(State.WAITING);
+        assertThat(task).isNotNull();
+        assertThat(task.getState()).isEqualTo(State.WAITING);
     }
 
     @Test
     public void testDependantStartsThroughDependency() throws Exception {
         String dependant = "dependant.service";
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .edge(new EdgeDTO(dependant, EXISTING_KEY))
-                .vertex(dependant, CreateTaskDTO.builder()
-                        .name(dependant)
-                        .remoteStart(getRequestWithoutStart("A payload"))
-                        .remoteCancel(getStopRequest("A payload"))
-                        .controllerMode(Mode.ACTIVE)
-                        .build())
-                .build());
+        taskEndpoint.start(
+                CreateGraphRequest.builder()
+                        .edge(new EdgeDTO(dependant, EXISTING_KEY))
+                        .vertex(
+                                dependant,
+                                CreateTaskDTO.builder()
+                                        .name(dependant)
+                                        .remoteStart(getRequestWithoutStart("A payload"))
+                                        .remoteCancel(getStopRequest("A payload"))
+                                        .controllerMode(Mode.ACTIVE)
+                                        .build())
+                        .build());
 
         container.getTransactionManager().begin();
         controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
@@ -245,16 +250,16 @@ class TaskContainerImplTest {
 
         taskEndpoint.start(getComplexGraph(false));
 
-        assertCorrectTaskRelations(container.getTask(a), 0, new String[]{c, d}, null);
-        assertCorrectTaskRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
-        assertCorrectTaskRelations(container.getTask(c), 1, new String[]{f}, new String[]{a});
-        assertCorrectTaskRelations(container.getTask(d), 2, new String[]{e}, new String[]{a, b});
-        assertCorrectTaskRelations(container.getTask(e), 2, new String[]{g, h}, new String[]{d, b});
-        assertCorrectTaskRelations(container.getTask(f), 1, new String[]{i}, new String[]{c});
-        assertCorrectTaskRelations(container.getTask(g), 1, new String[]{i, j}, new String[]{e});
-        assertCorrectTaskRelations(container.getTask(h), 2, new String[]{j}, new String[]{e, b});
-        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[]{f, g});
-        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[]{g, h});
+        assertCorrectTaskRelations(container.getTask(a), 0, new String[] { c, d }, null);
+        assertCorrectTaskRelations(container.getTask(b), 0, new String[] { d, e, h }, null);
+        assertCorrectTaskRelations(container.getTask(c), 1, new String[] { f }, new String[] { a });
+        assertCorrectTaskRelations(container.getTask(d), 2, new String[] { e }, new String[] { a, b });
+        assertCorrectTaskRelations(container.getTask(e), 2, new String[] { g, h }, new String[] { d, b });
+        assertCorrectTaskRelations(container.getTask(f), 1, new String[] { i }, new String[] { c });
+        assertCorrectTaskRelations(container.getTask(g), 1, new String[] { i, j }, new String[] { e });
+        assertCorrectTaskRelations(container.getTask(h), 2, new String[] { j }, new String[] { e, b });
+        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[] { f, g });
+        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[] { g, h });
     }
 
     @Test
@@ -278,17 +283,17 @@ class TaskContainerImplTest {
 
         taskEndpoint.start(graph);
 
-        assertCorrectTaskRelations(container.getTask(a), 0, new String[]{c, d}, null);
-        assertCorrectTaskRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
-        assertCorrectTaskRelations(container.getTask(c), 1, new String[]{f, EXISTING_KEY}, new String[]{a});
-        assertCorrectTaskRelations(container.getTask(d), 2, new String[]{e, EXISTING_KEY}, new String[]{a, b});
-        assertCorrectTaskRelations(container.getTask(e), 2, new String[]{g, h}, new String[]{d, b});
-        assertCorrectTaskRelations(container.getTask(f), 2, new String[]{i}, new String[]{c, EXISTING_KEY});
-        assertCorrectTaskRelations(container.getTask(g), 1, new String[]{i, j}, new String[]{e});
-        assertCorrectTaskRelations(container.getTask(h), 2, new String[]{j}, new String[]{e, b});
-        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[]{f, g});
-        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[]{g, h});
-        assertCorrectTaskRelations(container.getTask(EXISTING_KEY), 2, new String[]{f}, new String[]{c, d});
+        assertCorrectTaskRelations(container.getTask(a), 0, new String[] { c, d }, null);
+        assertCorrectTaskRelations(container.getTask(b), 0, new String[] { d, e, h }, null);
+        assertCorrectTaskRelations(container.getTask(c), 1, new String[] { f, EXISTING_KEY }, new String[] { a });
+        assertCorrectTaskRelations(container.getTask(d), 2, new String[] { e, EXISTING_KEY }, new String[] { a, b });
+        assertCorrectTaskRelations(container.getTask(e), 2, new String[] { g, h }, new String[] { d, b });
+        assertCorrectTaskRelations(container.getTask(f), 2, new String[] { i }, new String[] { c, EXISTING_KEY });
+        assertCorrectTaskRelations(container.getTask(g), 1, new String[] { i, j }, new String[] { e });
+        assertCorrectTaskRelations(container.getTask(h), 2, new String[] { j }, new String[] { e, b });
+        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[] { f, g });
+        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[] { g, h });
+        assertCorrectTaskRelations(container.getTask(EXISTING_KEY), 2, new String[] { f }, new String[] { c, d });
     }
 
     @Test
@@ -303,7 +308,7 @@ class TaskContainerImplTest {
         String h = "h";
         String i = "i";
         String j = "j";
-        String[] services = new String[]{a, b, c, d, e, f, g, h, i, j, EXISTING_KEY};
+        String[] services = new String[] { a, b, c, d, e, f, g, h, i, j, EXISTING_KEY };
 
         Task existingTask = container.getTask(EXISTING_KEY);
         Task updatedTask = existingTask.toBuilder().remoteStart(getEndpointWithStart(EXISTING_KEY)).build();
@@ -325,8 +330,7 @@ class TaskContainerImplTest {
         // sleep because running counter takes time to update
         Thread.sleep(100);
         assertThat(running.getValue()).isEqualTo(0);
-        assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
-                .doesNotContain(services);
+        assertThat(container.getTasks(true, true, true)).extracting("name", String.class).doesNotContain(services);
     }
 
     @Test
@@ -342,7 +346,7 @@ class TaskContainerImplTest {
         String i = "i";
         String j = "j";
         String k = "k";
-        String[] services = new String[]{a, b, c, d, e, f, g, h, i, j, k};
+        String[] services = new String[] { a, b, c, d, e, f, g, h, i, j, k };
 
         CreateGraphRequest request = CreateGraphRequest.builder()
                 .edge(new EdgeDTO(b, a))
@@ -400,12 +404,9 @@ class TaskContainerImplTest {
         String i = "i";
 
         // a -> i creates a i->f->c->a->i cycle
-        CreateGraphRequest request = getComplexGraph(false).toBuilder()
-                .edge(new EdgeDTO(a, i))
-                .build();
+        CreateGraphRequest request = getComplexGraph(false).toBuilder().edge(new EdgeDTO(a, i)).build();
 
-        assertThatThrownBy(() -> taskEndpoint.start(request))
-                .isInstanceOf(CircularDependencyException.class);
+        assertThatThrownBy(() -> taskEndpoint.start(request)).isInstanceOf(CircularDependencyException.class);
     }
 
     @Test
@@ -416,30 +417,25 @@ class TaskContainerImplTest {
         manager.commit();
 
         CreateGraphRequest request = getSingleWithoutStart("newDependency").toBuilder()
-                .edge(new EdgeDTO(EXISTING_KEY,"newDependency"))
+                .edge(new EdgeDTO(EXISTING_KEY, "newDependency"))
                 .build();
 
-        assertThatThrownBy(() -> taskEndpoint.start(request))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> taskEndpoint.start(request)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
     public void shouldFailOnTryingToScheduleExistingTask() {
         CreateGraphRequest request = getSingleWithoutStart(EXISTING_KEY);
 
-        assertThatThrownBy(() -> taskEndpoint.start(request))
-                .isInstanceOf(TaskConflictException.class);
+        assertThatThrownBy(() -> taskEndpoint.start(request)).isInstanceOf(TaskConflictException.class);
     }
 
     @Test
     public void shouldFailOnTryingToCreateReflexiveEdge() {
 
-        CreateGraphRequest request = CreateGraphRequest.builder()
-                .edge(new EdgeDTO(EXISTING_KEY, EXISTING_KEY))
-                .build();
+        CreateGraphRequest request = CreateGraphRequest.builder().edge(new EdgeDTO(EXISTING_KEY, EXISTING_KEY)).build();
 
-        assertThatThrownBy(() -> taskEndpoint.start(request))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> taskEndpoint.start(request)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
@@ -449,10 +445,8 @@ class TaskContainerImplTest {
                 .vertex("ignore", getMockTaskWithoutStart("ignore", Mode.IDLE))
                 .build();
 
-        assertThatThrownBy(() -> taskEndpoint.start(request))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> taskEndpoint.start(request)).isInstanceOf(BadRequestException.class);
     }
-
 
     @Test
     void shouldFailOnStartingTasksWithSameConstraint() {
@@ -463,17 +457,16 @@ class TaskContainerImplTest {
                 .constraint("common")
                 .build();
 
-        CreateGraphRequest firstRequest =  CreateGraphRequest.builder()
+        CreateGraphRequest firstRequest = CreateGraphRequest.builder()
                 .vertex("with-constraint1", withConstraint1)
                 .build();
-        CreateGraphRequest secondRequest =  CreateGraphRequest.builder()
+        CreateGraphRequest secondRequest = CreateGraphRequest.builder()
                 .vertex("with-constraint2", withConstraint2)
                 .build();
 
         taskEndpoint.start(firstRequest);
 
-        assertThatThrownBy(() -> taskEndpoint.start(secondRequest))
-                .isInstanceOf(ConstraintConflictException.class);
+        assertThatThrownBy(() -> taskEndpoint.start(secondRequest)).isInstanceOf(ConstraintConflictException.class);
 
     }
 
@@ -486,20 +479,15 @@ class TaskContainerImplTest {
                 .constraint("common")
                 .build();
 
-        CreateGraphRequest firstRequest =  CreateGraphRequest.builder()
-                .vertex(taskUno, withConstraint1)
-                .build();
+        CreateGraphRequest firstRequest = CreateGraphRequest.builder().vertex(taskUno, withConstraint1).build();
         taskEndpoint.start(firstRequest);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskUno);
-
 
         // DO SECOND REQUEST WITH THE SAME CONSTRAINT
         CreateTaskDTO withConstraint2 = getMockTaskWithStart(taskDos, Mode.ACTIVE).toBuilder()
                 .constraint("common")
                 .build();
-        CreateGraphRequest secondRequest =  CreateGraphRequest.builder()
-                .vertex(taskDos, withConstraint2)
-                .build();
+        CreateGraphRequest secondRequest = CreateGraphRequest.builder().vertex(taskDos, withConstraint2).build();
         taskEndpoint.start(secondRequest);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskDos);
     }

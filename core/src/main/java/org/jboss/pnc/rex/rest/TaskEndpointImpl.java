@@ -48,13 +48,15 @@ public class TaskEndpointImpl implements TaskEndpoint {
 
     @Override
     public Set<TaskDTO> getAll(TaskFilterParameters filterParameters) {
-        Boolean allFiltersAreFalse = !filterParameters.getFinished() && !filterParameters.getRunning() && !filterParameters.getWaiting();
+        Boolean allFiltersAreFalse = !filterParameters.getFinished() && !filterParameters.getRunning()
+                && !filterParameters.getWaiting();
 
-        //If query is empty return all services
+        // If query is empty return all services
         if (allFiltersAreFalse) {
-            return taskProvider.getAll(true,true,true);
+            return taskProvider.getAll(true, true, true);
         }
-        return taskProvider.getAll(filterParameters.getWaiting(), filterParameters.getRunning(), filterParameters.getFinished());
+        return taskProvider
+                .getAll(filterParameters.getWaiting(), filterParameters.getRunning(), filterParameters.getFinished());
     }
 
     @Override

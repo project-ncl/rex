@@ -23,7 +23,6 @@ import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import javax.enterprise.event.TransactionPhase;
 import javax.enterprise.inject.spi.CDI;
 
@@ -44,10 +43,12 @@ public class NotifyCallerJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {}
+    void beforeExecute() {
+    }
 
     @Override
-    void afterExecute() {}
+    void afterExecute() {
+    }
 
     @Override
     boolean execute() {
@@ -55,7 +56,8 @@ public class NotifyCallerJob extends ControllerJob {
     }
 
     @Override
-    void onFailure() {}
+    void onFailure() {
+    }
 
     @Override
     void onException(Throwable e) {

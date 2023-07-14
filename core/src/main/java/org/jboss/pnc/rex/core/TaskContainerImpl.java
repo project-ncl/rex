@@ -85,7 +85,10 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     private final Event<ControllerJob> jobEvent;
 
     @Inject
-    public TaskContainerImpl(TaskController controller, InitialTaskMapper initialMapper, Event<ControllerJob> jobEvent) {
+    public TaskContainerImpl(
+            TaskController controller,
+            InitialTaskMapper initialMapper,
+            Event<ControllerJob> jobEvent) {
         this.controller = controller;
         this.initialMapper = initialMapper;
         this.jobEvent = jobEvent;
@@ -199,7 +202,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         while (notVisited.size() > 0) {
             String current = notVisited.iterator().next();
             if (dfs(current, notVisited, visiting, visited)) {
-                throw new CircularDependencyException("Cycle has been found on Task " + current + " with loop: " + formatCycle(visiting, current));
+                throw new CircularDependencyException(
+                        "Cycle has been found on Task " + current + " with loop: " + formatCycle(visiting, current));
             }
         }
     }
@@ -298,7 +302,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                 Task previousValue = getCache().withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(task.getName(), task);
                 if (previousValue != null) {
                     throw new TaskConflictException(
-                            "Task " + task.getName() + " declared as new in vertices already exists.", previousValue.getName());
+                            "Task " + task.getName() + " declared as new in vertices already exists.",
+                            previousValue.getName());
                 }
 
                 handleOptionalConstraint(task);
@@ -310,7 +315,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                 VersionedValue<Task> versioned = getWithMetadata(entry.getKey());
                 // could be optimized by using #putAll method of remote cache (only 'else' part could be; the 'then'
                 // part required FORCE_RETURN_VALUE flag which is not available in putAll)
-                boolean success = getCache().replaceWithVersion(entry.getKey(), versioned.getValue(), versioned.getVersion());
+                boolean success = getCache()
+                        .replaceWithVersion(entry.getKey(), versioned.getValue(), versioned.getVersion());
                 if (!success) {
                     throw new ConcurrentUpdateException(
                             "Task " + versioned.getValue() + " was remotely updated during the transaction");
@@ -325,7 +331,10 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         if (constraint != null) {
             String previousHolder = constraints.putIfAbsent(constraint, task.getName());
             if (previousHolder != null) {
-                throw new ConstraintConflictException("Task " + task.getName() + " with constraint '" + task.getConstraint() +"' in conflict. Conflicting Task: " + previousHolder, constraint);
+                throw new ConstraintConflictException(
+                        "Task " + task.getName() + " with constraint '" + task.getConstraint()
+                                + "' in conflict. Conflicting Task: " + previousHolder,
+                        constraint);
             }
         }
     }
@@ -391,7 +400,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     /**
      * DEPENDANT -> DEPENDENCY
-     * 
+     *
      * Dependant can have a dependency if it's currently in an IDLE state (hasn't finished nor started)
      */
     private void assertDependantCanHaveDependency(Task dependant) {

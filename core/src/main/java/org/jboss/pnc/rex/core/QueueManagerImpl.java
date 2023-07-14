@@ -45,7 +45,11 @@ public class QueueManagerImpl implements QueueManager {
     private final TaskContainer container;
     private final TaskController controller;
 
-    public QueueManagerImpl(@MaxConcurrent Counter max, @Running Counter running, TaskContainer container, TaskController controller) {
+    public QueueManagerImpl(
+            @MaxConcurrent Counter max,
+            @Running Counter running,
+            TaskContainer container,
+            TaskController controller) {
         this.max = max;
         this.running = running;
         this.container = container;
@@ -75,15 +79,16 @@ public class QueueManagerImpl implements QueueManager {
             return;
         }
 
-        log.info("QUEUE: Free space of {} found. Scheduling {} task(s) of {}",
+        log.info(
+                "QUEUE: Free space of {} found. Scheduling {} task(s) of {}",
                 freeSpace,
                 randomEnqueuedTasks.size(),
-                randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList())
-        );
+                randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList()));
 
         randomEnqueuedTasks.forEach(task -> controller.dequeue(task.getName()));
 
-        log.info("QUEUE: Increasing running counter. ({} to {}) [ISPN-VERSION:{}]",
+        log.info(
+                "QUEUE: Increasing running counter. ({} to {}) [ISPN-VERSION:{}]",
                 runningValue,
                 (runningValue + randomEnqueuedTasks.size()),
                 runningMetadata.getVersion());
@@ -99,7 +104,8 @@ public class QueueManagerImpl implements QueueManager {
     public void decreaseRunningCounter() {
         VersionedValue<Long> runningMetadata = running.getMetadataValue();
         long runningValue = runningMetadata.getValue() - 1;
-        log.info("QUEUE: Decreasing running counter by one. ({} to {}) [ISPN-VERSION:{}]",
+        log.info(
+                "QUEUE: Decreasing running counter by one. ({} to {}) [ISPN-VERSION:{}]",
                 runningMetadata.getValue(),
                 runningValue,
                 runningMetadata.getVersion());

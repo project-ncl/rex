@@ -17,7 +17,6 @@
  */
 package org.jboss.pnc.rex.core;
 
-
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.mutiny.core.Vertx;
@@ -46,27 +45,31 @@ public class GenericVertxHttpClient {
     private final WebClient client;
     private final List<Throwable> failFast;
 
-
-    public GenericVertxHttpClient(Vertx vertx, @ConfigProperty(name = "scheduler.options.retry-policy.abortOn") List<Throwable> abortOn) {
+    public GenericVertxHttpClient(
+            Vertx vertx,
+            @ConfigProperty(name = "scheduler.options.retry-policy.abortOn") List<Throwable> abortOn) {
         this.client = WebClient.create(vertx);
         this.failFast = abortOn;
     }
 
     /**
      * Must be ran on a thread that can block
+     *
      * @param remoteEndpoint
      * @param method
      * @param headers
      * @param requestBody
      * @param onResponse
      */
-    public void makeRequest(URI remoteEndpoint,
-                             Method method,
-                             List<Header> headers,
-                             Object requestBody,
-                             Consumer<HttpResponse<Buffer>> onResponse,
-                             Consumer<Throwable> onConnectionUnreachable) {
-        HttpRequest<Buffer> request = client.request(toVertxMethod(method),
+    public void makeRequest(
+            URI remoteEndpoint,
+            Method method,
+            List<Header> headers,
+            Object requestBody,
+            Consumer<HttpResponse<Buffer>> onResponse,
+            Consumer<Throwable> onConnectionUnreachable) {
+        HttpRequest<Buffer> request = client.request(
+                toVertxMethod(method),
                 getPort(remoteEndpoint),
                 remoteEndpoint.getHost(),
                 remoteEndpoint.getPath());
@@ -74,8 +77,8 @@ public class GenericVertxHttpClient {
         request.ssl(isSSL(remoteEndpoint));
         request.followRedirects(true);
 
-
-        log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
+        log.trace(
+                "HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
                 remoteEndpoint,
                 method,
                 headers.toString(),
@@ -106,39 +109,49 @@ public class GenericVertxHttpClient {
         return remoteEndpoint.getPort();
     }
 
-    private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Consumer<Throwable> onConnectionUnreachable) {
+    private Uni<HttpResponse<Buffer>> handleRequest(
+            Uni<HttpResponse<Buffer>> uni,
+            Consumer<HttpResponse<Buffer>> onResponse,
+            Consumer<Throwable> onConnectionUnreachable) {
         // case when http request succeeds and a body is received
         uni = uni.onItem()
                 // create a separate uni to decouple internal failure tolerance
-                .transformToUni(i -> Uni.createFrom()
-                    .item(i)
-                    .invoke(onResponse)
-                    .onFailure(th -> !failFast.contains(th))
-                        .retry()
-                            .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
-                            .atMost(20)
-                    .onFailure()
-                        // recover with null so that Uni doesn't trigger outer onFailure() handlers
-                        .recoverWithNull()
-                );
+                .transformToUni(
+                        i -> Uni.createFrom()
+                                .item(i)
+                                .invoke(onResponse)
+                                .onFailure(th -> !failFast.contains(th))
+                                .retry()
+                                .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
+                                .atMost(20)
+                                .onFailure()
+                                // recover with null so that Uni doesn't trigger outer onFailure() handlers
+                                .recoverWithNull());
 
         // cases when http request method itself fails (unreachable host)
-        uni = uni.onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: ", t))
-                .onFailure().retry().atMost(20)
-                .onFailure().invoke(onConnectionUnreachable)
+        uni = uni.onFailure()
+                .invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: ", t))
+                .onFailure()
+                .retry()
+                .atMost(20)
+                .onFailure()
+                .invoke(onConnectionUnreachable)
                 // recover with null so that Uni doesn't propagate the exception
-                .onFailure().recoverWithNull();
+                .onFailure()
+                .recoverWithNull();
 
         return uni;
     }
 
-    public Uni<HttpResponse<Buffer>> makeReactiveRequest(URI remoteEndpoint,
-                             Method method,
-                             List<Header> headers,
-                             Object requestBody,
-                             Consumer<HttpResponse<Buffer>> onResponse,
-                             Consumer<Throwable> onConnectionUnreachable) {
-        HttpRequest<Buffer> request = client.request(toVertxMethod(method),
+    public Uni<HttpResponse<Buffer>> makeReactiveRequest(
+            URI remoteEndpoint,
+            Method method,
+            List<Header> headers,
+            Object requestBody,
+            Consumer<HttpResponse<Buffer>> onResponse,
+            Consumer<Throwable> onConnectionUnreachable) {
+        HttpRequest<Buffer> request = client.request(
+                toVertxMethod(method),
                 getPort(remoteEndpoint),
                 remoteEndpoint.getHost(),
                 remoteEndpoint.getPath());
@@ -146,7 +159,8 @@ public class GenericVertxHttpClient {
         request.ssl(isSSL(remoteEndpoint));
         request.followRedirects(true);
 
-        log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
+        log.trace(
+                "HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
                 remoteEndpoint,
                 method,
                 headers.toString(),

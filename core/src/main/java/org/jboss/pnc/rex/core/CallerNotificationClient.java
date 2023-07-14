@@ -58,8 +58,9 @@ public class CallerNotificationClient {
         try {
             uri = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Url for notifications is not a valid URL for task with name "
-                    + task.getName(), e);
+            throw new IllegalArgumentException(
+                    "Url for notifications is not a valid URL for task with name " + task.getName(),
+                    e);
         }
 
         NotificationRequest request = NotificationRequest.builder()
@@ -69,13 +70,15 @@ public class CallerNotificationClient {
                 .task(miniMapper.minimize(task))
                 .build();
 
-        log.info("NOTIFICATION {}: {} transition. Sending notification. REQUEST: {}.",
+        log.info(
+                "NOTIFICATION {}: {} transition. Sending notification. REQUEST: {}.",
                 task.getName(),
                 transition,
                 request.toString());
 
         AtomicBoolean result = new AtomicBoolean(false);
-        client.makeRequest(uri,
+        client.makeRequest(
+                uri,
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
@@ -90,7 +93,8 @@ public class CallerNotificationClient {
 
             result.set(true);
         } else if (300 <= response.statusCode() && response.statusCode() <= 499) {
-            log.warn("NOTIFICATION {}: Failure while sending notification for transition {}. RESPONSE: {}",
+            log.warn(
+                    "NOTIFICATION {}: Failure while sending notification for transition {}. RESPONSE: {}",
                     task.getName(),
                     transition,
                     response.bodyAsString());
@@ -98,7 +102,8 @@ public class CallerNotificationClient {
             result.set(false);
         } else {
             // trigger retry
-            log.warn("NOTIFICATION {}: System Failure while sending notification for transition {}. RESPONSE: {}",
+            log.warn(
+                    "NOTIFICATION {}: System Failure while sending notification for transition {}. RESPONSE: {}",
                     task.getName(),
                     transition,
                     response.bodyAsString());

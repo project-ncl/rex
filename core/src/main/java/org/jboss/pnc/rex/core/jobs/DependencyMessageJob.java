@@ -47,14 +47,18 @@ public abstract class DependencyMessageJob extends ControllerJob {
     abstract void inform(final String dependencyName);
 
     @Override
-    void beforeExecute() {}
+    void beforeExecute() {
+    }
 
     @Override
-    void afterExecute() {}
+    void afterExecute() {
+    }
 
     @Override
-    void onFailure() {}
+    void onFailure() {
+    }
 
     @Override
-    void onException(Throwable e) {}
+    void onException(Throwable e) {
+    }
 }

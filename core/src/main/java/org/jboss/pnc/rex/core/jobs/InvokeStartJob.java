@@ -45,10 +45,12 @@ public class InvokeStartJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {}
+    void beforeExecute() {
+    }
 
     @Override
-    void afterExecute() {}
+    void afterExecute() {
+    }
 
     @Override
     boolean execute() {
@@ -58,17 +60,31 @@ public class InvokeStartJob extends ControllerJob {
     }
 
     @Override
-    void onFailure() {}
+    void onFailure() {
+    }
 
     @Override
     void onException(Throwable e) {
         logger.error("STOP " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
-        Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> controller.fail(context.getName(), "START : System failure. Exception: " + e.toString()))
-                .onFailure().invoke((throwable) -> logger.warn("START " + context.getName() + ": Failed to transition task to START_FAILED state. Retrying.", throwable))
-                .onFailure().retry().atMost(5)
-                .onFailure().recoverWithNull()
-                .await().indefinitely();
+        Uni.createFrom()
+                .voidItem()
+                .onItem()
+                .invoke(
+                        (ignore) -> controller
+                                .fail(context.getName(), "START : System failure. Exception: " + e.toString()))
+                .onFailure()
+                .invoke(
+                        (throwable) -> logger.warn(
+                                "START " + context.getName()
+                                        + ": Failed to transition task to START_FAILED state. Retrying.",
+                                throwable))
+                .onFailure()
+                .retry()
+                .atMost(5)
+                .onFailure()
+                .recoverWithNull()
+                .await()
+                .indefinitely();
     }
 
 }

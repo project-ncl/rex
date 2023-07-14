@@ -34,30 +34,29 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class Assertions {
-    public static void assertCorrectTaskRelations(Task testing,
-                                                  int unfinishedDeps,
-                                                  String[] dependants,
-                                                  String[] dependencies) {
-        assertThat(testing)
-                .isNotNull();
-        assertThat(testing.getUnfinishedDependencies())
-                .isEqualTo(unfinishedDeps);
+    public static void assertCorrectTaskRelations(
+            Task testing,
+            int unfinishedDeps,
+            String[] dependants,
+            String[] dependencies) {
+        assertThat(testing).isNotNull();
+        assertThat(testing.getUnfinishedDependencies()).isEqualTo(unfinishedDeps);
         if (dependants != null) {
-            assertThat(testing.getDependants())
-                    .containsExactlyInAnyOrder(dependants);
+            assertThat(testing.getDependants()).containsExactlyInAnyOrder(dependants);
         }
         if (dependencies != null) {
-            assertThat(testing.getDependencies())
-                    .containsExactlyInAnyOrder(dependencies);
+            assertThat(testing.getDependencies()).containsExactlyInAnyOrder(dependencies);
         }
     }
 
     public static void waitTillTasksAre(State state, TaskContainer container, Task... tasks) {
         waitTillTasksAre(state, container, 5, Arrays.stream(tasks).map(Task::getName).toArray(String[]::new));
     }
+
     public static void waitTillTasksAre(State state, TaskContainer container, int timeout, Task... tasks) {
         waitTillTasksAre(state, container, timeout, Arrays.stream(tasks).map(Task::getName).toArray(String[]::new));
     }
+
     public static void waitTillTasksAre(State state, TaskContainer container, String... tasks) {
         waitTillTasksAre(state, container, 10, tasks);
     }
@@ -84,7 +83,8 @@ public class Assertions {
                 throw new AssertionError("Unexpected interruption", e);
             }
             if (System.currentTimeMillis() > stopTime) {
-                throw new AssertionError("Timeout " + timeout + " " + timeUnit + " reached while waiting for condition");
+                throw new AssertionError(
+                        "Timeout " + timeout + " " + timeUnit + " reached while waiting for condition");
             }
         } while (!condition.get());
     }
@@ -96,10 +96,14 @@ public class Assertions {
             for (int i = 0; i < tasks.length; i++) {
                 var tuple = queue.poll(10, TimeUnit.SECONDS);
                 if (tuple == null) {
-                    throw new AssertionError("Timeout " + 10 + " " + TimeUnit.SECONDS + " reached while waiting for some task to finish");
+                    throw new AssertionError(
+                            "Timeout " + 10 + " " + TimeUnit.SECONDS
+                                    + " reached while waiting for some task to finish");
                 }
                 if (tuple.second() != state) {
-                    throw new AssertionError("Task " + tuple.first() + " didn't have correct state. (" + state + " vs. " + tuple.second() + ")");
+                    throw new AssertionError(
+                            "Task " + tuple.first() + " didn't have correct state. (" + state + " vs. " + tuple.second()
+                                    + ")");
                 }
             }
         } catch (InterruptedException e) {

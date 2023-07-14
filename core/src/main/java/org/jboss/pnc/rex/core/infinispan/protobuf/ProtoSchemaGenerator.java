@@ -35,13 +35,14 @@ import org.jboss.pnc.rex.model.Task;
         schemaPackageName = "rex_model",
         schemaFilePath = "META-INF/",
         schemaFileName = "RexModel.proto",
-        includeClasses = {ServerResponse.class,
+        includeClasses = {
+                ServerResponse.class,
                 Task.class,
                 Header.class,
                 Method.class,
                 Mode.class,
                 State.class,
                 StopFlag.class,
-                Request.class})
+                Request.class })
 interface ProtoSchemaGenerator extends GeneratedSchema {
 }

@@ -39,7 +39,7 @@ public class MaxConcurrentCounter implements Counter {
     @Override
     public VersionedValue<Long> getMetadataValue() {
         VersionedValue<Long> metadata = counterCache.getWithMetadata(MAX_COUNTER_KEY);
-        if(metadata == null) {
+        if (metadata == null) {
             initialize(Long.valueOf(defaultMax));
             metadata = counterCache.getWithMetadata(MAX_COUNTER_KEY);
         }

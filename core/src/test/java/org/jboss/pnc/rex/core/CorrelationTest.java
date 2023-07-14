@@ -62,8 +62,7 @@ public class CorrelationTest {
     void testAllTasksGetCorrelated() {
         String correlationID = "heavy-metal";
 
-        CreateGraphRequest request = generateDAG(1000,2, 10, 5, 10, 0.7F)
-                .toBuilder()
+        CreateGraphRequest request = generateDAG(1000, 2, 10, 5, 10, 0.7F).toBuilder()
                 .correlationID(correlationID)
                 .build();
 
@@ -73,18 +72,14 @@ public class CorrelationTest {
 
         Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
 
-        assertThat(all)
-                .isNotEmpty()
-                .extracting(task -> task.correlationID)
-                .containsOnly(correlationID);
+        assertThat(all).isNotEmpty().extracting(task -> task.correlationID).containsOnly(correlationID);
     }
 
     @Test
     void testCorrelationGetAllEndpoint() throws InterruptedException {
         String correlationID = "nu-metal";
 
-        CreateGraphRequest request = generateDAG(1000,2, 10, 5, 10, 0.7F)
-                .toBuilder()
+        CreateGraphRequest request = generateDAG(1000, 2, 10, 5, 10, 0.7F).toBuilder()
                 .correlationID(correlationID)
                 .build();
 
@@ -94,31 +89,24 @@ public class CorrelationTest {
 
         Set<TaskDTO> tasks = taskEndpoint.byCorrelation(correlationID);
 
-        assertThat(tasks)
-                .isNotEmpty()
-                .extracting(task -> task.correlationID)
-                .containsOnly(correlationID);
+        assertThat(tasks).isNotEmpty().extracting(task -> task.correlationID).containsOnly(correlationID);
     }
 
     @Test
     void testCorrelationIsNullWhenNotSpecified() {
-        CreateGraphRequest request = generateDAG(1000,2, 10, 5, 10, 0.7F);
+        CreateGraphRequest request = generateDAG(1000, 2, 10, 5, 10, 0.7F);
 
         taskEndpoint.start(request);
 
         Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
 
-        assertThat(all)
-                .isNotEmpty()
-                .extracting(task -> task.correlationID)
-                .containsOnlyNulls();
+        assertThat(all).isNotEmpty().extracting(task -> task.correlationID).containsOnlyNulls();
     }
 
     @Test
     void testQueryByNonExistingCorrelationID() {
         String correlationID = "trash-metal";
-        CreateGraphRequest request = generateDAG(1000,2, 10, 5, 10, 0.7F)
-                .toBuilder()
+        CreateGraphRequest request = generateDAG(1000, 2, 10, 5, 10, 0.7F).toBuilder()
                 .correlationID(correlationID)
                 .build();
 

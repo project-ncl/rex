@@ -34,7 +34,8 @@ public class ConstraintValidationExceptionMapper implements ExceptionMapper<Cons
     @Override
     public Response toResponse(ConstraintViolationException e) {
         Response.Status status = Response.Status.BAD_REQUEST;
-        var detailMessage = e.getConstraintViolations().stream()
+        var detailMessage = e.getConstraintViolations()
+                .stream()
                 .map(ConstraintViolation::getMessage)
                 .collect(Collectors.joining(", "));
 
@@ -42,9 +43,6 @@ public class ConstraintValidationExceptionMapper implements ExceptionMapper<Cons
 
         log.warn("DTO Validation failed: " + detailMessage);
 
-        return Response.status(status)
-                .entity(response)
-                .type(MediaType.APPLICATION_JSON)
-                .build();
+        return Response.status(status).entity(response).type(MediaType.APPLICATION_JSON).build();
     }
 }

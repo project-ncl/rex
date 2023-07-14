@@ -24,6 +24,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * Infinispan testcontainers container. Requires docker to be installed.
  *
  * For further Image configuration:
+ *
  * @see <a href=https://github.com/infinispan/infinispan-images/blob/master/README.md>Infinispan Image GitHub</a>
  * @deprecated Infinispan Dev-services are used instead
  */
@@ -35,7 +36,9 @@ public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
     private static final String INFINISPAN_VERSION = "13.0.5.Final-2";
 
     public InfinispanContainer(boolean useNative) {
-        this("quay.io/infinispan/server" + (useNative ? "-native" + ":" + INFINISPAN_VERSION : ":" + INFINISPAN_VERSION));
+        this(
+                "quay.io/infinispan/server"
+                        + (useNative ? "-native" + ":" + INFINISPAN_VERSION : ":" + INFINISPAN_VERSION));
     }
 
     public InfinispanContainer(String imageName) {
@@ -52,8 +55,7 @@ public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
 
     public String getIPAddress() {
         getMappedPort(11222);
-        return getHost() +':'+ getMappedPort(11222);
+        return getHost() + ':' + getMappedPort(11222);
     }
-
 
 }

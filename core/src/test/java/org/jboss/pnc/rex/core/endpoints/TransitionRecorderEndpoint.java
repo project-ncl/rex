@@ -47,8 +47,7 @@ public class TransitionRecorderEndpoint {
             recorder.put(taskName, new ConcurrentHashSet<>());
         }
         Optional<Transition> transition = Arrays.stream(Transition.values())
-                .filter(t -> t.getBefore() == request.getBefore()
-                        && t.getAfter() == request.getAfter())
+                .filter(t -> t.getBefore() == request.getBefore() && t.getAfter() == request.getAfter())
                 .findFirst();
         if (transition.isPresent()) {
             recorder.get(taskName).add(transition.get());

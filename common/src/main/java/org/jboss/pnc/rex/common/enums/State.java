@@ -29,67 +29,56 @@ public enum State {
     /**
      * Task was created and is being idle. It does not transition unless Mode.ACTIVE.
      */
-    @ProtoEnumValue(number = 0)
-    NEW(StateGroup.IDLE),
+    @ProtoEnumValue(number = 0) NEW(StateGroup.IDLE),
     /**
      * Controller is waiting for either all dependencies to successfully complete.
      */
-    @ProtoEnumValue(number = 1)
-    WAITING(StateGroup.IDLE),
+    @ProtoEnumValue(number = 1) WAITING(StateGroup.IDLE),
     /**
      * Task is queued and can be started at any time.
      */
-    @ProtoEnumValue(number = 2)
-    ENQUEUED(StateGroup.QUEUED),
+    @ProtoEnumValue(number = 2) ENQUEUED(StateGroup.QUEUED),
     /**
      * Task is taken from a Queue and Controller makes a request to remote entity to start the Task remotely. Based on
      * the status code in response, Task will transition to either UP or START_FAILED.
      */
-    @ProtoEnumValue(number = 3)
-    STARTING(StateGroup.RUNNING),
+    @ProtoEnumValue(number = 3) STARTING(StateGroup.RUNNING),
     /**
      * Remote Task successfully started and is running.
      */
-    @ProtoEnumValue(number = 4)
-    UP(StateGroup.RUNNING),
+    @ProtoEnumValue(number = 4) UP(StateGroup.RUNNING),
     /**
-     * Controller was requested to stop the remote Task and waits for a response from remote entity. Based on the
-     * status code in response, Task will transition to either STOPPING or STOP_FAILED.
+     * Controller was requested to stop the remote Task and waits for a response from remote entity. Based on the status
+     * code in response, Task will transition to either STOPPING or STOP_FAILED.
      */
-    @ProtoEnumValue(number = 5)
-    STOP_REQUESTED(StateGroup.RUNNING),
+    @ProtoEnumValue(number = 5) STOP_REQUESTED(StateGroup.RUNNING),
     /**
      * Remote Task started the cancellation process and is running.
      */
-    @ProtoEnumValue(number = 6)
-    STOPPING(StateGroup.RUNNING),
+    @ProtoEnumValue(number = 6) STOPPING(StateGroup.RUNNING),
     /**
      * Task failed to start. Remote entity was either unreachable, didn't respond with 2xx status code or unexpected
      * error happened.
      */
-    @ProtoEnumValue(number = 7)
-    START_FAILED(StateGroup.FINAL),
+    @ProtoEnumValue(number = 7) START_FAILED(StateGroup.FINAL),
     /**
      * Task failed to stop. Remote entity was either unreachable, didn't respond with 2xx status code or unexpected
      * error happened.
      */
-    @ProtoEnumValue(number = 8)
-    STOP_FAILED(StateGroup.FINAL),
+    @ProtoEnumValue(number = 8) STOP_FAILED(StateGroup.FINAL),
     /**
      * Remote Task failed during execution.
      */
-    @ProtoEnumValue(number = 9)
-    FAILED(StateGroup.FINAL),
+    @ProtoEnumValue(number = 9) FAILED(StateGroup.FINAL),
     /**
      * Remote Task ended successfully.
      */
-    @ProtoEnumValue(number = 10)
-    SUCCESSFUL(StateGroup.FINAL),
+    @ProtoEnumValue(number = 10) SUCCESSFUL(StateGroup.FINAL),
     /**
      * Remote Task stopped successfully.
      */
-    @ProtoEnumValue(number = 11)
-    STOPPED(StateGroup.FINAL);
+    @ProtoEnumValue(number = 11) STOPPED(StateGroup.FINAL);
+
     private final StateGroup type;
 
     State(StateGroup type) {

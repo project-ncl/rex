@@ -49,4 +49,3 @@ public class CacheListeners {
         log.info("Someone has removed an entry: " + e);
     }
 }
-

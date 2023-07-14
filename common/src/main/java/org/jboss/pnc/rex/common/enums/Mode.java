@@ -26,16 +26,13 @@ public enum Mode {
     /**
      * Controller does not attempt to start the Task.
      */
-    @ProtoEnumValue(number = 0)
-    IDLE,
+    @ProtoEnumValue(number = 0) IDLE,
     /**
      * Controller will actively try to start Task's execution.
      */
-    @ProtoEnumValue(number = 1)
-    ACTIVE,
+    @ProtoEnumValue(number = 1) ACTIVE,
     /**
      * Controller is told to cancel Task's execution.
      */
-    @ProtoEnumValue(number = 2)
-    CANCEL
+    @ProtoEnumValue(number = 2) CANCEL
 }

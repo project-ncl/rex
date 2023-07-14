@@ -37,13 +37,14 @@ public class DelegateJob extends ControllerJob {
 
     private final boolean transactional;
 
-    private DelegateJob(TransactionPhase invocationPhase,
-                        Task context,
-                        boolean async,
-                        boolean tolerant,
-                        boolean transactional,
-                        TransactionSemantics transactionSemantics,
-                        ControllerJob delegate) {
+    private DelegateJob(
+            TransactionPhase invocationPhase,
+            Task context,
+            boolean async,
+            boolean tolerant,
+            boolean transactional,
+            TransactionSemantics transactionSemantics,
+            ControllerJob delegate) {
         super(invocationPhase, context, async);
         this.delegate = delegate;
         this.tolerant = tolerant;
@@ -66,12 +67,11 @@ public class DelegateJob extends ControllerJob {
 
     @Override
     boolean execute() {
-        Uni<Boolean> uni = Uni.createFrom().voidItem()
-                .onItem()
-                .transform(this::delegateExecute);
+        Uni<Boolean> uni = Uni.createFrom().voidItem().onItem().transform(this::delegateExecute);
 
         if (tolerant) {
-            uni = uni.onFailure().retry()
+            uni = uni.onFailure()
+                    .retry()
                     .withBackOff(Duration.ofMillis(10), Duration.ofMillis(100))
                     .withJitter(0.5)
                     .atMost(15);
@@ -89,7 +89,9 @@ public class DelegateJob extends ControllerJob {
     }
 
     @Override
-    void onFailure() {delegate.onFailure();}
+    void onFailure() {
+        delegate.onFailure();
+    }
 
     @Override
     void onException(Throwable e) {
@@ -152,4 +154,3 @@ public class DelegateJob extends ControllerJob {
         }
     }
 }
-

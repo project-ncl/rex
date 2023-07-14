@@ -67,11 +67,12 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     private final boolean cleanTasks;
 
-    public TaskControllerImpl(TaskContainerImpl container,
-                              Event<ControllerJob> scheduleJob,
-                              @ConfigProperty(
-                                      name = "scheduler.options.task-configuration.clean",
-                                      defaultValue = "true") boolean cleanTasks) {
+    public TaskControllerImpl(
+            TaskContainerImpl container,
+            Event<ControllerJob> scheduleJob,
+            @ConfigProperty(
+                    name = "scheduler.options.task-configuration.clean",
+                    defaultValue = "true") boolean cleanTasks) {
         this.container = container;
         this.scheduleJob = scheduleJob;
         this.cleanTasks = cleanTasks;
@@ -80,7 +81,11 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     private List<ControllerJob> transition(Task task) {
         Transition transition = getTransition(task);
         if (transition != null)
-            log.info("TRANSITION {}: before: {} after: {}", task.getName(), transition.getBefore().toString(), transition.getAfter().toString());
+            log.info(
+                    "TRANSITION {}: before: {} after: {}",
+                    task.getName(),
+                    transition.getBefore().toString(),
+                    transition.getAfter().toString());
 
         List<ControllerJob> tasks = new ArrayList<>();
 
@@ -89,7 +94,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         }
 
         tasks.addAll(switch (transition) {
-            //no tasks
+            // no tasks
             case NEW_to_WAITING, NEW_to_ENQUEUED, WAITING_to_ENQUEUED -> List.of();
 
             case ENQUEUED_to_STARTING -> List.of(new InvokeStartJob(task));
@@ -113,7 +118,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                     case CANCELLED -> jobs.add(new DependencyCancelledJob(task));
                     case DEPENDENCY_FAILED -> jobs.add(new DependencyStoppedJob(task));
                     // UNSUCCESSFUL is in FAILED transitions
-                    case UNSUCCESSFUL, NONE -> {}
+                    case UNSUCCESSFUL, NONE -> {
+                    }
                 }
                 if (shouldDeleteImmediately(task, transition))
                     jobs.add(moveToTheEndOfTransaction(new DeleteTaskJob(task)));
@@ -132,7 +138,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 yield jobs;
             }
 
-            //no tasks
+            // no tasks
             case STOP_REQUESTED_to_STOPPING, STARTING_to_UP -> List.of();
 
             case UP_to_SUCCESSFUL -> {
@@ -173,6 +179,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 .delegate(delegate)
                 .build();
     }
+
     private DelegateJob withTransactionAndTolerance(ControllerJob delegate) {
         return DelegateJob.builder()
                 .async(false)
@@ -274,6 +281,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     private boolean shouldDeleteOnNotification(Task task, Transition transition) {
         return shouldDelete(task, transition) && task.getCallerNotifications() != null;
     }
+
     private boolean shouldDelete(Task task, Transition transition) {
         return cleanTasks && task.getDependants().size() == 0 && transition.getAfter().isFinal();
     }
@@ -288,7 +296,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             jobs.addAll(Arrays.asList(forcedJobs));
         }
 
-        log.debug("SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
+        log.debug(
+                "SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
                 task.getName(),
                 taskMetadata.getVersion(),
                 task);
@@ -296,7 +305,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
             log.error("SAVE {}: Concurrent update detected. Transaction will fail.", task.getName());
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException(
+                    "Task " + task.getName() + " was remotely updated during the transaction");
         }
 
         doExecute(jobs);
@@ -324,8 +334,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #2 ALTER
         Mode currentMode = task.getControllerMode();
         if (currentMode == Mode.CANCEL || (mode == Mode.IDLE && currentMode == Mode.ACTIVE)) {
-            //no possible movement
-            log.error("SET-MODE {}: Incorrect request. (current-mode: {}, proposed-mode: {}) ",
+            // no possible movement
+            log.error(
+                    "SET-MODE {}: Incorrect request. (current-mode: {}, proposed-mode: {}) ",
                     name,
                     currentMode,
                     mode);
@@ -338,7 +349,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         // #3 HANDLE
         if (pokeQueue) {
-            handle(taskMetadata, task, new ControllerJob[]{new PokeQueueJob()});
+            handle(taskMetadata, task, new ControllerJob[] { new PokeQueueJob() });
         } else {
             handle(taskMetadata, task);
         }
@@ -357,7 +368,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(positiveResponse);
         } else {
-            var exception = new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
+            var exception = new IllegalStateException(
+                    "Got response from the remote entity while not in a state to do so. Task: " + task.getName()
+                            + " State: " + task.getState());
             log.error("ERROR: ", exception);
             throw exception;
         }
@@ -374,15 +387,17 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        if (EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED, State.STOPPING).contains(task.getState())){
+        if (EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED, State.STOPPING).contains(task.getState())) {
             ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response);
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(negativeResponse);
-            task.setServerResponses(responses); //probably unnecessary
-            //maybe assert it was NONE before
+            task.setServerResponses(responses); // probably unnecessary
+            // maybe assert it was NONE before
             task.setStopFlag(StopFlag.UNSUCCESSFUL);
         } else {
-            throw new IllegalStateException("Got response from the remote entity while not in a state to do so. Task: " + task.getName() + " State: " + task.getState());
+            throw new IllegalStateException(
+                    "Got response from the remote entity while not in a state to do so. Task: " + task.getName()
+                            + " State: " + task.getState());
         }
 
         // #3 HANDLE
@@ -400,7 +415,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         if (task.getState() == State.ENQUEUED) {
             task.setStarting(true);
         } else {
-            throw new IllegalStateException("Attempting to dequeue while not in a state to do. Task: " + task.getName() + " State: " + task.getState());
+            throw new IllegalStateException(
+                    "Attempting to dequeue while not in a state to do. Task: " + task.getName() + " State: "
+                            + task.getState());
         }
 
         // #3 HANDLE
@@ -413,7 +430,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
         Task task = taskMetadata.getValue();
 
@@ -430,18 +449,19 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        //maybe assert it was NONE before
+        // maybe assert it was NONE before
         task.setStopFlag(StopFlag.DEPENDENCY_FAILED);
 
         // #3 HANDLE
         handle(taskMetadata, task);
     }
-
 
     @Override
     @Transactional(MANDATORY)
@@ -449,12 +469,14 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        //maybe assert it was NONE before
+        // maybe assert it was NONE before
         task.setStopFlag(StopFlag.CANCELLED);
 
         // #3 HANDLE
@@ -473,11 +495,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         Task task = taskMetadata.getValue();
 
         if (!task.getState().isFinal()) {
-            log.info("TASK {}: Not in final state, removing deleted dependant {} from the task.", name, deletedDependant);
-            //REMOVE dependant so it doesn't get referenced later
+            log.info(
+                    "TASK {}: Not in final state, removing deleted dependant {} from the task.",
+                    name,
+                    deletedDependant);
+            // REMOVE dependant so it doesn't get referenced later
             task.getDependants().remove(deletedDependant);
 
-            log.debug("SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
+            log.debug(
+                    "SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
                     task.getName(),
                     taskMetadata.getVersion(),
                     task);
@@ -485,7 +511,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
             if (!pushed) {
                 log.error("SAVE {}: Concurrent update detected. Transaction will fail.", task.getName());
-                throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
+                throw new ConcurrentUpdateException(
+                        "Task " + task.getName() + " was remotely updated during the transaction");
             }
         } else {
             // DELETE
@@ -503,9 +530,12 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         // #2 DELETE
         if (!task.getState().isFinal()) {
-            throw new IllegalStateException("Attempting to delete a task while not in a final state. Task: " + task.getName() + " State: " + task.getState());
+            throw new IllegalStateException(
+                    "Attempting to delete a task while not in a final state. Task: " + task.getName() + " State: "
+                            + task.getState());
         }
-        log.debug("DELETE {}: Deleting task from ISPN. (ISPN-VERSION: {}) BODY: {}",
+        log.debug(
+                "DELETE {}: Deleting task from ISPN. (ISPN-VERSION: {}) BODY: {}",
                 task.getName(),
                 taskMetadata.getVersion(),
                 task);
@@ -513,7 +543,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         boolean deleted = container.getCache().removeWithVersion(name, taskMetadata.getVersion());
         if (!deleted) {
             log.error("DELETE {}: Concurrent update detected. Transaction will fail.", task.getName());
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException(
+                    "Task " + task.getName() + " was remotely updated during the transaction");
         }
 
         handleOptionalConstraint(task);

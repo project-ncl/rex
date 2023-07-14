@@ -27,7 +27,7 @@ import org.mapstruct.MappingTarget;
 
 import java.util.HashMap;
 
-@Mapper(config = MapperCentralConfig.class, uses = {EdgeMapper.class, CreateTaskMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = { EdgeMapper.class, CreateTaskMapper.class })
 public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph> {
 
     @Override
@@ -37,8 +37,8 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
 
     @Override
     @Mapping(target = "edge", ignore = true)
-    //correlationID is used in applyCorrelationID method
-    @BeanMapping(ignoreUnmappedSourceProperties = {"correlationID"})
+    // correlationID is used in applyCorrelationID method
+    @BeanMapping(ignoreUnmappedSourceProperties = { "correlationID" })
     TaskGraph toDB(CreateGraphRequest dtoEntity);
 
     @AfterMapping
@@ -46,13 +46,10 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
         if (source.correlationID != null && !source.correlationID.isBlank()) {
             var vertices = new HashMap<>(target.build().getVertices());
             for (var entry : vertices.entrySet()) {
-                entry.setValue(entry.getValue()
-                        .toBuilder()
-                        .correlationID(source.correlationID)
-                        .build());
+                entry.setValue(entry.getValue().toBuilder().correlationID(source.correlationID).build());
             }
 
-            //apply changes
+            // apply changes
             target.vertices(vertices);
         }
     }

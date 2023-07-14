@@ -86,10 +86,12 @@ public class ChainingJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {}
+    void beforeExecute() {
+    }
 
     @Override
-    void afterExecute() {}
+    void afterExecute() {
+    }
 
     @Override
     boolean execute() {
@@ -116,14 +118,14 @@ public class ChainingJob extends ControllerJob {
     }
 
     @Override
-    void onFailure() {}
+    void onFailure() {
+    }
 
     @Override
-    void onException(Throwable e) {}
+    void onException(Throwable e) {
+    }
 
     private enum ChainTrigger {
-        ON_SUCCESS,
-        ON_FAILURE,
-        ON_ANY_OUTCOME
+        ON_SUCCESS, ON_FAILURE, ON_ANY_OUTCOME
     }
 }

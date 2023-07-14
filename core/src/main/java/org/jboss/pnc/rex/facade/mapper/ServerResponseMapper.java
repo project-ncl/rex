@@ -23,10 +23,10 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 
 @Mapper(config = MapperCentralConfig.class)
-public interface ServerResponseMapper extends EntityMapper<ServerResponseDTO, ServerResponse>{
+public interface ServerResponseMapper extends EntityMapper<ServerResponseDTO, ServerResponse> {
 
     @Override
-    @BeanMapping(ignoreUnmappedSourceProperties = {"byteBody", "negative"})
+    @BeanMapping(ignoreUnmappedSourceProperties = { "byteBody", "negative" })
     ServerResponseDTO toDTO(ServerResponse dbEntity);
 
     @Override

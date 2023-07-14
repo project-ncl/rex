@@ -49,21 +49,20 @@ public class AuthenticationTest {
 
     @Test
     void testWithoutAuthentication() {
-        given()
-                .when()
+        given().when()
                 .contentType(ContentType.JSON)
-                .put(taskEndpointURI.getPath()+"/missing/cancel")
+                .put(taskEndpointURI.getPath() + "/missing/cancel")
                 .then()
                 .statusCode(401);
     }
 
     @Test
     void testWithUserAuthentication() {
-        given()
-                .auth().oauth2(getAccessToken("alice", Set.of("user")))
+        given().auth()
+                .oauth2(getAccessToken("alice", Set.of("user")))
                 .when()
                 .contentType(ContentType.JSON)
-                .put(taskEndpointURI.getPath()+"/missing/cancel")
+                .put(taskEndpointURI.getPath() + "/missing/cancel")
                 .then()
                 .statusCode(400)
                 .body("errorType", containsString("TaskMissingException"));
@@ -71,22 +70,22 @@ public class AuthenticationTest {
 
     @Test
     void testWithAdminAuthentication() {
-        given()
-                .auth().oauth2(getAccessToken("admin", Set.of("system-user")))
+        given().auth()
+                .oauth2(getAccessToken("admin", Set.of("system-user")))
                 .when()
                 .contentType(ContentType.JSON)
-                .post(internalEndpointURI.getPath()+"/options/concurrency?amount=40")
+                .post(internalEndpointURI.getPath() + "/options/concurrency?amount=40")
                 .then()
                 .statusCode(204);
     }
 
     @Test
     void testWithUserOnAdminAuthentication() {
-        given()
-                .auth().oauth2(getAccessToken("jdoe", Set.of("user")))
+        given().auth()
+                .oauth2(getAccessToken("jdoe", Set.of("user")))
                 .when()
                 .contentType(ContentType.JSON)
-                .post(internalEndpointURI.getPath()+"/options/concurrency?amount=40")
+                .post(internalEndpointURI.getPath() + "/options/concurrency?amount=40")
                 .then()
                 .statusCode(403);
     }

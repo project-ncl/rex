@@ -43,9 +43,6 @@ public class OptionsProviderImpl implements OptionsProvider {
 
     @Override
     public LongResponse getConcurrency() {
-        return LongResponse
-                .builder()
-                .number(manager.getMaximumConcurrency())
-                .build();
+        return LongResponse.builder().number(manager.getMaximumConcurrency()).build();
     }
 }

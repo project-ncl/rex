@@ -39,20 +39,35 @@ public class InvokeStopJob extends ControllerJob {
     private static final Logger logger = LoggerFactory.getLogger(InvokeStopJob.class);
 
     @Override
-    void beforeExecute() {}
+    void beforeExecute() {
+    }
 
     @Override
-    void afterExecute() {}
+    void afterExecute() {
+    }
 
     @Override
     void onException(Throwable e) {
         logger.error("STOP " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
-        Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> controller.fail(context.getName(), "STOP : System failure. Exception: " + e.toString()))
-                .onFailure().invoke((throwable) -> logger.warn("STOP " + context.getName() + ": Failed to transition task to STOP_FAILED state. Retrying.", throwable))
-                .onFailure().retry().atMost(5)
-                .onFailure().recoverWithNull()
-                .await().indefinitely();
+        Uni.createFrom()
+                .voidItem()
+                .onItem()
+                .invoke(
+                        (ignore) -> controller
+                                .fail(context.getName(), "STOP : System failure. Exception: " + e.toString()))
+                .onFailure()
+                .invoke(
+                        (throwable) -> logger.warn(
+                                "STOP " + context.getName()
+                                        + ": Failed to transition task to STOP_FAILED state. Retrying.",
+                                throwable))
+                .onFailure()
+                .retry()
+                .atMost(5)
+                .onFailure()
+                .recoverWithNull()
+                .await()
+                .indefinitely();
     }
 
     public InvokeStopJob(Task task) {
@@ -69,5 +84,6 @@ public class InvokeStopJob extends ControllerJob {
     }
 
     @Override
-    void onFailure() {}
+    void onFailure() {
+    }
 }

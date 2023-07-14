@@ -37,7 +37,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithoutStart;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
+// @QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
 public class ValidationTest {
 
@@ -51,8 +51,7 @@ public class ValidationTest {
 
     @Test
     void testCreateNoBody() {
-        given()
-                .when()
+        given().when()
                 .contentType(ContentType.JSON)
                 .post(taskEndpointURI.getPath())
                 .then()
@@ -62,15 +61,16 @@ public class ValidationTest {
 
     @Test
     void testCreateWithBlankEdge() {
-        CreateGraphRequest body = CreateGraphRequest.builder().edge(EdgeDTO.builder().source("hello").target("").build()).build();
-        given()
-                .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+        CreateGraphRequest body = CreateGraphRequest.builder()
+                .edge(EdgeDTO.builder().source("hello").target("").build())
+                .build();
+        given().when()
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
@@ -78,88 +78,74 @@ public class ValidationTest {
         CreateGraphRequest body = CreateGraphRequest.builder()
                 .vertex("", getMockTaskWithoutStart("", Mode.IDLE))
                 .build();
-        given()
-                .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+        given().when()
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
     void testCreateWithNullTask() {
-        CreateGraphRequest body = CreateGraphRequest.builder()
-                .vertex("", null)
-                .build();
-        given()
-                .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+        CreateGraphRequest body = CreateGraphRequest.builder().vertex("", null).build();
+        given().when()
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
     void testCreateWithNullEndpoints() {
         CreateGraphRequest body = CreateGraphRequest.builder()
-                .vertex("task", getMockTaskWithoutStart("task", Mode.IDLE)
-                        .toBuilder()
-                        .remoteStart(null)
-                        .build())
+                .vertex("task", getMockTaskWithoutStart("task", Mode.IDLE).toBuilder().remoteStart(null).build())
                 .build();
 
-        given()
-                .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+        given().when()
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
 
         body = CreateGraphRequest.builder()
-                .vertex("task", getMockTaskWithoutStart("task", Mode.IDLE)
-                        .toBuilder()
-                        .remoteCancel(null)
-                        .build())
+                .vertex("task", getMockTaskWithoutStart("task", Mode.IDLE).toBuilder().remoteCancel(null).build())
                 .build();
 
-        given()
-                .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+        given().when()
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
     void testFinishWithNoBody() {
-        given()
-                .when()
-                    .contentType(ContentType.JSON)
-                    .post(internalEndpointURI.getPath() + "/1/finish")
+        given().when()
+                .contentType(ContentType.JSON)
+                .post(internalEndpointURI.getPath() + "/1/finish")
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
     void testFinishWithNoStatus() {
-        FinishRequest request = new FinishRequest(null,"HELLO");
-        given()
-                .when()
-                    .contentType(ContentType.JSON)
-                    .body(request)
-                    .post(internalEndpointURI.getPath() + "/1/finish")
+        FinishRequest request = new FinishRequest(null, "HELLO");
+        given().when()
+                .contentType(ContentType.JSON)
+                .body(request)
+                .post(internalEndpointURI.getPath() + "/1/finish")
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
 }

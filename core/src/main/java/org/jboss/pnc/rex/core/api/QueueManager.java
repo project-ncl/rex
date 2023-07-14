@@ -50,6 +50,7 @@ public interface QueueManager {
 
     /**
      * Returns current number in the maximum counter.
+     *
      * @return maximum counter value
      */
     Long getMaximumConcurrency();

@@ -49,7 +49,7 @@ public class InternalEndpointImpl implements InternalEndpoint {
 
     @Override
     @Retry
-    @Fallback(fallbackMethod = "fallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
+    @Fallback(fallbackMethod = "fallback", applyOn = { RollbackException.class, ArcUndeclaredThrowableException.class })
     @RolesAllowed("user")
     public void finish(String taskName, FinishRequest result) {
         taskProvider.acceptRemoteResponse(taskName, result.getStatus(), result.getResponse());
@@ -70,11 +70,21 @@ public class InternalEndpointImpl implements InternalEndpoint {
     // once https://github.com/smallrye/smallrye-fault-tolerance/issues/492 is merged, use FallbackHandler
     void fallback(String taskName, FinishRequest result) {
         log.error("STOP " + taskName + ": UNEXPECTED exception has been thrown.");
-        Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> taskProvider.acceptRemoteResponse(taskName, false,"ACCEPT : System failure."))
-                .onFailure().invoke((throwable) -> log.warn("ACCEPT " + taskName + ": Failed to transition task to FAILED state. Retrying.", throwable))
-                .onFailure().retry().atMost(5)
-                .onFailure().recoverWithNull()
-                .await().indefinitely();
+        Uni.createFrom()
+                .voidItem()
+                .onItem()
+                .invoke((ignore) -> taskProvider.acceptRemoteResponse(taskName, false, "ACCEPT : System failure."))
+                .onFailure()
+                .invoke(
+                        (throwable) -> log.warn(
+                                "ACCEPT " + taskName + ": Failed to transition task to FAILED state. Retrying.",
+                                throwable))
+                .onFailure()
+                .retry()
+                .atMost(5)
+                .onFailure()
+                .recoverWithNull()
+                .await()
+                .indefinitely();
     }
 }

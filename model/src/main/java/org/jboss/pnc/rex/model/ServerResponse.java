@@ -42,10 +42,10 @@ public class ServerResponse {
     /**
      * Task's state when the Response from remote entity arrived (before transition)
      */
-    @Getter(onMethod_ = {@ProtoField(number = 1, type = Type.ENUM)})
+    @Getter(onMethod_ = { @ProtoField(number = 1, type = Type.ENUM) })
     private final State state;
 
-    @Getter(onMethod_ = {@ProtoField(number = 2, defaultValue = "true")})
+    @Getter(onMethod_ = { @ProtoField(number = 2, defaultValue = "true") })
     private final boolean positive;
 
     @Getter
@@ -83,7 +83,5 @@ public class ServerResponse {
         }
         return null;
     }
-
-
 
 }

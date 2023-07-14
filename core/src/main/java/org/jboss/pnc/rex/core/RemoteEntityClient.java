@@ -42,7 +42,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
  * TODO: Possibly convert to JAX-RS RestClient builder to enable dynamic url
- * @see <a href="https://download.eclipse.org/microprofile/microprofile-rest-client-1.2.1/microprofile-rest-client-1.2.1.html#_sample_builder_usage">JAX-RS Builder</a>
+ *
+ * @see <a href=
+ *      "https://download.eclipse.org/microprofile/microprofile-rest-client-1.2.1/microprofile-rest-client-1.2.1.html#_sample_builder_usage">JAX-RS
+ *      Builder</a>
  */
 
 @Unremovable
@@ -59,7 +62,10 @@ public class RemoteEntityClient {
     @ConfigProperty(name = "scheduler.baseUrl", defaultValue = "http://localhost:8080")
     String baseUrl;
 
-    public RemoteEntityClient(GenericVertxHttpClient client, @WithTransactions TaskController controller, ObjectMapper mapper) {
+    public RemoteEntityClient(
+            GenericVertxHttpClient client,
+            @WithTransactions TaskController controller,
+            ObjectMapper mapper) {
         this.controller = controller;
         this.client = client;
         this.mapper = mapper;
@@ -73,11 +79,12 @@ public class RemoteEntityClient {
         try {
             url = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("remoteCancel.url is not a valid URL for task with name " +
-                    task.getName(), e);
+            throw new IllegalArgumentException(
+                    "remoteCancel.url is not a valid URL for task with name " + task.getName(),
+                    e);
         }
 
-        String callback = baseUrl + "/rest/internal/"+ task.getName() + "/finish";
+        String callback = baseUrl + "/rest/internal/" + task.getName() + "/finish";
 
         callbackRequest = getCallbackRequest(callback, task.getName());
 
@@ -86,14 +93,14 @@ public class RemoteEntityClient {
                 .callback(callbackRequest)
                 .build();
 
-        client.makeRequest(url,
+        client.makeRequest(
+                url,
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
                 response -> handleResponse(response, task),
                 throwable -> handleConnectionFailure(throwable, task));
     }
-
 
     public void startJob(Task task) {
         Request requestDefinition = task.getRemoteStart();
@@ -104,11 +111,12 @@ public class RemoteEntityClient {
         try {
             uri = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("remoteStart.url is not a valid URL for task with name " +
-                    task.getName(), e);
+            throw new IllegalArgumentException(
+                    "remoteStart.url is not a valid URL for task with name " + task.getName(),
+                    e);
         }
 
-        String callback = baseUrl + "/rest/internal/"+ task.getName() + "/finish";
+        String callback = baseUrl + "/rest/internal/" + task.getName() + "/finish";
         callbackRequest = getCallbackRequest(callback, task.getName());
 
         StartRequest request = StartRequest.builder()
@@ -116,7 +124,8 @@ public class RemoteEntityClient {
                 .callback(callbackRequest)
                 .build();
 
-        client.makeRequest(uri,
+        client.makeRequest(
+                uri,
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
@@ -141,12 +150,24 @@ public class RemoteEntityClient {
     private void handleConnectionFailure(Throwable exception, Task task) {
         log.error("ERROR " + task.getName() + ": Couldn't reach the remote entity.", exception);
         // format of the simulated "response" could be better (mainly not String)
-        Uni.createFrom().voidItem()
-            .onItem().invoke(() -> controller.fail(task.getName(), "Remote entity failed to respond. Exception: " + exception.toString()))
-            .onFailure().retry().atMost(5)
-            .onFailure().invoke((throwable) -> log.error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
-            .onFailure().recoverWithNull()
-            .await().indefinitely();
+        Uni.createFrom()
+                .voidItem()
+                .onItem()
+                .invoke(
+                        () -> controller.fail(
+                                task.getName(),
+                                "Remote entity failed to respond. Exception: " + exception.toString()))
+                .onFailure()
+                .retry()
+                .atMost(5)
+                .onFailure()
+                .invoke(
+                        (throwable) -> log
+                                .error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
+                .onFailure()
+                .recoverWithNull()
+                .await()
+                .indefinitely();
     }
 
     private Object parseBody(HttpResponse<Buffer> response) {
@@ -156,7 +177,10 @@ public class RemoteEntityClient {
             try {
                 objectResponse = mapper.readValue(body, Object.class);
             } catch (JsonProcessingException ignored) {
-                log.warn("Response(statusCode: {}) could not be parsed. Response: {}", response.statusCode(), response.bodyAsString());
+                log.warn(
+                        "Response(statusCode: {}) could not be parsed. Response: {}",
+                        response.statusCode(),
+                        response.bodyAsString());
             }
         }
         return objectResponse;
@@ -166,10 +190,16 @@ public class RemoteEntityClient {
         org.jboss.pnc.api.dto.Request callbackRequest;
         try {
             URI callbackUri = new URI(callback);
-            List<org.jboss.pnc.api.dto.Request.Header> headers = List.of(new org.jboss.pnc.api.dto.Request.Header(CONTENT_TYPE, APPLICATION_JSON));
-            callbackRequest = new org.jboss.pnc.api.dto.Request(org.jboss.pnc.api.dto.Request.Method.POST, callbackUri, headers);
+            List<org.jboss.pnc.api.dto.Request.Header> headers = List
+                    .of(new org.jboss.pnc.api.dto.Request.Header(CONTENT_TYPE, APPLICATION_JSON));
+            callbackRequest = new org.jboss.pnc.api.dto.Request(
+                    org.jboss.pnc.api.dto.Request.Method.POST,
+                    callbackUri,
+                    headers);
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("callbackUri " + callback + " is not a valid URL for task with name " + taskName, e);
+            throw new IllegalArgumentException(
+                    "callbackUri " + callback + " is not a valid URL for task with name " + taskName,
+                    e);
         }
         return callbackRequest;
     }
