@@ -38,6 +38,6 @@ public class Configuration {
      * Specify whether we want to pass results of direct dependencies in the StartRequest and StopRequest
      */
     @Getter(onMethod_ = {@ProtoField(number = 1, defaultValue = "false")})
-    private final boolean provideDependencyResults;
+    private final boolean passResultsOfDependencies;
 
 }
