@@ -144,7 +144,7 @@ public class Task {
     private Boolean starting;
 
     @Getter(onMethod_ = @ProtoField(number = 15))
-    private Configuration configuration = new Configuration(false);
+    private Configuration configuration;
 
     public void incUnfinishedDependencies() {
         unfinishedDependencies++;

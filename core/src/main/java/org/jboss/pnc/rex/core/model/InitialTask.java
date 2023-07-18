@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Request;
 
 @Builder(toBuilder = true)
@@ -43,4 +44,6 @@ public class InitialTask {
     private final Request callerNotifications;
 
     private final Mode controllerMode;
+
+    private final Configuration configuration;
 }
