@@ -89,7 +89,8 @@ public class NotificationTest {
     TransitionRecorder recorder;
 
     @BeforeEach
-    void before() {
+    void before() throws InterruptedException {
+        Thread.sleep(100);
         running.initialize(0L);
         internalEndpoint.setConcurrent(10L);
         recorderEndpoint.flush();
@@ -97,9 +98,8 @@ public class NotificationTest {
     }
 
     @AfterEach
-    public void after() throws InterruptedException {
+    public void after()  {
         recorder.clear();
-        Thread.sleep(100);
     }
 
     @Test
