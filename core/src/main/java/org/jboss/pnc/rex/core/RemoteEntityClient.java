@@ -50,26 +50,34 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Slf4j
 public class RemoteEntityClient {
 
+    private static final String INTERNAL_ENDPOINT_PATH = "/rest/internal";
+    private static final String SUCCESS_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/succeed";
+    private static final String FAILED_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/fail";
+    private static final String SINGLE_FINISH_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/finish";
+
     private final TaskController controller;
 
     private final GenericVertxHttpClient client;
 
     private final ObjectMapper mapper;
 
-    @ConfigProperty(name = "scheduler.baseUrl", defaultValue = "http://localhost:8080")
-    String baseUrl;
+    private final String baseUrl;
 
-    public RemoteEntityClient(GenericVertxHttpClient client, @WithTransactions TaskController controller, ObjectMapper mapper) {
+    public RemoteEntityClient(GenericVertxHttpClient client,
+                              @WithTransactions TaskController controller,
+                              ObjectMapper mapper,
+                              @ConfigProperty(name = "scheduler.baseUrl",
+                                      defaultValue = "http://localhost:8080") String baseUrl) {
         this.controller = controller;
         this.client = client;
         this.mapper = mapper;
+        this.baseUrl = baseUrl;
     }
 
     public void stopJob(Task task) {
         Request requestDefinition = task.getRemoteCancel();
 
         URI url;
-        org.jboss.pnc.api.dto.Request callbackRequest;
         try {
             url = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
@@ -77,13 +85,16 @@ public class RemoteEntityClient {
                     task.getName(), e);
         }
 
-        String callback = baseUrl + "/rest/internal/"+ task.getName() + "/finish";
 
-        callbackRequest = getCallbackRequest(callback, task.getName());
+        org.jboss.pnc.api.dto.Request callbackRequest = getCallbackRequest(task.getName(), SINGLE_FINISH_ENDPOINT_PATH);
+        org.jboss.pnc.api.dto.Request positiveCallback = getCallbackRequest(task.getName(), SUCCESS_ENDPOINT_PATH);
+        org.jboss.pnc.api.dto.Request negativeCallback = getCallbackRequest(task.getName(), FAILED_ENDPOINT_PATH);
 
         StopRequest request = StopRequest.builder()
                 .payload(requestDefinition.getAttachment())
                 .callback(callbackRequest)
+                .positiveCallback(positiveCallback)
+                .negativeCallback(negativeCallback)
                 .build();
 
         client.makeRequest(url,
@@ -99,8 +110,6 @@ public class RemoteEntityClient {
         Request requestDefinition = task.getRemoteStart();
 
         URI uri;
-        org.jboss.pnc.api.dto.Request callbackRequest;
-
         try {
             uri = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
@@ -108,12 +117,15 @@ public class RemoteEntityClient {
                     task.getName(), e);
         }
 
-        String callback = baseUrl + "/rest/internal/"+ task.getName() + "/finish";
-        callbackRequest = getCallbackRequest(callback, task.getName());
+        org.jboss.pnc.api.dto.Request callbackRequest = getCallbackRequest(task.getName(), SINGLE_FINISH_ENDPOINT_PATH);
+        org.jboss.pnc.api.dto.Request positiveCallback = getCallbackRequest(task.getName(), SUCCESS_ENDPOINT_PATH);
+        org.jboss.pnc.api.dto.Request negativeCallback = getCallbackRequest(task.getName(), FAILED_ENDPOINT_PATH);
 
         StartRequest request = StartRequest.builder()
                 .payload(requestDefinition.getAttachment())
                 .callback(callbackRequest)
+                .positiveCallback(positiveCallback)
+                .negativeCallback(negativeCallback)
                 .build();
 
         client.makeRequest(uri,
@@ -162,7 +174,9 @@ public class RemoteEntityClient {
         return objectResponse;
     }
 
-    private org.jboss.pnc.api.dto.Request getCallbackRequest(String callback, String taskName) {
+    private org.jboss.pnc.api.dto.Request getCallbackRequest(String taskName, String templateEndpoint) {
+        String callback = baseUrl + templateEndpoint.formatted(taskName);
+
         org.jboss.pnc.api.dto.Request callbackRequest;
         try {
             URI callbackUri = new URI(callback);

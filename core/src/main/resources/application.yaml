@@ -94,6 +94,14 @@ org:
           InternalEndpointImpl/finish/Retry/delay: ${scheduler.options.retry-policy.delay}
           InternalEndpointImpl/finish/Retry/jitter: ${scheduler.options.retry-policy.jitter}
           InternalEndpointImpl/finish/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+          InternalEndpointImpl/succeed/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
+          InternalEndpointImpl/succeed/Retry/delay: ${scheduler.options.retry-policy.delay}
+          InternalEndpointImpl/succeed/Retry/jitter: ${scheduler.options.retry-policy.jitter}
+          InternalEndpointImpl/succeed/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+          InternalEndpointImpl/fail/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
+          InternalEndpointImpl/fail/Retry/delay: ${scheduler.options.retry-policy.delay}
+          InternalEndpointImpl/fail/Retry/jitter: ${scheduler.options.retry-policy.jitter}
+          InternalEndpointImpl/fail/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
           InternalEndpointImpl/setConcurrent/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
           InternalEndpointImpl/setConcurrent/Retry/delay: ${scheduler.options.retry-policy.delay}
           InternalEndpointImpl/setConcurrent/Retry/jitter: ${scheduler.options.retry-policy.jitter}
