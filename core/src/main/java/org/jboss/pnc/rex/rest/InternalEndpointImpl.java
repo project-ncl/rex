@@ -51,8 +51,25 @@ public class InternalEndpointImpl implements InternalEndpoint {
     @Retry
     @Fallback(fallbackMethod = "fallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
     @RolesAllowed("user")
+    @Deprecated
     public void finish(String taskName, FinishRequest result) {
         taskProvider.acceptRemoteResponse(taskName, result.getStatus(), result.getResponse());
+    }
+
+    @Override
+    @Retry
+    @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
+    @RolesAllowed("user")
+    public void succeed(String taskName, Object result) {
+        taskProvider.acceptRemoteResponse(taskName, true, result);
+    }
+
+    @Override
+    @Retry
+    @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
+    @RolesAllowed("user")
+    public void fail(String taskName, Object result) {
+        taskProvider.acceptRemoteResponse(taskName, false, result);
     }
 
     @Override
@@ -69,6 +86,16 @@ public class InternalEndpointImpl implements InternalEndpoint {
 
     // once https://github.com/smallrye/smallrye-fault-tolerance/issues/492 is merged, use FallbackHandler
     void fallback(String taskName, FinishRequest result) {
+        log.error("STOP " + taskName + ": UNEXPECTED exception has been thrown.");
+        Uni.createFrom().voidItem()
+                .onItem().invoke((ignore) -> taskProvider.acceptRemoteResponse(taskName, false,"ACCEPT : System failure."))
+                .onFailure().invoke((throwable) -> log.warn("ACCEPT " + taskName + ": Failed to transition task to FAILED state. Retrying.", throwable))
+                .onFailure().retry().atMost(5)
+                .onFailure().recoverWithNull()
+                .await().indefinitely();
+    }
+
+    void objectFallback(String taskName, Object result) {
         log.error("STOP " + taskName + ": UNEXPECTED exception has been thrown.");
         Uni.createFrom().voidItem()
                 .onItem().invoke((ignore) -> taskProvider.acceptRemoteResponse(taskName, false,"ACCEPT : System failure."))

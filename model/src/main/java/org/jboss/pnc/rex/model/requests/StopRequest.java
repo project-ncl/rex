@@ -31,7 +31,25 @@ import lombok.extern.jackson.Jacksonized;
 @ToString
 public class StopRequest {
 
+    /**
+     * The referenced endpoint is application/JSON only and serves for both positive and negative callback.
+     * Additionally, it uses a specific JSON body
+     *
+     * Don't use it
+     */
+    @Deprecated
     private final org.jboss.pnc.api.dto.Request callback;
+
+    /**
+     * The referenced endpoint is generic and serves for positive callback.
+     */
+    private final org.jboss.pnc.api.dto.Request positiveCallback;
+
+    /**
+     * The referenced endpoint is generic and serves for negative callback.
+     */
+    private final org.jboss.pnc.api.dto.Request negativeCallback;
+
 
     private final Object payload;
 }
