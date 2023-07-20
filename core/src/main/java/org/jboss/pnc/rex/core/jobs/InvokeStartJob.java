@@ -39,7 +39,8 @@ public class InvokeStartJob extends ControllerJob {
     private static final Logger logger = LoggerFactory.getLogger(InvokeStartJob.class);
 
     public InvokeStartJob(Task task) {
-        super(INVOCATION_PHASE, task, false);
+        // dilemma whether this Job should be async or not
+        super(INVOCATION_PHASE, task, true);
         this.client = CDI.current().select(RemoteEntityClient.class).get();
         this.controller = CDI.current().select(TaskController.class, () -> WithTransactions.class).get();
     }
