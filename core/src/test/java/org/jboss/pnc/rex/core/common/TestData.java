@@ -111,6 +111,15 @@ public class TestData {
                 .build();
     }
 
+    public static org.jboss.pnc.api.dto.Request getRequestWithNegativeCallback(String payload) {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/test/acceptAndFail"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
+                .attachment(payload)
+                .build();
+    }
+
     public static org.jboss.pnc.api.dto.Request getNotificationsRequest() {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/transition/record"))

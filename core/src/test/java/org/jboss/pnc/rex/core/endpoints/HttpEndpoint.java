@@ -84,7 +84,7 @@ public class HttpEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response stopAndCallback(StopRequest request) {
         record();
-        executor.submit(() -> finishTask(request.getCallback()));
+        executor.submit(() -> finishTask(request.getPositiveCallback()));
         return Response.ok().build();
     }
 
@@ -93,7 +93,16 @@ public class HttpEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response acceptAndStart(StartRequest request) {
         record();
-        executor.submit(() -> finishTask(request.getCallback()));
+        executor.submit(() -> finishTask(request.getPositiveCallback()));
+        return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
+    }
+
+    @POST
+    @Path("/acceptAndFail")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response acceptAndFail(StartRequest request) {
+        record();
+        executor.submit(() -> finishTask(request.getNegativeCallback()));
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
 
@@ -103,7 +112,7 @@ public class HttpEndpoint {
         } catch (InterruptedException e) {
             //ignore
         }
-        FinishRequest body = new FinishRequest(true, "ALL IS OK");
+        String body = "ALL IS OK";
 
         List<Header> callbackHeaders = new ArrayList<>();
         callbackHeaders.add(Header.builder().name("Content-Type").value("application/json").build());
