@@ -47,4 +47,6 @@ public class CreateTaskDTO {
     public Request callerNotifications;
 
     public Mode controllerMode;
+
+    public ConfigurationDTO configuration;
 }

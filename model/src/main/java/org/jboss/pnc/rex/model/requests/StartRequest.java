@@ -22,6 +22,8 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 
+import java.util.Map;
+
 /**
  * Request sent to the remote entity to start execution of remote Task.
  */
@@ -51,4 +53,6 @@ public class StartRequest {
     private final org.jboss.pnc.api.dto.Request negativeCallback;
 
     private final Object payload;
+
+    private final Map<String, Object> taskResults;
 }

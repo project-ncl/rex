@@ -15,35 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.model;
+package org.jboss.pnc.rex.facade.mapper;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
-import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.model.Configuration;
-import org.jboss.pnc.rex.model.Request;
+import org.mapstruct.Mapper;
 
-@Builder(toBuilder = true)
-@AllArgsConstructor
-@ToString
-@Getter
-public class InitialTask {
+@Mapper(config = MapperCentralConfig.class)
+public interface ConfigurationMapper extends EntityMapper<ConfigurationDTO, Configuration> {
 
-    private final String name;
+    @Override
+    ConfigurationDTO toDTO(Configuration dbEntity);
 
-    private final String constraint;
-
-    private final String correlationID;
-
-    private final Request remoteStart;
-
-    private final Request remoteCancel;
-
-    private final Request callerNotifications;
-
-    private final Mode controllerMode;
-
-    private final Configuration configuration;
+    @Override
+    Configuration toDB(ConfigurationDTO dtoEntity);
 }

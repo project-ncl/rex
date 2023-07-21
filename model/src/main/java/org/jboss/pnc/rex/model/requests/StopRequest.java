@@ -22,6 +22,8 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 
+import java.util.Map;
+
 /**
  * Request sent to the remote entity to cancel execution of remote Task.
  */
@@ -52,4 +54,6 @@ public class StopRequest {
 
 
     private final Object payload;
+
+    private final Map<String, Object> taskResults;
 }

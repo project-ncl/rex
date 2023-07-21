@@ -15,35 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.model;
+package org.jboss.pnc.rex.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.model.Configuration;
-import org.jboss.pnc.rex.model.Request;
+import lombok.extern.jackson.Jacksonized;
+import lombok.extern.slf4j.Slf4j;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
-@Builder(toBuilder = true)
-@AllArgsConstructor
-@ToString
-@Getter
-public class InitialTask {
+/**
+ * Class to specify metadata for a Task.
+ */
+@Builder
+@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@Slf4j
+@Jacksonized
+public class Configuration {
 
-    private final String name;
+    /**
+     * Specify whether we want to pass results of direct dependencies in the StartRequest and StopRequest
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 1, defaultValue = "false")})
+    private final boolean passResultsOfDependencies;
 
-    private final String constraint;
-
-    private final String correlationID;
-
-    private final Request remoteStart;
-
-    private final Request remoteCancel;
-
-    private final Request callerNotifications;
-
-    private final Mode controllerMode;
-
-    private final Configuration configuration;
 }

@@ -23,7 +23,7 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(config = MapperCentralConfig.class, uses = {RequestMapper.class, ServerResponseMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = {RequestMapper.class, ServerResponseMapper.class, ConfigurationMapper.class})
 public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
 
     @Override
