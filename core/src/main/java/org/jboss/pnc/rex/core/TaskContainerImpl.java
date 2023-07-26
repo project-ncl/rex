@@ -43,6 +43,7 @@ import org.jboss.pnc.rex.core.mapper.InitialTaskMapper;
 import org.jboss.pnc.rex.core.model.Edge;
 import org.jboss.pnc.rex.core.model.InitialTask;
 import org.jboss.pnc.rex.core.model.TaskGraph;
+import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -176,6 +177,30 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         Query<Task> query = factory.create("FROM rex_model.Task WHERE state IN (" + filter + ")");
 
         return query.execute().list();
+    }
+
+    public Map<String, Object> getTaskResults(Task task) {
+
+        Map<String, Object> taskResults = new HashMap<>();
+        // tasks that this task depends on
+        Set<String> dependencies = task.getDependencies();
+
+        // add dependency results to the map
+        for (String taskName : dependencies) {
+
+            Task previousTask = getRequiredTask(taskName);
+            List<ServerResponse> serverResponses = previousTask.getServerResponses();
+
+            if (serverResponses != null && !serverResponses.isEmpty()) {
+                // add last positive server response to the data to send
+                taskResults.put(taskName, serverResponses.get(serverResponses.size() - 1));
+            } else {
+                // just add an empty object?
+                taskResults.put(taskName, new Object());
+            }
+        }
+
+        return taskResults;
     }
 
     @Override

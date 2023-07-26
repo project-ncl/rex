@@ -22,6 +22,7 @@ import org.jboss.pnc.rex.model.Task;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The registry is used to retrieve Tasks.
@@ -57,6 +58,16 @@ public interface TaskRegistry {
      * @return list of filtered services
      */
     List<Task> getTasks(boolean waiting, boolean running, boolean finished);
+
+
+    /**
+     * Get the task results of the direct dependencies of the task, irrespective of the task configuration to allow
+     * or deny it
+     *
+     * @param task task to return task results
+     * @return Map of taskName and the result
+     */
+    Map<String, Object> getTaskResults(Task task);
 
     List<Task> getEnqueuedTasks(long limit);
 
