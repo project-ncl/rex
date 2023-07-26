@@ -40,4 +40,10 @@ public class Configuration {
     @Getter(onMethod_ = {@ProtoField(number = 1, defaultValue = "false")})
     private final boolean passResultsOfDependencies;
 
+    /**
+     * Specify whether we want to accept the response to StartRequest as the final data (true), or not (false: default)
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 2, defaultValue = "false")})
+    private final boolean skipCallback;
+
 }

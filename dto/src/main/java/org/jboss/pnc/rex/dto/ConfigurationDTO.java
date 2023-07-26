@@ -33,5 +33,6 @@ import lombok.ToString;
 @ToString
 public class ConfigurationDTO {
 
-    public boolean passResultsOfDependencies = false;
+    private boolean passResultsOfDependencies = false;
+    private boolean skipCallback = false;
 }
