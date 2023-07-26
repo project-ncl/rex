@@ -27,9 +27,11 @@ import static org.jboss.pnc.rex.core.common.TestData.getEndpointWithStart;
 import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithStart;
 import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithoutStart;
+import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
 import static org.jboss.pnc.rex.core.common.TestData.getRequestWithoutStart;
 import static org.jboss.pnc.rex.core.common.TestData.getSingleWithoutStart;
 import static org.jboss.pnc.rex.core.common.TestData.getStopRequest;
+import static org.jboss.pnc.rex.core.common.TestData.getStopRequestWithCallback;
 
 import javax.inject.Inject;
 import javax.transaction.RollbackException;
@@ -50,6 +52,8 @@ import org.jboss.pnc.rex.core.common.TransitionRecorder;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.MaxConcurrent;
 import org.jboss.pnc.rex.core.counter.Running;
+import org.jboss.pnc.rex.core.endpoints.HttpEndpoint;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
@@ -57,12 +61,15 @@ import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 
 import io.quarkus.test.junit.QuarkusTest;
-import org.junit.Ignore;
+import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collection;
+import java.util.Map;
 
 @QuarkusTest
 //@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
@@ -80,6 +87,9 @@ class TaskContainerImplTest {
 
     @Inject
     TaskEndpoint taskEndpoint;
+
+    @Inject
+    HttpEndpoint httpEndpoint;
 
     @Inject
     @Running
@@ -525,4 +535,72 @@ class TaskContainerImplTest {
                 .doesNotContain(randomDAG.getVertices().keySet().toArray(new String[0]));
     }
 
+    @Test
+    public void testGettingTaskResults() throws Exception {
+
+        httpEndpoint.startRecordingQueue();
+
+        taskEndpoint.start(CreateGraphRequest.builder()
+                .edge(new EdgeDTO("service2", "service1"))
+                .vertex("service1", CreateTaskDTO.builder()
+                        .name("service1")
+                        .remoteStart(getRequestWithStart("I am service1!"))
+                        .remoteCancel(getStopRequestWithCallback("I am service1!"))
+                        .build())
+                .vertex("service2", CreateTaskDTO.builder()
+                        .name("service2")
+                        .remoteStart(getRequestWithStart("I am service2!"))
+                        .remoteCancel(getStopRequestWithCallback("I am service2!"))
+                        .configuration(new ConfigurationDTO(true))
+                        .build())
+                .build());
+
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "service1", "service2");
+
+        httpEndpoint.stopRecording();
+        Collection<Object> requests = httpEndpoint.getRecordedRequestData();
+        assertThat(requests).hasSize(2);
+
+        // the last request should have the taskResults populated
+        Object lastRequest = requests.toArray()[requests.size() - 1];
+        StartRequest startRequest = (StartRequest) lastRequest;
+
+        Map<String, Object> taskResults = startRequest.getTaskResults();
+        assertThat(taskResults).isNotEmpty();
+        assertThat(taskResults.keySet()).contains("service1");
+        assertThat(taskResults.get("service1")).isNotNull();
+    }
+
+    @Test
+    public void testNotGettingTaskResultsWhenConfigurationProhibitsIt() throws Exception {
+
+        httpEndpoint.startRecordingQueue();
+
+        taskEndpoint.start(CreateGraphRequest.builder()
+                .edge(new EdgeDTO("service2", "service1"))
+                .vertex("service1", CreateTaskDTO.builder()
+                        .name("service1")
+                        .remoteStart(getRequestWithStart("I am service1!"))
+                        .remoteCancel(getStopRequestWithCallback("I am service1!"))
+                        .build())
+                .vertex("service2", CreateTaskDTO.builder()
+                        .name("service2")
+                        .remoteStart(getRequestWithStart("I am service2!"))
+                        .remoteCancel(getStopRequestWithCallback("I am service2!"))
+                        .configuration(new ConfigurationDTO(false))
+                        .build())
+                .build());
+
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "service1", "service2");
+
+        httpEndpoint.stopRecording();
+        Collection<Object> requests = httpEndpoint.getRecordedRequestData();
+
+        // the last request should have the taskResults populated
+        Object lastRequest = requests.toArray()[requests.size() - 1];
+        StartRequest startRequest = (StartRequest) lastRequest;
+
+        Map<String, Object> taskResults = startRequest.getTaskResults();
+        assertThat(taskResults).isNull();
+    }
 }

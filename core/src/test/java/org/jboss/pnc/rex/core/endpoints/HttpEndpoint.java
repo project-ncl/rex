@@ -26,7 +26,6 @@ import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.core.GenericVertxHttpClient;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
-import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.jboss.pnc.rex.model.requests.StopRequest;
@@ -60,6 +59,7 @@ public class HttpEndpoint {
     Counter running;
 
     private final Queue<Long> record = new ConcurrentLinkedQueue<>();
+    private final Queue<Object> recordedRequestData = new ConcurrentLinkedQueue<>();
 
     private boolean shouldRecord = false;
 
@@ -67,7 +67,7 @@ public class HttpEndpoint {
     @Path("/accept")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response accept(String request) {
-        record();
+        record(request);
         return Response.ok().build();
     }
 
@@ -75,7 +75,7 @@ public class HttpEndpoint {
     @Path("/stop")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response stop(String request) {
-        record();
+        record(request);
         return Response.ok().build();
     }
 
@@ -83,7 +83,7 @@ public class HttpEndpoint {
     @Path("/stopAndCallback")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response stopAndCallback(StopRequest request) {
-        record();
+        record(request);
         executor.submit(() -> finishTask(request.getPositiveCallback()));
         return Response.ok().build();
     }
@@ -92,7 +92,7 @@ public class HttpEndpoint {
     @Path("/acceptAndStart")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response acceptAndStart(StartRequest request) {
-        record();
+        record(request);
         executor.submit(() -> finishTask(request.getPositiveCallback()));
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
@@ -101,7 +101,7 @@ public class HttpEndpoint {
     @Path("/acceptAndFail")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response acceptAndFail(StartRequest request) {
-        record();
+        record(request);
         executor.submit(() -> finishTask(request.getNegativeCallback()));
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
@@ -139,19 +139,25 @@ public class HttpEndpoint {
         }
     }
 
-    private void record() {
+    private void record(Object data) {
         if (shouldRecord) {
             record.offer(running.getValue());
+            recordedRequestData.offer(data);
         }
     }
 
     public void startRecordingQueue() {
         record.clear();
+        recordedRequestData.clear();
         shouldRecord = true;
     }
 
     public Collection<Long> stopRecording() {
         shouldRecord = false;
         return record;
+    }
+
+    public Collection<Object> getRecordedRequestData() {
+        return recordedRequestData;
     }
 }

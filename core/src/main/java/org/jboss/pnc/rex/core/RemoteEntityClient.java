@@ -26,6 +26,7 @@ import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
@@ -36,6 +37,7 @@ import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -57,6 +59,8 @@ public class RemoteEntityClient {
 
     private final TaskController controller;
 
+    private final TaskRegistry taskRegistry;
+
     private final GenericVertxHttpClient client;
 
     private final ObjectMapper mapper;
@@ -65,10 +69,12 @@ public class RemoteEntityClient {
 
     public RemoteEntityClient(GenericVertxHttpClient client,
                               @WithTransactions TaskController controller,
+                              TaskRegistry taskRegistry,
                               ObjectMapper mapper,
                               @ConfigProperty(name = "scheduler.baseUrl",
                                       defaultValue = "http://localhost:8080") String baseUrl) {
         this.controller = controller;
+        this.taskRegistry = taskRegistry;
         this.client = client;
         this.mapper = mapper;
         this.baseUrl = baseUrl;
@@ -92,6 +98,7 @@ public class RemoteEntityClient {
 
         StopRequest request = StopRequest.builder()
                 .payload(requestDefinition.getAttachment())
+                .taskResults(getTaskResultsIfConfigurationAllows(task))
                 .callback(callbackRequest)
                 .positiveCallback(positiveCallback)
                 .negativeCallback(negativeCallback)
@@ -123,6 +130,7 @@ public class RemoteEntityClient {
 
         StartRequest request = StartRequest.builder()
                 .payload(requestDefinition.getAttachment())
+                .taskResults(getTaskResultsIfConfigurationAllows(task))
                 .callback(callbackRequest)
                 .positiveCallback(positiveCallback)
                 .negativeCallback(negativeCallback)
@@ -187,4 +195,19 @@ public class RemoteEntityClient {
         }
         return callbackRequest;
     }
+
+    /**
+     * Get task results of dependencies if the configuration allows it, otherwise return null
+     * @param task to process
+     *
+     * @return task results of dependencies
+     */
+    private Map<String, Object> getTaskResultsIfConfigurationAllows(Task task) {
+        if (task.getConfiguration() != null && task.getConfiguration().isPassResultsOfDependencies()) {
+            return taskRegistry.getTaskResults(task);
+        } else {
+            return null;
+        }
+    }
+
 }
