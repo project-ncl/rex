@@ -50,10 +50,12 @@ import org.jboss.pnc.rex.core.common.TransitionRecorder;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.MaxConcurrent;
 import org.jboss.pnc.rex.core.counter.Running;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Request;
+import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 
 import io.quarkus.test.junit.QuarkusTest;
@@ -63,6 +65,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 @QuarkusTest
 //@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
@@ -523,6 +527,40 @@ class TaskContainerImplTest {
         assertThat(running.getValue()).isEqualTo(0);
         assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
                 .doesNotContain(randomDAG.getVertices().keySet().toArray(new String[0]));
+    }
+
+    @Test
+    public void testSkipCallback() throws Exception {
+        taskEndpoint.start(CreateGraphRequest.builder()
+                .edge(new EdgeDTO("service2", "service1"))
+                .vertex("service1", CreateTaskDTO.builder()
+                        .name("service1")
+                        .controllerMode(Mode.IDLE)
+                        .remoteStart(getRequestWithoutStart("I am service1!"))
+                        .remoteCancel(getStopRequest("I am service1!"))
+                        .configuration(new ConfigurationDTO(false, true))
+                        .build())
+                .vertex("service2", CreateTaskDTO.builder()
+                        .name("service2")
+                        .controllerMode(Mode.IDLE)
+                        .remoteStart(getRequestWithoutStart("I am service2!"))
+                        .remoteCancel(getStopRequest("I am service2!"))
+                        .configuration(new ConfigurationDTO(false, true))
+                        .build())
+                .build());
+
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "service1", "service2");
+
+        // sleep because running counter takes time to update
+        Thread.sleep(50);
+
+        Task task1 = container.getTask("service1");
+        List<ServerResponse> task1Responses = task1.getServerResponses();
+        assertThat(task1Responses).hasSize(1);
+
+        Task task2 = container.getTask("service2");
+        List<ServerResponse> task2Responses = task1.getServerResponses();
+        assertThat(task2Responses).hasSize(1);
     }
 
 }

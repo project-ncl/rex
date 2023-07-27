@@ -110,6 +110,11 @@ public enum Transition {
      */
     STARTING_to_UP(State.STARTING, State.UP),
     /**
+     * Controller received positive response that remote Task has successfully started and finished its execution.
+     * We use this when a callback is not necessary
+     */
+    STARTING_to_SUCCESSFUL(State.STARTING, State.SUCCESSFUL),
+    /**
      * Controller received negative response that remote Task failed to start its execution.
      *
      * Controller informs Task's dependants that the Task failed.

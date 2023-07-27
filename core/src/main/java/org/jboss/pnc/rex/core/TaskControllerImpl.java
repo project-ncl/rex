@@ -135,7 +135,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             //no tasks
             case STOP_REQUESTED_to_STOPPING, STARTING_to_UP -> List.of();
 
-            case UP_to_SUCCESSFUL -> {
+            case STARTING_to_SUCCESSFUL, UP_to_SUCCESSFUL -> {
                 var jobs = new ArrayList<ControllerJob>();
                 jobs.add(new DependencySucceededJob(task));
                 jobs.add(new DecreaseCounterJob(task));
@@ -214,8 +214,13 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 if (task.getStopFlag() == StopFlag.CANCELLED)
                     yield Transition.STARTING_to_STOP_REQUESTED;
                 List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STARTING).toList();
-                if (responses.stream().anyMatch(ServerResponse::isPositive))
-                    yield Transition.STARTING_to_UP;
+                if (responses.stream().anyMatch(ServerResponse::isPositive)) {
+                    if (task.getConfiguration() != null && task.getConfiguration().isSkipCallback()) {
+                        yield Transition.STARTING_to_SUCCESSFUL;
+                    } else {
+                        yield Transition.STARTING_to_UP;
+                    }
+                }
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
                     yield Transition.STARTING_to_START_FAILED;
                 yield null;
