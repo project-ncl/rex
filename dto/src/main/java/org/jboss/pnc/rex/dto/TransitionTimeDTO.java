@@ -15,18 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.mapper;
+package org.jboss.pnc.rex.dto;
 
-import org.jboss.pnc.rex.facade.mapper.MapperCentralConfig;
-import org.jboss.pnc.rex.facade.mapper.TransitionTimeMapper;
-import org.jboss.pnc.rex.model.Task;
-import org.jboss.pnc.rex.model.requests.MinimizedTask;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.jboss.pnc.rex.common.enums.Transition;
 
-@Mapper(config = MapperCentralConfig.class, uses = {TransitionTimeMapper.class})
-public interface MiniTaskMapper {
+import java.time.Instant;
 
-    @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "starting", "controllerMode"})
-    MinimizedTask minimize(Task task);
+@Getter
+@Builder
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
+public class TransitionTimeDTO implements Comparable<TransitionTimeDTO> {
+
+    public Transition transition;
+
+    public Instant time;
+
+    @Override
+    public int compareTo(TransitionTimeDTO o) {
+        return this.getTime().compareTo(o.getTime());
+    }
 }

@@ -23,11 +23,13 @@ import io.quarkus.test.security.TestSecurity;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
+import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.core.common.TransitionRecorder;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.MaxConcurrent;
 import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.dto.TransitionTimeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.test.profile.WithoutTaskCleaning;
 import org.junit.jupiter.api.AfterEach;
@@ -36,11 +38,21 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.pnc.rex.common.enums.Transition.ENQUEUED_to_STARTING;
+import static org.jboss.pnc.rex.common.enums.Transition.NEW_to_ENQUEUED;
+import static org.jboss.pnc.rex.common.enums.Transition.NEW_to_WAITING;
+import static org.jboss.pnc.rex.common.enums.Transition.STARTING_to_UP;
+import static org.jboss.pnc.rex.common.enums.Transition.UP_to_SUCCESSFUL;
+import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_ENQUEUED;
 import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
 import static org.jboss.pnc.rex.core.common.TestData.getAllParameters;
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
@@ -109,5 +121,42 @@ public class TaskContainerNoCleanTest {
             assertThat(task.getState()).isEqualTo(State.STOPPED);
             assertThat(task.getStopFlag()).isEqualTo(StopFlag.DEPENDENCY_FAILED);
         });
+    }
+
+    @Test
+    void testTransitionTimes() throws InterruptedException {
+        CreateGraphRequest request = getComplexGraph(true, true);
+        taskEndpoint.start(request);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, request.getVertices().keySet().toArray(new String[0]));
+
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
+        Thread.sleep(100);
+
+        // Extract transitions+timestamps and order by timestamps
+        Map<String, List<TransitionTimeDTO>> times = all.stream()
+                .collect(Collectors.toMap(
+                        // key is task name
+                        TaskDTO::getName,
+                        // value is Tuple of transition and timestamp ordered by timestamp
+                        TaskDTO::getTimestamps));
+        assertThat(times.keySet()).containsExactlyInAnyOrderElementsOf(request.getVertices().keySet());
+
+        containsInTimeOrder(times, "a", NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+        containsInTimeOrder(times, "b", NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+        containsInTimeOrder(times, "c", NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+        containsInTimeOrder(times, "d", NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+        containsInTimeOrder(times, "e", NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+        containsInTimeOrder(times, "f", NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+        containsInTimeOrder(times, "g", NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+        containsInTimeOrder(times, "h", NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+        containsInTimeOrder(times, "i", NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+        containsInTimeOrder(times, "j", NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL);
+
+    }
+
+    private static void containsInTimeOrder(Map<String, List<TransitionTimeDTO>> times, String task, Transition... transitions) {
+        assertThat(times.get(task))
+                .map(TransitionTimeDTO::getTransition)
+                .containsExactlyElementsOf(Arrays.asList(transitions));
     }
 }

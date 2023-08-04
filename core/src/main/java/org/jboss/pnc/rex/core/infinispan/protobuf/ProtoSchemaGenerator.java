@@ -23,11 +23,13 @@ import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
+import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
+import org.jboss.pnc.rex.model.TransitionTime;
 
 /**
  * Generates .proto schemas and infinispan protobuf marshallers of proto-annotated classes in includeClasses
@@ -44,6 +46,8 @@ import org.jboss.pnc.rex.model.Task;
                 State.class,
                 StopFlag.class,
                 Request.class,
-                Configuration.class})
+                Configuration.class,
+                Transition.class,
+                TransitionTime.class})
 interface ProtoSchemaGenerator extends GeneratedSchema {
 }

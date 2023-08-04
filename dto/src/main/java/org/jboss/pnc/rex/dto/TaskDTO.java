@@ -28,9 +28,9 @@ import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Getter
 @Builder
@@ -57,9 +57,11 @@ public class TaskDTO {
 
     public List<ServerResponseDTO> serverResponses = new ArrayList<>();
 
-    public Set<String> dependants = new HashSet<>();
+    public Set<String> dependants = new TreeSet<>();
 
-    public Set<String> dependencies = new HashSet<>();
+    public Set<String> dependencies = new TreeSet<>();
 
     public ConfigurationDTO configuration = new ConfigurationDTO();
+
+    public List<TransitionTimeDTO> timestamps = new ArrayList<>();
 }

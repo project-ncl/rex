@@ -44,10 +44,12 @@ import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
 import org.jboss.pnc.rex.core.jobs.PokeQueueJob;
 import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
+import org.jboss.pnc.rex.model.TransitionTime;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.transaction.Transactional;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -79,8 +81,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     private List<ControllerJob> transition(Task task) {
         Transition transition = getTransition(task);
-        if (transition != null)
+        if (transition != null) {
             log.info("TRANSITION {}: before: {} after: {}", task.getName(), transition.getBefore().toString(), transition.getAfter().toString());
+            task.getTimestamps().add(new TransitionTime(transition, Instant.now()));
+        }
 
         List<ControllerJob> tasks = new ArrayList<>();
 

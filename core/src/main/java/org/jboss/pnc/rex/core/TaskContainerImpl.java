@@ -59,6 +59,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static javax.transaction.Transactional.TxType.MANDATORY;
@@ -73,9 +74,11 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     @ConfigProperty(name = "scheduler.baseUrl")
     String baseUrl;
 
+    @Inject
     @Remote("rex-tasks")
     RemoteCache<String, Task> tasks;
 
+    @Inject
     @Remote("rex-constraints")
     RemoteCache<String, String> constraints;
 
@@ -380,8 +383,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             task = initialMapper.fromInitialTask(vertices.get(name));
 
             // workaround for lombok builder's immutable collections
-            task.setDependants(new HashSet<>(task.getDependants()));
-            task.setDependencies(new HashSet<>(task.getDependencies()));
+            task.setDependants(new TreeSet<>(task.getDependants()));
+            task.setDependencies(new TreeSet<>(task.getDependencies()));
         } else {
             // task data for existing task should be retrieved from DB
             task = getTask(name);

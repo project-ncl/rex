@@ -23,11 +23,15 @@ import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
+import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.ServerResponse;
+import org.jboss.pnc.rex.model.TransitionTime;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -62,4 +66,6 @@ public class MinimizedTask {
     private final StopFlag stopFlag;
 
     private final Configuration configuration;
+
+    private final Set<TransitionTime> timestamps;
 }
