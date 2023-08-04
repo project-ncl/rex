@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -35,6 +36,7 @@ import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToObject;
 
 @Builder
 @AllArgsConstructor
+@ToString
 @Slf4j
 @Jacksonized
 public class ServerResponse {

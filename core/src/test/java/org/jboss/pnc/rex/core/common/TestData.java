@@ -75,7 +75,7 @@ public class TestData {
                 .build();
     }
 
-    public static org.jboss.pnc.api.dto.Request getRequestWithoutStart(String payload) {
+    public static org.jboss.pnc.api.dto.Request getRequestWithoutStart(Object payload) {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/test/accept"))
                 .method(org.jboss.pnc.api.dto.Request.Method.POST)
@@ -84,7 +84,7 @@ public class TestData {
                 .build();
     }
 
-    public static org.jboss.pnc.api.dto.Request getStopRequest(String payload) {
+    public static org.jboss.pnc.api.dto.Request getStopRequest(Object payload) {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/test/stop"))
                 .method(org.jboss.pnc.api.dto.Request.Method.POST)
@@ -93,7 +93,7 @@ public class TestData {
                 .build();
     }
 
-    public static org.jboss.pnc.api.dto.Request getStopRequestWithCallback(String payload) {
+    public static org.jboss.pnc.api.dto.Request getStopRequestWithCallback(Object payload) {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/test/stopAndCallback"))
                 .method(org.jboss.pnc.api.dto.Request.Method.POST)
@@ -102,7 +102,7 @@ public class TestData {
                 .build();
     }
 
-    public static org.jboss.pnc.api.dto.Request getRequestWithStart(String payload) {
+    public static org.jboss.pnc.api.dto.Request getRequestWithStart(Object payload) {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/test/acceptAndStart"))
                 .method(org.jboss.pnc.api.dto.Request.Method.POST)
@@ -111,7 +111,7 @@ public class TestData {
                 .build();
     }
 
-    public static org.jboss.pnc.api.dto.Request getRequestWithNegativeCallback(String payload) {
+    public static org.jboss.pnc.api.dto.Request getRequestWithNegativeCallback(Object payload) {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/test/acceptAndFail"))
                 .method(org.jboss.pnc.api.dto.Request.Method.POST)

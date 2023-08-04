@@ -23,7 +23,9 @@ import org.jboss.pnc.rex.model.Task;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(config = MapperCentralConfig.class)
+import java.util.TreeSet;
+
+@Mapper(config = MapperCentralConfig.class, imports = {TreeSet.class})
 public interface InitialTaskMapper {
 
     @Mapping(target = "serverResponses", ignore = true)
@@ -35,6 +37,7 @@ public interface InitialTaskMapper {
     @Mapping(target = "stopFlag", constant = "NONE")
     @Mapping(target = "state", constant = "NEW")
     @Mapping(target = "starting", constant = "false")
+    @Mapping(target = "timestamps", expression = "java( new TreeSet() )")
     // Singular additions
     @Mapping(target = "serverResponse", ignore = true)
     @Mapping(target = "dependant", ignore = true)

@@ -31,10 +31,10 @@ import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Task is an entity that holds data of remotely executed process.
@@ -107,7 +107,7 @@ public class Task {
      */
     @Singular
     @Getter(onMethod_ = @ProtoField(number = 9))
-    private Set<String> dependants = new HashSet<>();
+    private Set<String> dependants;
 
     /**
      * Number of unfinishedDependencies. Task can't remotely start if the number is positive.
@@ -122,7 +122,7 @@ public class Task {
      */
     @Singular
     @Getter(onMethod_ = @ProtoField(number = 11))
-    private Set<String> dependencies = new HashSet<>();
+    private Set<String> dependencies;
 
     /**
      * Flag which signifies a reason why the Task stopped execution.
@@ -134,8 +134,8 @@ public class Task {
      * List of all responses(bodies) received from remote entity.
      */
     @Singular
-    @Getter(onMethod_ = @ProtoField(number = 13))
-    private List<ServerResponse> serverResponses = new ArrayList<>();
+    @Getter(onMethod_ = @ProtoField(number = 13, collectionImplementation = ArrayList.class))
+    private List<ServerResponse> serverResponses;
 
     /**
      * This flag indicates whether task should be dropped from queue and start remote execution.
@@ -145,6 +145,12 @@ public class Task {
 
     @Getter(onMethod_ = @ProtoField(number = 15))
     private Configuration configuration;
+
+    /**
+     * INFINISPAN caveat: Infinispan doesn't serialize Maps, therefore Set is used
+     */
+    @Getter(onMethod_ = @ProtoField(number = 16, collectionImplementation = TreeSet.class))
+    private Set<TransitionTime> timestamps;
 
     public void incUnfinishedDependencies() {
         unfinishedDependencies++;

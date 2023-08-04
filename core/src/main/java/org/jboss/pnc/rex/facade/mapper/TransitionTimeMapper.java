@@ -15,18 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.mapper;
+package org.jboss.pnc.rex.facade.mapper;
 
-import org.jboss.pnc.rex.facade.mapper.MapperCentralConfig;
-import org.jboss.pnc.rex.facade.mapper.TransitionTimeMapper;
-import org.jboss.pnc.rex.model.Task;
-import org.jboss.pnc.rex.model.requests.MinimizedTask;
-import org.mapstruct.BeanMapping;
+import org.jboss.pnc.rex.dto.TransitionTimeDTO;
+import org.jboss.pnc.rex.model.TransitionTime;
 import org.mapstruct.Mapper;
 
-@Mapper(config = MapperCentralConfig.class, uses = {TransitionTimeMapper.class})
-public interface MiniTaskMapper {
+@Mapper(config = MapperCentralConfig.class)
+public interface TransitionTimeMapper extends EntityMapper<TransitionTimeDTO, TransitionTime> {
 
-    @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "starting", "controllerMode"})
-    MinimizedTask minimize(Task task);
+    @Override
+    TransitionTimeDTO toDTO(TransitionTime dbEntity);
+
+    @Override
+    TransitionTime toDB(TransitionTimeDTO dtoEntity);
 }
