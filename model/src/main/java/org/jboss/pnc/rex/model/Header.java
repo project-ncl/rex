@@ -37,6 +37,20 @@ public class Header {
 
     @Override
     public String toString() {
-        return '(' + name + ": " + value + ')';
+        var headerValue = value;
+        if (name.equals("Authorization")) {
+            String method = value.split(" ", 2)[0];
+            switch (method.toUpperCase()) {
+                case "BASIC":
+                case "DIGEST":
+                case "BEARER":
+                case "SCRAM":
+                case "NEGOTIATE":
+                    headerValue = method + " ***";
+                    break;
+            };
+        }
+
+        return '(' + name + ": " + headerValue + ')';
     }
 }
