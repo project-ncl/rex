@@ -63,5 +63,8 @@ public class TaskDTO {
 
     public ConfigurationDTO configuration = new ConfigurationDTO();
 
+    /**
+     * The list of timestamps is order from the earliest transitions
+     */
     public List<TransitionTimeDTO> timestamps = new ArrayList<>();
 }
