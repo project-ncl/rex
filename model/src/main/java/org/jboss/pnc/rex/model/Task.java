@@ -147,6 +147,8 @@ public class Task {
     private Configuration configuration;
 
     /**
+     * Set of ORDERED timestamps of transitions by time (used TreeSet)
+     *
      * INFINISPAN caveat: Infinispan doesn't serialize Maps, therefore Set is used
      */
     @Getter(onMethod_ = @ProtoField(number = 16, collectionImplementation = TreeSet.class))
