@@ -67,5 +67,5 @@ public class MinimizedTask {
 
     private final Configuration configuration;
 
-    private final Set<TransitionTime> timestamps;
+    private final List<TransitionTime> timestamps;
 }
