@@ -154,7 +154,7 @@ org:
           near-cache-max-entries: 100
       devservices:
 #        image-name: "infinispan/server:13.0.5.Final-2"
-        image-name: "infinispan/server:14.0.2.Final"
+        image-name: "quay.io/infinispan/server:14.0.2.Final"
 
 "%dev":
   scheduler:
@@ -190,7 +190,7 @@ org:
           near-cache-max-entries: 100
       devservices:
         #        image-name: "infinispan/server:13.0.5.Final-2"
-        image-name: "infinispan/server:14.0.2.Final"
+        image-name: "quay.io/infinispan/server:14.0.2.Final"
     log:
       category:
         "org.jboss.pnc":
