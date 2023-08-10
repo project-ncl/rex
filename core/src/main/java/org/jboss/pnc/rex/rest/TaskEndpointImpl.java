@@ -41,7 +41,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
 
     @Override
     @Retry
-    @RolesAllowed("user")
+    @RolesAllowed({ "pnc-users-rex-admin", "pnc-users-rex-user", "pnc-users-admin" })
     public Set<TaskDTO> start(CreateGraphRequest request) {
         return taskProvider.create(request);
     }
@@ -69,7 +69,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
 
     @Override
     @Retry
-    @RolesAllowed("user")
+    @RolesAllowed({ "pnc-users-rex-admin", "pnc-users-rex-user", "pnc-users-admin" })
     public void cancel(String taskID) {
         taskProvider.cancel(taskID);
     }
