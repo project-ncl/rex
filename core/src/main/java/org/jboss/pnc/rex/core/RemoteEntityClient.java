@@ -20,6 +20,7 @@ package org.jboss.pnc.rex.core;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.arc.Unremovable;
+import io.quarkus.oidc.client.Tokens;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
@@ -28,14 +29,18 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
+import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.jboss.pnc.rex.model.requests.StopRequest;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.core.HttpHeaders;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -66,6 +71,9 @@ public class RemoteEntityClient {
     private final ObjectMapper mapper;
 
     private final String baseUrl;
+
+    @Inject
+    Tokens serviceTokens;
 
     public RemoteEntityClient(GenericVertxHttpClient client,
                               @WithTransactions TaskController controller,
@@ -106,7 +114,7 @@ public class RemoteEntityClient {
 
         client.makeRequest(url,
                 requestDefinition.getMethod(),
-                requestDefinition.getHeaders(),
+                addAuthenticatedHeaderToHeaders(requestDefinition.getHeaders()),
                 request,
                 response -> handleResponse(response, task),
                 throwable -> handleConnectionFailure(throwable, task));
@@ -138,7 +146,7 @@ public class RemoteEntityClient {
 
         client.makeRequest(uri,
                 requestDefinition.getMethod(),
-                requestDefinition.getHeaders(),
+                addAuthenticatedHeaderToHeaders(requestDefinition.getHeaders()),
                 request,
                 response -> handleResponse(response, task),
                 throwable -> handleConnectionFailure(throwable, task));
@@ -209,5 +217,19 @@ public class RemoteEntityClient {
             return null;
         }
     }
+
+    /**
+     * Copy the headers parameter and add the Authorization header to it
+     *
+     * @param headers original list of headers
+     * @return new list containing the original headers + the authorization header
+     */
+    private List<Header> addAuthenticatedHeaderToHeaders(List<Header> headers) {
+        // do a shallow copy to not modify parameter list
+        List<Header> copy = new ArrayList<>(headers);
+        copy.add(new Header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceTokens.getAccessToken()));
+        return copy;
+    }
+
 
 }
