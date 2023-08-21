@@ -6,11 +6,34 @@ scheduler:
       clean: true
     concurrency:
       default: 5
-    retry-policy:
-      maxRetries: 15
+    internal-retry-policy:
       delay: 10
       jitter: 50
-      abortOn: javax.validation.ConstraintViolationException, org.jboss.pnc.rex.common.exceptions.TaskMissingException, org.jboss.pnc.rex.common.exceptions.BadRequestException, org.jboss.pnc.rex.common.exceptions.TaskConflictException, org.jboss.pnc.rex.common.exceptions.CircularDependencyException, org.jboss.pnc.rex.common.exceptions.ConstraintConflictException
+      max-retries: 15
+      abort-on:
+        - javax.validation.ConstraintViolationException
+        - org.jboss.pnc.rex.common.exceptions.TaskMissingException
+        - org.jboss.pnc.rex.common.exceptions.BadRequestException
+        - org.jboss.pnc.rex.common.exceptions.TaskConflictException
+        - org.jboss.pnc.rex.common.exceptions.CircularDependencyException
+        - org.jboss.pnc.rex.common.exceptions.ConstraintConflictException
+    http-configuration:
+      idle-timeout: 300000 # 5 minutes
+      follow-redirects: true
+      request-retry-policy:
+        backoff:
+          min-delay: 0
+          max-delay: 0
+          jitter-factor: 0.5
+        max-retries: 20
+        expire-in: 0
+      425-backoff-policy:
+        backoff:
+          min-delay: 200
+          max-delay: 6000 # 1 minute
+          jitter-factor: 0.5
+        max-retries: 0
+        expire-in: 600000 # 10minutes
 
 quarkus:
   application:
@@ -77,49 +100,56 @@ org:
       rex:
         core:
           delegates:
-            TolerantQueueManager/poke/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
-            TolerantQueueManager/poke/Retry/delay: ${scheduler.options.retry-policy.delay}
-            TolerantQueueManager/poke/Retry/jitter: ${scheduler.options.retry-policy.jitter}
-            TolerantQueueManager/poke/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
-            TolerantQueueManager/decreaseRunningCounter/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
-            TolerantQueueManager/decreaseRunningCounter/Retry/delay: ${scheduler.options.retry-policy.delay}
-            TolerantQueueManager/decreaseRunningCounter/Retry/jitter: ${scheduler.options.retry-policy.jitter}
-            TolerantQueueManager/decreaseRunningCounter/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
-            TolerantQueueManager/setMaximumConcurrency/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
-            TolerantQueueManager/setMaximumConcurrency/Retry/delay: ${scheduler.options.retry-policy.delay}
-            TolerantQueueManager/setMaximumConcurrency/Retry/jitter: ${scheduler.options.retry-policy.jitter}
-            TolerantQueueManager/setMaximumConcurrency/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+            TolerantQueueManager/poke/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+            TolerantQueueManager/poke/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+            TolerantQueueManager/poke/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+            TolerantQueueManager/poke/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+            TolerantQueueManager/decreaseRunningCounter/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+            TolerantQueueManager/decreaseRunningCounter/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+            TolerantQueueManager/decreaseRunningCounter/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+            TolerantQueueManager/decreaseRunningCounter/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+            TolerantQueueManager/setMaximumConcurrency/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+            TolerantQueueManager/setMaximumConcurrency/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+            TolerantQueueManager/setMaximumConcurrency/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+            TolerantQueueManager/setMaximumConcurrency/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
         rest:
-          InternalEndpointImpl/finish/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
-          InternalEndpointImpl/finish/Retry/delay: ${scheduler.options.retry-policy.delay}
-          InternalEndpointImpl/finish/Retry/jitter: ${scheduler.options.retry-policy.jitter}
-          InternalEndpointImpl/finish/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
-          InternalEndpointImpl/succeed/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
-          InternalEndpointImpl/succeed/Retry/delay: ${scheduler.options.retry-policy.delay}
-          InternalEndpointImpl/succeed/Retry/jitter: ${scheduler.options.retry-policy.jitter}
-          InternalEndpointImpl/succeed/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
-          InternalEndpointImpl/fail/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
-          InternalEndpointImpl/fail/Retry/delay: ${scheduler.options.retry-policy.delay}
-          InternalEndpointImpl/fail/Retry/jitter: ${scheduler.options.retry-policy.jitter}
-          InternalEndpointImpl/fail/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
-          InternalEndpointImpl/setConcurrent/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
-          InternalEndpointImpl/setConcurrent/Retry/delay: ${scheduler.options.retry-policy.delay}
-          InternalEndpointImpl/setConcurrent/Retry/jitter: ${scheduler.options.retry-policy.jitter}
-          InternalEndpointImpl/setConcurrent/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
-          TaskEndpointImpl/start/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
-          TaskEndpointImpl/start/Retry/delay: ${scheduler.options.retry-policy.delay}
-          TaskEndpointImpl/start/Retry/jitter: ${scheduler.options.retry-policy.jitter}
-          TaskEndpointImpl/start/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
-          TaskEndpointImpl/cancel/Retry/maxRetries: ${scheduler.options.retry-policy.maxRetries}
-          TaskEndpointImpl/cancel/Retry/delay: ${scheduler.options.retry-policy.delay}
-          TaskEndpointImpl/cancel/Retry/jitter: ${scheduler.options.retry-policy.jitter}
-          TaskEndpointImpl/cancel/Retry/abortOn: ${scheduler.options.retry-policy.abortOn}
+          InternalEndpointImpl/finish/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+          InternalEndpointImpl/finish/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+          InternalEndpointImpl/finish/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+          InternalEndpointImpl/finish/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+          InternalEndpointImpl/succeed/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+          InternalEndpointImpl/succeed/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+          InternalEndpointImpl/succeed/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+          InternalEndpointImpl/succeed/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+          InternalEndpointImpl/fail/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+          InternalEndpointImpl/fail/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+          InternalEndpointImpl/fail/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+          InternalEndpointImpl/fail/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+          InternalEndpointImpl/setConcurrent/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+          InternalEndpointImpl/setConcurrent/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+          InternalEndpointImpl/setConcurrent/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+          InternalEndpointImpl/setConcurrent/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+          TaskEndpointImpl/start/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+          TaskEndpointImpl/start/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+          TaskEndpointImpl/start/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+          TaskEndpointImpl/start/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+          TaskEndpointImpl/cancel/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+          TaskEndpointImpl/cancel/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+          TaskEndpointImpl/cancel/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+          TaskEndpointImpl/cancel/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
 
 
 
 "%test":
   scheduler:
     baseUrl: http://localhost:8081
+    options:
+      http-configuration:
+        425-backoff-policy:
+          backoff:
+            min-delay: 10
+            max-delay: 10
+          expire-in: 5000
   quarkus:
     log:
       category:
@@ -133,6 +163,10 @@ org:
       default-transaction-timeout: 10m
     http:
       port: 8081
+    opentelemetry:
+      enabled: false
+      tracer:
+        enabled: false
     infinispan-client:
       client-intelligence: BASIC
       use-schema-registration: true
@@ -167,6 +201,10 @@ org:
       auth-server-url: ""
     transaction-manager:
       default-transaction-timeout: 10m
+    opentelemetry:
+      enabled: false
+      tracer:
+        enabled: false
     http:
       port: 8181
     infinispan-client:
@@ -176,15 +214,15 @@ org:
       username: admin
       password: password
       cache:
-        "counter":
+        "rex-counter":
           configuration-uri: "counter-configuration.xml"
           near-cache-mode: disabled
           near-cache-max-entries: -1
-        "near-tasks":
+        "rex-tasks":
           configuration-uri: "task-configuration.xml"
           near-cache-mode: invalidated
           near-cache-max-entries: 100
-        "near-constraints":
+        "rex-constraints":
           configuration-uri: "constraints-configuration.xml"
           near-cache-mode: invalidated
           near-cache-max-entries: 100
@@ -197,4 +235,6 @@ org:
           level: TRACE
         "io.quarkus.infinispan":
           level: TRACE
+        "io.opentelemetry":
+          level: INFO
       min-level: FINEST
