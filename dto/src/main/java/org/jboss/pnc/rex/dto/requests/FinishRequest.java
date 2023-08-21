@@ -28,14 +28,11 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@Deprecated
 public class FinishRequest {
 
     @NotNull
     public Boolean status;
 
     public Object response;
-
-    public Boolean getStatus() {
-        return status;
-    }
 }
