@@ -19,6 +19,8 @@ package org.jboss.pnc.rex.core;
 
 
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
@@ -26,13 +28,16 @@ import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.pnc.rex.common.enums.Method;
+import org.jboss.pnc.rex.common.exceptions.TooEarlyException;
+import org.jboss.pnc.rex.core.config.Backoff425Policy;
+import org.jboss.pnc.rex.core.config.HttpRetryPolicy;
+import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
+import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
 import org.jboss.pnc.rex.model.Header;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
-import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Consumer;
@@ -44,12 +49,20 @@ import static java.time.Duration.of;
 public class GenericVertxHttpClient {
 
     private final WebClient client;
-    private final List<Throwable> failFast;
+    private final InternalRetryPolicy internalPolicy;
+    private final HttpConfiguration configuration;
+    private final HttpRetryPolicy requestRetryPolicy;
+    private final Backoff425Policy backoff425Policy;
 
 
-    public GenericVertxHttpClient(Vertx vertx, @ConfigProperty(name = "scheduler.options.retry-policy.abortOn") List<Throwable> abortOn) {
+    public GenericVertxHttpClient(Vertx vertx,
+                                  InternalRetryPolicy internalPolicy,
+                                  HttpConfiguration configuration) {
         this.client = WebClient.create(vertx);
-        this.failFast = abortOn;
+        this.internalPolicy = internalPolicy;
+        this.configuration = configuration;
+        this.requestRetryPolicy = configuration.requestRetryPolicy();
+        this.backoff425Policy = configuration.backoff425RetryPolicy();
     }
 
     /**
@@ -66,24 +79,14 @@ public class GenericVertxHttpClient {
                              Object requestBody,
                              Consumer<HttpResponse<Buffer>> onResponse,
                              Consumer<Throwable> onConnectionUnreachable) {
-        HttpRequest<Buffer> request = client.request(toVertxMethod(method),
-                getPort(remoteEndpoint),
-                remoteEndpoint.getHost(),
-                remoteEndpoint.getPath());
-        addHeaders(request, headers);
-        request.ssl(isSSL(remoteEndpoint));
-        request.followRedirects(true);
-
-
-        log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
-                remoteEndpoint,
+        makeReactiveRequest(remoteEndpoint,
                 method,
-                headers.toString(),
-                requestBody.toString());
-
-        var uni = Uni.createFrom().item(() -> request.sendJsonAndAwait(requestBody));
-
-        handleRequest(uni, onResponse, onConnectionUnreachable).await().atMost(Duration.ofSeconds(5));
+                headers,
+                requestBody,
+                onResponse,
+                onConnectionUnreachable)
+            .await() // TODO make configurable?
+            .indefinitely();
     }
 
     private boolean isSSL(URI remoteEndpoint) {
@@ -107,15 +110,26 @@ public class GenericVertxHttpClient {
     }
 
     private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Consumer<Throwable> onConnectionUnreachable) {
+        // apply back-pressure if the receiving service responds with 425 Too Early
+        uni = uni.onItem().invoke(Unchecked.consumer(resp -> {
+                    if (resp != null && resp.statusCode() == 425) {
+                        log.warn("Receiver returned status 425 Too Early. Executing back-pressure. Resp: {}", resp.bodyAsString());
+                        throw new TooEarlyException("Receiver returned 425 Too Early.");
+                    }
+                }));
+        uni = backoff425Policy
+                .applyToleranceOn(TooEarlyException.class, uni);
+
         // case when http request succeeds and a body is received
         uni = uni.onItem()
                 // create a separate uni to decouple internal failure tolerance
                 .transformToUni(i -> Uni.createFrom()
                     .item(i)
                     .invoke(onResponse)
-                    .onFailure(th -> !failFast.contains(th))
+                    .onFailure(this::abortOnNonRecoverable)
                         .retry()
                             .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
+                            .withJitter(0.5)
                             .atMost(20)
                     .onFailure()
                         // recover with null so that Uni doesn't trigger outer onFailure() handlers
@@ -123,13 +137,26 @@ public class GenericVertxHttpClient {
                 );
 
         // cases when http request method itself fails (unreachable host)
-        uni = uni.onFailure().invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: ", t))
-                .onFailure().retry().atMost(20)
-                .onFailure().invoke(onConnectionUnreachable)
+        uni = uni.onFailure(this::skipOn425)
+                .invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: ", t));
+
+        uni = requestRetryPolicy
+                .applyToleranceOn(this::skipOn425, uni);
+
+        // fallback to connection unreachable after an exception
+        uni = uni.onFailure().invoke(onConnectionUnreachable)
                 // recover with null so that Uni doesn't propagate the exception
                 .onFailure().recoverWithNull();
 
         return uni;
+    }
+
+    private boolean abortOnNonRecoverable(Throwable failure) {
+        return !internalPolicy.abortOn().contains(failure);
+    }
+
+    private boolean skipOn425(Throwable failure) {
+        return !(failure instanceof TooEarlyException || failure.getCause() instanceof TooEarlyException);
     }
 
     public Uni<HttpResponse<Buffer>> makeReactiveRequest(URI remoteEndpoint,
@@ -141,10 +168,11 @@ public class GenericVertxHttpClient {
         HttpRequest<Buffer> request = client.request(toVertxMethod(method),
                 getPort(remoteEndpoint),
                 remoteEndpoint.getHost(),
-                remoteEndpoint.getPath());
+                getPath(remoteEndpoint));
         addHeaders(request, headers);
         request.ssl(isSSL(remoteEndpoint));
-        request.followRedirects(true);
+        request.followRedirects(configuration.followRedirects());
+        request.timeout(configuration.idleTimeout());
 
         log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
                 remoteEndpoint,
@@ -152,7 +180,18 @@ public class GenericVertxHttpClient {
                 headers.toString(),
                 requestBody.toString());
 
-        return handleRequest(request.sendJson(requestBody), onResponse, onConnectionUnreachable);
+        return handleRequest(
+                request.sendJson(requestBody).emitOn(Infrastructure.getDefaultWorkerPool()),
+                onResponse,
+                onConnectionUnreachable);
+    }
+
+    private static String getPath(URI remoteEndpoint) {
+        if (remoteEndpoint.getQuery() != null) {
+            return remoteEndpoint.getPath() + "?" + remoteEndpoint.getQuery();
+        }
+
+        return remoteEndpoint.getPath();
     }
 
     private HttpMethod toVertxMethod(Method method) {

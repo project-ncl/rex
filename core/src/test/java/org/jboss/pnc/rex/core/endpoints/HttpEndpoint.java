@@ -34,6 +34,8 @@ import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.time.Duration;
@@ -43,6 +45,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Path("/test")
@@ -62,6 +65,8 @@ public class HttpEndpoint {
     private final Queue<Object> recordedRequestData = new ConcurrentLinkedQueue<>();
 
     private boolean shouldRecord = false;
+
+    private final AtomicInteger counter = new AtomicInteger(0);
 
     @POST
     @Path("/accept")
@@ -104,6 +109,27 @@ public class HttpEndpoint {
         record(request);
         executor.submit(() -> finishTask(request.getNegativeCallback()));
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
+    }
+
+    @POST
+    @Path("/425eventuallyOK")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response eventuallyAccept(StartRequest request, @QueryParam("fails") int fails) {
+
+        if (fails == counter.get()) {
+            executor.submit(() -> finishTask(request.getPositiveCallback()));
+            return Response.status(200)
+                    .header("Content-Type", "application/json")
+                    .entity("{\"you\":\"cool\"}")
+                    .build();
+        }
+
+        counter.incrementAndGet();
+        return Response.status(425)
+                .header("Content-Type", "application/json")
+                .entity("{\"you\":\"wait\"}")
+                .build();
     }
 
     private void finishTask(Request callback) {
@@ -159,5 +185,13 @@ public class HttpEndpoint {
 
     public Collection<Object> getRecordedRequestData() {
         return recordedRequestData;
+    }
+
+    public void clearRequestCounter() {
+        counter.set(0);
+    }
+
+    public int getCount() {
+        return counter.get();
     }
 }
