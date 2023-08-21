@@ -58,7 +58,7 @@ import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedW
 import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.core.common.TestData.getAllParameters;
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
-import static org.jboss.pnc.rex.core.common.TestData.getMockTask;
+import static org.jboss.pnc.rex.core.common.TestData.createMockTask;
 import static org.jboss.pnc.rex.core.common.TestData.getNaughtyNotificationsRequest;
 import static org.jboss.pnc.rex.core.common.TestData.getNotificationsRequest;
 import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
@@ -195,13 +195,13 @@ public class NotificationTest {
     @Test
     void testDeletionDoesntHappenOnFailedFinalNotification() throws InterruptedException {
         String taskName = "task";
-        var okNotificationTask = getMockTask(
+        var okNotificationTask = createMockTask(
                 taskName,
                 Mode.ACTIVE,
                 getRequestWithStart(taskName),
                 getStopRequestWithCallback(taskName),
                 getNotificationsRequest());
-        var failingNotificationTask = getMockTask(
+        var failingNotificationTask = createMockTask(
                 taskName,
                 Mode.ACTIVE,
                 getRequestWithStart(taskName),

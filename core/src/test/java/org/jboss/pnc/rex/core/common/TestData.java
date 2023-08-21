@@ -38,9 +38,9 @@ public class TestData {
     public static CreateTaskDTO getMockTaskWithoutStart(String name, Mode mode, boolean withNotifications) {
         String payload = String.format("I'm an %s!", name);
         if (withNotifications) {
-            return getMockTask(name, mode, getRequestWithoutStart(payload), getStopRequestWithCallback(payload), getNotificationsRequest());
+            return createMockTask(name, mode, getRequestWithoutStart(payload), getStopRequestWithCallback(payload), getNotificationsRequest());
         }
-        return getMockTask(name, mode, getRequestWithoutStart(payload), getStopRequestWithCallback(payload), null);
+        return createMockTask(name, mode, getRequestWithoutStart(payload), getStopRequestWithCallback(payload), null);
     }
 
     public static CreateTaskDTO getMockTaskWithStart(String name, Mode mode) {
@@ -49,9 +49,9 @@ public class TestData {
 
     public static CreateTaskDTO getMockTaskWithStart(String name, Mode mode, boolean withNotifications) {
         if (withNotifications) {
-            return getMockTask(name, mode, getRequestWithStart(name), getStopRequestWithCallback(name), getNotificationsRequest());
+            return createMockTask(name, mode, getRequestWithStart(name), getStopRequestWithCallback(name), getNotificationsRequest());
         }
-        return getMockTask(name, mode, getRequestWithStart(name), getStopRequestWithCallback(name), null);
+        return createMockTask(name, mode, getRequestWithStart(name), getStopRequestWithCallback(name), null);
     }
 
     public static CreateGraphRequest getSingleWithoutStart(String name) {
@@ -65,7 +65,13 @@ public class TestData {
                 .build();
     }
 
-    public static CreateTaskDTO getMockTask(String name, Mode mode, org.jboss.pnc.api.dto.Request startRequest, org.jboss.pnc.api.dto.Request stopRequest, org.jboss.pnc.api.dto.Request notificationsRequest) {
+    public static CreateGraphRequest getRequestFromSingleTask(CreateTaskDTO task) {
+        return CreateGraphRequest.builder()
+                .vertex(task.name, task)
+                .build();
+    }
+
+    public static CreateTaskDTO createMockTask(String name, Mode mode, org.jboss.pnc.api.dto.Request startRequest, org.jboss.pnc.api.dto.Request stopRequest, org.jboss.pnc.api.dto.Request notificationsRequest) {
         return CreateTaskDTO.builder()
                 .name(name)
                 .controllerMode(mode)
@@ -105,6 +111,15 @@ public class TestData {
     public static org.jboss.pnc.api.dto.Request getRequestWithStart(Object payload) {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/test/acceptAndStart"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
+                .attachment(payload)
+                .build();
+    }
+
+    public static org.jboss.pnc.api.dto.Request getRequestWithBackoff(Object payload, int failsUntilOK) {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/test/425eventuallyOK?fails=" + failsUntilOK))
                 .method(org.jboss.pnc.api.dto.Request.Method.POST)
                 .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
                 .attachment(payload)
