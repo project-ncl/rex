@@ -223,7 +223,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     @Override
     public List<Task> getMarkedTasksWithoutDependants() {
         QueryFactory factory = Search.getQueryFactory(tasks);
-        Query<Task> taskQuery = factory.create("FROM rex_model.Task WHERE disposable = true AND dependants IS EMPTY");
+        Query<Task> taskQuery = factory.create("FROM rex_model.Task WHERE disposable = true AND dependants IS NULL");
         return taskQuery.execute().list();
     }
 

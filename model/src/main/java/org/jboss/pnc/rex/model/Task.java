@@ -160,7 +160,7 @@ public class Task {
      *
      * Even though a Task can be flagged disposable, it won't be removed until all dependants are removed beforehand.
      */
-    @Getter(onMethod_ = @ProtoField(number = 17, defaultValue = "false"))
+    @Getter(onMethod_ = {@ProtoField(number = 17, defaultValue = "false"), @ProtoDoc("@Field(index=Index.YES)")})
     private boolean disposable;
 
     public void incUnfinishedDependencies() {

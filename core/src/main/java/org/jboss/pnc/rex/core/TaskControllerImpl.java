@@ -51,6 +51,7 @@ import org.jboss.pnc.rex.model.TransitionTime;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.transaction.Transactional;
+import javax.validation.constraints.Max;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,12 +125,18 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             case UP_to_SUCCESSFUL -> List.of(new DependencySucceededJob(task), new DecreaseCounterJob(task));
         });
 
+        // add common tasks on transitioning from a specific StateGroup into specific StateGroup
+        tasks.addAll(switch (transition.getBefore().getGroup()) {
+            case IDLE,FINAL -> List.of();
+            // Poke Queue when transitioning from running/enqueued tasks into final state
+            case QUEUED,RUNNING -> transition.getAfter().isFinal() ? List.of(new PokeQueueJob()) : List.of();
+        });
+
         // add common tasks on transitioning into a specific StateGroup
         tasks.addAll(switch (transition.getAfter().getGroup()) {
             case IDLE,QUEUED, RUNNING -> List.of();
             case FINAL -> {
                 var jobs = new ArrayList<ControllerJob>();
-                jobs.add(new PokeQueueJob());
                 if (shouldMarkImmediately(task, transition))
                     jobs.add(new MarkForCleaningJob(task));
                 if (shouldDeleteImmediately(task, transition))
