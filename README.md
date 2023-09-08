@@ -122,3 +122,9 @@ However this transformation doesn't take care of transitive dependencies. Since 
 - explicitly exclude rex-dto when using rex-api
 - explicitly specify that we want to use the rex-dto with classifier `jakarta` and explicity exclude pnc-api
 - explicitly specify that we want to use pnc-api with classifier `jakarta`
+
+# Authentication
+Rex is authentication using OIDC. Three roles are used:
+- `pnc-users-rex-user`: Regular Rex user permissions for some endpoints
+- `pnc-users-rex-admin`: Admin permissions for all endpoints
+- `pnc-users-admin`: Admin permissions for all endpoints
