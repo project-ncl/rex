@@ -23,6 +23,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.List;
+
 /**
  * Class to specify metadata for a Task.
  */
@@ -33,5 +35,11 @@ import lombok.ToString;
 @ToString
 public class ConfigurationDTO {
 
-    public boolean passResultsOfDependencies = false;
+    public Boolean passResultsOfDependencies = null;
+
+    public Boolean passMDCInRequestBody = null;
+
+    public Boolean passOTELInRequestBody = null;
+
+    public List<String> mdcHeaderKeys = null;
 }
