@@ -25,10 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Class to specify metadata for a Task.
  */
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor(onConstructor_ = {@ProtoFactory})
 @Slf4j
 @Jacksonized
@@ -37,7 +40,21 @@ public class Configuration {
     /**
      * Specify whether we want to pass results of direct dependencies in the StartRequest and StopRequest
      */
-    @Getter(onMethod_ = {@ProtoField(number = 1, defaultValue = "false")})
+    @Getter(onMethod_ = {@ProtoField(number = 1, defaultValue = "" + Defaults.passResultsOfDependencies)})
     private final boolean passResultsOfDependencies;
 
+    @Getter(onMethod_ = {@ProtoField(number = 2, defaultValue = "" + Defaults.passMDCInRequestBody)})
+    private final boolean passMDCInRequestBody;
+
+    @Getter(onMethod_ = {@ProtoField(number = 3, defaultValue = "" + Defaults.passOTELInRequestBody)})
+    private final boolean passOTELInRequestBody;
+
+    @Getter(onMethod_ = {@ProtoField(number = 4, collectionImplementation = ArrayList.class)})
+    private final List<String> mdcHeaderKeys;
+
+    public static class Defaults {
+        public static final boolean passResultsOfDependencies = false;
+        public static final boolean passMDCInRequestBody = false;
+        public static final boolean passOTELInRequestBody = false;
+    }
 }
