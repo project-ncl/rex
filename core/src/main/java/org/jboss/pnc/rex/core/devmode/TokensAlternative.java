@@ -15,28 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core;
+package org.jboss.pnc.rex.core.devmode;
 
+import io.quarkus.arc.lookup.LookupIfProperty;
+import io.quarkus.arc.profile.IfBuildProfile;
 import io.quarkus.oidc.client.Tokens;
+import io.vertx.core.json.JsonObject;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import java.time.Duration;
 
 @ApplicationScoped
-public class BeanFactory {
-
-    /**
-     * Return a mock Tokens object to make the gods of CI happy
-     * @return Tokens object
-     */
+@LookupIfProperty(name = "quarkus.oidc-client.enabled", stringValue = "false")
+@IfBuildProfile(anyOf = {"dev", "test"})
+/**
+ * To be able to start in development/test mode without authorization
+ */
+public class TokensAlternative {
     @Produces
-    public Tokens getToken() {
-        return new Tokens(
-                "abcd",
-                0L,
-                null,
-                "abcd",
-                0L,
-                null);
+    public Tokens produceToken() {
+        return new Tokens("access-token",
+                Long.MAX_VALUE,
+                Duration.ofNanos(Long.MAX_VALUE),
+                "refresh-token",
+                Long.MAX_VALUE, JsonObject.of());
     }
 }
