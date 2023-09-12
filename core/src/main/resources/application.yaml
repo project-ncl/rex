@@ -211,6 +211,8 @@ org:
     oidc:
       enabled: false
       auth-server-url: ""
+    oidc-client:
+      enabled: false
     transaction-manager:
       default-transaction-timeout: 10m
     opentelemetry:
