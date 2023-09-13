@@ -522,7 +522,6 @@ class TaskContainerImplTest {
      * Disabled for test determinism reasons
      */
     @RepeatedTest(100)
-    @Disabled
     public void randomDAGTest() throws Exception {
         CreateGraphRequest randomDAG = generateDAG(2, 10, 5, 10, 0.7F);
         taskEndpoint.start(randomDAG);
@@ -551,7 +550,7 @@ class TaskContainerImplTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(true))
+                        .configuration(new ConfigurationDTO(true, false, false, null))
                         .build())
                 .build());
 
@@ -587,7 +586,7 @@ class TaskContainerImplTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(false))
+                        .configuration(new ConfigurationDTO(false, false, false, null))
                         .build())
                 .build());
 

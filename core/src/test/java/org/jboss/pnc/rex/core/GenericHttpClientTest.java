@@ -17,8 +17,13 @@
  */
 package org.jboss.pnc.rex.core;
 
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import io.restassured.http.ContentType;
+import io.restassured.http.Header;
+import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
@@ -28,17 +33,25 @@ import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.MaxConcurrent;
 import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.core.endpoints.HttpEndpoint;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
 import static org.jboss.pnc.rex.core.common.TestData.createMockTask;
 import static org.jboss.pnc.rex.core.common.TestData.getRequestFromSingleTask;
+import static io.restassured.RestAssured.given;
 
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)
@@ -56,6 +69,9 @@ public class GenericHttpClientTest {
     @Inject
     TransitionRecorder recorder;
 
+    @TestHTTPEndpoint(TaskEndpoint.class)
+    @TestHTTPResource
+    URI taskEndpointURI;
 
     @Inject
     @Running
@@ -109,5 +125,167 @@ public class GenericHttpClientTest {
         waitTillTasksAreFinishedWith(State.START_FAILED, "backoff-test");
 
         assertThat(endpoint.getCount()).isNotZero();
+    }
+
+    @Test
+    void shouldPassMDCInBodyLocalConfig() {
+        // with
+        ConfigurationDTO config = ConfigurationDTO.builder()
+                .passMDCInRequestBody(true)
+                .mdcHeaderKeys(List.of("mdc-key"))
+                .build();
+        CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test",
+                Mode.ACTIVE,
+                TestData.getRequestWithStart(null, List.of(new Request.Header("mdc-key", "mdc-value"))),
+                TestData.getStopRequest(null),
+                null,
+                config));
+
+        // when
+        endpoint.startRecordingQueue();
+        taskEndpoint.start(request);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "mdc-test");
+        endpoint.stopRecording();
+
+        // then
+        Collection<Object> recordedRequestData = endpoint.getRecordedRequestData();
+        assertThat(recordedRequestData.toArray()[0])
+                .isInstanceOf(StartRequest.class)
+                .extracting("mdc")
+                .isInstanceOf(Map.class)
+                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-key", "mdc-value"));
+    }
+
+    @Test
+    void shouldPassMDCInBodyGraphConfig() {
+        // with
+        ConfigurationDTO config = ConfigurationDTO.builder()
+                .passMDCInRequestBody(true)
+                .mdcHeaderKeys(List.of("mdc-key"))
+                .build();
+        CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test-graph",
+                    Mode.ACTIVE,
+                    TestData.getRequestWithStart(null, List.of(new Request.Header("mdc-key", "mdc-value"))),
+                    TestData.getStopRequest(null),
+                    null))
+                .toBuilder()
+                .graphConfiguration(config)
+                .build();
+
+        // when
+        endpoint.startRecordingQueue();
+        // using restassured because of weird MDC issue in main
+        given().body(request)
+                .contentType(ContentType.JSON)
+                .when().post(taskEndpointURI).then()
+                .statusCode(200);
+
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "mdc-test-graph");
+        endpoint.stopRecording();
+
+        // then
+        Collection<Object> recordedRequestData = endpoint.getRecordedRequestData();
+        assertThat(recordedRequestData.toArray()[0])
+                .isInstanceOf(StartRequest.class)
+                .extracting("mdc")
+                .isInstanceOf(Map.class)
+                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-key", "mdc-value"));
+    }
+
+    @Test
+    void shouldPassMDCInBodyLocalTakePriority() {
+        // with
+        ConfigurationDTO graphConfig = ConfigurationDTO.builder()
+                .passMDCInRequestBody(true)
+                .mdcHeaderKeys(List.of("mdc1-key"))
+                .build();
+
+        ConfigurationDTO localConfig = ConfigurationDTO.builder()
+                .passMDCInRequestBody(true)
+                .mdcHeaderKeys(List.of("mdc-key"))
+                .build();
+        CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test-graph",
+                    Mode.ACTIVE,
+                    TestData.getRequestWithStart(null,
+                            List.of(new Request.Header("mdc-key", "mdc-value"),
+                                    new Request.Header("mdc1-key", "mdc1-value"))),
+                    TestData.getStopRequest(null),
+                    null,
+                    localConfig))
+                .toBuilder()
+                .graphConfiguration(graphConfig)
+                .build();
+
+        // when
+        endpoint.startRecordingQueue();
+
+        // using restassured because of weird MDC issue in main
+        given().body(request)
+                .contentType(ContentType.JSON)
+                .header(new Header("mdc1-key", "mdc1-value"))
+                .when()
+                .post(taskEndpointURI)
+                .then()
+                .statusCode(200);
+
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "mdc-test-graph");
+        endpoint.stopRecording();
+
+        // then
+        Collection<Object> recordedRequestData = endpoint.getRecordedRequestData();
+        assertThat(recordedRequestData.toArray()[0])
+                .isInstanceOf(StartRequest.class)
+                .extracting("mdc")
+                .isInstanceOf(Map.class)
+                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap)
+                        // from local-level config
+                        .containsEntry("mdc-key", "mdc-value")
+                        // from graph-level config
+                        .doesNotContainEntry("mdc1-key", "mdc1-value"));
+    }
+
+    @Test
+    void shouldPassMDCInBodyAndMergeConfigs() {
+        // with
+        ConfigurationDTO graphConfig = ConfigurationDTO.builder()
+                .passMDCInRequestBody(true)
+                .build();
+
+        ConfigurationDTO localConfig = ConfigurationDTO.builder()
+                .mdcHeaderKeys(List.of("mdc-key"))
+                .build();
+        CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test-graph",
+                    Mode.ACTIVE,
+                    TestData.getRequestWithStart(null,
+                            List.of(new Request.Header("mdc-key", "mdc-value"),
+                                    new Request.Header("mdc1-key", "mdc1-value"))),
+                    TestData.getStopRequest(null),
+                    null,
+                    localConfig))
+                .toBuilder()
+                .graphConfiguration(graphConfig)
+                .build();
+
+        // when
+        endpoint.startRecordingQueue();
+
+        // using restassured because of weird MDC issue in main
+        given().body(request)
+                .contentType(ContentType.JSON)
+                .when()
+                .post(taskEndpointURI)
+                .then()
+                .statusCode(200);
+
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "mdc-test-graph");
+        endpoint.stopRecording();
+
+        // then
+        Collection<Object> recordedRequestData = endpoint.getRecordedRequestData();
+        assertThat(recordedRequestData.toArray()[0])
+                .isInstanceOf(StartRequest.class)
+                .extracting("mdc")
+                .isInstanceOf(Map.class)
+                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-key", "mdc-value"));
     }
 }

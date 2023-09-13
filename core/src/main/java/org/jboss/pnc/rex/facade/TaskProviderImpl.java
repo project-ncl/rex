@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.facade;
 
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
+import org.jboss.pnc.rex.common.util.MDCUtils;
 import org.jboss.pnc.rex.core.api.TaskContainer;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
@@ -30,11 +31,13 @@ import org.jboss.pnc.rex.facade.api.TaskProvider;
 import org.jboss.pnc.rex.facade.mapper.GraphsMapper;
 import org.jboss.pnc.rex.facade.mapper.TaskMapper;
 import org.jboss.pnc.rex.model.Task;
+import org.slf4j.MDC;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Set;
@@ -53,22 +56,33 @@ public class TaskProviderImpl implements TaskProvider {
 
     private final TaskController controller;
 
+    private final HttpHeaders httpHeaders;
+
     @Inject
-    public TaskProviderImpl(TaskContainer container, TaskController controller, TaskMapper mapper, GraphsMapper graphMapper) {
+    public TaskProviderImpl(TaskContainer container, TaskController controller, TaskMapper mapper, GraphsMapper graphMapper, HttpHeaders httpHeaders) {
         this.target = container;
         this.registry = container;
         this.controller = controller;
         this.mapper = mapper;
         this.graphMapper = graphMapper;
+        this.httpHeaders = httpHeaders;
     }
 
     @Override
     @Transactional
     public Set<TaskDTO> create(CreateGraphRequest request) {
-        return target.install(graphMapper.toDB(request))
-                .stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toSet());
+        try {
+            if (request.graphConfiguration != null) {
+                MDCUtils.applyMDCsFromHeadersMM(request.graphConfiguration.mdcHeaderKeys, httpHeaders.getRequestHeaders());
+            }
+
+            return target.install(graphMapper.toDB(request))
+                    .stream()
+                    .map(mapper::toDTO)
+                    .collect(Collectors.toSet());
+        } finally {
+            MDC.clear();
+        }
     }
 
     @Override

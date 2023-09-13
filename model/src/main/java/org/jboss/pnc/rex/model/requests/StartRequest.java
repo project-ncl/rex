@@ -54,5 +54,7 @@ public class StartRequest {
 
     private final Object payload;
 
+    private final Map<String, String> mdc;
+
     private final Map<String, Object> taskResults;
 }
