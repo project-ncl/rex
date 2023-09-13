@@ -52,8 +52,9 @@ public class StopRequest {
      */
     private final org.jboss.pnc.api.dto.Request negativeCallback;
 
-
     private final Object payload;
+
+    private final Map<String, String> mdc;
 
     private final Map<String, Object> taskResults;
 }

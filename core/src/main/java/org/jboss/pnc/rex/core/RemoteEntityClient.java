@@ -19,6 +19,8 @@ package org.jboss.pnc.rex.core;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
 import io.quarkus.arc.Unremovable;
 import io.quarkus.oidc.client.Tokens;
 import io.smallrye.mutiny.Uni;
@@ -26,31 +28,31 @@ import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.pnc.api.constants.MDCHeaderKeys;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
+import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.jboss.pnc.rex.model.requests.StopRequest;
+import org.slf4j.MDC;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import javax.ws.rs.core.HttpHeaders;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-
-/**
- * TODO: Possibly convert to JAX-RS RestClient builder to enable dynamic url
- * @see <a href="https://download.eclipse.org/microprofile/microprofile-rest-client-1.2.1/microprofile-rest-client-1.2.1.html#_sample_builder_usage">JAX-RS Builder</a>
- */
+import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
 
 @Unremovable
 @ApplicationScoped
@@ -72,23 +74,46 @@ public class RemoteEntityClient {
 
     private final String baseUrl;
 
-    @Inject
-    Tokens serviceTokens;
+    private final Tokens serviceTokens;
 
     public RemoteEntityClient(GenericVertxHttpClient client,
                               @WithTransactions TaskController controller,
                               TaskRegistry taskRegistry,
                               ObjectMapper mapper,
                               @ConfigProperty(name = "scheduler.baseUrl",
-                                      defaultValue = "http://localhost:8080") String baseUrl) {
+                                      defaultValue = "http://localhost:8080") String baseUrl,
+                              Tokens serviceTokens) {
         this.controller = controller;
         this.taskRegistry = taskRegistry;
         this.client = client;
         this.mapper = mapper;
         this.baseUrl = baseUrl;
+        this.serviceTokens = serviceTokens;
     }
 
     public void stopJob(Task task) {
+        if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeys() != null) {
+            var keys = task.getConfiguration().getMdcHeaderKeys();
+            var headers = task.getRemoteCancel().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
+            
+            wrapWithMDC(keys, headers, () -> stopJobInternal(task));
+        } else {
+            stopJobInternal(task);
+        }
+    }
+
+    public void startJob(Task task) {
+        if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeys() != null) {
+            var keys = task.getConfiguration().getMdcHeaderKeys();
+            var headers = task.getRemoteStart().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
+
+            wrapWithMDC(keys, headers, () -> startJobInternal(task));
+        } else {
+            startJobInternal(task);
+        }
+    }
+
+    private void stopJobInternal(Task task) {
         Request requestDefinition = task.getRemoteCancel();
 
         URI url;
@@ -110,6 +135,7 @@ public class RemoteEntityClient {
                 .callback(callbackRequest)
                 .positiveCallback(positiveCallback)
                 .negativeCallback(negativeCallback)
+                .mdc(getOptionalMDCAndOTELValues(task))
                 .build();
 
         client.makeRequest(url,
@@ -120,8 +146,41 @@ public class RemoteEntityClient {
                 throwable -> handleConnectionFailure(throwable, task));
     }
 
+    private Map<String, String> getOptionalMDCAndOTELValues(Task task) {
+        Configuration configuration = task.getConfiguration();
+        if (configuration == null) {
+            return null;
+        }
 
-    public void startJob(Task task) {
+        Map<String, String> mdcBody = new HashMap<>();
+
+        if (configuration.isPassMDCInRequestBody()) {
+            mdcBody.putAll(MDC.getCopyOfContextMap());
+        }
+
+        if (configuration.isPassOTELInRequestBody()) {
+            mdcBody.putAll(getOTELContext());
+        }
+
+        return mdcBody;
+    }
+
+    private Map<String, String> getOTELContext() {
+        Map<String, String> toReturn = new HashMap<>();
+
+        Span span = Span.current();
+        if (span != null) {
+            SpanContext context = span.getSpanContext();
+            toReturn.put(MDCHeaderKeys.SPAN_ID.getMdcKey(), context.getSpanId());
+            toReturn.put(MDCHeaderKeys.TRACE_ID.getMdcKey(), context.getTraceId());
+            toReturn.put(MDCHeaderKeys.TRACE_FLAGS.getMdcKey(), context.getTraceFlags().asHex());
+            // TODO what to do with TRACE_STATE as it returns Map<String,String> ?
+            // toReturn.put(MDCHeaderKeys.TRACE_STATE.getMdcKey(), context.getTraceState().asMap());
+        }
+        return toReturn;
+    }
+
+    private void startJobInternal(Task task) {
         Request requestDefinition = task.getRemoteStart();
 
         URI uri;
@@ -142,6 +201,7 @@ public class RemoteEntityClient {
                 .callback(callbackRequest)
                 .positiveCallback(positiveCallback)
                 .negativeCallback(negativeCallback)
+                .mdc(getOptionalMDCAndOTELValues(task))
                 .build();
 
         client.makeRequest(uri,
