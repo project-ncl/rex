@@ -27,6 +27,10 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.jboss.pnc.rex.common.enums.Transition;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 
 @Builder
 @Jacksonized
@@ -42,5 +46,19 @@ public class TransitionTime implements Comparable<TransitionTime> {
     @Override
     public int compareTo(TransitionTime other) {
         return this.getTime().compareTo(other.getTime());
+    }
+
+    @Override
+    public String toString() {
+        return "[ " + transition + " at " + formatTime(time) + " ]";
+    }
+
+    /**
+     * f.e. 9/12/23, 5:56:49 PM CEST
+     * @return formatted time
+     */
+    private String formatTime(Instant time) {
+        return DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.LONG)
+                .format(ZonedDateTime.ofInstant(time, ZoneId.systemDefault()));
     }
 }
