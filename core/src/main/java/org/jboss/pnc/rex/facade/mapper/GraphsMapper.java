@@ -18,14 +18,17 @@
 package org.jboss.pnc.rex.facade.mapper;
 
 import org.jboss.pnc.rex.core.model.TaskGraph;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
+import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import java.util.HashMap;
+import java.util.List;
 
 @Mapper(config = MapperCentralConfig.class, uses = {EdgeMapper.class, CreateTaskMapper.class})
 public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph> {
@@ -33,12 +36,14 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
     @Override
     @Mapping(target = "edge", ignore = true)
     @Mapping(target = "correlationID", ignore = true)
+    @Mapping(target = "graphConfiguration", ignore = true)
     CreateGraphRequest toDTO(TaskGraph dbEntity);
 
     @Override
     @Mapping(target = "edge", ignore = true)
     //correlationID is used in applyCorrelationID method
-    @BeanMapping(ignoreUnmappedSourceProperties = {"correlationID"})
+    //graphConfiguration is used in mergeWithGraphConfig method
+    @BeanMapping(ignoreUnmappedSourceProperties = {"correlationID", "graphConfiguration"})
     TaskGraph toDB(CreateGraphRequest dtoEntity);
 
     @AfterMapping
@@ -55,5 +60,61 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
             //apply changes
             target.vertices(vertices);
         }
+    }
+
+    @BeforeMapping
+    default void mergeWithGraphConfig(CreateGraphRequest request) {
+        if (request == null || request.graphConfiguration == null) {
+            return;
+        }
+
+        for (var entry : request.getVertices().entrySet()) {
+            var taskConfig = entry.getValue().getConfiguration();
+            var graphConfig = request.getGraphConfiguration();
+
+            // apply merged configuration
+            entry.getValue().configuration = merge(taskConfig, graphConfig);
+        }
+    }
+
+    /**
+     * Merge graph-level and task-level configuration into one. The task-level configuration has priority. A field will
+     * be overridden only if the task-level field IS NULL.
+     *
+     * @param taskConfig task-level config
+     * @param graphConfig graph-level config
+     * @return merged configuration
+     */
+    private static ConfigurationDTO merge(ConfigurationDTO taskConfig, ConfigurationDTO graphConfig) {
+        if (taskConfig == null) {
+            return new ConfigurationDTO(
+                    graphConfig.passResultsOfDependencies,
+                    graphConfig.passMDCInRequestBody,
+                    graphConfig.passOTELInRequestBody,
+                    graphConfig.mdcHeaderKeys);
+        }
+
+        Boolean passResultsOfDependencies = taskConfig.passResultsOfDependencies;
+        if (taskConfig.passResultsOfDependencies == null && graphConfig.passResultsOfDependencies != null) {
+            passResultsOfDependencies = graphConfig.passResultsOfDependencies;
+        }
+        Boolean passMDCInRequestBody = taskConfig.passMDCInRequestBody;
+        if (taskConfig.passMDCInRequestBody == null && graphConfig.passMDCInRequestBody != null) {
+            passMDCInRequestBody = graphConfig.passMDCInRequestBody;
+        }
+        Boolean passOTELInRequestBody = taskConfig.passOTELInRequestBody;
+        if (taskConfig.passOTELInRequestBody == null && graphConfig.passOTELInRequestBody != null) {
+            passOTELInRequestBody = graphConfig.passOTELInRequestBody;
+        }
+        List<String> mdcHeaderKeys = taskConfig.mdcHeaderKeys;
+        if (taskConfig.mdcHeaderKeys == null && graphConfig.mdcHeaderKeys != null) {
+            mdcHeaderKeys = graphConfig.mdcHeaderKeys;
+        }
+
+        return new ConfigurationDTO(
+                passResultsOfDependencies,
+                passMDCInRequestBody,
+                passOTELInRequestBody,
+                mdcHeaderKeys);
     }
 }

@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Singular;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;
 
@@ -31,19 +32,19 @@ import javax.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
 
+@Getter
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateGraphRequest {
 
-    @Getter
     public String correlationID;
 
-    @Getter
+    public ConfigurationDTO graphConfiguration;
+
     @Singular
     public Set<@NotNull @Valid EdgeDTO> edges;
 
-    @Getter
     @Singular
     public Map<@NotBlank String, @NotNull @Valid CreateTaskDTO> vertices;
 }

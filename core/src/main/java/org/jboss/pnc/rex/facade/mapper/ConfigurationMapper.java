@@ -20,13 +20,21 @@ package org.jboss.pnc.rex.facade.mapper;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.model.Configuration;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(config = MapperCentralConfig.class)
+import static org.jboss.pnc.rex.model.Configuration.*;
+
+@Mapper(config = MapperCentralConfig.class,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_DEFAULT)
 public interface ConfigurationMapper extends EntityMapper<ConfigurationDTO, Configuration> {
 
     @Override
     ConfigurationDTO toDTO(Configuration dbEntity);
 
     @Override
+    @Mapping(target = "passResultsOfDependencies", defaultValue = "" + Defaults.passResultsOfDependencies)
+    @Mapping(target = "passMDCInRequestBody", defaultValue = "" + Defaults.passMDCInRequestBody)
+    @Mapping(target = "passOTELInRequestBody", defaultValue = "" + Defaults.passOTELInRequestBody)
     Configuration toDB(ConfigurationDTO dtoEntity);
 }
