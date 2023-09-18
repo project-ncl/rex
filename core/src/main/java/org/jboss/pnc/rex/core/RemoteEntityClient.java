@@ -21,6 +21,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
+import io.opentelemetry.context.Context;
 import io.quarkus.arc.Unremovable;
 import io.quarkus.oidc.client.Tokens;
 import io.smallrye.mutiny.Uni;
@@ -169,13 +171,14 @@ public class RemoteEntityClient {
         Map<String, String> toReturn = new HashMap<>();
 
         Span span = Span.current();
+        W3CTraceContextPropagator traceParentGen = W3CTraceContextPropagator.getInstance();
         if (span != null) {
             SpanContext context = span.getSpanContext();
             toReturn.put(MDCHeaderKeys.SPAN_ID.getMdcKey(), context.getSpanId());
             toReturn.put(MDCHeaderKeys.TRACE_ID.getMdcKey(), context.getTraceId());
             toReturn.put(MDCHeaderKeys.TRACE_FLAGS.getMdcKey(), context.getTraceFlags().asHex());
-            // TODO what to do with TRACE_STATE as it returns Map<String,String> ?
-            // toReturn.put(MDCHeaderKeys.TRACE_STATE.getMdcKey(), context.getTraceState().asMap());
+            // sets TRACE_PARENT and TRACE_STATE(encoded)
+            traceParentGen.inject(Context.current(), toReturn, (map, key, value) -> map.put(key, value));
         }
         return toReturn;
     }
