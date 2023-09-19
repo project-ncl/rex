@@ -25,8 +25,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
+import java.beans.ConstructorProperties;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Class to specify metadata for a Task.
@@ -43,14 +45,31 @@ public class Configuration {
     @Getter(onMethod_ = {@ProtoField(number = 1, defaultValue = "" + Defaults.passResultsOfDependencies)})
     private final boolean passResultsOfDependencies;
 
+    /**
+     * Specify whether to put applied MDC values into the request body. MDCHeaderKeyMapping MUST be configured.
+     */
     @Getter(onMethod_ = {@ProtoField(number = 2, defaultValue = "" + Defaults.passMDCInRequestBody)})
     private final boolean passMDCInRequestBody;
 
+    /**
+     * Specify whether to put OTEL values into the request body. MDCHeaderKeyMapping MUST be configured.
+     */
     @Getter(onMethod_ = {@ProtoField(number = 3, defaultValue = "" + Defaults.passOTELInRequestBody)})
     private final boolean passOTELInRequestBody;
 
-    @Getter(onMethod_ = {@ProtoField(number = 4, collectionImplementation = ArrayList.class)})
-    private final List<String> mdcHeaderKeys;
+    /**
+     * If configured, Rex looks at a Request headers and extracts values and maps them into it's MDC.
+     *
+     * (Header Key -> MDC Key)
+     *
+     * Has to be HashMap for ISPN inference in AllArgsConstructor
+     */
+    private final HashMap<String, String> mdcHeaderKeyMapping;
+
+    @ProtoField(number = 4, javaType = HashMap.class)
+    public Map<String, String> getMdcHeaderKeyMapping() {
+        return mdcHeaderKeyMapping;
+    }
 
     public static class Defaults {
         public static final boolean passResultsOfDependencies = false;

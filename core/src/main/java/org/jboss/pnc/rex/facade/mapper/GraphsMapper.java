@@ -28,7 +28,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 
 @Mapper(config = MapperCentralConfig.class, uses = {EdgeMapper.class, CreateTaskMapper.class})
 public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph> {
@@ -91,7 +91,7 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
                     graphConfig.passResultsOfDependencies,
                     graphConfig.passMDCInRequestBody,
                     graphConfig.passOTELInRequestBody,
-                    graphConfig.mdcHeaderKeys);
+                    graphConfig.mdcHeaderKeyMapping);
         }
 
         Boolean passResultsOfDependencies = taskConfig.passResultsOfDependencies;
@@ -106,9 +106,9 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
         if (taskConfig.passOTELInRequestBody == null && graphConfig.passOTELInRequestBody != null) {
             passOTELInRequestBody = graphConfig.passOTELInRequestBody;
         }
-        List<String> mdcHeaderKeys = taskConfig.mdcHeaderKeys;
-        if (taskConfig.mdcHeaderKeys == null && graphConfig.mdcHeaderKeys != null) {
-            mdcHeaderKeys = graphConfig.mdcHeaderKeys;
+        Map<String, String> mdcHeaderKeys = taskConfig.mdcHeaderKeyMapping;
+        if (taskConfig.mdcHeaderKeyMapping == null && graphConfig.mdcHeaderKeyMapping != null) {
+            mdcHeaderKeys = graphConfig.mdcHeaderKeyMapping;
         }
 
         return new ConfigurationDTO(

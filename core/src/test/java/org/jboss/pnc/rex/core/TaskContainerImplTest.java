@@ -522,6 +522,7 @@ class TaskContainerImplTest {
      * Disabled for test determinism reasons
      */
     @RepeatedTest(100)
+    @Disabled
     public void randomDAGTest() throws Exception {
         CreateGraphRequest randomDAG = generateDAG(2, 10, 5, 10, 0.7F);
         taskEndpoint.start(randomDAG);

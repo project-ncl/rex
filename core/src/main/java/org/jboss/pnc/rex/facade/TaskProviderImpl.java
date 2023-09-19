@@ -73,7 +73,7 @@ public class TaskProviderImpl implements TaskProvider {
     public Set<TaskDTO> create(CreateGraphRequest request) {
         try {
             if (request.graphConfiguration != null) {
-                MDCUtils.applyMDCsFromHeadersMM(request.graphConfiguration.mdcHeaderKeys, httpHeaders.getRequestHeaders());
+                MDCUtils.applyMDCsFromHeadersMM(request.graphConfiguration.mdcHeaderKeyMapping, httpHeaders.getRequestHeaders());
             }
 
             return target.install(graphMapper.toDB(request))

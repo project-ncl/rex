@@ -132,7 +132,7 @@ public class GenericHttpClientTest {
         // with
         ConfigurationDTO config = ConfigurationDTO.builder()
                 .passMDCInRequestBody(true)
-                .mdcHeaderKeys(List.of("mdc-key"))
+                .mdcHeaderKeyMapping(Map.of("mdc-key", "mdc-logging-key"))
                 .build();
         CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test",
                 Mode.ACTIVE,
@@ -153,7 +153,7 @@ public class GenericHttpClientTest {
                 .isInstanceOf(StartRequest.class)
                 .extracting("mdc")
                 .isInstanceOf(Map.class)
-                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-key", "mdc-value"));
+                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-logging-key", "mdc-value"));
     }
 
     @Test
@@ -161,7 +161,7 @@ public class GenericHttpClientTest {
         // with
         ConfigurationDTO config = ConfigurationDTO.builder()
                 .passMDCInRequestBody(true)
-                .mdcHeaderKeys(List.of("mdc-key"))
+                .mdcHeaderKeyMapping(Map.of("mdc-key", "mdc-logging-key"))
                 .build();
         CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test-graph",
                     Mode.ACTIVE,
@@ -189,7 +189,7 @@ public class GenericHttpClientTest {
                 .isInstanceOf(StartRequest.class)
                 .extracting("mdc")
                 .isInstanceOf(Map.class)
-                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-key", "mdc-value"));
+                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-logging-key", "mdc-value"));
     }
 
     @Test
@@ -197,12 +197,12 @@ public class GenericHttpClientTest {
         // with
         ConfigurationDTO graphConfig = ConfigurationDTO.builder()
                 .passMDCInRequestBody(true)
-                .mdcHeaderKeys(List.of("mdc1-key"))
+                .mdcHeaderKeyMapping(Map.of("mdc1-key", "mdc1-logging-key"))
                 .build();
 
         ConfigurationDTO localConfig = ConfigurationDTO.builder()
                 .passMDCInRequestBody(true)
-                .mdcHeaderKeys(List.of("mdc-key"))
+                .mdcHeaderKeyMapping(Map.of("mdc-key", "mdc-logging-key"))
                 .build();
         CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test-graph",
                     Mode.ACTIVE,
@@ -239,9 +239,9 @@ public class GenericHttpClientTest {
                 .isInstanceOf(Map.class)
                 .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap)
                         // from local-level config
-                        .containsEntry("mdc-key", "mdc-value")
+                        .containsEntry("mdc-logging-key", "mdc-value")
                         // from graph-level config
-                        .doesNotContainEntry("mdc1-key", "mdc1-value"));
+                        .doesNotContainEntry("mdc1-logging-key", "mdc1-value"));
     }
 
     @Test
@@ -252,7 +252,7 @@ public class GenericHttpClientTest {
                 .build();
 
         ConfigurationDTO localConfig = ConfigurationDTO.builder()
-                .mdcHeaderKeys(List.of("mdc-key"))
+                .mdcHeaderKeyMapping(Map.of("mdc-key", "mdc-logging-key"))
                 .build();
         CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test-graph",
                     Mode.ACTIVE,
@@ -286,6 +286,6 @@ public class GenericHttpClientTest {
                 .isInstanceOf(StartRequest.class)
                 .extracting("mdc")
                 .isInstanceOf(Map.class)
-                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-key", "mdc-value"));
+                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-logging-key", "mdc-value"));
     }
 }
