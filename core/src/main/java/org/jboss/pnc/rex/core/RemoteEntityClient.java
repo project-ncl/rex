@@ -94,8 +94,8 @@ public class RemoteEntityClient {
     }
 
     public void stopJob(Task task) {
-        if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeys() != null) {
-            var keys = task.getConfiguration().getMdcHeaderKeys();
+        if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeyMapping() != null) {
+            var keys = task.getConfiguration().getMdcHeaderKeyMapping();
             var headers = task.getRemoteCancel().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
             
             wrapWithMDC(keys, headers, () -> stopJobInternal(task));
@@ -105,8 +105,8 @@ public class RemoteEntityClient {
     }
 
     public void startJob(Task task) {
-        if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeys() != null) {
-            var keys = task.getConfiguration().getMdcHeaderKeys();
+        if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeyMapping() != null) {
+            var keys = task.getConfiguration().getMdcHeaderKeyMapping();
             var headers = task.getRemoteStart().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
 
             wrapWithMDC(keys, headers, () -> startJobInternal(task));

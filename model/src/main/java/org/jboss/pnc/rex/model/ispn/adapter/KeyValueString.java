@@ -15,31 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.dto;
+package org.jboss.pnc.rex.model.ispn.adapter;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.extern.jackson.Jacksonized;
+import lombok.extern.slf4j.Slf4j;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
-import java.util.Map;
+@Builder(toBuilder = true)
+@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@Slf4j
+@Jacksonized
+public class KeyValueString {
+    @Getter(onMethod_ = {@ProtoField(number = 1)})
+    private final String key;
 
-/**
- * Class to specify metadata for a Task.
- */
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString
-public class ConfigurationDTO {
-
-    public Boolean passResultsOfDependencies = null;
-
-    public Boolean passMDCInRequestBody = null;
-
-    public Boolean passOTELInRequestBody = null;
-
-    public Map<String, String> mdcHeaderKeyMapping = null;
+    @Getter(onMethod_ = {@ProtoField(number = 2)})
+    private final String value;
 }
