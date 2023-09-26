@@ -29,7 +29,7 @@ import java.time.Duration;
 @ApplicationScoped
 @LookupIfProperty(name = "quarkus.oidc-client.enabled", stringValue = "false")
 @IfBuildProfile(anyOf = {"dev", "test"})
-/**
+/*
  * To be able to start in development/test mode without authorization
  */
 public class TokensAlternative {
@@ -39,6 +39,7 @@ public class TokensAlternative {
                 Long.MAX_VALUE,
                 Duration.ofNanos(Long.MAX_VALUE),
                 "refresh-token",
-                Long.MAX_VALUE, JsonObject.of());
+                Long.MAX_VALUE,
+                JsonObject.of());
     }
 }
