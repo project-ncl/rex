@@ -22,6 +22,7 @@ import javax.transaction.Transactional;
 
 import io.quarkus.arc.Unremovable;
 import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.api.TaskController;
 
 @WithTransactions
@@ -49,14 +50,14 @@ public class TransactionalTaskController implements TaskController {
 
     @Override
     @Transactional
-    public void accept(String name, Object response) {
-        delegate.accept(name, response);
+    public void accept(String name, Object response, Origin origin) {
+        delegate.accept(name, response, origin);
     }
 
     @Override
     @Transactional
-    public void fail(String name, Object response) {
-        delegate.fail(name, response);
+    public void fail(String name, Object response, Origin origin) {
+        delegate.fail(name, response, origin);
     }
 
     @Override

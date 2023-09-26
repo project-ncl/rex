@@ -15,28 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.dto;
+package org.jboss.pnc.rex.common.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import org.jboss.pnc.rex.common.enums.Origin;
-import org.jboss.pnc.rex.common.enums.State;
 
-@Getter
-@Builder
-@ToString
-@NoArgsConstructor
-@AllArgsConstructor
-public class ServerResponseDTO {
+import org.infinispan.protostream.annotations.ProtoEnumValue;
 
-    public State state;
+public enum Origin {
 
-    public Boolean positive;
+    /**
+     * The response originates from a external remote entitu. This response signifies a callback for start/cancel
+     * operations.
+     */
+    @ProtoEnumValue(number = 0)
+    REMOTE_ENTITY,
 
-    public Object body;
-
-    public Origin origin;
+    /**
+     * A response for the transition originates in Rex itself. The generated response contains an error with the reason
+     * for failure.
+     *
+     * An example of a failure can be failed invocation of remote entity whilst starting/cancelling.
+     */
+    @ProtoEnumValue(number = 1)
+    REX_INTERNAL_ERROR
 }

@@ -18,6 +18,8 @@
 package org.jboss.pnc.rex.core.jobs;
 
 import io.smallrye.mutiny.Uni;
+import org.jboss.pnc.api.dto.ErrorResponse;
+import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.RemoteEntityClient;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
@@ -65,7 +67,7 @@ public class InvokeStartJob extends ControllerJob {
     void onException(Throwable e) {
         logger.error("STOP " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
         Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> controller.fail(context.getName(), "START : System failure. Exception: " + e.toString()))
+                .onItem().invoke((ignore) -> controller.fail(context.getName(), new ErrorResponse(e, "Rex failed to start a Task on the remote entity."), Origin.REX_INTERNAL_ERROR))
                 .onFailure().invoke((throwable) -> logger.warn("START " + context.getName() + ": Failed to transition task to START_FAILED state. Retrying.", throwable))
                 .onFailure().retry().atMost(5)
                 .onFailure().recoverWithNull()

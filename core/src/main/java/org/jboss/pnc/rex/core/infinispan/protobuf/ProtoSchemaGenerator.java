@@ -21,6 +21,7 @@ import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
@@ -47,6 +48,7 @@ import org.jboss.pnc.rex.model.ispn.adapter.KeyValueString;
                 Mode.class,
                 State.class,
                 StopFlag.class,
+                Origin.class,
                 Request.class,
                 Configuration.class,
                 Transition.class,

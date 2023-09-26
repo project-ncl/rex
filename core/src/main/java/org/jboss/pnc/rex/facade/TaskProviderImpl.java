@@ -18,6 +18,7 @@
 package org.jboss.pnc.rex.facade;
 
 import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
 import org.jboss.pnc.rex.common.util.MDCUtils;
 import org.jboss.pnc.rex.core.api.TaskContainer;
@@ -127,9 +128,9 @@ public class TaskProviderImpl implements TaskProvider {
     @Transactional
     public void acceptRemoteResponse(String taskName, boolean positive, Object response) {
         if (positive) {
-            controller.accept(taskName, response);
+            controller.accept(taskName, response, Origin.REMOTE_ENTITY);
         } else {
-            controller.fail(taskName, response);
+            controller.fail(taskName, response, Origin.REMOTE_ENTITY);
         }
     }
 }

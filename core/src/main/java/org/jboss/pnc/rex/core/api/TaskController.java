@@ -18,6 +18,7 @@
 package org.jboss.pnc.rex.core.api;
 
 import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.Origin;
 
 /**
  * This is API for TaskController.
@@ -51,19 +52,23 @@ public interface TaskController {
 
     /**
      * Method used for positive callback. Needs to be called in a transaction.
-     *
+     * <p>
      * f.e. to signalize that remote Task has started/cancelled/finished.
-     * @param name id of the Task
+     *
+     * @param name   id of the Task
+     * @param origin the origin of response
      */
-    void accept(String name, Object response);
+    void accept(String name, Object response, Origin origin);
 
     /**
      * Method used for negative callback. Needs to be called in a transaction.
-     *
+     * <p>
      * f.e. to signalize that remote Task failed to start/cancel or failed during execution.
-     * @param name id of the Task
+     *
+     * @param name   id of the Task
+     * @param origin the origin of response
      */
-    void fail(String name, Object response);
+    void fail(String name, Object response, Origin origin);
 
     void dequeue(String name);
 

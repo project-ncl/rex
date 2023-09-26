@@ -42,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
@@ -234,7 +235,7 @@ class TaskContainerImplTest {
         waitTillTasksAre(State.UP, container, EXISTING_KEY);
 
         container.getTransactionManager().begin();
-        controller.accept(EXISTING_KEY, null);
+        controller.accept(EXISTING_KEY, null, Origin.REMOTE_ENTITY);
         container.getTransactionManager().commit();
 
         waitTillTasksAre(State.UP, container, dependant);

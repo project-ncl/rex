@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
@@ -363,14 +364,14 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     @Override
     @Transactional(MANDATORY)
-    public void accept(String name, Object response) {
+    public void accept(String name, Object response, Origin origin) {
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
         if (EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED, State.STOPPING).contains(task.getState())) {
-            ServerResponse positiveResponse = new ServerResponse(task.getState(), true, response);
+            ServerResponse positiveResponse = new ServerResponse(task.getState(), true, response, origin);
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(positiveResponse);
         } else {
@@ -385,14 +386,14 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     @Override
     @Transactional(MANDATORY)
-    public void fail(String name, Object response) {
+    public void fail(String name, Object response, Origin origin) {
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
         if (EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED, State.STOPPING).contains(task.getState())){
-            ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response);
+            ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response, origin);
             List<ServerResponse> responses = task.getServerResponses();
             responses.add(negativeResponse);
             task.setServerResponses(responses); //probably unnecessary

@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
+import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
 
 import java.io.IOException;
@@ -53,10 +54,14 @@ public class ServerResponse {
     @Getter
     private final Object body;
 
+    @Getter(onMethod_ = {@ProtoField(number = 4, type = Type.ENUM)})
+    private final Origin origin;
+
     @ProtoFactory
-    public ServerResponse(State state, boolean positive, byte[] byteBody) {
+    public ServerResponse(State state, boolean positive, byte[] byteBody, Origin origin) {
         this.state = state;
         this.positive = positive;
+        this.origin = origin;
         Object body;
         try {
             body = convertToObject(byteBody);

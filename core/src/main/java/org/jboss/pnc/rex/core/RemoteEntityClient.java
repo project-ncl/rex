@@ -31,6 +31,8 @@ import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.pnc.api.constants.MDCHeaderKeys;
+import org.jboss.pnc.api.dto.ErrorResponse;
+import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
@@ -218,22 +220,21 @@ public class RemoteEntityClient {
     private void handleResponse(HttpResponse<Buffer> response, Task task) {
         if (200 <= response.statusCode() && response.statusCode() <= 299) {
             log.info("RESPONSE {}: Got positive response.", task.getName());
-            controller.accept(task.getName(), parseBody(response));
+            controller.accept(task.getName(), parseBody(response), Origin.REMOTE_ENTITY);
         } else if (300 <= response.statusCode() && response.statusCode() <= 399) {
             log.info("RESPONSE {}: Got redirect to {}", task.getName(), response.getHeader("Location"));
             // TODO do not fail after proper redirect handling
-            controller.fail(task.getName(), parseBody(response));
+            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY);
         } else {
             log.info("RESPONSE {}: Got negative response. (STATUS CODE: {})", task.getName(), response.statusCode());
-            controller.fail(task.getName(), parseBody(response));
+            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY);
         }
     }
 
     private void handleConnectionFailure(Throwable exception, Task task) {
         log.error("ERROR " + task.getName() + ": Couldn't reach the remote entity.", exception);
-        // format of the simulated "response" could be better (mainly not String)
         Uni.createFrom().voidItem()
-            .onItem().invoke(() -> controller.fail(task.getName(), "Remote entity failed to respond. Exception: " + exception.toString()))
+            .onItem().invoke(() -> controller.fail(task.getName(), new ErrorResponse(exception.getClass().getSimpleName(), exception.getMessage(), "Rex couldn't contact remote entity.") , Origin.REX_INTERNAL_ERROR))
             .onFailure().retry().atMost(5)
             .onFailure().invoke((throwable) -> log.error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
             .onFailure().recoverWithNull()
