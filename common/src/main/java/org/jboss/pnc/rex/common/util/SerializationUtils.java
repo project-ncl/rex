@@ -22,10 +22,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
 
 public class SerializationUtils {
 
     public static byte[] convertToByteArray(Object object) throws IOException {
+        if (object == null) {
+            return null;
+        }
+
         ByteArrayOutputStream bStream = new ByteArrayOutputStream();
         try (ObjectOutputStream stream = new ObjectOutputStream(bStream)) {
             stream.writeObject(object);
@@ -35,6 +40,9 @@ public class SerializationUtils {
     }
 
     public static Object convertToObject(byte[] attachment) throws IOException, ClassNotFoundException {
+        if (attachment == null || attachment.length == 0) {
+            return null;
+        }
         try (ObjectInputStream stream = new ObjectInputStream(new ByteArrayInputStream(attachment))) {
             return stream.readObject();
         }

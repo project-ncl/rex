@@ -234,11 +234,22 @@ public class RemoteEntityClient {
     private void handleConnectionFailure(Throwable exception, Task task) {
         log.error("ERROR " + task.getName() + ": Couldn't reach the remote entity.", exception);
         Uni.createFrom().voidItem()
-            .onItem().invoke(() -> controller.fail(task.getName(), new ErrorResponse(exception.getClass().getSimpleName(), exception.getMessage(), "Rex couldn't contact remote entity.") , Origin.REX_INTERNAL_ERROR))
+            .onItem().invoke(
+                () -> controller.fail(
+                    task.getName(),
+                    convertToHashMap(new ErrorResponse(exception.getClass().getSimpleName(), exception.getMessage(), "Rex couldn't contact remote entity.")),
+                    Origin.REX_INTERNAL_ERROR))
             .onFailure().retry().atMost(5)
             .onFailure().invoke((throwable) -> log.error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
             .onFailure().recoverWithNull()
             .await().indefinitely();
+    }
+
+    /**
+     * Simple workaround for serializing unserializable objects (missing Serializable)
+     */
+    private Object convertToHashMap(Object object) {
+        return mapper.convertValue(object, HashMap.class);
     }
 
     private Object parseBody(HttpResponse<Buffer> response) {
