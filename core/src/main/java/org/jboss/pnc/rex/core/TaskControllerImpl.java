@@ -104,7 +104,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
             case UP_to_STOP_REQUESTED, STARTING_to_STOP_REQUESTED -> List.of(new InvokeStopJob(task));
 
-            case STOPPING_TO_STOPPED -> List.of(new DependencyCancelledJob(task), new DecreaseCounterJob(task));
+            case STOP_REQUESTED_to_STOPPED, STOPPING_TO_STOPPED -> List.of(new DependencyCancelledJob(task), new DecreaseCounterJob(task));
 
             case NEW_to_STOPPED, WAITING_to_STOPPED, ENQUEUED_to_STOPPED -> {
                 var jobs = new ArrayList<ControllerJob>();
@@ -123,7 +123,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             //no tasks
             case STOP_REQUESTED_to_STOPPING, STARTING_to_UP -> List.of();
 
-            case UP_to_SUCCESSFUL -> List.of(new DependencySucceededJob(task), new DecreaseCounterJob(task));
+            case STARTING_to_SUCCESSFUL, UP_to_SUCCESSFUL -> List.of(new DependencySucceededJob(task), new DecreaseCounterJob(task));
         });
 
         // add common tasks on transitioning from a specific StateGroup into specific StateGroup
@@ -215,8 +215,13 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 if (task.getStopFlag() == StopFlag.CANCELLED)
                     yield Transition.STARTING_to_STOP_REQUESTED;
                 List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STARTING).toList();
-                if (responses.stream().anyMatch(ServerResponse::isPositive))
-                    yield Transition.STARTING_to_UP;
+                if (responses.stream().anyMatch(ServerResponse::isPositive)) {
+                    if (task.getConfiguration() != null && task.getConfiguration().isSkipStartRequestCallback()) {
+                        yield Transition.STARTING_to_SUCCESSFUL;
+                    } else {
+                        yield Transition.STARTING_to_UP;
+                    }
+                }
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
                     yield Transition.STARTING_to_START_FAILED;
                 yield null;
@@ -233,8 +238,13 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             }
             case STOP_REQUESTED -> {
                 List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STOP_REQUESTED).toList();
-                if (responses.stream().anyMatch(ServerResponse::isPositive))
-                    yield Transition.STOP_REQUESTED_to_STOPPING;
+                if (responses.stream().anyMatch(ServerResponse::isPositive)) {
+                    if (task.getConfiguration() != null && task.getConfiguration().isSkipStartRequestCallback()) {
+                        yield Transition.STOP_REQUESTED_to_STOPPED;
+                    } else {
+                        yield Transition.STOP_REQUESTED_to_STOPPING;
+                    }
+                }
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
                     yield Transition.STOP_REQUESTED_to_STOP_FAILED;
                 yield null;

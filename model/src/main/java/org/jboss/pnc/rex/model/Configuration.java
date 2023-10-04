@@ -25,8 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-import java.beans.ConstructorProperties;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,6 +64,21 @@ public class Configuration {
      */
     private final HashMap<String, String> mdcHeaderKeyMapping;
 
+    /**
+     * Specify whether we want to accept the response to StartRequest as the final data (true), or not (false: default)
+     * The effect is that we don't need to receive a callback if true
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 5, defaultValue = "" + Defaults.skipStartRequestCallback)})
+    private final boolean skipStartRequestCallback;
+
+    /**
+     * Specify whether we want to accept the response to StopRequest as the final data (true), or not (false: default)
+     * The effect is that we don't need to receive a callback if true
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 6, defaultValue = "" + Defaults.skipStopRequestCallback)})
+    private final boolean skipStopRequestCallback;
+
+
     @ProtoField(number = 4, javaType = HashMap.class)
     public Map<String, String> getMdcHeaderKeyMapping() {
         return mdcHeaderKeyMapping;
@@ -75,5 +88,9 @@ public class Configuration {
         public static final boolean passResultsOfDependencies = false;
         public static final boolean passMDCInRequestBody = false;
         public static final boolean passOTELInRequestBody = false;
+
+        public static final boolean skipStartRequestCallback = false;
+
+        public static final boolean skipStopRequestCallback = false;
     }
 }

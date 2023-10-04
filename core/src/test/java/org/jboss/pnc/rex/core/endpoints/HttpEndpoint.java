@@ -27,8 +27,8 @@ import org.jboss.pnc.rex.core.GenericVertxHttpClient;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.model.Header;
-import org.jboss.pnc.rex.model.requests.StartRequest;
-import org.jboss.pnc.rex.model.requests.StopRequest;
+import org.jboss.pnc.rex.model.requests.StartRequestWithCallback;
+import org.jboss.pnc.rex.model.requests.StopRequestWithCallback;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -87,7 +87,7 @@ public class HttpEndpoint {
     @POST
     @Path("/stopAndCallback")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response stopAndCallback(StopRequest request) {
+    public Response stopAndCallback(StopRequestWithCallback request) {
         record(request);
         executor.submit(() -> finishTask(request.getPositiveCallback()));
         return Response.ok().build();
@@ -96,7 +96,7 @@ public class HttpEndpoint {
     @POST
     @Path("/acceptAndStart")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response acceptAndStart(StartRequest request) {
+    public Response acceptAndStart(StartRequestWithCallback request) {
         record(request);
         executor.submit(() -> finishTask(request.getPositiveCallback()));
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
@@ -105,7 +105,7 @@ public class HttpEndpoint {
     @POST
     @Path("/acceptAndFail")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response acceptAndFail(StartRequest request) {
+    public Response acceptAndFail(StartRequestWithCallback request) {
         record(request);
         executor.submit(() -> finishTask(request.getNegativeCallback()));
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
@@ -115,7 +115,7 @@ public class HttpEndpoint {
     @Path("/425eventuallyOK")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response eventuallyAccept(StartRequest request, @QueryParam("fails") int fails) {
+    public Response eventuallyAccept(StartRequestWithCallback request, @QueryParam("fails") int fails) {
 
         if (fails == counter.get()) {
             executor.submit(() -> finishTask(request.getPositiveCallback()));

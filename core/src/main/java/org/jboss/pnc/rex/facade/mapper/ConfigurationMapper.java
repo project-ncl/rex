@@ -36,5 +36,7 @@ public interface ConfigurationMapper extends EntityMapper<ConfigurationDTO, Conf
     @Mapping(target = "passResultsOfDependencies", defaultValue = "" + Defaults.passResultsOfDependencies)
     @Mapping(target = "passMDCInRequestBody", defaultValue = "" + Defaults.passMDCInRequestBody)
     @Mapping(target = "passOTELInRequestBody", defaultValue = "" + Defaults.passOTELInRequestBody)
+    @Mapping(target = "skipStartRequestCallback", defaultValue = "" + Defaults.skipStartRequestCallback)
+    @Mapping(target = "skipStopRequestCallback", defaultValue = "" + Defaults.skipStopRequestCallback)
     Configuration toDB(ConfigurationDTO dtoEntity);
 }

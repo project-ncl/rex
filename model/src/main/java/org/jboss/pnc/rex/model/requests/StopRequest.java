@@ -17,9 +17,9 @@
  */
 package org.jboss.pnc.rex.model.requests;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
 import java.util.Map;
@@ -28,29 +28,10 @@ import java.util.Map;
  * Request sent to the remote entity to cancel execution of remote Task.
  */
 @Jacksonized
-@Builder
+@SuperBuilder
 @Getter
 @ToString
 public class StopRequest {
-
-    /**
-     * The referenced endpoint is application/JSON only and serves for both positive and negative callback.
-     * Additionally, it uses a specific JSON body
-     *
-     * Don't use it
-     */
-    @Deprecated
-    private final org.jboss.pnc.api.dto.Request callback;
-
-    /**
-     * The referenced endpoint is generic and serves for positive callback.
-     */
-    private final org.jboss.pnc.api.dto.Request positiveCallback;
-
-    /**
-     * The referenced endpoint is generic and serves for negative callback.
-     */
-    private final org.jboss.pnc.api.dto.Request negativeCallback;
 
     private final Object payload;
 

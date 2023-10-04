@@ -91,7 +91,9 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
                     graphConfig.passResultsOfDependencies,
                     graphConfig.passMDCInRequestBody,
                     graphConfig.passOTELInRequestBody,
-                    graphConfig.mdcHeaderKeyMapping);
+                    graphConfig.mdcHeaderKeyMapping,
+                    graphConfig.skipStartRequestCallback,
+                    graphConfig.skipStopRequestCallback);
         }
 
         Boolean passResultsOfDependencies = taskConfig.passResultsOfDependencies;
@@ -110,11 +112,21 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
         if (taskConfig.mdcHeaderKeyMapping == null && graphConfig.mdcHeaderKeyMapping != null) {
             mdcHeaderKeys = graphConfig.mdcHeaderKeyMapping;
         }
+        Boolean skipStartRequestCallback = taskConfig.skipStartRequestCallback;
+        if (taskConfig.skipStartRequestCallback == null && graphConfig.skipStartRequestCallback != null) {
+            skipStartRequestCallback = graphConfig.skipStartRequestCallback;
+        }
+        Boolean skipStopRequestCallback = taskConfig.skipStopRequestCallback;
+        if (taskConfig.skipStopRequestCallback == null && graphConfig.skipStopRequestCallback != null) {
+            skipStopRequestCallback = graphConfig.skipStopRequestCallback;
+        }
 
         return new ConfigurationDTO(
                 passResultsOfDependencies,
                 passMDCInRequestBody,
                 passOTELInRequestBody,
-                mdcHeaderKeys);
+                mdcHeaderKeys,
+                skipStartRequestCallback,
+                skipStopRequestCallback);
     }
 }

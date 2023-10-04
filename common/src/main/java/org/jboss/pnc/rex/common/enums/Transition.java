@@ -145,7 +145,19 @@ public enum Transition {
      * Controller informs Task's dependants that it successfully finished.
      */
     @ProtoEnumValue(number = 16)
-    UP_to_SUCCESSFUL(State.UP, State.SUCCESSFUL);
+    UP_to_SUCCESSFUL(State.UP, State.SUCCESSFUL),
+    /**
+     * Controller received positive response that remote Task has successfully started and finished its execution.
+     * We use this when a callback is not necessary
+     */
+    @ProtoEnumValue(number = 17)
+    STARTING_to_SUCCESSFUL(State.STARTING, State.SUCCESSFUL),
+    /**
+     * Controller received positive response that remote Task has successfully stopped and finished its execution.
+     * We use this when a callback is not necessary
+     */
+    @ProtoEnumValue(number = 18)
+    STOP_REQUESTED_to_STOPPED(State.STOP_REQUESTED, State.STOPPED);
 
     private final State before;
 

@@ -22,20 +22,30 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
-import java.util.Map;
-
 /**
- * Request sent to the remote entity to start execution of remote Task.
+ * Request sent to the remote entity to start execution of remote Task, with extra fields for callback endpoints
  */
 @Jacksonized
 @SuperBuilder
 @Getter
 @ToString
-public class StartRequest {
+public class StartRequestWithCallback extends StartRequest {
+    /**
+     * The referenced endpoint is application/JSON only and serves for both positive and negative callback.
+     * Additionally, it uses a specific JSON body
+     *
+     * Don't use it
+     */
+    @Deprecated
+    private final org.jboss.pnc.api.dto.Request callback;
 
-    private final Object payload;
+    /**
+     * The referenced endpoint is generic and serves for positive callback.
+     */
+    private final org.jboss.pnc.api.dto.Request positiveCallback;
 
-    private final Map<String, String> mdc;
-
-    private final Map<String, Object> taskResults;
+    /**
+     * The referenced endpoint is generic and serves for negative callback.
+     */
+    private final org.jboss.pnc.api.dto.Request negativeCallback;
 }

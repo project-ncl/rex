@@ -59,17 +59,21 @@ import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Request;
+import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.jboss.pnc.rex.model.requests.StartRequest;
+import org.jboss.pnc.rex.model.requests.StartRequestWithCallback;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 @QuarkusTest
@@ -552,7 +556,7 @@ class TaskContainerImplTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(true, false, false, null))
+                        .configuration(new ConfigurationDTO(true, false, false, null, false, false))
                         .build())
                 .build());
 
@@ -588,7 +592,7 @@ class TaskContainerImplTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(false, false, false, null))
+                        .configuration(new ConfigurationDTO(false, false, false, null, false, false))
                         .build())
                 .build());
 
@@ -599,9 +603,53 @@ class TaskContainerImplTest {
 
         // the last request should have the taskResults populated
         Object lastRequest = requests.toArray()[requests.size() - 1];
-        StartRequest startRequest = (StartRequest) lastRequest;
+        StartRequestWithCallback startRequest = (StartRequestWithCallback) lastRequest;
 
         Map<String, Object> taskResults = startRequest.getTaskResults();
         assertThat(taskResults).isNull();
+    }
+
+        @Test
+    public void testSkipCallback() throws Exception {
+        List<EdgeDTO> edges = new ArrayList<>();
+        edges.add(new EdgeDTO("service2", "service1"));
+        edges.add(new EdgeDTO("service3", "service2"));
+        edges.add(new EdgeDTO("service3", "service1"));
+
+        taskEndpoint.start(CreateGraphRequest.builder()
+                .edges(edges)
+                .vertex("service1", CreateTaskDTO.builder()
+                        .name("service1")
+                        .controllerMode(Mode.ACTIVE)
+                        .remoteStart(getRequestWithoutStart("I am service1!"))
+                        .remoteCancel(getStopRequest("I am service1!"))
+                        .configuration(new ConfigurationDTO(false, false, false, null, true, true))
+                        .build())
+                .vertex("service2", CreateTaskDTO.builder()
+                        .name("service2")
+                        .remoteStart(getRequestWithoutStart("I am service2!"))
+                        .remoteCancel(getStopRequest("I am service2!"))
+                        .configuration(new ConfigurationDTO(false, false, false, null, true, true))
+                        .build())
+                .vertex("service3", CreateTaskDTO.builder()
+                        .name("service3")
+                        .remoteStart(getRequestWithoutStart("I am service3!"))
+                        .remoteCancel(getStopRequest("I am service3!"))
+                        .build())
+                .build());
+
+        // service3 was added just so that service1 and service2 are not auto-removed and wait for service3 to be over
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "service1", "service2");
+
+        // sleep because running counter takes time to update
+        Thread.sleep(50);
+
+        Task task1 = container.getTask("service1");
+        List<ServerResponse> task1Responses = task1.getServerResponses();
+        assertThat(task1Responses).hasSize(1);
+
+        Task task2 = container.getTask("service2");
+        List<ServerResponse> task2Responses = task1.getServerResponses();
+        assertThat(task2Responses).hasSize(1);
     }
 }

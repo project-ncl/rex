@@ -41,7 +41,9 @@ import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.requests.StartRequest;
+import org.jboss.pnc.rex.model.requests.StartRequestWithCallback;
 import org.jboss.pnc.rex.model.requests.StopRequest;
+import org.jboss.pnc.rex.model.requests.StopRequestWithCallback;
 import org.slf4j.MDC;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -133,14 +135,23 @@ public class RemoteEntityClient {
         org.jboss.pnc.api.dto.Request positiveCallback = getCallbackRequest(task.getName(), SUCCESS_ENDPOINT_PATH);
         org.jboss.pnc.api.dto.Request negativeCallback = getCallbackRequest(task.getName(), FAILED_ENDPOINT_PATH);
 
-        StopRequest request = StopRequest.builder()
-                .payload(requestDefinition.getAttachment())
-                .taskResults(getTaskResultsIfConfigurationAllows(task))
-                .callback(callbackRequest)
-                .positiveCallback(positiveCallback)
-                .negativeCallback(negativeCallback)
-                .mdc(getOptionalMDCAndOTELValues(task))
-                .build();
+        StopRequest request = null;
+        if (task.getConfiguration() != null && task.getConfiguration().isSkipStopRequestCallback()) {
+            request = StopRequest.builder()
+                    .payload(requestDefinition.getAttachment())
+                    .taskResults(getTaskResultsIfConfigurationAllows(task))
+                    .mdc(getOptionalMDCAndOTELValues(task))
+                    .build();
+        } else {
+            request = StopRequestWithCallback.builder()
+                    .payload(requestDefinition.getAttachment())
+                    .taskResults(getTaskResultsIfConfigurationAllows(task))
+                    .callback(callbackRequest)
+                    .positiveCallback(positiveCallback)
+                    .negativeCallback(negativeCallback)
+                    .mdc(getOptionalMDCAndOTELValues(task))
+                    .build();
+        }
 
         client.makeRequest(url,
                 requestDefinition.getMethod(),
@@ -200,14 +211,23 @@ public class RemoteEntityClient {
         org.jboss.pnc.api.dto.Request positiveCallback = getCallbackRequest(task.getName(), SUCCESS_ENDPOINT_PATH);
         org.jboss.pnc.api.dto.Request negativeCallback = getCallbackRequest(task.getName(), FAILED_ENDPOINT_PATH);
 
-        StartRequest request = StartRequest.builder()
-                .payload(requestDefinition.getAttachment())
-                .taskResults(getTaskResultsIfConfigurationAllows(task))
-                .callback(callbackRequest)
-                .positiveCallback(positiveCallback)
-                .negativeCallback(negativeCallback)
-                .mdc(getOptionalMDCAndOTELValues(task))
-                .build();
+        StartRequest request = null;
+        if (task.getConfiguration() != null && task.getConfiguration().isSkipStartRequestCallback()) {
+            request = StartRequest.builder()
+                    .payload(requestDefinition.getAttachment())
+                    .taskResults(getTaskResultsIfConfigurationAllows(task))
+                    .mdc(getOptionalMDCAndOTELValues(task))
+                    .build();
+        } else {
+            request = StartRequestWithCallback.builder()
+                    .payload(requestDefinition.getAttachment())
+                    .taskResults(getTaskResultsIfConfigurationAllows(task))
+                    .callback(callbackRequest)
+                    .positiveCallback(positiveCallback)
+                    .negativeCallback(negativeCallback)
+                    .mdc(getOptionalMDCAndOTELValues(task))
+                    .build();
+        }
 
         client.makeRequest(uri,
                 requestDefinition.getMethod(),

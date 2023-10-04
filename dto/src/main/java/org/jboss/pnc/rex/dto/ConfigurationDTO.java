@@ -42,4 +42,8 @@ public class ConfigurationDTO {
     public Boolean passOTELInRequestBody = null;
 
     public Map<String, String> mdcHeaderKeyMapping = null;
+
+    public Boolean skipStartRequestCallback = null;
+
+    public Boolean skipStopRequestCallback = null;
 }
