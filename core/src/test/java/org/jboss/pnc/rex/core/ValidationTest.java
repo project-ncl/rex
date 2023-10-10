@@ -22,7 +22,7 @@ import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
-import org.jboss.pnc.rex.api.InternalEndpoint;
+import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.dto.EdgeDTO;
@@ -45,9 +45,9 @@ public class ValidationTest {
     @TestHTTPResource
     URI taskEndpointURI;
 
-    @TestHTTPEndpoint(InternalEndpoint.class)
+    @TestHTTPEndpoint(CallbackEndpoint.class)
     @TestHTTPResource
-    URI internalEndpointURI;
+    URI queueEndpointURI;
 
     @Test
     void testCreateNoBody() {
@@ -143,7 +143,7 @@ public class ValidationTest {
         given()
                 .when()
                     .contentType(ContentType.JSON)
-                    .post(internalEndpointURI.getPath() + "/1/finish")
+                    .post(queueEndpointURI.getPath() + "/1/finish")
                 .then()
                     .statusCode(400)
                     .body("errorType", containsString("ViolationException"));
@@ -156,7 +156,7 @@ public class ValidationTest {
                 .when()
                     .contentType(ContentType.JSON)
                     .body(request)
-                    .post(internalEndpointURI.getPath() + "/1/finish")
+                    .post(queueEndpointURI.getPath() + "/1/finish")
                 .then()
                     .statusCode(400)
                     .body("errorType", containsString("ViolationException"));

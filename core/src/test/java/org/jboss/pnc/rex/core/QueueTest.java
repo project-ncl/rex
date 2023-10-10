@@ -19,7 +19,8 @@ package org.jboss.pnc.rex.core;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.InternalEndpoint;
+import org.jboss.pnc.rex.api.CallbackEndpoint;
+import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.common.enums.State;
@@ -66,13 +67,16 @@ public class QueueTest {
     TaskEndpoint taskEndpoint;
 
     @Inject
-    InternalEndpoint internalEndpoint;
+    CallbackEndpoint callbackEndpoint;
 
     @Inject
     HttpEndpoint httpEndpoint;
 
     @Inject
     TransitionRecorder recorder;
+
+    @Inject
+    QueueEndpoint queue;
 
     @BeforeEach
     void before() {
@@ -88,7 +92,7 @@ public class QueueTest {
 
     @Test
     void testNoServiceStartsWithMaxBeingZero() {
-        internalEndpoint.setConcurrent(0L);
+        queue.setConcurrent(0L);
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.start(graph);
 
@@ -102,7 +106,7 @@ public class QueueTest {
 
     @Test
     void testComplexStartsWithMaxBeingNonZero() {
-        internalEndpoint.setConcurrent(1L);
+        queue.setConcurrent(1L);
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.start(graph);
 
@@ -111,7 +115,7 @@ public class QueueTest {
 
     @Test
     void testComplexGraphSucceedsAfterChangingMaxToNonZero() throws Exception{
-        internalEndpoint.setConcurrent(0L);
+        queue.setConcurrent(0L);
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.start(graph);
 
@@ -122,13 +126,13 @@ public class QueueTest {
                 .extracting("state", State.class)
                 .allMatch((state -> state.isIdle() || state.isQueued()));
 
-        internalEndpoint.setConcurrent(2L);
+        queue.setConcurrent(2L);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
     }
 
     @Test
     void testChangingMaxCounterWillTriggerPoke() {
-        internalEndpoint.setConcurrent(0L);
+        queue.setConcurrent(0L);
 
         taskEndpoint.start(getSingleWithoutStart(EXISTING_KEY));
 
@@ -140,13 +144,13 @@ public class QueueTest {
         assertThat(task.getName()).isEqualTo(EXISTING_KEY);
         assertThat(task.getState()).isEqualTo(ENQUEUED);
 
-        internalEndpoint.setConcurrent(1L);
+        queue.setConcurrent(1L);
         waitTillTasksAre(State.UP, container, container.getTask(EXISTING_KEY));
     }
 
     @Test
     void testRunningQueue() {
-        internalEndpoint.setConcurrent(1L);
+        queue.setConcurrent(1L);
 
         // to make the test deterministic
         int seed = 1000;

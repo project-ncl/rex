@@ -24,7 +24,7 @@ import java.net.URI;
 import java.util.Set;
 
 import io.smallrye.jwt.build.Jwt;
-import org.jboss.pnc.rex.api.InternalEndpoint;
+import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.test.profile.WithWiremockOpenId;
 import org.junit.jupiter.api.Test;
@@ -43,9 +43,9 @@ public class AuthenticationTest {
     @TestHTTPResource
     URI taskEndpointURI;
 
-    @TestHTTPEndpoint(InternalEndpoint.class)
+    @TestHTTPEndpoint(QueueEndpoint.class)
     @TestHTTPResource
-    URI internalEndpointURI;
+    URI queueEndpointURI;
 
     @Test
     void testWithoutAuthentication() {
@@ -75,7 +75,7 @@ public class AuthenticationTest {
                 .auth().oauth2(getAccessToken("admin", Set.of("pnc-users-rex-admin")))
                 .when()
                 .contentType(ContentType.JSON)
-                .post(internalEndpointURI.getPath()+"/options/concurrency?amount=40")
+                .post(queueEndpointURI.getPath()+"/concurrency?amount=40")
                 .then()
                 .statusCode(204);
     }
@@ -86,7 +86,7 @@ public class AuthenticationTest {
                 .auth().oauth2(getAccessToken("jdoe", Set.of("user")))
                 .when()
                 .contentType(ContentType.JSON)
-                .post(internalEndpointURI.getPath()+"/options/concurrency?amount=40")
+                .post(queueEndpointURI.getPath()+"/concurrency?amount=40")
                 .then()
                 .statusCode(403);
     }

@@ -20,7 +20,8 @@ package org.jboss.pnc.rex.core;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.InternalEndpoint;
+import org.jboss.pnc.rex.api.CallbackEndpoint;
+import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.core.common.TestData;
@@ -59,7 +60,10 @@ public class NotificationDisableCleanTest {
     TaskEndpoint endpoint;
 
     @Inject
-    InternalEndpoint internalEndpoint;
+    CallbackEndpoint callbackEndpoint;
+
+    @Inject
+    QueueEndpoint queue;
 
     @Inject
     @Running
@@ -74,7 +78,7 @@ public class NotificationDisableCleanTest {
     @BeforeEach
     void before() {
         running.initialize(0L);
-        internalEndpoint.setConcurrent(10L);
+        queue.setConcurrent(10L);
         recorderEndpoint.flush();
         container.getCache().clear();
     }

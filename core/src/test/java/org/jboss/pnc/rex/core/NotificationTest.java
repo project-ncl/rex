@@ -19,7 +19,8 @@ package org.jboss.pnc.rex.core;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.InternalEndpoint;
+import org.jboss.pnc.rex.api.CallbackEndpoint;
+import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
@@ -76,7 +77,10 @@ public class NotificationTest {
     TaskEndpoint endpoint;
 
     @Inject
-    InternalEndpoint internalEndpoint;
+    CallbackEndpoint callbackEndpoint;
+
+    @Inject
+    QueueEndpoint queue;
 
     @Inject
     @Running
@@ -92,7 +96,7 @@ public class NotificationTest {
     void before() throws InterruptedException {
         Thread.sleep(100);
         running.initialize(0L);
-        internalEndpoint.setConcurrent(10L);
+        queue.setConcurrent(10L);
         recorderEndpoint.flush();
         container.getCache().clear();
     }

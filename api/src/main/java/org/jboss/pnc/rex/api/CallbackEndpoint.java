@@ -26,26 +26,22 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.rex.api.openapi.OpenapiConstants;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
-import org.jboss.pnc.rex.dto.responses.LongResponse;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Tag(name = "Internal endpoint")
-@Path("/rest/internal")
+@Tag(name = "Callback endpoint")
+@Path("/rest/callback")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface InternalEndpoint {
+public interface CallbackEndpoint {
 
     @Path("/{taskName}/finish")
     @Operation(summary = "[ADMIN] Used by remote entity to report Task completion.")
@@ -83,29 +79,4 @@ public interface InternalEndpoint {
     })
     @POST
     void fail(@PathParam("taskName") @NotEmpty String taskName, @Valid @NotNull Object result);
-
-    @Path("/options/concurrency")
-    @Operation(summary = "[ADMIN] Sets the amount of possible concurrent builds. Tasks that are currently running are never affected.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @POST
-    void setConcurrent(@QueryParam("amount") @NotNull @Min(0) Long amount);
-
-    @Path("/options/concurrency")
-    @Operation(summary = "Returns amount of possible concurrent builds.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = LongResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GET
-    LongResponse getConcurrent();
 }
