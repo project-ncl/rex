@@ -63,7 +63,7 @@ import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
 @Slf4j
 public class RemoteEntityClient {
 
-    private static final String INTERNAL_ENDPOINT_PATH = "/rest/internal";
+    private static final String INTERNAL_ENDPOINT_PATH = "/rest/callback";
     private static final String SUCCESS_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/succeed";
     private static final String FAILED_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/fail";
     private static final String SINGLE_FINISH_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/finish";

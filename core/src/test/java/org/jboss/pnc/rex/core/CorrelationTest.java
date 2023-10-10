@@ -19,7 +19,8 @@ package org.jboss.pnc.rex.core;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.InternalEndpoint;
+import org.jboss.pnc.rex.api.CallbackEndpoint;
+import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.dto.TaskDTO;
@@ -43,15 +44,18 @@ public class CorrelationTest {
     TaskEndpoint taskEndpoint;
 
     @Inject
-    InternalEndpoint internalEndpoint;
+    CallbackEndpoint callbackEndpoint;
 
     @Inject
     TaskContainerImpl container;
 
+    @Inject
+    QueueEndpoint queue;
+
     @BeforeEach
     void before() {
         // don't actually start tasks because they get deleted after finishing
-        internalEndpoint.setConcurrent(0L);
+        queue.setConcurrent(0L);
 
         // clear ISPN
         container.getCache().clear();
