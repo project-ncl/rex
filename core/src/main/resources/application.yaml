@@ -89,6 +89,9 @@ quarkus:
   log:
     console:
       format: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c{3.}] (%t) %s%e%n"
+      json:
+        ~: false
+        exception-output-type: formatted
     category:
       "org.jboss.pnc":
         level: DEBUG
@@ -165,7 +168,6 @@ org:
       category:
         "org.testcontainers":
           level: DEBUG
-      min-level: TRACE
     oidc:
       enabled: false
       auth-server-url: ""
