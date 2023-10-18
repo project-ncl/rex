@@ -18,19 +18,27 @@
 package org.jboss.pnc.rex.core;
 
 import io.quarkus.arc.Unremovable;
+import io.quarkus.oidc.client.Tokens;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.core.mapper.MiniTaskMapper;
+import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.requests.NotificationRequest;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.core.HttpHeaders;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
 
 @Unremovable
 @ApplicationScoped
@@ -41,12 +49,26 @@ public class CallerNotificationClient {
 
     private final GenericVertxHttpClient client;
 
-    public CallerNotificationClient(MiniTaskMapper miniMapper, GenericVertxHttpClient client) {
+    private final Tokens serviceTokens;
+
+    public CallerNotificationClient(MiniTaskMapper miniMapper, GenericVertxHttpClient client, Tokens serviceTokens) {
         this.miniMapper = miniMapper;
         this.client = client;
+        this.serviceTokens = serviceTokens;
     }
 
     public boolean notifyCaller(Transition transition, Task task) {
+        if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeyMapping() != null) {
+            var keys = task.getConfiguration().getMdcHeaderKeyMapping();
+            var headers = task.getCallerNotifications().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
+
+            return wrapWithMDC(keys, headers, () -> notifyCallerInternal(transition, task));
+        } else {
+            return notifyCallerInternal(transition, task);
+        }
+    }
+
+    private boolean notifyCallerInternal(Transition transition, Task task) {
         Request requestDefinition = task.getCallerNotifications();
 
         if (requestDefinition == null) {
@@ -77,7 +99,7 @@ public class CallerNotificationClient {
         AtomicBoolean result = new AtomicBoolean(false);
         client.makeRequest(uri,
                 requestDefinition.getMethod(),
-                requestDefinition.getHeaders(),
+                addAuthenticatedHeaderToHeaders(requestDefinition.getHeaders()),
                 request,
                 response -> handleResponse(response, transition, task, result),
                 throwable -> onConnectionFailure(throwable, task, result));
@@ -110,5 +132,18 @@ public class CallerNotificationClient {
         log.error("NOTIFICATION {}: HTTP call to the Caller failed multiple times.", task, exception);
         // IS THIS A FAIL STATE? SHOULD I THROW EXCEPTION? SHOULD FAILING BE CONFIGURABLE?
         result.set(false);
+    }
+
+    /**
+     * Copy the headers parameter and add the Authorization header to it
+     *
+     * @param headers original list of headers
+     * @return new list containing the original headers + the authorization header
+     */
+    private List<Header> addAuthenticatedHeaderToHeaders(List<Header> headers) {
+        // do a shallow copy to not modify parameter list
+        List<Header> copy = new ArrayList<>(headers);
+        copy.add(new Header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceTokens.getAccessToken()));
+        return copy;
     }
 }
