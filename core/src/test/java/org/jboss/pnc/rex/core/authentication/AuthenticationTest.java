@@ -60,7 +60,7 @@ public class AuthenticationTest {
     @Test
     void testWithUserAuthentication() {
         given()
-                .auth().oauth2(getAccessToken("alice", Set.of("pnc-users-rex-user")))
+                .auth().oauth2(getAccessToken("alice", Set.of("pnc-app-rex-user")))
                 .when()
                 .contentType(ContentType.JSON)
                 .put(taskEndpointURI.getPath()+"/missing/cancel")
@@ -72,7 +72,7 @@ public class AuthenticationTest {
     @Test
     void testWithAdminAuthentication() {
         given()
-                .auth().oauth2(getAccessToken("admin", Set.of("pnc-users-rex-admin")))
+                .auth().oauth2(getAccessToken("admin", Set.of("pnc-app-rex-editor")))
                 .when()
                 .contentType(ContentType.JSON)
                 .post(queueEndpointURI.getPath()+"/concurrency?amount=40")

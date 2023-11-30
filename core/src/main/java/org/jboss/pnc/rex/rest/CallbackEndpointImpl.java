@@ -46,7 +46,7 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
     @Override
     @Retry
     @Fallback(fallbackMethod = "fallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
-    @RolesAllowed({ "pnc-users-rex-admin", "pnc-users-rex-user", "pnc-users-admin" })
+    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     @Deprecated
     public void finish(String taskName, FinishRequest result) {
         taskProvider.acceptRemoteResponse(taskName, result.getStatus(), result.getResponse());
@@ -55,7 +55,7 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
     @Override
     @Retry
     @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
-    @RolesAllowed({ "pnc-users-rex-admin", "pnc-users-rex-user", "pnc-users-admin" })
+    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public void succeed(String taskName, Object result) {
         taskProvider.acceptRemoteResponse(taskName, true, result);
     }
@@ -63,7 +63,7 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
     @Override
     @Retry
     @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
-    @RolesAllowed({ "pnc-users-rex-admin", "pnc-users-rex-user", "pnc-users-admin" })
+    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public void fail(String taskName, Object result) {
         taskProvider.acceptRemoteResponse(taskName, false, result);
     }
