@@ -56,8 +56,12 @@ quarkus:
     type: fast-jar
 
   http:
-    cors: true
+    cors:
+      ~: true
+      origins: "/.*/"
+
     port: 80
+
 
   oidc:
     enabled: true
