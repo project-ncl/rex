@@ -19,14 +19,13 @@ package org.jboss.pnc.rex.rest.providers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
-import org.jboss.resteasy.spi.Failure;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 import java.util.List;
 import java.util.Map;
 
@@ -43,13 +42,6 @@ public class AllOtherExceptionMapper implements ExceptionMapper<Exception> {
             if (e instanceof NotFoundException) {
                 return response; // In case of 404 we want to return the empty body.
             }
-            log.debug("An exception occurred when processing REST response", e);
-        } else if (e instanceof Failure) { // Resteasy support
-            Failure failure = ((Failure) e);
-            if (failure.getErrorCode() > 0) {
-                status = failure.getErrorCode();
-            }
-            response = failure.getResponse();
             log.debug("An exception occurred when processing REST response", e);
         } else {
             log.error("An exception occurred when processing REST response", e);

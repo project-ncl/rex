@@ -1,6 +1,6 @@
 scheduler:
   baseUrl: ${BASE_URL}
-  name: node
+  name: ${quarkus.uuid}
   options:
     task-configuration:
       clean: true
@@ -11,7 +11,7 @@ scheduler:
       jitter: 80
       max-retries: 15
       abort-on:
-        - javax.validation.ConstraintViolationException
+        - jakarta.validation.ConstraintViolationException
         - org.jboss.pnc.rex.common.exceptions.TaskMissingException
         - org.jboss.pnc.rex.common.exceptions.BadRequestException
         - org.jboss.pnc.rex.common.exceptions.TaskConflictException
@@ -29,8 +29,8 @@ scheduler:
         expire-in: 0
       425-backoff-policy:
         backoff:
-          min-delay: 200
-          max-delay: 6000 # 1 minute
+          min-delay: 200ms
+          max-delay: 6000ms # 1 minute
           jitter-factor: 0.5
         max-retries: 0
         expire-in: 600000 # 10minutes
@@ -164,8 +164,8 @@ org:
       http-configuration:
         425-backoff-policy:
           backoff:
-            min-delay: 10
-            max-delay: 10
+            min-delay: 10ms
+            max-delay: 10ms
           expire-in: 5000
   quarkus:
     log:
@@ -193,15 +193,15 @@ org:
       password: password
       cache:
         "rex-counter":
-          configuration-uri: "counter-configuration.xml"
+          configuration-resource: "constraints-configuration.xml"
           near-cache-mode: disabled
-          near-cache-max-entries: -1
+#          near-cache-max-entries: -1
         "rex-tasks":
-          configuration-uri: "task-configuration.xml"
+          configuration-resource: "task-configuration.xml"
           near-cache-mode: invalidated
           near-cache-max-entries: 100
         "rex-constraints":
-          configuration-uri: "constraints-configuration.xml"
+          configuration-resource: "counter-configuration.xml"
           near-cache-mode: invalidated
           near-cache-max-entries: 100
       devservices:
@@ -235,17 +235,17 @@ org:
       password: password
       cache:
         "rex-counter":
-          configuration-uri: "counter-configuration.xml"
+          configuration-resource: "counter-configuration.xml"
           near-cache-mode: disabled
-          near-cache-max-entries: -1
+#          near-cache-max-entries: -1
         "rex-tasks":
-          configuration-uri: "task-configuration.xml"
+          configuration-resource: "task-configuration.xml"
           near-cache-mode: invalidated
-          near-cache-max-entries: 100
+#          near-cache-max-entries: 100
         "rex-constraints":
-          configuration-uri: "constraints-configuration.xml"
+          configuration-resource: "constraints-configuration.xml"
           near-cache-mode: invalidated
-          near-cache-max-entries: 100
+      #          near-cache-max-entries: 100
       devservices:
         #        image-name: "infinispan/server:13.0.5.Final-2"
         image-name: "quay.io/infinispan/server:14.0.2.Final"

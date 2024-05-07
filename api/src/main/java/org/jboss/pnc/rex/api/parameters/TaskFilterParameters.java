@@ -20,8 +20,8 @@ package org.jboss.pnc.rex.api.parameters;
 import lombok.Data;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.QueryParam;
 
 @Data
 public class TaskFilterParameters {

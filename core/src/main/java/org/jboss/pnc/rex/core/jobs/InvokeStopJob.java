@@ -28,8 +28,8 @@ import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.TransactionPhase;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.HashMap;
 
 public class InvokeStopJob extends ControllerJob {
@@ -45,13 +45,13 @@ public class InvokeStopJob extends ControllerJob {
     private static final Logger logger = LoggerFactory.getLogger(InvokeStopJob.class);
 
     @Override
-    void beforeExecute() {}
+    protected void beforeExecute() {}
 
     @Override
-    void afterExecute() {}
+    protected void afterExecute() {}
 
     @Override
-    void onException(Throwable e) {
+    protected void onException(Throwable e) {
         logger.error("STOP " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
         Uni.createFrom().voidItem()
                 .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR))
@@ -75,12 +75,12 @@ public class InvokeStopJob extends ControllerJob {
     }
 
     @Override
-    boolean execute() {
+    public boolean execute() {
         logger.info("STOP {}: STOPPING", context.getName());
         client.stopJob(context);
         return true;
     }
 
     @Override
-    void onFailure() {}
+    protected void onFailure() {}
 }

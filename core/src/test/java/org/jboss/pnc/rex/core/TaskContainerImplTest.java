@@ -33,9 +33,9 @@ import static org.jboss.pnc.rex.core.common.TestData.getSingleWithoutStart;
 import static org.jboss.pnc.rex.core.common.TestData.getStopRequest;
 import static org.jboss.pnc.rex.core.common.TestData.getStopRequestWithCallback;
 
-import javax.inject.Inject;
-import javax.transaction.RollbackException;
-import javax.transaction.TransactionManager;
+import jakarta.inject.Inject;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.TransactionManager;
 
 import io.quarkus.test.security.TestSecurity;
 import lombok.extern.slf4j.Slf4j;

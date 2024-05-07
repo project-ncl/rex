@@ -49,19 +49,19 @@ import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.TransitionTime;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Event;
-import javax.transaction.Transactional;
-import javax.validation.constraints.Max;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Max;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-import static javax.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
-import static javax.enterprise.event.TransactionPhase.IN_PROGRESS;
-import static javax.transaction.Transactional.TxType.MANDATORY;
+import static jakarta.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
+import static jakarta.enterprise.event.TransactionPhase.IN_PROGRESS;
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
 
 @Slf4j
 @ApplicationScoped

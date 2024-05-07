@@ -20,8 +20,8 @@ package org.jboss.pnc.rex.core.jobs;
 import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.core.delegates.WithRetries;
 
-import javax.enterprise.event.TransactionPhase;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
 
 public class PokeQueueJob extends ControllerJob {
 
@@ -35,20 +35,20 @@ public class PokeQueueJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {}
+    protected void beforeExecute() {}
 
     @Override
-    void afterExecute() {}
+    protected void afterExecute() {}
 
     @Override
-    boolean execute() {
+    public boolean execute() {
         manager.poke();
         return true;
     }
 
     @Override
-    void onException(Throwable e) {}
+    protected void onException(Throwable e) {}
 
     @Override
-    void onFailure() {}
+    protected void onFailure() {}
 }

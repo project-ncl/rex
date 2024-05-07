@@ -28,8 +28,8 @@ import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.event.TransactionPhase;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.HashMap;
 
 public class InvokeStartJob extends ControllerJob {
@@ -53,27 +53,27 @@ public class InvokeStartJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {}
+    protected void beforeExecute() {}
 
     @Override
-    void afterExecute() {}
+    protected void afterExecute() {}
 
     @Override
-    boolean execute() {
+    public boolean execute() {
         logger.info("START {}: STARTING", context.getName());
         client.startJob(context);
         return true;
     }
 
     @Override
-    void onFailure() {}
+    protected void onFailure() {}
 
     @Override
-    void onException(Throwable e) {
-        logger.error("START " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
+    protected void onException(Throwable e) {
+        logger.error("START {}: UNEXPECTED exception has been thrown.", context.getName(), e);
         Uni.createFrom().voidItem()
                 .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR))
-                .onFailure().invoke((throwable) -> logger.warn("START " + context.getName() + ": Failed to transition task to START_FAILED state. Retrying.", throwable))
+                .onFailure().invoke((throwable) -> logger.warn("START {}: Failed to transition task to START_FAILED state. Retrying.", context.getName(), throwable))
                 .onFailure().retry().atMost(5)
                 .onFailure().recoverWithNull()
                 .await().indefinitely();

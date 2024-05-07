@@ -20,8 +20,8 @@ package org.jboss.pnc.rex.core.jobs;
 import org.jboss.pnc.rex.core.api.DependentMessenger;
 import org.jboss.pnc.rex.model.Task;
 
-import javax.enterprise.event.TransactionPhase;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.Set;
 
 /**
@@ -43,7 +43,7 @@ public abstract class DependantMessageJob extends ControllerJob {
     }
 
     @Override
-    boolean execute() {
+    public boolean execute() {
         for (String dependent : dependents) {
             inform(dependent);
         }
@@ -53,14 +53,14 @@ public abstract class DependantMessageJob extends ControllerJob {
     abstract void inform(final String dependentName);
 
     @Override
-    void beforeExecute() {}
+    protected void beforeExecute() {}
 
     @Override
-    void afterExecute() {}
+    protected void afterExecute() {}
 
     @Override
-    void onFailure() {}
+    protected void onFailure() {}
 
     @Override
-    void onException(Throwable e) {}
+    protected void onException(Throwable e) {}
 }

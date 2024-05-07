@@ -24,9 +24,9 @@ import lombok.extern.jackson.Jacksonized;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.types.protobuf.DurationSchema;
 
-import java.beans.ConstructorProperties;
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -71,9 +71,14 @@ public class Configuration {
         return mdcHeaderKeyMapping;
     }
 
+    @Getter(onMethod_ = {@ProtoField(number = 5, defaultValue = Defaults.cancelTimeoutString)})
+    private final Duration cancelTimeout;
+
     public static class Defaults {
         public static final boolean passResultsOfDependencies = false;
         public static final boolean passMDCInRequestBody = false;
         public static final boolean passOTELInRequestBody = false;
+        public static final Duration cancelTimeout = Duration.ZERO;
+        public static final String cancelTimeoutString = "PT0S";
     }
 }

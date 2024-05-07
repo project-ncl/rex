@@ -23,7 +23,7 @@ import io.smallrye.mutiny.Uni;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.model.Task;
 
-import javax.enterprise.event.TransactionPhase;
+import jakarta.enterprise.event.TransactionPhase;
 import java.time.Duration;
 
 @Slf4j
@@ -55,17 +55,17 @@ public class DelegateJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {
+    protected void beforeExecute() {
         delegate.beforeExecute();
     }
 
     @Override
-    void afterExecute() {
+    protected void afterExecute() {
         delegate.afterExecute();
     }
 
     @Override
-    boolean execute() {
+    public boolean execute() {
         Uni<Boolean> uni = Uni.createFrom().voidItem()
                 .onItem()
                 .transform(this::delegateExecute);
@@ -89,10 +89,10 @@ public class DelegateJob extends ControllerJob {
     }
 
     @Override
-    void onFailure() {delegate.onFailure();}
+    protected void onFailure() {delegate.onFailure();}
 
     @Override
-    void onException(Throwable e) {
+    protected void onException(Throwable e) {
         delegate.onException(e);
     }
 

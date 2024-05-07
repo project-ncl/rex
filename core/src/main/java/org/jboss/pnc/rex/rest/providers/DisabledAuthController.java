@@ -19,12 +19,12 @@ package org.jboss.pnc.rex.rest.providers;
 
 import io.quarkus.arc.profile.UnlessBuildProfile;
 import io.quarkus.security.spi.runtime.AuthorizationController;
+import jakarta.annotation.Priority;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import javax.annotation.Priority;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Alternative;
-import javax.interceptor.Interceptor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Alternative;
+import jakarta.interceptor.Interceptor;
 
 /**
  * This class provides an option to disable authorization for testing purposes.

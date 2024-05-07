@@ -17,8 +17,8 @@
  */
 package org.jboss.pnc.rex.core.delegates;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.transaction.Transactional;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
 
 import io.quarkus.arc.Unremovable;
 import org.jboss.pnc.rex.common.enums.Mode;

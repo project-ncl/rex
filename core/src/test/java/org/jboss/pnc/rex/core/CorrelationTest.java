@@ -28,7 +28,7 @@ import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import java.util.Set;
 

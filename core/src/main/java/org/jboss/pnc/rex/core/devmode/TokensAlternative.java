@@ -22,8 +22,8 @@ import io.quarkus.arc.profile.IfBuildProfile;
 import io.quarkus.oidc.client.Tokens;
 import io.vertx.core.json.JsonObject;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
 import java.time.Duration;
 
 @ApplicationScoped

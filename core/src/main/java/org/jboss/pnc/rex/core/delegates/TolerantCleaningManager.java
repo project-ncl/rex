@@ -21,7 +21,7 @@ import io.quarkus.arc.Unremovable;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.rex.core.api.CleaningManager;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 
 @WithRetries
 @Unremovable

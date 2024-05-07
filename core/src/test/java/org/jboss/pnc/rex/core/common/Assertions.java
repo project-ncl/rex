@@ -22,7 +22,7 @@ import org.jboss.pnc.rex.core.api.TaskContainer;
 import org.jboss.pnc.rex.core.common.TransitionRecorder.Tuple;
 import org.jboss.pnc.rex.model.Task;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;

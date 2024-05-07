@@ -20,7 +20,7 @@ package org.jboss.pnc.rex.core.jobs;
 import lombok.Getter;
 import org.jboss.pnc.rex.model.Task;
 
-import javax.enterprise.event.TransactionPhase;
+import jakarta.enterprise.event.TransactionPhase;
 import java.util.Optional;
 
 /**
@@ -72,12 +72,12 @@ public abstract class ControllerJob implements Runnable {
         }
     }
 
-    abstract void beforeExecute();
-    abstract void afterExecute();
-    abstract boolean execute();
+    abstract protected void beforeExecute();
+    abstract protected void afterExecute();
+    abstract public boolean execute();
 
-    abstract void onFailure();
-    abstract void onException(Throwable e);
+    abstract protected void onFailure();
+    abstract protected void onException(Throwable e);
 
     public Optional<Task> getContext() {
         return context == null ? Optional.empty() : Optional.of(context);

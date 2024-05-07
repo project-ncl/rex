@@ -48,6 +48,12 @@
             <artifactId>quarkus-smallrye-openapi</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <!-- Standards dependencies -->
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

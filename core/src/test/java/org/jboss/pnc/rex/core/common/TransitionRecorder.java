@@ -23,9 +23,9 @@ import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.core.jobs.ChainingJob;
 import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import javax.enterprise.event.TransactionPhase;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.TransactionPhase;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;

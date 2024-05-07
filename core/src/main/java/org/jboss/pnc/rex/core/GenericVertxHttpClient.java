@@ -36,7 +36,7 @@ import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
 import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
 import org.jboss.pnc.rex.model.Header;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.List;

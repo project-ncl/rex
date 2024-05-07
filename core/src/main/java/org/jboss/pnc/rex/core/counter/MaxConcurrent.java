@@ -17,7 +17,7 @@
  */
 package org.jboss.pnc.rex.core.counter;
 
-import javax.inject.Qualifier;
+import jakarta.inject.Qualifier;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 

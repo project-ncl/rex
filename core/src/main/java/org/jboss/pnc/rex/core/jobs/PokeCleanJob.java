@@ -21,8 +21,8 @@ import org.jboss.pnc.rex.core.api.CleaningManager;
 import org.jboss.pnc.rex.core.delegates.WithRetries;
 import org.jboss.pnc.rex.model.Task;
 
-import javax.enterprise.event.TransactionPhase;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
 
 public class PokeCleanJob extends ControllerJob {
 
@@ -36,24 +36,24 @@ public class PokeCleanJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {
+    protected void beforeExecute() {
 
     }
 
     @Override
-    void afterExecute() {
+    protected void afterExecute() {
 
     }
 
     @Override
-    boolean execute() {
+    public boolean execute() {
         manager.tryClean();
         return true;
     }
 
     @Override
-    void onException(Throwable e) {}
+    protected void onException(Throwable e) {}
 
     @Override
-    void onFailure() {}
+    protected void onFailure() {}
 }
