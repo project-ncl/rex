@@ -21,14 +21,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
-import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@Builder(toBuilder = true)
-@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
-@Slf4j
 @Jacksonized
+@Getter
+@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@Builder(toBuilder = true)
 public class KeyValueString {
     @Getter(onMethod_ = {@ProtoField(number = 1)})
     private final String key;

@@ -17,13 +17,11 @@
  */
 package org.jboss.pnc.rex.core.config.api;
 
-import io.smallrye.config.WithConverter;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 import io.smallrye.mutiny.Uni;
-import org.eclipse.microprofile.config.spi.Converter;
 
-import javax.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.time.Duration;
 import java.util.function.Predicate;
 
@@ -68,7 +66,6 @@ public interface MutinyRetryPolicy {
          *
          * @return minimum delay in millis
          */
-        @WithConverter(MillisConverter.class)
         @WithDefault("0")
         @WithName("min-delay")
         Duration initialDelay();
@@ -78,8 +75,6 @@ public interface MutinyRetryPolicy {
          *
          * @return maximum delay in millis
          */
-        @WithConverter(MillisConverter.class)
-        @PositiveOrZero
         @WithDefault("0")
         Duration maxDelay();
 
@@ -90,7 +85,6 @@ public interface MutinyRetryPolicy {
          *
          * @return  millis
          */
-        @PositiveOrZero
         @WithDefault("0.5")
         Double jitterFactor();
     }
@@ -130,18 +124,5 @@ public interface MutinyRetryPolicy {
 
     default <T> Uni<T> applyTolerance(Uni<T> uni) {
         return applyToleranceOn(__ -> true, uni);
-    }
-
-    class MillisConverter implements Converter<Duration> {
-        @Override
-        public Duration convert(String s) throws IllegalArgumentException, NullPointerException {
-            try {
-                long millis = Long.parseLong(s);
-                if (millis < 0) throw new IllegalArgumentException(": Duration cannot be negative!!");
-                return Duration.ofMillis(millis);
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Cannot parse milliseconds.", e);
-            }
-        }
     }
 }

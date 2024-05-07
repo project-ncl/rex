@@ -19,8 +19,8 @@ package org.jboss.pnc.rex.core.config.api;
 
 import io.smallrye.config.WithDefault;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 public interface MPRetryPolicy {

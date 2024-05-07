@@ -25,7 +25,7 @@ import org.mapstruct.ReportingPolicy;
         unmappedSourcePolicy = ReportingPolicy.ERROR,
         unmappedTargetPolicy = ReportingPolicy.ERROR,
         implementationPackage = "org.jboss.pnc.rex.facade.mapper",
-        componentModel = "cdi",
+        componentModel = "jakarta",
         injectionStrategy = InjectionStrategy.CONSTRUCTOR
 )
 public interface MapperCentralConfig {

@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.rest;
 
+import jakarta.annotation.security.RolesAllowed;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
@@ -24,9 +25,8 @@ import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.facade.api.TaskProvider;
 
-import javax.annotation.security.RolesAllowed;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.util.Set;
 
 @ApplicationScoped

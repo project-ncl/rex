@@ -19,7 +19,7 @@ package org.jboss.pnc.rex.core.jobs;
 
 import org.jboss.pnc.rex.model.Task;
 
-import javax.enterprise.event.TransactionPhase;
+import jakarta.enterprise.event.TransactionPhase;
 
 public class DependencyStoppedJob extends DependantMessageJob {
 

@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import javax.enterprise.event.TransactionPhase;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
 
 public class NotifyCallerJob extends ControllerJob {
 
@@ -44,21 +44,21 @@ public class NotifyCallerJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {}
+    protected void beforeExecute() {}
 
     @Override
-    void afterExecute() {}
+    protected void afterExecute() {}
 
     @Override
-    boolean execute() {
+    public boolean execute() {
         return client.notifyCaller(transition, context);
     }
 
     @Override
-    void onFailure() {}
+    protected void onFailure() {}
 
     @Override
-    void onException(Throwable e) {
+    protected void onException(Throwable e) {
         log.error("NOTIFICATION " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
     }
 

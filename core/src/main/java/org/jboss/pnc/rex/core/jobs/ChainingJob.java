@@ -20,7 +20,7 @@ package org.jboss.pnc.rex.core.jobs;
 import lombok.Getter;
 import org.jboss.pnc.rex.model.Task;
 
-import javax.enterprise.event.TransactionPhase;
+import jakarta.enterprise.event.TransactionPhase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -86,13 +86,13 @@ public class ChainingJob extends ControllerJob {
     }
 
     @Override
-    void beforeExecute() {}
+    protected void beforeExecute() {}
 
     @Override
-    void afterExecute() {}
+    protected void afterExecute() {}
 
     @Override
-    boolean execute() {
+    public boolean execute() {
         boolean lastResult = true;
         for (ControllerJob toRun : chainLinks) {
             ChainTrigger toRunTrigger = chainTriggers.get(toRun);
@@ -116,10 +116,10 @@ public class ChainingJob extends ControllerJob {
     }
 
     @Override
-    void onFailure() {}
+    protected void onFailure() {}
 
     @Override
-    void onException(Throwable e) {}
+    protected void onException(Throwable e) {}
 
     private enum ChainTrigger {
         ON_SUCCESS,

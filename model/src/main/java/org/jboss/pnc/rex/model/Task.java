@@ -23,7 +23,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.Singular;
 import lombok.ToString;
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.jboss.pnc.rex.common.enums.Mode;
@@ -49,7 +50,7 @@ import java.util.TreeSet;
 @Setter
 @ToString
 @Builder(toBuilder = true)
-@ProtoDoc("@Indexed")
+@Indexed
 @AllArgsConstructor(onConstructor_ = {@ProtoFactory})
 public class Task {
     /**
@@ -67,7 +68,7 @@ public class Task {
     /*
      * Correlation ID between tasks that were triggered at the same time.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 3), @ProtoDoc("@Field(index=Index.YES)")})
+    @Getter(onMethod_ = {@ProtoField(number = 3), @Basic})
     private final String correlationID;
 
     /**
@@ -91,13 +92,13 @@ public class Task {
     /**
      * TaskController mode.
      */
-    @Getter(onMethod_ = @ProtoField(number = 7))
+    @Getter(onMethod_ = {@ProtoField(number = 7), @Basic})
     private Mode controllerMode;
 
     /**
      * Current state of a task. Default is State.IDLE.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 8), @ProtoDoc("@Field(index=Index.YES)")})
+    @Getter(onMethod_ = {@ProtoField(number = 8), @Basic})
     private State state;
 
     /**
@@ -160,7 +161,7 @@ public class Task {
      *
      * Even though a Task can be flagged disposable, it won't be removed until all dependants are removed beforehand.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 17, defaultValue = "false"), @ProtoDoc("@Field(index=Index.YES)")})
+    @Getter(onMethod_ = {@ProtoField(number = 17, defaultValue = "false"), @Basic})
     private boolean disposable;
 
     public void incUnfinishedDependencies() {

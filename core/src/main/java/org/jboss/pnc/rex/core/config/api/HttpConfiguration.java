@@ -23,7 +23,7 @@ import io.smallrye.config.WithName;
 import org.jboss.pnc.rex.core.config.Backoff425Policy;
 import org.jboss.pnc.rex.core.config.HttpRetryPolicy;
 
-import javax.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.PositiveOrZero;
 
 /**
  * Configuration for internal HTTP client requests from Rex.
