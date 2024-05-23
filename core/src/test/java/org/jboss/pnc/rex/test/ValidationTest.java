@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core;
+package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.common.http.TestHTTPResource;
@@ -55,8 +55,7 @@ public class ValidationTest {
                     .contentType(ContentType.JSON)
                     .post(taskEndpointURI.getPath())
                 .then()
-                .statusCode(400)
-                .body("errorType", containsString("ViolationException"));
+                    .statusCode(400)
                     .body("errorType", containsString("ViolationException"));
     }
 
@@ -143,7 +142,7 @@ public class ValidationTest {
         given()
                 .when()
                     .contentType(ContentType.JSON)
-                    .post(queueEndpointURI.getPath() + "/1/finish")
+                    .post(callbackEndpointURI.getPath() + CallbackEndpoint.FINISH_TASK_FMT.formatted( "1"))
                 .then()
                     .statusCode(400)
                     .body("errorType", containsString("ViolationException"));
@@ -156,7 +155,7 @@ public class ValidationTest {
                 .when()
                     .contentType(ContentType.JSON)
                     .body(request)
-                    .post(queueEndpointURI.getPath() + "/1/finish")
+                    .post(callbackEndpointURI.getPath() + CallbackEndpoint.FINISH_TASK_FMT.formatted( "1"))
                 .then()
                     .statusCode(400)
                     .body("errorType", containsString("ViolationException"));
