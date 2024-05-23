@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core;
+package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.common.http.TestHTTPResource;
@@ -27,12 +27,9 @@ import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.core.common.TestData;
-import org.jboss.pnc.rex.core.common.TransitionRecorder;
-import org.jboss.pnc.rex.core.counter.Counter;
-import org.jboss.pnc.rex.core.counter.MaxConcurrent;
-import org.jboss.pnc.rex.core.counter.Running;
-import org.jboss.pnc.rex.core.endpoints.HttpEndpoint;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.common.TestData;
+import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.requests.StartRequest;
@@ -48,9 +45,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.core.common.TestData.createMockTask;
-import static org.jboss.pnc.rex.core.common.TestData.getRequestFromSingleTask;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.TestData.createMockTask;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestFromSingleTask;
 import static io.restassured.RestAssured.given;
 
 @QuarkusTest

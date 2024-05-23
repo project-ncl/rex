@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core;
+package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -33,8 +33,8 @@ import jakarta.inject.Inject;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
-import static org.jboss.pnc.rex.core.common.TestData.getAllParameters;
+import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
+import static org.jboss.pnc.rex.test.common.TestData.getAllParameters;
 
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)

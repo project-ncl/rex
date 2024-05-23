@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.common;
+package org.jboss.pnc.rex.test.common;
 
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
@@ -28,9 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static org.jboss.pnc.rex.core.common.TestData.getNotificationsRequest;
-import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
-import static org.jboss.pnc.rex.core.common.TestData.getStopRequest;
+import static org.jboss.pnc.rex.test.common.TestData.getNotificationsRequest;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
+import static org.jboss.pnc.rex.test.common.TestData.getStopRequest;
 
 public class RandomDAGGeneration {
 

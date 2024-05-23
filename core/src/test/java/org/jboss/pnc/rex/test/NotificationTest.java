@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core;
+package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -25,11 +25,9 @@ import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.Transition;
-import org.jboss.pnc.rex.core.common.TestData;
-import org.jboss.pnc.rex.core.common.TransitionRecorder;
-import org.jboss.pnc.rex.core.counter.Counter;
-import org.jboss.pnc.rex.core.counter.Running;
-import org.jboss.pnc.rex.core.endpoints.TransitionRecorderEndpoint;
+import org.jboss.pnc.rex.core.TaskContainerImpl;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.junit.jupiter.api.AfterEach;
@@ -54,16 +52,17 @@ import static org.jboss.pnc.rex.common.enums.Transition.UP_to_STOP_REQUESTED;
 import static org.jboss.pnc.rex.common.enums.Transition.UP_to_SUCCESSFUL;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_ENQUEUED;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_STOPPED;
-import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAre;
-import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
-import static org.jboss.pnc.rex.core.common.TestData.getAllParameters;
-import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
-import static org.jboss.pnc.rex.core.common.TestData.createMockTask;
-import static org.jboss.pnc.rex.core.common.TestData.getNaughtyNotificationsRequest;
-import static org.jboss.pnc.rex.core.common.TestData.getNotificationsRequest;
-import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
-import static org.jboss.pnc.rex.core.common.TestData.getStopRequestWithCallback;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAre;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
+import static org.jboss.pnc.rex.test.common.TestData.createMockTask;
+import static org.jboss.pnc.rex.test.common.TestData.getAllParameters;
+import static org.jboss.pnc.rex.test.common.TestData.getComplexGraph;
+import static org.jboss.pnc.rex.test.common.TestData.getComplexGraphWithoutEnd;
+import static org.jboss.pnc.rex.test.common.TestData.getNaughtyNotificationsRequest;
+import static org.jboss.pnc.rex.test.common.TestData.getNotificationsRequest;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
+import static org.jboss.pnc.rex.test.common.TestData.getStopRequestWithCallback;
 
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)
@@ -128,7 +127,7 @@ public class NotificationTest {
 
     @Test
     void testNotificationOnCancel() throws InterruptedException {
-        CreateGraphRequest request = TestData.getComplexGraphWithoutEnd(true, true);
+        CreateGraphRequest request = getComplexGraphWithoutEnd(true, true);
         endpoint.start(request);
         waitTillTasksAre(State.UP, container, "a", "b");
 
