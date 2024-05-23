@@ -18,11 +18,12 @@
 package org.jboss.pnc.rex.core.counter;
 
 import io.quarkus.infinispan.client.Remote;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import jakarta.inject.Inject;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
 
 @MaxConcurrent
 @ApplicationScoped
@@ -33,14 +34,14 @@ public class MaxConcurrentCounter implements Counter {
     @Remote("rex-counter")
     RemoteCache<String, Long> counterCache;
 
-    @ConfigProperty(name = "scheduler.options.concurrency.default", defaultValue = "5")
-    String defaultMax;
+    @Inject
+    TaskConfiguration taskConfig;
 
     @Override
     public VersionedValue<Long> getMetadataValue() {
         VersionedValue<Long> metadata = counterCache.getWithMetadata(MAX_COUNTER_KEY);
         if(metadata == null) {
-            initialize(Long.valueOf(defaultMax));
+            initialize((long) taskConfig.defaultConcurrency());
             metadata = counterCache.getWithMetadata(MAX_COUNTER_KEY);
         }
         return metadata;

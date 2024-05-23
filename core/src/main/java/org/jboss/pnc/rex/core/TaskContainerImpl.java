@@ -38,6 +38,7 @@ import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.core.api.TaskTarget;
+import org.jboss.pnc.rex.core.config.ApplicationConfig;
 import org.jboss.pnc.rex.core.jobs.ControllerJob;
 import org.jboss.pnc.rex.core.jobs.PokeQueueJob;
 import org.jboss.pnc.rex.core.mapper.InitialTaskMapper;
@@ -70,21 +71,11 @@ import static jakarta.transaction.Transactional.TxType.MANDATORY;
 @ApplicationScoped
 public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
-    @Getter
-    @ConfigProperty(name = "scheduler.name", defaultValue = "undefined")
-    String deploymentName;
+    private final ApplicationConfig appConfig;
 
-    @Getter
-    @ConfigProperty(name = "scheduler.baseUrl")
-    String baseUrl;
+    private final RemoteCache<String, Task> tasks;
 
-    @Inject
-    @Remote("rex-tasks")
-    RemoteCache<String, Task> tasks;
-
-    @Inject
-    @Remote("rex-constraints")
-    RemoteCache<String, String> constraints;
+    private final RemoteCache<String, String> constraints;
 
     private final TaskController controller;
 
@@ -93,10 +84,18 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     private final Event<ControllerJob> jobEvent;
 
     @Inject
-    public TaskContainerImpl(TaskController controller, InitialTaskMapper initialMapper, Event<ControllerJob> jobEvent) {
+    public TaskContainerImpl(ApplicationConfig appConfig,
+                             TaskController controller,
+                             InitialTaskMapper initialMapper,
+                             @Remote("rex-constraints") RemoteCache<String, String> constraints,
+                             @Remote("rex-tasks") RemoteCache<String, Task> tasks,
+                             Event<ControllerJob> jobEvent) {
+        this.appConfig = appConfig;
         this.controller = controller;
         this.initialMapper = initialMapper;
         this.jobEvent = jobEvent;
+        this.constraints = constraints;
+        this.tasks = tasks;
     }
 
     // FIXME implement
@@ -141,6 +140,10 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     public RemoteCache<String, String> getConstraintCache() {
         return constraints;
+    }
+
+    public String getDeploymentName() {
+        return appConfig.name();
     }
 
     public VersionedValue<Task> getWithMetadata(String name) {

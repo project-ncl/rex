@@ -19,7 +19,6 @@ package org.jboss.pnc.rex.core;
 
 import io.quarkus.narayana.jta.TransactionSemantics;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
@@ -30,6 +29,7 @@ import org.jboss.pnc.rex.core.api.DependencyMessenger;
 import org.jboss.pnc.rex.core.api.DependentMessenger;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
 import org.jboss.pnc.rex.core.jobs.ChainingJob;
 import org.jboss.pnc.rex.core.jobs.DecreaseCounterJob;
 import org.jboss.pnc.rex.core.jobs.DelegateJob;
@@ -45,6 +45,7 @@ import org.jboss.pnc.rex.core.jobs.MarkForCleaningJob;
 import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
 import org.jboss.pnc.rex.core.jobs.PokeCleanJob;
 import org.jboss.pnc.rex.core.jobs.PokeQueueJob;
+import org.jboss.pnc.rex.core.jobs.TimeoutCancelClusterJob;
 import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.TransitionTime;
@@ -52,7 +53,7 @@ import org.jboss.pnc.rex.model.TransitionTime;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.Max;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,16 +72,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     private final Event<ControllerJob> scheduleJob;
 
-    private final boolean cleanTasks;
+    private final TaskConfiguration config;
+
 
     public TaskControllerImpl(TaskContainerImpl container,
                               Event<ControllerJob> scheduleJob,
-                              @ConfigProperty(
-                                      name = "scheduler.options.task-configuration.clean",
-                                      defaultValue = "true") boolean cleanTasks) {
+                              TaskConfiguration config) {
         this.container = container;
         this.scheduleJob = scheduleJob;
-        this.cleanTasks = cleanTasks;
+        this.config = config;
     }
 
     private List<ControllerJob> transition(Task task) {
@@ -273,7 +273,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     }
 
     private boolean shouldDelete(Task task, Transition transition) {
-        return cleanTasks && task.getDependants().isEmpty() && transition.getAfter().isFinal();
+        return config.shouldClean() && task.getDependants().isEmpty() && transition.getAfter().isFinal();
     }
 
     private boolean shouldMarkAfterNotification(Task task, Transition transition) {
@@ -281,7 +281,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     }
 
     private boolean shouldMark(Task task, Transition transition) {
-        return cleanTasks && transition.getAfter().isFinal();
+        return config.shouldClean() && transition.getAfter().isFinal();
     }
 
     /**
@@ -289,7 +289,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
      * NOTIFICATION completes.
      */
     private boolean shouldMarkImmediately(Task task, Transition transition) {
-        return cleanTasks && transition.getAfter().isFinal() && task.getCallerNotifications() == null;
+        return config.shouldClean() && transition.getAfter().isFinal() && task.getCallerNotifications() == null;
     }
 
     private void handle(VersionedValue<Task> taskMetadata, Task task) {
