@@ -137,6 +137,10 @@ org:
             TolerantCleaningManager/tryClean/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
             TolerantCleaningManager/tryClean/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
             TolerantCleaningManager/tryClean/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+            FaultToleranceDecorator/withTolerance/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+            FaultToleranceDecorator/withTolerance/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+            FaultToleranceDecorator/withTolerance/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+            FaultToleranceDecorator/withTolerance/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
         rest:
           CallbackEndpointImpl/finish/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
           CallbackEndpointImpl/finish/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
