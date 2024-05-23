@@ -1,0 +1,68 @@
+scheduler:
+  baseUrl: http://localhost:8081
+  options:
+    http-configuration:
+      425-backoff-policy:
+        backoff:
+          min-delay: 10ms
+          max-delay: 10ms
+        expire-in: 5000
+
+quarkus:
+  log:
+    category:
+      "org.testcontainers":
+        level: DEBUG
+      "io.quarkus.infinispan.client":
+        level: INFO
+  oidc:
+    enabled: false
+    auth-server-url: ""
+  oidc-client:
+    enabled: false
+  transaction-manager:
+    default-transaction-timeout: 10m
+  http:
+    port: 8081
+  otel:
+    enabled: true
+    exporter:
+      otlp:
+        traces:
+          endpoint: http://localhost:4317
+    traces:
+      exporter: cdi
+      enabled: true
+
+  infinispan-client:
+    use-schema-registration: true
+    use-auth: true
+    username: admin
+    password: password
+    tracing:
+      propagation:
+        enabled: true
+    cache:
+      "rex-counter":
+        configuration-resource: "counter-configuration.xml"
+        near-cache-mode: disabled
+#        near-cache-max-entries: -1
+      "rex-tasks":
+        configuration-resource: "task-configuration.xml"
+        near-cache-mode: invalidated
+        near-cache-max-entries: 100
+      "rex-constraints":
+        configuration-resource: "constraints-configuration.xml"
+        near-cache-mode: invalidated
+        near-cache-max-entries: 100
+      "rex-signals":
+        configuration-resource: "signals-configuration.xml"
+        near-cache-mode: disabled
+      "rex-cluster-jobs":
+        configuration-resource: "cluster-jobs-configuration.xml"
+        near-cache-mode: disabled
+    devservices:
+
+      tracing:
+        enabled: true
+      image-name: "quay.io/infinispan/server:14.0.28.Final"
