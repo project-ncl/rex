@@ -43,7 +43,14 @@ import jakarta.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface CallbackEndpoint {
 
-    @Path("/{taskName}/finish")
+    //region MessageFormat PATH CONSTANTS
+    String FINISH_TASK_FMT = "/%s/finish";
+    String OPERATION_SUCCESSFUL_FMT = "/%s/succeed";
+    String OPERATION_FAILED_FMT = "/%s/fail";
+    //endregion
+
+    String FINISH_TASK = "/{taskName}/finish";
+    @Path(FINISH_TASK)
     @Operation(summary = "[ADMIN] Used by remote entity to report Task completion.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
@@ -56,7 +63,8 @@ public interface CallbackEndpoint {
     @Deprecated
     void finish(@PathParam("taskName") @NotEmpty String taskName, @Valid @NotNull FinishRequest result);
 
-    @Path("/{taskName}/succeed")
+    String OPERATION_SUCCESSFUL = "/{taskName}/succeed";
+    @Path(OPERATION_SUCCESSFUL)
     @Operation(summary = "[ADMIN] Used by remote entity to report successful Task completion.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
@@ -66,9 +74,10 @@ public interface CallbackEndpoint {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @POST
-    void succeed(@PathParam("taskName") @NotEmpty String taskName, @Valid @NotNull Object result);
+    void succeed(@PathParam("taskName") @NotEmpty String taskName, Object result);
 
-    @Path("/{taskName}/fail")
+    String OPERATION_FAILED = "/{taskName}/fail";
+    @Path(OPERATION_FAILED)
     @Operation(summary = "[ADMIN] Used by remote entity to report failed Task completion.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
@@ -78,5 +87,5 @@ public interface CallbackEndpoint {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @POST
-    void fail(@PathParam("taskName") @NotEmpty String taskName, @Valid @NotNull Object result);
+    void fail(@PathParam("taskName") @NotEmpty String taskName, Object result);
 }
