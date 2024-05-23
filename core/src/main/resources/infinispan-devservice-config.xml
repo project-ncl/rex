@@ -1,0 +1,50 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-15.0.xsd
+                            urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
+        xmlns="urn:infinispan:config:15.0"
+        xmlns:server="urn:infinispan:server:15.0">
+
+  <cache-container>
+    <!--  CACHE TEMPLATE  -->
+    <distributed-cache-configuration name="minimal-config" mode="SYNC" statistics="true">
+      <locking isolation="REPEATABLE_READ"/>
+      <transaction locking="PESSIMISTIC" mode="NON_DURABLE_XA"/>
+      <encoding media-type="application/x-protostream"/>
+      <expiration lifespan="-1" max-idle="-1"/>
+    </distributed-cache-configuration>
+
+    <!--  REX TASKS CACHE  -->
+    <distributed-cache name="rex-tasks"
+                       configuration="minimal-config">
+      <indexing storage="local-heap" enabled="true">
+        <indexed-entities>
+          <indexed-entity>rex_model.Task</indexed-entity>
+        </indexed-entities>
+      </indexing>
+    </distributed-cache>
+
+    <!--  REX COUNTER CACHE  -->
+    <distributed-cache name="rex-counter"
+                       configuration="minimal-config"/>
+
+    <!--  REX CONSTRAINTS CACHE  -->
+    <distributed-cache name="rex-constraints"
+                       configuration="minimal-config"/>
+
+    <!--  REX JOBS CACHE  -->
+    <distributed-cache name="rex-cluster-jobs"
+                       configuration="minimal-config">
+      <indexing storage="local-heap" enabled="true">
+        <indexed-entities>
+          <indexed-entity>rex_model.ClusteredJobReference</indexed-entity>
+        </indexed-entities>
+      </indexing>
+    </distributed-cache>
+
+    <!--  REX SIGNALS CACHE  -->
+    <distributed-cache name="rex-signals"
+                       configuration="minimal-config"/>
+
+  </cache-container>
+</infinispan>

@@ -120,8 +120,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             case UP_to_FAILED, STARTING_to_START_FAILED, STOPPING_TO_STOP_FAILED, STOP_REQUESTED_to_STOP_FAILED
                     -> List.of(new DependencyStoppedJob(task), new DecreaseCounterJob(task));
 
+            case STOP_REQUESTED_to_STOPPING -> List.of(new TimeoutCancelClusterJob(task));
+
             //no tasks
-            case STOP_REQUESTED_to_STOPPING, STARTING_to_UP -> List.of();
+            case STARTING_to_UP -> List.of();
 
             case UP_to_SUCCESSFUL -> List.of(new DependencySucceededJob(task), new DecreaseCounterJob(task));
         });

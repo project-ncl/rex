@@ -45,12 +45,23 @@ public class StartCachesOnStartup {
     @Remote("rex-counter")
     RemoteCache<String, Long> counters;
 
+    @Inject
+    @Remote("rex-cluster-jobs")
+    RemoteCache<String, Long> clusterJobs;
+
+    @Inject
+    @Remote("rex-signals")
+    RemoteCache<String, Long> signal;
+
+
     void onStart(@Observes StartupEvent ev) {
         log.info("Startup: Initializing ISPN caches!");
         try {
             tasks.get("ASD");
             constraints.get("ASD");
             counters.get("ASD");
+            clusterJobs.get("ASD");
+            signal.get("ASD");
         } catch (Exception e) {
             throw new IllegalStateException("Cannot get caches", e);
         }

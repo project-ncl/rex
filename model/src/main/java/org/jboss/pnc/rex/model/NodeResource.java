@@ -15,34 +15,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.dto;
+package org.jboss.pnc.rex.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.extern.jackson.Jacksonized;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.jboss.pnc.rex.common.enums.ResourceType;
 
-import java.time.Duration;
-import java.util.Map;
-
-/**
- * Class to specify metadata for a Task.
- */
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @ToString
-public class ConfigurationDTO {
+@Jacksonized
+@Builder(toBuilder = true)
+@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+public class NodeResource {
+    @Getter(onMethod_ = {@ProtoField(number = 1)})
+    private final String ownerNode;
 
-    public Boolean passResultsOfDependencies = null;
+    @Getter(onMethod_ = {@ProtoField(number = 2)})
+    private final String resourceId;
 
-    public Boolean passMDCInRequestBody = null;
-
-    public Boolean passOTELInRequestBody = null;
-
-    public Map<String, String> mdcHeaderKeyMapping = null;
-
-    public Duration cancelTimeout = null;
+    @Getter(onMethod_ = {@ProtoField(number = 3)})
+    private final ResourceType resourceType;
 }

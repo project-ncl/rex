@@ -27,6 +27,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -91,7 +92,8 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
                     graphConfig.passResultsOfDependencies,
                     graphConfig.passMDCInRequestBody,
                     graphConfig.passOTELInRequestBody,
-                    graphConfig.mdcHeaderKeyMapping);
+                    graphConfig.mdcHeaderKeyMapping,
+                    graphConfig.cancelTimeout);
         }
 
         Boolean passResultsOfDependencies = taskConfig.passResultsOfDependencies;
@@ -110,11 +112,16 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
         if (taskConfig.mdcHeaderKeyMapping == null && graphConfig.mdcHeaderKeyMapping != null) {
             mdcHeaderKeys = graphConfig.mdcHeaderKeyMapping;
         }
+        Duration cancelTimeout = taskConfig.cancelTimeout;
+        if (taskConfig.cancelTimeout == null && graphConfig.cancelTimeout != null) {
+            cancelTimeout = graphConfig.cancelTimeout;
+        }
 
         return new ConfigurationDTO(
                 passResultsOfDependencies,
                 passMDCInRequestBody,
                 passOTELInRequestBody,
-                mdcHeaderKeys);
+                mdcHeaderKeys,
+                cancelTimeout);
     }
 }

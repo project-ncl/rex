@@ -71,7 +71,7 @@ public class Configuration {
         return mdcHeaderKeyMapping;
     }
 
-    @Getter(onMethod_ = {@ProtoField(number = 5, defaultValue = Defaults.cancelTimeoutString)})
+    @Getter(onMethod_ = {@ProtoField(number = 5)})
     private final Duration cancelTimeout;
 
     public static class Defaults {

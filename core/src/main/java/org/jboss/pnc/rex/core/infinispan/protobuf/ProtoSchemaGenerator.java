@@ -19,18 +19,25 @@ package org.jboss.pnc.rex.core.infinispan.protobuf;
 
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.jboss.pnc.rex.common.enums.CJobOperation;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
+import org.jboss.pnc.rex.common.enums.ResourceType;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
+import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Header;
+import org.jboss.pnc.rex.model.NodeResource;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.TransitionTime;
+import org.jboss.pnc.rex.model.ispn.adapter.DurationAdapter;
+import org.jboss.pnc.rex.model.ispn.adapter.HashMapStringyAdapter;
+import org.jboss.pnc.rex.model.ispn.adapter.KeyValueString;
 
 /**
  * Generates .proto schemas and infinispan protobuf marshallers of proto-annotated classes in includeClasses
@@ -39,7 +46,6 @@ import org.jboss.pnc.rex.model.TransitionTime;
         schemaPackageName = "rex_model",
         schemaFilePath = "META-INF/",
         schemaFileName = "RexModel.proto",
-        dependsOn = {MapSchemaGenerator.class},
         includeClasses = {
                 ServerResponse.class,
                 Task.class,
@@ -53,6 +59,13 @@ import org.jboss.pnc.rex.model.TransitionTime;
                 Configuration.class,
                 Transition.class,
                 TransitionTime.class,
+                KeyValueString.class,
+                HashMapStringyAdapter.class,
+                DurationAdapter.class,
+                NodeResource.class,
+                ClusteredJobReference.class,
+                ResourceType.class,
+                CJobOperation.class
                 })
 interface ProtoSchemaGenerator extends GeneratedSchema {
 }

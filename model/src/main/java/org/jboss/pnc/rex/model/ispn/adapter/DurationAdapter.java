@@ -15,34 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.dto;
+package org.jboss.pnc.rex.model.ispn.adapter;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import org.infinispan.protostream.annotations.ProtoAdapter;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
 import java.time.Duration;
-import java.util.Map;
 
-/**
- * Class to specify metadata for a Task.
- */
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString
-public class ConfigurationDTO {
+@ProtoAdapter(Duration.class)
+public class DurationAdapter {
 
-    public Boolean passResultsOfDependencies = null;
+    @ProtoFactory
+    public Duration create(String duration) {
+        if (duration == null || duration.isEmpty()) {
+            return null;
+        }
 
-    public Boolean passMDCInRequestBody = null;
+        return Duration.parse(duration);
+    }
 
-    public Boolean passOTELInRequestBody = null;
+    @ProtoField(value = 1, javaType = String.class)
+    public String getDuration(Duration duration) {
+        if (duration == null) {
+            return null;
+        }
 
-    public Map<String, String> mdcHeaderKeyMapping = null;
-
-    public Duration cancelTimeout = null;
+        return duration.toString();
+    }
 }
