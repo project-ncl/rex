@@ -58,6 +58,12 @@ public class CallerNotificationClient {
     }
 
     public boolean notifyCaller(Transition transition, Task task) {
+
+        if (task.getCallerNotifications() == null) {
+            log.warn("NOTIFICATION {}: DISABLED", task.getName());
+            return false;
+        }
+
         if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeyMapping() != null) {
             var keys = task.getConfiguration().getMdcHeaderKeyMapping();
             var headers = task.getCallerNotifications().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
@@ -70,11 +76,6 @@ public class CallerNotificationClient {
 
     private boolean notifyCallerInternal(Transition transition, Task task) {
         Request requestDefinition = task.getCallerNotifications();
-
-        if (requestDefinition == null) {
-            log.warn("NOTIFICATION {}: DISABLED", task.getName());
-            return false;
-        }
 
         URI uri;
         try {
