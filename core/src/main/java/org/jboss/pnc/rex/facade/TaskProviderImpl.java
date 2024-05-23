@@ -60,7 +60,11 @@ public class TaskProviderImpl implements TaskProvider {
     private final HttpHeaders httpHeaders;
 
     @Inject
-    public TaskProviderImpl(TaskContainer container, TaskController controller, TaskMapper mapper, GraphsMapper graphMapper, HttpHeaders httpHeaders) {
+    public TaskProviderImpl(TaskContainer container,
+                            TaskController controller,
+                            TaskMapper mapper,
+                            GraphsMapper graphMapper,
+                            HttpHeaders httpHeaders) {
         this.target = container;
         this.registry = container;
         this.controller = controller;

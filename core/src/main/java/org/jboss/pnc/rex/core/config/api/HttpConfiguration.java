@@ -28,7 +28,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 /**
  * Configuration for internal HTTP client requests from Rex.
  */
-@ConfigMapping(prefix = "scheduler.options.http-configuration")
+@ConfigMapping(prefix = "scheduler.options.http-configuration") //CDI
 public interface HttpConfiguration {
 
     /**

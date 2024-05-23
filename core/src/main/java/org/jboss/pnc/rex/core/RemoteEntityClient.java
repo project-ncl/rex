@@ -35,6 +35,7 @@ import org.jboss.pnc.api.dto.ErrorResponse;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
+import org.jboss.pnc.rex.core.config.ApplicationConfig;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
 import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Header;
@@ -85,14 +86,13 @@ public class RemoteEntityClient {
                               @WithTransactions TaskController controller,
                               TaskRegistry taskRegistry,
                               ObjectMapper mapper,
-                              @ConfigProperty(name = "scheduler.baseUrl",
-                                      defaultValue = "http://localhost:8080") String baseUrl,
+                              ApplicationConfig config,
                               Tokens serviceTokens) {
         this.controller = controller;
         this.taskRegistry = taskRegistry;
         this.client = client;
         this.mapper = mapper;
-        this.baseUrl = baseUrl;
+        this.baseUrl = config.baseUrl();
         this.serviceTokens = serviceTokens;
     }
 
