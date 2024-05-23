@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
+import static org.jboss.pnc.rex.core.utils.OTELUtils.getOTELContext;
 
 @Unremovable
 @ApplicationScoped
@@ -169,21 +170,6 @@ public class RemoteEntityClient {
         return mdcBody;
     }
 
-    private Map<String, String> getOTELContext() {
-        Map<String, String> toReturn = new HashMap<>();
-
-        Span span = Span.current();
-        W3CTraceContextPropagator traceParentGen = W3CTraceContextPropagator.getInstance();
-        if (span != null) {
-            SpanContext context = span.getSpanContext();
-            toReturn.put(MDCHeaderKeys.SPAN_ID.getMdcKey(), context.getSpanId());
-            toReturn.put(MDCHeaderKeys.TRACE_ID.getMdcKey(), context.getTraceId());
-            toReturn.put(MDCHeaderKeys.TRACE_FLAGS.getMdcKey(), context.getTraceFlags().asHex());
-            // sets TRACE_PARENT and TRACE_STATE(encoded)
-            traceParentGen.inject(Context.current(), toReturn, (map, key, value) -> map.put(key, value));
-        }
-        return toReturn;
-    }
 
     private void startJobInternal(Task task) {
         Request requestDefinition = task.getRemoteStart();
@@ -232,7 +218,7 @@ public class RemoteEntityClient {
     }
 
     private void handleConnectionFailure(Throwable exception, Task task) {
-        log.error("ERROR " + task.getName() + ": Couldn't reach the remote entity.", exception);
+        log.error("ERROR {}: Couldn't reach the remote entity.", task.getName(), exception);
         Uni.createFrom().voidItem()
             .onItem().invoke(
                 () -> controller.fail(

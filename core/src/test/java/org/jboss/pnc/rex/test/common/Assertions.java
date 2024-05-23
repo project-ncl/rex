@@ -19,7 +19,7 @@ package org.jboss.pnc.rex.core.common;
 
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.core.api.TaskContainer;
-import org.jboss.pnc.rex.core.common.TransitionRecorder.Tuple;
+import org.jboss.pnc.rex.test.common.TransitionRecorder.Tuple;
 import org.jboss.pnc.rex.model.Task;
 
 import jakarta.enterprise.inject.spi.CDI;
@@ -63,6 +63,14 @@ public class Assertions {
     }
 
     public static void waitTillTasksAre(State state, TaskContainer container, int timeout, String... strings) {
+        waitTillTasksAre(state, container, timeout, TimeUnit.SECONDS, strings);
+    }
+
+    public static void waitTillTasksAre(State state,
+                                        TaskContainer container,
+                                        int timeout,
+                                        TimeUnit timeUnit,
+                                        String... strings) {
         List<String> fine = new ArrayList<>(Arrays.asList(strings));
         waitSynchronouslyFor(() -> {
             Iterator<String> iterator = fine.iterator();
@@ -72,7 +80,7 @@ public class Assertions {
                     iterator.remove();
             }
             return fine.isEmpty();
-        }, timeout, TimeUnit.SECONDS);
+        }, timeout, timeUnit);
     }
 
     public static void waitSynchronouslyFor(Supplier<Boolean> condition, long timeout, TimeUnit timeUnit) {
