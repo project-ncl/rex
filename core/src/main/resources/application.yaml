@@ -38,19 +38,15 @@ scheduler:
 quarkus:
   application:
     name: rex
-
-  opentelemetry:
+  otel:
     enabled: true
-    tracer:
+    traces:
       enabled: true
+      exporter: cdi
       # reflect sampling on collector
       resource-attributes: "sampler_ratio=0.05,service.name=rex"
       sampler:
         ratio: 0.05
-      exporter:
-        otlp:
-          # Send telemetry data to an opentelemetry-collector
-          #endpoint: http://localhost:4317
 
   package:
     type: fast-jar
