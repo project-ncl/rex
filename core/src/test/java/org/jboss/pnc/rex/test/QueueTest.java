@@ -50,7 +50,6 @@ import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
 import static org.jboss.pnc.rex.core.common.TestData.getSingleWithoutStart;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
 public class QueueTest {
 

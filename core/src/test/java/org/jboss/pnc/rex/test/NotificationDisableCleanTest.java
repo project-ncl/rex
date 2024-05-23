@@ -48,7 +48,6 @@ import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks
 public class NotificationDisableCleanTest {

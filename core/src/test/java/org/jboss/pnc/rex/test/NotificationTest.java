@@ -66,7 +66,6 @@ import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
 import static org.jboss.pnc.rex.core.common.TestData.getStopRequestWithCallback;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
 public class NotificationTest {
 

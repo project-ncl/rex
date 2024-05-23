@@ -73,7 +73,6 @@ import java.util.Collection;
 import java.util.Map;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @Slf4j
 @TestSecurity(authorizationEnabled = false)
 class TaskContainerImplTest {
