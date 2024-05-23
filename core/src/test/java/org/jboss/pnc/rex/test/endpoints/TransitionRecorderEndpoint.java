@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.endpoints;
+package org.jboss.pnc.rex.test.endpoints;
 
 import io.vertx.core.impl.ConcurrentHashSet;
 import org.jboss.pnc.rex.common.enums.Transition;

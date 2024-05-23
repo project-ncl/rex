@@ -15,23 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core;
+package org.jboss.pnc.rex.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.jboss.pnc.rex.core.common.Assertions.assertCorrectTaskRelations;
-import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAre;
-import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
-import static org.jboss.pnc.rex.core.common.TestData.getEndpointWithStart;
-import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithStart;
-import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
-import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithoutStart;
-import static org.jboss.pnc.rex.core.common.TestData.getRequestWithStart;
-import static org.jboss.pnc.rex.core.common.TestData.getRequestWithoutStart;
-import static org.jboss.pnc.rex.core.common.TestData.getSingleWithoutStart;
-import static org.jboss.pnc.rex.core.common.TestData.getStopRequest;
-import static org.jboss.pnc.rex.core.common.TestData.getStopRequestWithCallback;
+import static org.jboss.pnc.rex.test.common.Assertions.assertCorrectTaskRelations;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAre;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.TestData.getComplexGraph;
+import static org.jboss.pnc.rex.test.common.TestData.getEndpointWithStart;
+import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithStart;
+import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
+import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithoutStart;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestWithoutStart;
+import static org.jboss.pnc.rex.test.common.TestData.getSingleWithoutStart;
+import static org.jboss.pnc.rex.test.common.TestData.getStopRequest;
+import static org.jboss.pnc.rex.test.common.TestData.getStopRequestWithCallback;
 
 import jakarta.inject.Inject;
 import jakarta.transaction.RollbackException;
@@ -49,11 +49,11 @@ import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
 import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
 import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
 import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.core.common.TransitionRecorder;
+import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.MaxConcurrent;
 import org.jboss.pnc.rex.core.counter.Running;
-import org.jboss.pnc.rex.core.endpoints.HttpEndpoint;
+import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;

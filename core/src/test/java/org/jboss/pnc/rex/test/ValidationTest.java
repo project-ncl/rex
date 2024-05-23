@@ -34,7 +34,7 @@ import java.net.URI;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
-import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithoutStart;
+import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithoutStart;
 
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)

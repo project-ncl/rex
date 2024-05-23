@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core;
+package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -24,11 +24,8 @@ import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.core.common.TestData;
-import org.jboss.pnc.rex.core.common.TransitionRecorder;
-import org.jboss.pnc.rex.core.counter.Counter;
-import org.jboss.pnc.rex.core.counter.Running;
-import org.jboss.pnc.rex.core.endpoints.TransitionRecorderEndpoint;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.common.TestData;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.test.profile.WithoutTaskCleaning;
@@ -42,10 +39,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAre;
-import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.core.common.RandomDAGGeneration.generateDAG;
-import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.TestData.getComplexGraph;
 
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)

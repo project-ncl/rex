@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core;
+package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -24,10 +24,7 @@ import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
-import org.jboss.pnc.rex.core.common.TransitionRecorder;
-import org.jboss.pnc.rex.core.counter.Counter;
-import org.jboss.pnc.rex.core.counter.MaxConcurrent;
-import org.jboss.pnc.rex.core.counter.Running;
+import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.TransitionTimeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
@@ -53,10 +50,10 @@ import static org.jboss.pnc.rex.common.enums.Transition.NEW_to_WAITING;
 import static org.jboss.pnc.rex.common.enums.Transition.STARTING_to_UP;
 import static org.jboss.pnc.rex.common.enums.Transition.UP_to_SUCCESSFUL;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_ENQUEUED;
-import static org.jboss.pnc.rex.core.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.core.common.TestData.getAllParameters;
-import static org.jboss.pnc.rex.core.common.TestData.getComplexGraph;
-import static org.jboss.pnc.rex.core.common.TestData.getRequestWithNegativeCallback;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.TestData.getAllParameters;
+import static org.jboss.pnc.rex.test.common.TestData.getComplexGraph;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestWithNegativeCallback;
 
 /**
  * Use this class instead of TaskContainerTest if you want to verify data in tasks after completion.

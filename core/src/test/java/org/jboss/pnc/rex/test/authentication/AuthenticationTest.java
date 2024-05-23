@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.authentication;
+package org.jboss.pnc.rex.test.authentication;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;

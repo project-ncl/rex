@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.common;
+package org.jboss.pnc.rex.test.common;
 
 import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.common.enums.Method;
