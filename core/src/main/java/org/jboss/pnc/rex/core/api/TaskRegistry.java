@@ -49,15 +49,16 @@ public interface TaskRegistry {
 
     /**
      * Returns all Tasks present in the cache filtered by parameters
-     *
+     * <p>
      * (Can be costly without filters)
      *
-     * @param waiting is in StateGroup.IDLE state
-     * @param running is in StateGroup.RUNNING state
-     * @param finished is in StateGroup.FINAL state
+     * @param waiting  is in StateGroup.IDLE state
+     * @param queued  is in StateGroup.QUEUED state
+     * @param running  is in StateGroup.RUNNING state
+     * @param finished  is in StateGroup.FINAL state
      * @return list of filtered services
      */
-    List<Task> getTasks(boolean waiting, boolean running, boolean finished);
+    List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished);
 
 
     /**
@@ -87,4 +88,9 @@ public interface TaskRegistry {
      * @return the service names
      */
     Collection<String> getTaskIds();
+
+    /**
+     * This method permanently removes all tasks in the persistent store.
+     */
+    void removeAllTasks();
 }

@@ -53,7 +53,20 @@ public class TolerantQueueManager implements QueueManager {
     }
 
     @Override
+    @Retry
     public Long getMaximumConcurrency() {
         return delegate.getMaximumConcurrency();
+    }
+
+    @Override
+    @Retry
+    public Long synchronizeRunningCounter() {
+        return delegate.synchronizeRunningCounter();
+    }
+
+    @Override
+    @Retry
+    public Long getRunningCounter() {
+        return delegate.getRunningCounter();
     }
 }

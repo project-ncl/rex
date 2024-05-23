@@ -50,7 +50,22 @@ public interface QueueManager {
 
     /**
      * Returns current number in the maximum counter.
+     *
      * @return maximum counter value
      */
     Long getMaximumConcurrency();
+
+    /**
+     * Returns current number in the running counter. This value should reflect amount of running Tasks.
+     *
+     * @return
+     */
+    Long getRunningCounter();
+
+    /**
+     * The method queries running tasks and synchronizes running counter in case it is different.
+     *
+     * @return returns synchronized value of the counter
+     */
+    Long synchronizeRunningCounter();
 }

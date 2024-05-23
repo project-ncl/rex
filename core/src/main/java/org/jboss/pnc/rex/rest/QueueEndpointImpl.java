@@ -21,6 +21,7 @@ import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.rex.api.QueueEndpoint;
+import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.dto.responses.LongResponse;
 import org.jboss.pnc.rex.facade.api.OptionsProvider;
 
@@ -32,8 +33,11 @@ public class QueueEndpointImpl implements QueueEndpoint {
 
     private final OptionsProvider optionsProvider;
 
-    public QueueEndpointImpl(OptionsProvider optionsProvider) {
+    private final QueueManager queue;
+
+    public QueueEndpointImpl(OptionsProvider optionsProvider, QueueManager queue) {
         this.optionsProvider = optionsProvider;
+        this.queue = queue;
     }
 
     @Override
@@ -48,4 +52,8 @@ public class QueueEndpointImpl implements QueueEndpoint {
         return optionsProvider.getConcurrency();
     }
 
+    @Override
+    public LongResponse getRunning() {
+        return LongResponse.builder().number(queue.getRunningCounter()).build();
+    }
 }
