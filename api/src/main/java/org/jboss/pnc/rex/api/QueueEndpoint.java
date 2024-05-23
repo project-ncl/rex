@@ -67,4 +67,19 @@ public interface QueueEndpoint {
     })
     @GET
     LongResponse getConcurrent();
+
+    String GET_RUNNING = "/running";
+    @Path(GET_RUNNING)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns amount of active tasks in queue (excluding ENQUEUED).")
+    @APIResponses(value = {
+        @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = LongResponse.class))),
+        @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GET
+    LongResponse getRunning();
 }

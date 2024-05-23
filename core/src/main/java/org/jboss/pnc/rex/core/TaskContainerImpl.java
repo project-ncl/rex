@@ -124,6 +124,13 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         return tasks.keySet();
     }
 
+    @Override
+    @Transactional(MANDATORY)
+    public void removeAllTasks() {
+        tasks.clear();
+        constraints.clear();
+    }
+
     public TransactionManager getTransactionManager() {
         return tasks.getTransactionManager();
     }
@@ -150,7 +157,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     }
 
     @Override
-    public List<Task> getTasks(boolean waiting, boolean running, boolean finished) {
+    public List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished) {
         if (!waiting && !running && !finished)
             return Collections.emptyList();
 
@@ -209,7 +216,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     public List<Task> getEnqueuedTasks(long limit) {
         QueryFactory factory = Search.getQueryFactory(tasks);
         Query<Task> query = factory.create("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "'");
-        return query.maxResults((int) limit).execute().list();
+        return query.maxResults((int) limit).list();
     }
 
     @Override

@@ -20,7 +20,6 @@ package org.jboss.pnc.rex.core;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.core.api.QueueManager;
-import org.jboss.pnc.rex.core.api.TaskContainer;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.core.counter.Counter;
@@ -127,5 +126,29 @@ public class QueueManagerImpl implements QueueManager {
     public Long getMaximumConcurrency() {
         VersionedValue<Long> meta = max.getMetadataValue();
         return meta == null ? null : meta.getValue();
+    }
+
+    @Override
+    public Long getRunningCounter() {
+        VersionedValue<Long> meta = running.getMetadataValue();
+        return meta == null ? null : meta.getValue();
+    }
+
+    @Override
+    @Transactional(MANDATORY)
+    public Long synchronizeRunningCounter() {
+        VersionedValue<Long> runningMeta = running.getMetadataValue();
+        if (runningMeta == null) {
+            running.initialize(0L);
+            return 0L;
+        }
+
+        List<Task> runningTasks = container.getTasks(false, false, true, false);
+        if (!runningMeta.getValue().equals((long) runningTasks.size())) {
+            log.info("Synchronizing running counter. Mismatch between active tasks and counter found. Previous value '{}' -> new value '{}'", runningMeta.getValue(),  runningTasks.size());
+            running.replaceValue(runningMeta, (long) runningTasks.size());
+        }
+
+        return running.getMetadataValue().getValue();
     }
 }
