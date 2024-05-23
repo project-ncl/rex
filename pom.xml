@@ -188,7 +188,8 @@
               <exclude>**/.mvn/**</exclude>
               <exclude>**/mvnw*</exclude>
               <exclude>**/**.properties</exclude>
-              <exclude>**/application.yaml</exclude>
+              <exclude>**/infinispan-devservice-config.xml</exclude>
+              <exclude>**/application*.yaml</exclude>
 
               <!-- Exclude downloaded/generated -->
               <exclude>**/.cache/**</exclude>
