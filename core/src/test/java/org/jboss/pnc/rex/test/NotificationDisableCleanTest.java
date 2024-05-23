@@ -20,8 +20,6 @@ package org.jboss.pnc.rex.test;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.CallbackEndpoint;
-import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.test.common.AbstractTest;
@@ -29,8 +27,6 @@ import org.jboss.pnc.rex.test.common.TestData;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.test.profile.WithoutTaskCleaning;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
@@ -45,43 +41,10 @@ import static org.jboss.pnc.rex.test.common.TestData.getComplexGraph;
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks
-public class NotificationDisableCleanTest {
-
-    @Inject
-    TaskContainerImpl container;
+public class NotificationDisableCleanTest extends AbstractTest {
 
     @Inject
     TaskEndpoint endpoint;
-
-    @Inject
-    CallbackEndpoint callbackEndpoint;
-
-    @Inject
-    QueueEndpoint queue;
-
-    @Inject
-    @Running
-    Counter running;
-
-    @Inject
-    TransitionRecorderEndpoint recorderEndpoint;
-
-    @Inject
-    TransitionRecorder recorder;
-
-    @BeforeEach
-    void before() {
-        running.initialize(0L);
-        queue.setConcurrent(10L);
-        recorderEndpoint.flush();
-        container.getCache().clear();
-    }
-
-    @AfterEach
-    public void after() throws InterruptedException {
-        recorder.clear();
-        Thread.sleep(100);
-    }
 
     @Test
     void testRecordedBodies() throws InterruptedException {
