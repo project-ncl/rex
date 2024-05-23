@@ -18,6 +18,7 @@
 package org.jboss.pnc.rex.rest;
 
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
@@ -70,7 +71,9 @@ public class TaskEndpointImpl implements TaskEndpoint {
     @Override
     @Retry
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
-    public void cancel(String taskID) {
+    public Response cancel(String taskID) {
         taskProvider.cancel(taskID);
+
+        return Response.accepted().build();
     }
 }

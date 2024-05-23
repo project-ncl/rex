@@ -124,7 +124,7 @@ public interface TaskEndpoint {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PUT
-    void cancel(@Parameter(description = TASK_ID) @PathParam("taskID") @NotBlank String taskID);
+    Response cancel(@Parameter(description = TASK_ID) @PathParam("taskID") @NotBlank String taskID);
 
     String GET_BY_CORRELATION_ID = "/by-correlation/{correlationID}";
     @Path(GET_BY_CORRELATION_ID)
