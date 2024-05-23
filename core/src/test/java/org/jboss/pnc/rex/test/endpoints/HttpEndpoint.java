@@ -161,7 +161,7 @@ public class HttpEndpoint {
         if (response.statusCode() < 400) {
             log.info("Callback to scheduler positive!");
         } else {
-            log.warn("Callback to scheduler negative! " + response.body().toString());
+            log.warn("Callback to scheduler negative! {}", response.body().toString());
         }
     }
 

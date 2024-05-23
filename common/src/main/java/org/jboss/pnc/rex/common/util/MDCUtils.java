@@ -67,4 +67,14 @@ public class MDCUtils {
             MDC.clear();
         }
     }
+
+    public static <T> T wrapWithMDC(Map<String, String> mdcKeys, Supplier<T> supplier) {
+        try {
+            mdcKeys.forEach(MDC::put);
+
+            return supplier.get();
+        } finally {
+            MDC.clear();
+        }
+    }
 }

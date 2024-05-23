@@ -23,7 +23,7 @@ import org.infinispan.protostream.annotations.ProtoEnumValue;
 public enum Origin {
 
     /**
-     * The response originates from a external remote entitu. This response signifies a callback for start/cancel
+     * The response originates from an external remote entity. This response signifies a callback for start/cancel
      * operations.
      */
     @ProtoEnumValue(number = 0)

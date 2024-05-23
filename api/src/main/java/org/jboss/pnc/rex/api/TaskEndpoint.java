@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.api;
 
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -48,6 +49,12 @@ import java.util.Set;
 @Tag(name = "Task endpoint")
 @Path("/rest/tasks")
 public interface TaskEndpoint {
+
+    //region MessageFormat PATH CONSTANTS
+    String GET_SPECIFIC_FMT = "/%s";
+    String CANCEL_PATH_FMT = "/%s/cancel";
+    String GET_BY_CORRELATION_ID_FMT = "/by-correlation/%s";
+    //endregion
 
     String TASK_ID = "Unique identifier of the task";
 
@@ -87,7 +94,8 @@ public interface TaskEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     Set<TaskDTO> getAll(@BeanParam TaskFilterParameters filterParameters);
 
-    @Path("/{taskID}")
+    String GET_SPECIFIC_PATH = "/{taskID}";
+    @Path(GET_SPECIFIC_PATH)
     @Operation(summary = "Returns a specific task.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
@@ -103,7 +111,8 @@ public interface TaskEndpoint {
     @Produces(MediaType.APPLICATION_JSON)
     TaskDTO getSpecific(@Parameter(description = TASK_ID) @PathParam("taskID") @NotBlank String taskID);
 
-    @Path("/{taskID}/cancel")
+    String CANCEL_PATH = "/{taskID}/cancel";
+    @Path(CANCEL_PATH)
     @Operation(summary = "Cancels execution of a task and the tasks which depend on it")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.ACCEPTED_CODE, description = OpenapiConstants.ACCEPTED_CODE),
@@ -117,6 +126,8 @@ public interface TaskEndpoint {
     @PUT
     void cancel(@Parameter(description = TASK_ID) @PathParam("taskID") @NotBlank String taskID);
 
+    String GET_BY_CORRELATION_ID = "/by-correlation/{correlationID}";
+    @Path(GET_BY_CORRELATION_ID)
     @GET
     @Operation(summary = "Returns tasks grouped by correlation ID.")
     @APIResponses(value = {
@@ -130,7 +141,6 @@ public interface TaskEndpoint {
             @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @Path("/by-correlation/{correlationID}")
     @Produces(MediaType.APPLICATION_JSON)
     Set<TaskDTO> byCorrelation(@PathParam("correlationID") @NotBlank String correlationID);
 

@@ -181,19 +181,19 @@
               <exclude>**/LICENSE</exclude>
               <exclude>**/eclipse-codeStyle.xml</exclude>
               <exclude>.license-header.txt</exclude>
-	          <exclude>**/Dockerfile</exclude>
-	          <exclude>**/scripts/**</exclude>
-	          <exclude>**/images/**</exclude>
-	          <exclude>**/.dockerignore</exclude>
-	          <exclude>**/.mvn/**</exclude>
-	          <exclude>**/mvnw*</exclude>
+              <exclude>**/Dockerfile</exclude>
+              <exclude>**/scripts/**</exclude>
+              <exclude>**/images/**</exclude>
+              <exclude>**/.dockerignore</exclude>
+              <exclude>**/.mvn/**</exclude>
+              <exclude>**/mvnw*</exclude>
               <exclude>**/**.properties</exclude>
               <exclude>**/application.yaml</exclude>
 
               <!-- Exclude downloaded/generated -->
               <exclude>**/.cache/**</exclude>
-	          <exclude>**/rest-config.json</exclude>
-	          <exclude>**/Test*.html</exclude>
+              <exclude>**/rest-config.json</exclude>
+              <exclude>**/Test*.html</exclude>
             </excludes>
           </configuration>
         </plugin>

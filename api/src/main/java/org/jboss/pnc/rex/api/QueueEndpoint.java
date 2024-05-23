@@ -39,14 +39,13 @@ import jakarta.ws.rs.core.MediaType;
 
 @Tag(name = "Endpoint for queue administration")
 @Path("/rest/queue")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 public interface QueueEndpoint {
 
-    @Path("/concurrency")
+    String SET_CONCURRENT = "/concurrency";
+    @Path(SET_CONCURRENT)
     @Operation(summary = "[ADMIN] Sets the amount of possible concurrent tasks. Tasks that are currently running are never affected.")
     @APIResponses(value = {
-        @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
+        @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
         @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
@@ -55,7 +54,9 @@ public interface QueueEndpoint {
     @POST
     void setConcurrent(@QueryParam("amount") @NotNull @Min(0) Long amount);
 
-    @Path("/concurrency")
+    String GET_CONCURRENT = "/concurrency";
+    @Path(GET_CONCURRENT)
+    @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns amount of possible concurrent tasks.")
     @APIResponses(value = {
         @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
