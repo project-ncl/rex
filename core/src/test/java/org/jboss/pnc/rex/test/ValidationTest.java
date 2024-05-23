@@ -46,17 +46,18 @@ public class ValidationTest {
 
     @TestHTTPEndpoint(CallbackEndpoint.class)
     @TestHTTPResource
-    URI queueEndpointURI;
+    URI callbackEndpointURI;
 
     @Test
     void testCreateNoBody() {
         given()
                 .when()
-                .contentType(ContentType.JSON)
-                .post(taskEndpointURI.getPath())
+                    .contentType(ContentType.JSON)
+                    .post(taskEndpointURI.getPath())
                 .then()
                 .statusCode(400)
                 .body("errorType", containsString("ViolationException"));
+                    .body("errorType", containsString("ViolationException"));
     }
 
     @Test

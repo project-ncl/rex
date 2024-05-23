@@ -29,13 +29,10 @@ import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.TransitionTimeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.test.profile.WithoutTaskCleaning;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
 
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -61,37 +58,10 @@ import static org.jboss.pnc.rex.test.common.TestData.getRequestWithNegativeCallb
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks
-public class TaskContainerNoCleanTest {
-
-    @Inject
-    @Running
-    Counter running;
-
-    @Inject
-    @MaxConcurrent
-    Counter max;
-
-    @Inject
-    TaskContainerImpl container;
-
-    @Inject
-    TransitionRecorder recorder;
+public class TaskContainerNoCleanTest extends AbstractTest {
 
     @Inject
     TaskEndpoint taskEndpoint;
-
-    @BeforeEach
-    public void before() throws Exception {
-        max.initialize(1000L);
-        running.initialize(0L);
-        container.getCache().clear();
-    }
-
-    @AfterEach
-    public void after() throws InterruptedException {
-        recorder.clear();
-        Thread.sleep(100);
-    }
 
     @Test
     void shouldFailATaskAndDependants() {

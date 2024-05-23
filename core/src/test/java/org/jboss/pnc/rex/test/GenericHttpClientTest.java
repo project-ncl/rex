@@ -33,8 +33,6 @@ import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.requests.StartRequest;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
@@ -52,45 +50,16 @@ import static io.restassured.RestAssured.given;
 
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)
-public class GenericHttpClientTest {
-
-    @Inject
-    TaskContainerImpl container;
-
+public class GenericHttpClientTest extends AbstractTest {
     @Inject
     HttpEndpoint endpoint;
 
     @Inject
     TaskEndpoint taskEndpoint;
 
-    @Inject
-    TransitionRecorder recorder;
-
     @TestHTTPEndpoint(TaskEndpoint.class)
     @TestHTTPResource
     URI taskEndpointURI;
-
-    @Inject
-    @Running
-    Counter running;
-
-    @Inject
-    @MaxConcurrent
-    Counter max;
-
-    @BeforeEach
-    public void before() throws Exception {
-        max.initialize(1000L);
-        running.initialize(0L);
-    }
-
-    @AfterEach
-    public void after() throws InterruptedException {
-        endpoint.clearRequestCounter();
-        container.getCache().clear();
-        recorder.clear();
-        Thread.sleep(100);
-    }
 
     @Test
     void shouldRetryBackpressureOn425AndSucceed() {

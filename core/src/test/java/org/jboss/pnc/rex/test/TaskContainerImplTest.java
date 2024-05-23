@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.test;
 
+import static io.restassured.RestAssured.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.jboss.pnc.rex.test.common.Assertions.assertCorrectTaskRelations;
@@ -33,6 +34,10 @@ import static org.jboss.pnc.rex.test.common.TestData.getSingleWithoutStart;
 import static org.jboss.pnc.rex.test.common.TestData.getStopRequest;
 import static org.jboss.pnc.rex.test.common.TestData.getStopRequestWithCallback;
 
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.restassured.common.mapper.TypeRef;
+import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.TransactionManager;
@@ -48,34 +53,36 @@ import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
 import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
 import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
+import org.jboss.pnc.rex.core.TaskContainerImpl;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.core.counter.Counter;
-import org.jboss.pnc.rex.core.counter.MaxConcurrent;
 import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;
+import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.jboss.pnc.rex.model.requests.StartRequest;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 @QuarkusTest
 @Slf4j
 @TestSecurity(authorizationEnabled = false)
-class TaskContainerImplTest {
+class TaskContainerImplTest extends AbstractTest {
 
     public static final String EXISTING_KEY = "omg.wtf.whatt";
 
@@ -88,6 +95,10 @@ class TaskContainerImplTest {
     @Inject
     TaskEndpoint taskEndpoint;
 
+    @TestHTTPEndpoint(TaskEndpoint.class)
+    @TestHTTPResource
+    URI taskEndpointURI;
+
     @Inject
     HttpEndpoint httpEndpoint;
 
@@ -95,33 +106,9 @@ class TaskContainerImplTest {
     @Running
     Counter running;
 
-    @Inject
-    @MaxConcurrent
-    Counter max;
-
-    @Inject
-    TransitionRecorder recorder;
-
     @BeforeEach
     public void before() throws Exception {
-        log.info("Clearing cache and initializing counters");
-        max.initialize(1000L);
-        running.initialize(0L);
-        container.getCache().clear();
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .vertex(EXISTING_KEY, CreateTaskDTO.builder()
-                        .name(EXISTING_KEY)
-                        .controllerMode(Mode.IDLE)
-                        .remoteStart(getRequestWithoutStart("{id: 100}"))
-                        .remoteCancel(getStopRequest("{id: 100}"))
-                        .build())
-                .build());
-    }
-
-    @AfterEach
-    public void after() throws InterruptedException {
-        recorder.clear();
-        Thread.sleep(100);
+        putDummyTask();
     }
 
     @Test
@@ -335,7 +322,7 @@ class TaskContainerImplTest {
         // sleep because running counter takes time to update
         Thread.sleep(100);
         assertThat(running.getValue()).isEqualTo(0);
-        assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
+        assertThat(container.getTasks(true, false, true, true)).extracting("name", String.class)
                 .doesNotContain(services);
     }
 
@@ -393,7 +380,7 @@ class TaskContainerImplTest {
 
         waitTillTasksAreFinishedWith(State.STOPPED, services);
 
-        assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
+        assertThat(container.getTasks(true, true, true, true)).extracting("name", String.class)
                 .doesNotContain(request.getVertices().keySet().toArray(new String[0]));
     }
 
@@ -401,7 +388,7 @@ class TaskContainerImplTest {
     public void testQuery() throws Exception {
         taskEndpoint.start(getComplexGraph(false));
 
-        assertThat(container.getTasks(true, true, true)).hasSize(11);
+        assertThat(container.getTasks(true, true, true, true)).hasSize(11);
     }
 
     @Test
@@ -531,7 +518,7 @@ class TaskContainerImplTest {
         // sleep because running counter takes time to update
         Thread.sleep(50);
         assertThat(running.getValue()).isEqualTo(0);
-        assertThat(container.getTasks(true, true, true)).extracting("name", String.class)
+        assertThat(container.getTasks(true, false, true, true)).extracting("name", String.class)
                 .doesNotContain(randomDAG.getVertices().keySet().toArray(new String[0]));
     }
 
@@ -551,7 +538,7 @@ class TaskContainerImplTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(true, false, false, null))
+                        .configuration(new ConfigurationDTO(true, false, false, null, null))
                         .build())
                 .build());
 
@@ -587,7 +574,7 @@ class TaskContainerImplTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(false, false, false, null))
+                        .configuration(new ConfigurationDTO(false, false, false, null, null))
                         .build())
                 .build());
 
@@ -602,5 +589,29 @@ class TaskContainerImplTest {
 
         Map<String, Object> taskResults = startRequest.getTaskResults();
         assertThat(taskResults).isNull();
+    }
+
+    private void putDummyTask() {
+        CreateGraphRequest dummyTask = CreateGraphRequest.builder()
+            .vertex(EXISTING_KEY, CreateTaskDTO.builder()
+                .name(EXISTING_KEY)
+                .controllerMode(Mode.IDLE)
+                .remoteStart(getRequestWithoutStart("{id: 100}"))
+                .remoteCancel(getStopRequest("{id: 100}"))
+                .build())
+            .build();
+
+        Set<TaskDTO> response = with()
+            .body(dummyTask)
+                .contentType(ContentType.JSON)
+            .post(taskEndpointURI.getPath())
+            .then()
+                .statusCode(200)
+            .extract().as(new TypeRef<>(){});
+
+        assertThat(response)
+            .isNotNull()
+            .extracting("name")
+            .contains(EXISTING_KEY);
     }
 }

@@ -19,13 +19,11 @@ package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.CallbackEndpoint;
-import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
@@ -38,29 +36,10 @@ import static org.jboss.pnc.rex.test.common.TestData.getAllParameters;
 
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)
-public class CorrelationTest {
+public class CorrelationTest extends AbstractTest {
 
     @Inject
     TaskEndpoint taskEndpoint;
-
-    @Inject
-    CallbackEndpoint callbackEndpoint;
-
-    @Inject
-    TaskContainerImpl container;
-
-    @Inject
-    QueueEndpoint queue;
-
-    @BeforeEach
-    void before() {
-        // don't actually start tasks because they get deleted after finishing
-        queue.setConcurrent(0L);
-
-        // clear ISPN
-        container.getCache().clear();
-        container.getConstraintCache().clear();
-    }
 
     @Test
     void testAllTasksGetCorrelated() {

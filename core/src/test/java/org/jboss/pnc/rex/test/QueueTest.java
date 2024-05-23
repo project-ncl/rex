@@ -19,7 +19,6 @@ package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
@@ -29,8 +28,6 @@ import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
@@ -50,7 +47,7 @@ import static org.jboss.pnc.rex.test.common.TestData.getSingleWithoutStart;
 
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)
-public class QueueTest {
+public class QueueTest extends AbstractTest {
 
     public static final String EXISTING_KEY = "omg.wtf.whatt";
 
@@ -58,35 +55,13 @@ public class QueueTest {
     TaskContainerImpl container;
 
     @Inject
-    @Running
-    Counter running;
-
-    @Inject
     TaskEndpoint taskEndpoint;
-
-    @Inject
-    CallbackEndpoint callbackEndpoint;
 
     @Inject
     HttpEndpoint httpEndpoint;
 
     @Inject
-    TransitionRecorder recorder;
-
-    @Inject
     QueueEndpoint queue;
-
-    @BeforeEach
-    void before() {
-        running.initialize(0L);
-        container.getCache().clear();
-    }
-
-    @AfterEach
-    public void after() throws InterruptedException {
-        recorder.clear();
-        Thread.sleep(100);
-    }
 
     @Test
     void testNoServiceStartsWithMaxBeingZero() {
