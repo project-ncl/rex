@@ -37,7 +37,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.jboss.pnc.rex.core.common.TestData.getMockTaskWithoutStart;
 
 @QuarkusTest
-//@QuarkusTestResource(InfinispanResource.class) //Infinispan dev-services are used instead
 @TestSecurity(authorizationEnabled = false)
 public class ValidationTest {
 
