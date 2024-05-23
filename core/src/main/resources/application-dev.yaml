@@ -1,0 +1,54 @@
+scheduler:
+  baseUrl: http://localhost:8181
+
+disable:
+  authorization: true
+quarkus:
+  oidc:
+    enabled: false
+    auth-server-url: ""
+  oidc-client:
+    enabled: false
+  transaction-manager:
+    default-transaction-timeout: 10m
+  otel:
+    enabled: false
+    traces:
+      enabled: false
+  http:
+    port: 8181
+  infinispan-client:
+    use-schema-registration: true
+    use-auth: true
+    username: admin
+    password: password
+    cache:
+      "rex-counter":
+        configuration-resource: "counter-configuration.xml"
+        near-cache-mode: disabled
+#        near-cache-max-entries: -1
+      "rex-tasks":
+        configuration-resource: "task-configuration.xml"
+        near-cache-mode: invalidated
+#        near-cache-max-entries: 100
+      "rex-constraints":
+        configuration-resource: "constraints-configuration.xml"
+        near-cache-mode: invalidated
+#        near-cache-max-entries: 100
+      "rex-signals":
+        configuration-resource: "signals-configuration.xml"
+        near-cache-mode: disabled
+      "rex-cluster-jobs":
+        configuration-resource: "cluster-jobs-configuration.xml"
+        near-cache-mode: disabled
+    devservices:
+      image-name: "quay.io/infinispan/server:14.0.28.Final"
+  log:
+    category:
+      "org.jboss.pnc":
+        level: TRACE
+      "io.quarkus.infinispan":
+        level: TRACE
+      "io.opentelemetry":
+        level: INFO
+    min-level: FINEST

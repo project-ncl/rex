@@ -121,6 +121,18 @@ org:
             TolerantQueueManager/setMaximumConcurrency/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
             TolerantQueueManager/setMaximumConcurrency/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
             TolerantQueueManager/setMaximumConcurrency/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+            TolerantQueueManager/getMaximumConcurrency/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+            TolerantQueueManager/getMaximumConcurrency/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+            TolerantQueueManager/getMaximumConcurrency/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+            TolerantQueueManager/getMaximumConcurrency/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+            TolerantQueueManager/synchronizeRunningCounter/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+            TolerantQueueManager/synchronizeRunningCounter/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+            TolerantQueueManager/synchronizeRunningCounter/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+            TolerantQueueManager/synchronizeRunningCounter/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+            TolerantQueueManager/getRunningCounter/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+            TolerantQueueManager/getRunningCounter/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+            TolerantQueueManager/getRunningCounter/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+            TolerantQueueManager/getRunningCounter/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
             TolerantCleaningManager/tryClean/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
             TolerantCleaningManager/tryClean/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
             TolerantCleaningManager/tryClean/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
@@ -150,107 +162,7 @@ org:
           TaskEndpointImpl/cancel/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
           TaskEndpointImpl/cancel/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
           TaskEndpointImpl/cancel/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
-
-
-
-"%test":
-  scheduler:
-    baseUrl: http://localhost:8081
-    options:
-      http-configuration:
-        425-backoff-policy:
-          backoff:
-            min-delay: 10ms
-            max-delay: 10ms
-          expire-in: 5000
-  quarkus:
-    log:
-      category:
-        "org.testcontainers":
-          level: DEBUG
-    oidc:
-      enabled: false
-      auth-server-url: ""
-    oidc-client:
-      enabled: false
-    transaction-manager:
-      default-transaction-timeout: 10m
-    http:
-      port: 8081
-    opentelemetry:
-      enabled: false
-      tracer:
-        enabled: false
-    infinispan-client:
-      client-intelligence: BASIC
-      use-schema-registration: true
-      use-auth: true
-      username: admin
-      password: password
-      cache:
-        "rex-counter":
-          configuration-resource: "constraints-configuration.xml"
-          near-cache-mode: disabled
-#          near-cache-max-entries: -1
-        "rex-tasks":
-          configuration-resource: "task-configuration.xml"
-          near-cache-mode: invalidated
-          near-cache-max-entries: 100
-        "rex-constraints":
-          configuration-resource: "counter-configuration.xml"
-          near-cache-mode: invalidated
-          near-cache-max-entries: 100
-      devservices:
-#        image-name: "infinispan/server:13.0.5.Final-2"
-        image-name: "quay.io/infinispan/server:14.0.2.Final"
-
-"%dev":
-  scheduler:
-    baseUrl: http://localhost:8181
-  disable:
-    authorization: true
-  quarkus:
-    oidc:
-      enabled: false
-      auth-server-url: ""
-    oidc-client:
-      enabled: false
-    transaction-manager:
-      default-transaction-timeout: 10m
-    opentelemetry:
-      enabled: false
-      tracer:
-        enabled: false
-    http:
-      port: 8181
-    infinispan-client:
-      client-intelligence: BASIC
-      use-schema-registration: true
-      use-auth: true
-      username: admin
-      password: password
-      cache:
-        "rex-counter":
-          configuration-resource: "counter-configuration.xml"
-          near-cache-mode: disabled
-#          near-cache-max-entries: -1
-        "rex-tasks":
-          configuration-resource: "task-configuration.xml"
-          near-cache-mode: invalidated
-#          near-cache-max-entries: 100
-        "rex-constraints":
-          configuration-resource: "constraints-configuration.xml"
-          near-cache-mode: invalidated
-      #          near-cache-max-entries: 100
-      devservices:
-        #        image-name: "infinispan/server:13.0.5.Final-2"
-        image-name: "quay.io/infinispan/server:14.0.2.Final"
-    log:
-      category:
-        "org.jboss.pnc":
-          level: TRACE
-        "io.quarkus.infinispan":
-          level: TRACE
-        "io.opentelemetry":
-          level: INFO
-      min-level: FINEST
+          MaintenanceEndpointImpl/clearAll/Retry/maxRetries: ${scheduler.options.internal-retry-policy.max-retries}
+          MaintenanceEndpointImpl/clearAll/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
+          MaintenanceEndpointImpl/clearAll/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
+          MaintenanceEndpointImpl/clearAll/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
