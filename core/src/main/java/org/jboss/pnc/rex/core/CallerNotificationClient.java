@@ -49,12 +49,9 @@ public class CallerNotificationClient {
 
     private final GenericVertxHttpClient client;
 
-    private final Tokens serviceTokens;
-
-    public CallerNotificationClient(MiniTaskMapper miniMapper, GenericVertxHttpClient client, Tokens serviceTokens) {
+    public CallerNotificationClient(MiniTaskMapper miniMapper, GenericVertxHttpClient client) {
         this.miniMapper = miniMapper;
         this.client = client;
-        this.serviceTokens = serviceTokens;
     }
 
     public boolean notifyCaller(Transition transition, Task task) {
@@ -100,7 +97,7 @@ public class CallerNotificationClient {
         AtomicBoolean result = new AtomicBoolean(false);
         client.makeRequest(uri,
                 requestDefinition.getMethod(),
-                addAuthenticatedHeaderToHeaders(requestDefinition.getHeaders()),
+                requestDefinition.getHeaders(),
                 request,
                 response -> handleResponse(response, transition, task, result),
                 throwable -> onConnectionFailure(throwable, task, result));
@@ -135,16 +132,4 @@ public class CallerNotificationClient {
         result.set(false);
     }
 
-    /**
-     * Copy the headers parameter and add the Authorization header to it
-     *
-     * @param headers original list of headers
-     * @return new list containing the original headers + the authorization header
-     */
-    private List<Header> addAuthenticatedHeaderToHeaders(List<Header> headers) {
-        // do a shallow copy to not modify parameter list
-        List<Header> copy = new ArrayList<>(headers);
-        copy.add(new Header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceTokens.getAccessToken()));
-        return copy;
-    }
 }

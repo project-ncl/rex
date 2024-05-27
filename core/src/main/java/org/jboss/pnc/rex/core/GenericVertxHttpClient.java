@@ -18,15 +18,20 @@
 package org.jboss.pnc.rex.core;
 
 
+import io.quarkus.oidc.client.Tokens;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.unchecked.Unchecked;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.client.impl.ClientPhase;
+import io.vertx.ext.web.client.impl.HttpContext;
+import io.vertx.ext.web.client.impl.WebClientInternal;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
+import jakarta.enterprise.context.control.ActivateRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.exceptions.TooEarlyException;
@@ -53,16 +58,21 @@ public class GenericVertxHttpClient {
     private final HttpConfiguration configuration;
     private final HttpRetryPolicy requestRetryPolicy;
     private final Backoff425Policy backoff425Policy;
+    private final Tokens serviceTokens;
 
 
     public GenericVertxHttpClient(Vertx vertx,
                                   InternalRetryPolicy internalPolicy,
-                                  HttpConfiguration configuration) {
+                                  HttpConfiguration configuration,
+                                  Tokens serviceTokens) {
         this.client = WebClient.create(vertx);
         this.internalPolicy = internalPolicy;
         this.configuration = configuration;
         this.requestRetryPolicy = configuration.requestRetryPolicy();
         this.backoff425Policy = configuration.backoff425RetryPolicy();
+        this.serviceTokens = serviceTokens;
+        WebClientInternal delegate = (WebClientInternal) client.getDelegate();
+        delegate.addInterceptor(this::putOrRefreshToken);
     }
 
     /**
@@ -73,6 +83,7 @@ public class GenericVertxHttpClient {
      * @param requestBody
      * @param onResponse
      */
+    @ActivateRequestContext
     public void makeRequest(URI remoteEndpoint,
                              Method method,
                              List<Header> headers,
@@ -159,6 +170,7 @@ public class GenericVertxHttpClient {
         return !(failure instanceof TooEarlyException || failure.getCause() instanceof TooEarlyException);
     }
 
+    @ActivateRequestContext
     public Uni<HttpResponse<Buffer>> makeReactiveRequest(URI remoteEndpoint,
                              Method method,
                              List<Header> headers,
@@ -209,6 +221,25 @@ public class GenericVertxHttpClient {
     private void addHeaders(HttpRequest<Buffer> request, List<Header> headers) {
         if (headers != null) {
             headers.forEach(header -> request.putHeader(header.getName(), header.getValue()));
+        }
+    }
+
+    /**
+     * Interceptor that is called every request. Ensures that the accessToken is refreshed during retries.
+     *
+     * @link <a href="https://stackoverflow.com/questions/76985918/custom-interceptor-in-quarkus-mutiny-web-client">Stack Overflow</a>
+     * @param context httpContext
+     */
+    private void putOrRefreshToken(HttpContext<?> context) {
+        try {
+            if (context.phase() == ClientPhase.PREPARE_REQUEST) {
+                io.vertx.ext.web.client.HttpRequest<?> request = context.request();
+
+                request.bearerTokenAuthentication(serviceTokens.getAccessToken());
+            }
+        } finally {
+            // go to next interceptor
+            context.next();
         }
     }
 }

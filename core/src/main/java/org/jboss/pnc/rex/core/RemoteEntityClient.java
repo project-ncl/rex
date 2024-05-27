@@ -19,18 +19,11 @@ package org.jboss.pnc.rex.core;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanContext;
-import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
-import io.opentelemetry.context.Context;
 import io.quarkus.arc.Unremovable;
-import io.quarkus.oidc.client.Tokens;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.pnc.api.constants.MDCHeaderKeys;
 import org.jboss.pnc.api.dto.ErrorResponse;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.api.TaskController;
@@ -46,10 +39,8 @@ import org.jboss.pnc.rex.model.requests.StopRequest;
 import org.slf4j.MDC;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.core.HttpHeaders;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,20 +71,16 @@ public class RemoteEntityClient {
 
     private final String baseUrl;
 
-    private final Tokens serviceTokens;
-
     public RemoteEntityClient(GenericVertxHttpClient client,
                               @WithTransactions TaskController controller,
                               TaskRegistry taskRegistry,
                               ObjectMapper mapper,
-                              ApplicationConfig config,
-                              Tokens serviceTokens) {
+                              ApplicationConfig config) {
         this.controller = controller;
         this.taskRegistry = taskRegistry;
         this.client = client;
         this.mapper = mapper;
         this.baseUrl = config.baseUrl();
-        this.serviceTokens = serviceTokens;
     }
 
     public void stopJob(Task task) {
@@ -145,7 +132,7 @@ public class RemoteEntityClient {
 
         client.makeRequest(url,
                 requestDefinition.getMethod(),
-                addAuthenticatedHeaderToHeaders(requestDefinition.getHeaders()),
+                requestDefinition.getHeaders(),
                 request,
                 response -> handleResponse(response, task),
                 throwable -> handleConnectionFailure(throwable, task));
@@ -197,7 +184,7 @@ public class RemoteEntityClient {
 
         client.makeRequest(uri,
                 requestDefinition.getMethod(),
-                addAuthenticatedHeaderToHeaders(requestDefinition.getHeaders()),
+                requestDefinition.getHeaders(),
                 request,
                 response -> handleResponse(response, task),
                 throwable -> handleConnectionFailure(throwable, task));
@@ -278,19 +265,5 @@ public class RemoteEntityClient {
             return null;
         }
     }
-
-    /**
-     * Copy the headers parameter and add the Authorization header to it
-     *
-     * @param headers original list of headers
-     * @return new list containing the original headers + the authorization header
-     */
-    private List<Header> addAuthenticatedHeaderToHeaders(List<Header> headers) {
-        // do a shallow copy to not modify parameter list
-        List<Header> copy = new ArrayList<>(headers);
-        copy.add(new Header(HttpHeaders.AUTHORIZATION, "Bearer " + serviceTokens.getAccessToken()));
-        return copy;
-    }
-
 
 }
