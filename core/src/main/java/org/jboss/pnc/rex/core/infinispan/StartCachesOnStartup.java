@@ -19,8 +19,9 @@ package org.jboss.pnc.rex.core.infinispan;
 
 import io.quarkus.infinispan.client.Remote;
 import io.quarkus.runtime.Startup;
-import io.quarkus.runtime.StartupEvent;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.jboss.pnc.rex.model.ClusteredJobReference;
+import org.jboss.pnc.rex.model.NodeResource;
 import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,14 +48,14 @@ public class StartCachesOnStartup {
 
     @Inject
     @Remote("rex-cluster-jobs")
-    RemoteCache<String, Long> clusterJobs;
+    RemoteCache<String, ClusteredJobReference> clusterJobs;
 
     @Inject
     @Remote("rex-signals")
-    RemoteCache<String, Long> signal;
+    RemoteCache<String, NodeResource> signal;
 
-
-    void onStart(@Observes StartupEvent ev) {
+    @Startup
+    void onStart() {
         log.info("Startup: Initializing ISPN caches!");
         try {
             tasks.get("ASD");
