@@ -322,7 +322,7 @@ class TaskContainerImplTest extends AbstractTest {
         // sleep because running counter takes time to update
         Thread.sleep(100);
         assertThat(running.getValue()).isEqualTo(0);
-        assertThat(container.getTasks(true, false, true, true)).extracting("name", String.class)
+        assertThat(container.getTasks(true, true, true, true)).extracting("name", String.class)
                 .doesNotContain(services);
     }
 
@@ -518,7 +518,7 @@ class TaskContainerImplTest extends AbstractTest {
         // sleep because running counter takes time to update
         Thread.sleep(50);
         assertThat(running.getValue()).isEqualTo(0);
-        assertThat(container.getTasks(true, false, true, true)).extracting("name", String.class)
+        assertThat(container.getTasks(true, true, true, true)).extracting("name", String.class)
                 .doesNotContain(randomDAG.getVertices().keySet().toArray(new String[0]));
     }
 

@@ -170,6 +170,11 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                     .filter(state -> state.isIdle() || state.isQueued())
                     .collect(Collectors.toSet()));
         }
+        if (queued) {
+            states.addAll(EnumSet.allOf(State.class).stream()
+                .filter(State::isQueued)
+                .collect(Collectors.toSet()));
+        }
         if (running) {
             states.addAll(EnumSet.allOf(State.class).stream()
                     .filter(State::isRunning)

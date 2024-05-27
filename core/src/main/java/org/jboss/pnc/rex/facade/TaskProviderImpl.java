@@ -92,7 +92,7 @@ public class TaskProviderImpl implements TaskProvider {
 
     @Override
     public Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished) {
-        return registry.getTasks(waiting, false, running,finished).stream()
+        return registry.getTasks(waiting, waiting, running, finished).stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toSet());
     }
