@@ -68,15 +68,20 @@ public interface ApplicationConfig {
         interface TaskConfiguration {
 
             /**
-             * This configuration decides when removal of Tasks happens.
+             * This configuration decides if automatic removal of Tasks happens.
              *
-             * If true, the Tasks are deleted IMMEDIATELY upon positive/negative callback. (within the same Transaction)
+             * If true, the Tasks are deleted automatically.
+             * The circumstances of cleaning depend on a Task definition:
+             *  - If Notification Request IS defined. The removal is done AFTER a Notification of FINAL transition
+             *    succeeds.
+             *  - If Notification Request IS NOT defined. The Task is removed immediately after it is finished.
+             * Additionally, Tasks are deleted only if they have no dependants, meaning that the dependency tree must be
+             * almost entirely finished before removal starts to happen. The deletion is recursive from dependants to
+             * dependencies so the end result is that the entire/part of tree is deleted in one transaction.
              *
-             * If false, the Tasks are not deleted immediately but AFTER a successful transition Notification of final
-             * state. It ensures that the receiver of the Notification can still query Rex for information during the
-             * call.
+             * If false, Tasks are never deleted.
              *
-             * @return
+             * @return if should clean
              */
             @WithName("clean")
             boolean shouldClean();

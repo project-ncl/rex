@@ -1,6 +1,6 @@
 scheduler:
   baseUrl: ${BASE_URL}
-  name: ${quarkus.uuid}
+  name: rex-${quarkus.uuid}
   options:
     task-configuration:
       clean: true
