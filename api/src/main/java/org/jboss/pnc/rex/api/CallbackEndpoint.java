@@ -17,6 +17,8 @@
  */
 package org.jboss.pnc.rex.api;
 
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.QueryParam;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -24,6 +26,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.rex.api.openapi.OpenapiConstants;
+import org.jboss.pnc.rex.api.parameters.ErrorOption;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
 
@@ -61,7 +64,9 @@ public interface CallbackEndpoint {
     })
     @POST
     @Deprecated
-    void finish(@PathParam("taskName") @NotEmpty String taskName, @Valid @NotNull FinishRequest result);
+    void finish(@PathParam("taskName") @NotEmpty String taskName,
+                @Valid @NotNull FinishRequest result,
+                @QueryParam("err") @DefaultValue("PASS_ERROR") ErrorOption err);
 
     String OPERATION_SUCCESSFUL = "/{taskName}/succeed";
     @Path(OPERATION_SUCCESSFUL)
@@ -74,7 +79,9 @@ public interface CallbackEndpoint {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @POST
-    void succeed(@PathParam("taskName") @NotEmpty String taskName, Object result);
+    void succeed(@PathParam("taskName") @NotEmpty String taskName,
+                 Object result,
+                 @QueryParam("err") @DefaultValue("PASS_ERROR") ErrorOption err);
 
     String OPERATION_FAILED = "/{taskName}/fail";
     @Path(OPERATION_FAILED)
@@ -87,5 +94,7 @@ public interface CallbackEndpoint {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @POST
-    void fail(@PathParam("taskName") @NotEmpty String taskName, Object result);
+    void fail(@PathParam("taskName") @NotEmpty String taskName,
+              Object result,
+              @QueryParam("err") @DefaultValue("PASS_ERROR") ErrorOption err);
 }

@@ -24,6 +24,7 @@ import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.api.parameters.ErrorOption;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.dto.EdgeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
@@ -161,4 +162,16 @@ public class ValidationTest {
                     .body("errorType", containsString("ViolationException"));
     }
 
+    @Test
+    void shouldNotFailOnMissingTaskIfIgnoreSpecified() {
+        FinishRequest request = new FinishRequest(true,"HELLO");
+        given()
+            .when()
+                .contentType(ContentType.JSON)
+                .body(request)
+                .queryParam("err", ErrorOption.IGNORE) // IGNORE should make the response 204
+                .post(callbackEndpointURI.getPath() + CallbackEndpoint.FINISH_TASK_FMT.formatted( "doesn't-exist"))
+            .then()
+                .statusCode(204);
+    }
 }
