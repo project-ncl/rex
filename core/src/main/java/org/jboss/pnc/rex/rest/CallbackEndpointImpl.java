@@ -24,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.faulttolerance.Fallback;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.rex.api.CallbackEndpoint;
+import org.jboss.pnc.rex.api.parameters.ErrorOption;
+import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.facade.api.TaskProvider;
 
@@ -37,49 +39,66 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
 
     private final TaskProvider taskProvider;
 
-
     @Inject
     public CallbackEndpointImpl(TaskProvider provider) {
         this.taskProvider = provider;
     }
 
     @Override
+    @Fallback(fallbackMethod = "fallback", applyOn = {RollbackException.class,
+        ArcUndeclaredThrowableException.class,
+        TaskMissingException.class
+    })
     @Retry
-    @Fallback(fallbackMethod = "fallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     @Deprecated
-    public void finish(String taskName, FinishRequest result) {
+    public void finish(String taskName, FinishRequest result, ErrorOption errorOption) {
         taskProvider.acceptRemoteResponse(taskName, result.getStatus(), result.getResponse());
     }
 
     @Override
     @Retry
-    @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
+    @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class, TaskMissingException.class})
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
-    public void succeed(String taskName, Object result) {
+    public void succeed(String taskName, Object result, ErrorOption errorOption) {
         taskProvider.acceptRemoteResponse(taskName, true, result);
     }
 
     @Override
+    @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class, TaskMissingException.class})
     @Retry
-    @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class})
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
-    public void fail(String taskName, Object result) {
+    public void fail(String taskName, Object result, ErrorOption errorOption) {
         taskProvider.acceptRemoteResponse(taskName, false, result);
     }
 
-    // once https://github.com/smallrye/smallrye-fault-tolerance/issues/492 is merged, use FallbackHandler
-    void fallback(String taskName, FinishRequest result) {
-        log.error("STOP " + taskName + ": UNEXPECTED exception has been thrown.");
-        Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> taskProvider.acceptRemoteResponse(taskName, false,"ACCEPT : System failure."))
-                .onFailure().invoke((throwable) -> log.warn("ACCEPT " + taskName + ": Failed to transition task to FAILED state. Retrying.", throwable))
-                .onFailure().retry().atMost(5)
-                .onFailure().recoverWithNull()
-                .await().indefinitely();
+    /**
+     * Return positive Status Code on ErrorOption.IGNORE if task is missing.
+     */
+    void fallback(String taskName, FinishRequest result, ErrorOption errorOption, TaskMissingException e) {
+        handleWithErrorOption(errorOption, e);
     }
 
-    void objectFallback(String taskName, Object result) {
+    void objectFallback(String taskName, Object result, ErrorOption errorOption, TaskMissingException e) {
+        handleWithErrorOption(errorOption, e);
+    }
+
+    void fallback(String taskName, FinishRequest result, ErrorOption errorOption) {
+        systemFailure(taskName);
+    }
+
+    void objectFallback(String taskName, Object result, ErrorOption errorOption) {
+        systemFailure(taskName);
+    }
+
+    private void handleWithErrorOption(ErrorOption errorOption, RuntimeException e) {
+        switch (errorOption) {
+            case IGNORE -> {}
+            case PASS_ERROR -> throw e;
+        }
+    }
+
+    private void systemFailure(String taskName) {
         log.error("STOP " + taskName + ": UNEXPECTED exception has been thrown.");
         Uni.createFrom().voidItem()
                 .onItem().invoke((ignore) -> taskProvider.acceptRemoteResponse(taskName, false,"ACCEPT : System failure."))
