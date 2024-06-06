@@ -17,7 +17,7 @@ scheduler:
         - org.jboss.pnc.rex.common.exceptions.CircularDependencyException
         - org.jboss.pnc.rex.common.exceptions.ConstraintConflictException
     http-configuration:
-      idle-timeout: 300000 # 5 minutes
+      idle-timeout: 5m # 5 minutes
       follow-redirects: true
       request-retry-policy:
         backoff:
@@ -29,10 +29,10 @@ scheduler:
       425-backoff-policy:
         backoff:
           min-delay: 200ms
-          max-delay: 60000ms # 1 minute
+          max-delay: 1m # 1 minute
           jitter-factor: 0.5
         max-retries: 0
-        expire-in: 600000 # 10minutes
+        expire-in: 10m # 10minutes
 
 quarkus:
   application:

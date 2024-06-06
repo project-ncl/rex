@@ -23,7 +23,7 @@ import io.smallrye.config.WithName;
 import org.jboss.pnc.rex.core.config.Backoff425Policy;
 import org.jboss.pnc.rex.core.config.HttpRetryPolicy;
 
-import jakarta.validation.constraints.PositiveOrZero;
+import java.time.Duration;
 
 /**
  * Configuration for internal HTTP client requests from Rex.
@@ -36,11 +36,10 @@ public interface HttpConfiguration {
      *
      * Value of 0 means NO timeout.
      *
-     * @return time in milliseconds
+     * @return duration until request times out
      */
-    @WithDefault("300000") // 5 minutes
-    @PositiveOrZero
-    long idleTimeout();
+    @WithDefault("5m") // 5 minutes
+    Duration idleTimeout();
 
     /**
      * Configures HTTP client to follow 3xx redirects.
