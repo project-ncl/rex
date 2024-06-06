@@ -24,7 +24,7 @@ scheduler:
           min-delay: 0ms
           max-delay: 0ms
           jitter-factor: 0.5
-        max-retries: 20
+        max-retries: 0
         expire-in: 0
       425-backoff-policy:
         backoff:

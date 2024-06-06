@@ -92,12 +92,10 @@ public interface MutinyRetryPolicy {
         if (maxRetries() != 0 || !expireIn().isZero()) {
             var retry = uni.onFailure(predicate).retry();
 
-            if (!backoff().initialDelay().isZero()) {
-                if (!backoff().maxDelay().isZero()) {
-                    retry = retry.withBackOff(backoff().initialDelay(), backoff().maxDelay());
-                } else {
-                    retry = retry.withBackOff(backoff().initialDelay());
-                }
+            if (backoff().maxDelay().isZero() && !backoff().initialDelay().isZero()) {
+                retry = retry.withBackOff(backoff().initialDelay());
+            } else {
+                retry = retry.withBackOff(backoff().initialDelay(), backoff().maxDelay());
             }
 
             if (backoff().jitterFactor() != 0) {

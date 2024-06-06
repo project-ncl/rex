@@ -34,6 +34,7 @@ import io.vertx.mutiny.ext.web.client.WebClient;
 import jakarta.enterprise.context.control.ActivateRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.common.enums.Method;
+import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
 import org.jboss.pnc.rex.common.exceptions.TooEarlyException;
 import org.jboss.pnc.rex.core.config.Backoff425Policy;
 import org.jboss.pnc.rex.core.config.HttpRetryPolicy;
@@ -142,14 +143,20 @@ public class GenericVertxHttpClient {
                             .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
                             .withJitter(0.5)
                             .atMost(20)
-                    .onFailure()
+                    .onFailure(throwable -> !(throwable instanceof RequestRetryException)) // propagate to exception to outer loop
                         // recover with null so that Uni doesn't trigger outer onFailure() handlers
                         .recoverWithNull()
                 );
 
         // cases when http request method itself fails (unreachable host)
         uni = uni.onFailure(this::skipOn425)
-                .invoke(t -> log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: ", t));
+                .invoke(t ->  {
+                    if (t instanceof RequestRetryException) {
+                        log.warn("HTTP-CLIENT : Http call failed. RETRYING.");
+                    } else {
+                        log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: ", t);
+                    }
+                });
 
         uni = requestRetryPolicy
                 .applyToleranceOn(this::skipOn425, uni);
@@ -163,7 +170,9 @@ public class GenericVertxHttpClient {
     }
 
     private boolean abortOnNonRecoverable(Throwable failure) {
-        return !internalPolicy.abortOn().contains(failure);
+        return !internalPolicy.abortOn().contains(failure)
+            // This is internal retry loop, RequestRetryException to go into outer Retry loop where the request is retried
+            && !(failure instanceof RequestRetryException);
     }
 
     private boolean skipOn425(Throwable failure) {
