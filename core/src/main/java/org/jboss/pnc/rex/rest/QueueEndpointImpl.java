@@ -42,7 +42,7 @@ public class QueueEndpointImpl implements QueueEndpoint {
 
     @Override
     @Retry
-    @RolesAllowed({ "pnc-app-rex-editor", "pnc-users-admin" })
+    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public void setConcurrent(Long amount) {
         optionsProvider.setConcurrency(amount);
     }
