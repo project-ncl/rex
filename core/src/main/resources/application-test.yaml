@@ -6,7 +6,7 @@ scheduler:
         backoff:
           min-delay: 10ms
           max-delay: 10ms
-        expire-in: 5000
+        expire-in: 5s
 
 quarkus:
   log:

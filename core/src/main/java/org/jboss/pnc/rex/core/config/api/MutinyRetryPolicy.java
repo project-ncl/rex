@@ -51,8 +51,7 @@ public interface MutinyRetryPolicy {
      * @return time in millis until a failure occurs
      */
     @WithDefault("0")
-    @PositiveOrZero
-    long expireIn();
+    Duration expireIn();
 
     ExpBackoff backoff();
 
@@ -90,7 +89,7 @@ public interface MutinyRetryPolicy {
     }
 
     default <T> Uni<T> applyToleranceOn(Predicate<? super Throwable> predicate, Uni<T> uni) {
-        if (maxRetries() != 0 || expireIn() != 0) {
+        if (maxRetries() != 0 || !expireIn().isZero()) {
             var retry = uni.onFailure(predicate).retry();
 
             if (!backoff().initialDelay().isZero()) {
@@ -109,8 +108,8 @@ public interface MutinyRetryPolicy {
                 return retry.atMost(maxRetries());
             }
 
-            if (expireIn() != 0) {
-                return retry.expireIn(expireIn());
+            if (!expireIn().isZero()) {
+                return retry.expireIn(expireIn().toMillis());
             }
         }
 

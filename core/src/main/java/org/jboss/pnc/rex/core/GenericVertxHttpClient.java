@@ -184,7 +184,7 @@ public class GenericVertxHttpClient {
         addHeaders(request, headers);
         request.ssl(isSSL(remoteEndpoint));
         request.followRedirects(configuration.followRedirects());
-        request.timeout(configuration.idleTimeout());
+        request.timeout(configuration.idleTimeout().toMillis());
 
         log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
                 remoteEndpoint,
