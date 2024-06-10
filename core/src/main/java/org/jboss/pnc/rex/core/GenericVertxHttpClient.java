@@ -18,6 +18,7 @@
 package org.jboss.pnc.rex.core;
 
 
+import io.quarkus.oidc.client.OidcClient;
 import io.quarkus.oidc.client.Tokens;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
@@ -59,19 +60,18 @@ public class GenericVertxHttpClient {
     private final HttpConfiguration configuration;
     private final HttpRetryPolicy requestRetryPolicy;
     private final Backoff425Policy backoff425Policy;
-    private final Tokens serviceTokens;
-
+    private final OidcClient oidcClient;
 
     public GenericVertxHttpClient(Vertx vertx,
                                   InternalRetryPolicy internalPolicy,
                                   HttpConfiguration configuration,
-                                  Tokens serviceTokens) {
+                                  OidcClient oidcClient) {
         this.client = WebClient.create(vertx);
         this.internalPolicy = internalPolicy;
         this.configuration = configuration;
         this.requestRetryPolicy = configuration.requestRetryPolicy();
         this.backoff425Policy = configuration.backoff425RetryPolicy();
-        this.serviceTokens = serviceTokens;
+        this.oidcClient = oidcClient;
         WebClientInternal delegate = (WebClientInternal) client.getDelegate();
         delegate.addInterceptor(this::putOrRefreshToken);
     }
@@ -244,7 +244,9 @@ public class GenericVertxHttpClient {
             if (context.phase() == ClientPhase.PREPARE_REQUEST) {
                 io.vertx.ext.web.client.HttpRequest<?> request = context.request();
 
-                request.bearerTokenAuthentication(serviceTokens.getAccessToken());
+                String accessToken = oidcClient.getTokens().await().indefinitely().getAccessToken();
+
+                request.bearerTokenAuthentication(accessToken);
             }
         } finally {
             // go to next interceptor
