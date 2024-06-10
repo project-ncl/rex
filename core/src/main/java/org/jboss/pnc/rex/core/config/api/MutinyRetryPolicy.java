@@ -21,7 +21,8 @@ import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 import io.smallrye.mutiny.Uni;
 
-import jakarta.validation.constraints.PositiveOrZero;
+import org.jboss.pnc.rex.core.config.validation.ValidBackoff;
+
 import java.time.Duration;
 import java.util.function.Predicate;
 
@@ -58,6 +59,7 @@ public interface MutinyRetryPolicy {
     /**
      * Exponential backoff configuration.
      */
+    @ValidBackoff
     interface ExpBackoff {
 
         /**
@@ -66,6 +68,7 @@ public interface MutinyRetryPolicy {
          * @return minimum delay in millis
          */
         @WithDefault("0")
+//        @DurationMin(nanos = 1) // positive
         @WithName("min-delay")
         Duration initialDelay();
 
@@ -93,9 +96,9 @@ public interface MutinyRetryPolicy {
             var retry = uni.onFailure(predicate).retry();
 
             if (backoff().maxDelay().isZero() && !backoff().initialDelay().isZero()) {
-                retry = retry.withBackOff(backoff().initialDelay());
+                retry = retry.withBackOff(backoff().initialDelay()); // MD: 0 ID: non-0
             } else {
-                retry = retry.withBackOff(backoff().initialDelay(), backoff().maxDelay());
+                retry = retry.withBackOff(backoff().initialDelay(), backoff().maxDelay()); // MD: non-0 ID: 0
             }
 
             if (backoff().jitterFactor() != 0) {
