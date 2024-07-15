@@ -30,7 +30,7 @@ import org.jboss.pnc.rex.core.api.DependentMessenger;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
-import org.jboss.pnc.rex.core.jobs.ChainingJob;
+import org.jboss.pnc.rex.core.jobs.ClearConstraintJob;
 import org.jboss.pnc.rex.core.jobs.DecreaseCounterJob;
 import org.jboss.pnc.rex.core.jobs.DelegateJob;
 import org.jboss.pnc.rex.core.jobs.DeleteTaskJob;
@@ -46,6 +46,7 @@ import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
 import org.jboss.pnc.rex.core.jobs.PokeCleanJob;
 import org.jboss.pnc.rex.core.jobs.PokeQueueJob;
 import org.jboss.pnc.rex.core.jobs.TimeoutCancelClusterJob;
+import org.jboss.pnc.rex.core.jobs.TreeJob;
 import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.TransitionTime;
@@ -155,7 +156,19 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         var notifyJob = new NotifyCallerJob(transition, task);
         if (shouldMarkAfterNotification(task, transition)) {
             // send notification and delete jobs after a success
-            tasks.add(ChainingJob.of(notifyJob).chainOnSuccess(withTransactionAndTolerance(new MarkForCleaningJob(task, true))));
+            var treeJobBuilder = TreeJob.of(notifyJob);
+
+            // remove constraint after notification completes
+            if (task.getConstraint() != null) {
+                var removeConstraint = new ClearConstraintJob(task);
+                treeJobBuilder.triggerAfter(notifyJob, removeConstraint);
+            }
+
+            var cleaningJob = withTransactionAndTolerance(new MarkForCleaningJob(task, true));
+            treeJobBuilder.triggerAfterSuccess(notifyJob, cleaningJob);
+
+
+            tasks.add(treeJobBuilder.build());
         } else {
             // send notification
             tasks.add(notifyJob);
@@ -562,6 +575,17 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         // #3 HANDLE (there is no transition) and CASCADE
         doExecute(List.of(new DependantDeletedJob(task)));
+    }
+
+    @Override
+    @Transactional(MANDATORY)
+    public void clearConstraint(String name) {
+        // #1 PULL
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        Task task = taskMetadata.getValue();
+
+        // #2 CLEAR
+        handleOptionalConstraint(task);
     }
 
     private void handleOptionalConstraint(Task task) {
