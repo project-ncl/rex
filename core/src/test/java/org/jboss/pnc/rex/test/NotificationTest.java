@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.jboss.pnc.rex.common.enums.Transition.ENQUEUED_to_STARTING;
 import static org.jboss.pnc.rex.common.enums.Transition.NEW_to_ENQUEUED;
 import static org.jboss.pnc.rex.common.enums.Transition.NEW_to_WAITING;
@@ -194,5 +195,47 @@ public class NotificationTest extends AbstractTest {
         Thread.sleep(100);
 
         assertThat(endpoint.getSpecific(taskName)).isNotNull();
+    }
+
+    @Test
+    void testConstraintIsClearedAfterFailedNotification() throws InterruptedException {
+        String taskName = "task";
+        String otherTaskName = "other-task";
+        String sharedConstraint = "constraint";
+
+        var failingNotificationTask = createMockTask(
+            taskName,
+            Mode.ACTIVE,
+            getRequestWithStart(taskName),
+            getStopRequestWithCallback(taskName),
+            getNaughtyNotificationsRequest()).toBuilder()
+            .constraint(sharedConstraint)
+            .build();
+        var runAfterTask = createMockTask(
+            otherTaskName,
+            Mode.ACTIVE,
+            getRequestWithStart(taskName),
+            getStopRequestWithCallback(taskName),
+            getNotificationsRequest()).toBuilder()
+            .constraint(sharedConstraint)
+            .build();
+
+        var reqFailNot = CreateGraphRequest.builder().vertex(taskName, failingNotificationTask).build();
+        var reqAfter = CreateGraphRequest.builder().vertex(otherTaskName, runAfterTask).build();
+
+        endpoint.start(reqFailNot);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskName);
+        Thread.sleep(100);
+
+        // assert task was not deleted
+        assertThat(endpoint.getAll(getAllParameters())).extracting(TaskDTO::getName).contains(taskName);
+
+        // should proceed because shared constraint should be cleared
+        assertThatNoException().isThrownBy(() -> endpoint.start(reqAfter));
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, otherTaskName);
+        Thread.sleep(100);
+
+        assertThat(endpoint.getAll(getAllParameters())).extracting(TaskDTO::getName).doesNotContain(otherTaskName);
+
     }
 }

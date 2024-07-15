@@ -26,6 +26,8 @@ import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.TransactionPhase;
+import org.jboss.pnc.rex.core.jobs.TreeJob;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -48,6 +50,12 @@ public class TransitionRecorder {
 
     void recordTransition(@Observes(during = TransactionPhase.AFTER_SUCCESS) ChainingJob chainingJob) {
         if (chainingJob.getChainLinks().get(0) instanceof NotifyCallerJob notification) {
+            extractTransitionAndRecord(notification);
+        }
+    }
+
+    void recordTransition(@Observes(during = TransactionPhase.AFTER_SUCCESS) TreeJob chainingJob) {
+        if (chainingJob.getRoot() instanceof NotifyCallerJob notification) {
             extractTransitionAndRecord(notification);
         }
     }

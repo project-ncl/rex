@@ -84,8 +84,16 @@ public interface TaskController {
     /**
      * Marks the Task for disposal/cleaning.
      *
-     * @param name        id of thr Task
+     * @param name        id of the Task
      * @param pokeCleaner
      */
     void markForDisposal(String name, boolean pokeCleaner);
+
+    /**
+     * Clears a secondary constraint of a Task (if one is present). The method does nothing if the constraint was
+     * already cleared.
+     *
+     * @param name id of the Task
+     */
+    void clearConstraint(String name);
 }

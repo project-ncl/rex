@@ -77,4 +77,10 @@ public class TransactionalTaskController implements TaskController {
     public void markForDisposal(String name, boolean pokeCleaner) {
         delegate.markForDisposal(name, pokeCleaner);
     }
+
+    @Override
+    @Transactional
+    public void clearConstraint(String name) {
+        delegate.clearConstraint(name);
+    }
 }
