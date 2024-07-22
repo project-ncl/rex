@@ -17,6 +17,10 @@
  */
 package org.jboss.pnc.rex.core;
 
+import io.quarkus.vertx.core.runtime.VertxMDC;
+import io.vertx.core.Context;
+import io.vertx.core.Vertx;
+import io.vertx.core.impl.ContextInternal;
 import jakarta.annotation.Priority;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.context.ManagedExecutor;
@@ -24,15 +28,15 @@ import org.jboss.pnc.rex.core.jobs.ControllerJob;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.BeforeDestroyed;
-import jakarta.enterprise.context.Destroyed;
-import jakarta.enterprise.context.Initialized;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.inject.Inject;
-import jakarta.transaction.Status;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.TransactionManager;
 import jakarta.transaction.TransactionScoped;
+import org.slf4j.MDC;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 import static jakarta.interceptor.Interceptor.Priority.APPLICATION;
 
@@ -46,44 +50,45 @@ public class TaskListener {
     @Inject
     ManagedExecutor executor;
 
-    void onUnsuccessfulTransaction(@Observes(during = TransactionPhase.AFTER_SUCCESS) ControllerJob task) {
-        if (task.getInvocationPhase() == TransactionPhase.AFTER_SUCCESS) {
+    void onUnsuccessfulTransaction(@Observes(during = TransactionPhase.AFTER_SUCCESS) ControllerJob job) {
+        if (job.getInvocationPhase() == TransactionPhase.AFTER_SUCCESS) {
             // disassociate the thread from previous transaction as it results in errors
             try {
                 tm.suspend();
             } catch (SystemException e) {
                 log.error("Could not disassociate from transaction.", e);
             }
-            String contextMessage = task.getContext().isPresent() ? ' ' + task.getContext().get().getName() : "";
-            log.debug("AFTER TRANSACTION{}: {}", contextMessage, task.getClass().getSimpleName());
-            if (task.isAsync()) {
                 executor.execute(task);
+
+            String contextMessage = job.getContext().isPresent() ? ' ' + job.getContext().get().getName() : "";
+            log.debug("AFTER TRANSACTION{}: {}", contextMessage, job.getClass().getSimpleName());
+            if (job.isAsync()) {
             } else {
-                task.run();
+                job.run();
             }
         }
     }
 
-    void onOngoingTransaction(@Observes(during = TransactionPhase.IN_PROGRESS) ControllerJob task) {
-        if (task.getInvocationPhase() == TransactionPhase.IN_PROGRESS) {
-            String contextMessage = task.getContext().isPresent() ? ' ' + task.getContext().get().getName() : "";
-            log.debug("WITHIN TRANSACTION{}: {}", contextMessage, task.getClass().getSimpleName());
-            if (task.isAsync()) {
                 executor.execute(task);
+    void onOngoingTransaction(@Observes(during = TransactionPhase.IN_PROGRESS) ControllerJob job) {
+        if (job.getInvocationPhase() == TransactionPhase.IN_PROGRESS) {
+            String contextMessage = job.getContext().isPresent() ? ' ' + job.getContext().get().getName() : "";
+            log.debug("WITHIN TRANSACTION{}: {}", contextMessage, job.getClass().getSimpleName());
+            if (job.isAsync()) {
             } else {
-                task.run();
+                job.run();
             }
         }
     }
 
-    void beforeCompletion(@Observes(during = TransactionPhase.BEFORE_COMPLETION) ControllerJob task) {
-        if (task.getInvocationPhase() == TransactionPhase.BEFORE_COMPLETION) {
-            String contextMessage = task.getContext().isPresent() ? ' ' + task.getContext().get().getName() : "";
+    void beforeCompletion(@Observes(during = TransactionPhase.BEFORE_COMPLETION) ControllerJob job) {
+        if (job.getInvocationPhase() == TransactionPhase.BEFORE_COMPLETION) {
+            String contextMessage = job.getContext().isPresent() ? ' ' + job.getContext().get().getName() : "";
             log.debug("BEFORE COMPLETION: " + contextMessage);
-            if (task.isAsync()) {
                 executor.execute(task);
+            if (job.isAsync()) {
             } else {
-                task.run();
+                job.run();
             }
         }
     }
