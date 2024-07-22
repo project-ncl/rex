@@ -58,23 +58,23 @@ public class TaskListener {
             } catch (SystemException e) {
                 log.error("Could not disassociate from transaction.", e);
             }
-                executor.execute(task);
 
             String contextMessage = job.getContext().isPresent() ? ' ' + job.getContext().get().getName() : "";
             log.debug("AFTER TRANSACTION{}: {}", contextMessage, job.getClass().getSimpleName());
             if (job.isAsync()) {
+                executor.execute(() -> correctlyPropagateMDC(job));
             } else {
                 job.run();
             }
         }
     }
 
-                executor.execute(task);
     void onOngoingTransaction(@Observes(during = TransactionPhase.IN_PROGRESS) ControllerJob job) {
         if (job.getInvocationPhase() == TransactionPhase.IN_PROGRESS) {
             String contextMessage = job.getContext().isPresent() ? ' ' + job.getContext().get().getName() : "";
             log.debug("WITHIN TRANSACTION{}: {}", contextMessage, job.getClass().getSimpleName());
             if (job.isAsync()) {
+                executor.execute(() -> correctlyPropagateMDC(job));
             } else {
                 job.run();
             }
@@ -85,12 +85,29 @@ public class TaskListener {
         if (job.getInvocationPhase() == TransactionPhase.BEFORE_COMPLETION) {
             String contextMessage = job.getContext().isPresent() ? ' ' + job.getContext().get().getName() : "";
             log.debug("BEFORE COMPLETION: " + contextMessage);
-                executor.execute(task);
             if (job.isAsync()) {
+                executor.execute(() -> correctlyPropagateMDC(job));
             } else {
                 job.run();
             }
         }
+    }
+
+    /**
+     * Inspired by VertxMDC#contextualDataMap(Context ctx) to reset Map instance
+     */
+    void correctlyPropagateMDC(Runnable job) {
+        var mdcCopy = MDC.getCopyOfContextMap();
+        Context context = Vertx.currentContext();
+        if (context != null) {
+            var contextData = ((ContextInternal) context).localContextData();
+            if (contextData.containsKey(VertxMDC.class.getName())) {
+                // create a NEW instance of propagated MDC map to avoid parallel threads influencing each other
+                contextData.put(VertxMDC.class.getName(), new ConcurrentHashMap<>(mdcCopy));
+            }
+        }
+
+        job.run();
     }
 
     void failureListener(@Observes(during = TransactionPhase.AFTER_FAILURE) @BeforeDestroyed(TransactionScoped.class) @Priority(APPLICATION + 499) Object ignore) throws SystemException {
