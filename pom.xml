@@ -62,7 +62,7 @@
   </modules>
 
   <properties>
-    <quarkus.version>3.8.4</quarkus.version>
+    <quarkus.version>3.8.5</quarkus.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
