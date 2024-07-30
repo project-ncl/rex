@@ -29,7 +29,7 @@ import jakarta.interceptor.Interceptor;
 /**
  * This class provides an option to disable authorization for testing purposes.
  *
- * @see https://quarkus.io/guides/security-customization#disabling-authorization
+ * @see <a href="https://quarkus.io/guides/security-customization#disabling-authorization">Quarkus Security Guide</a>
  */
 @Alternative
 @Priority(Interceptor.Priority.LIBRARY_AFTER)

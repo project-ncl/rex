@@ -71,11 +71,15 @@
     <maven.compiler.target>17</maven.compiler.target>
     <surefire-plugin.version>3.2.3</surefire-plugin.version>
     <lombok.version>1.18.32</lombok.version>
+    <delombok-plugin.version>1.18.20.0</delombok-plugin.version>
     <slf4j.version>1.7.28</slf4j.version>
     <assertj.version>3.23.1</assertj.version>
     <restassured.version>4.1.1</restassured.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <pnc-api.version>2.5.1</pnc-api.version>
+    <nexus-staging-plugin.version>1.7.0</nexus-staging-plugin.version>
+    <maven-gpg-plugin.version>3.2.4</maven-gpg-plugin.version>
+    <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
   </properties>
   
   <dependencyManagement>
@@ -211,6 +215,49 @@
                 <classifier>javax</classifier>
             </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.projectlombok</groupId>
+          <artifactId>lombok-maven-plugin</artifactId>
+          <version>${delombok-plugin.version}</version>
+          <configuration>
+            <sourceDirectory>src/main/java</sourceDirectory>
+            <outputDirectory>${delombok.output}</outputDirectory>
+            <addOutputDirectory>false</addOutputDirectory>
+          </configuration>
+          <executions>
+            <execution>
+              <phase>prepare-package</phase>
+              <goals>
+                <goal>delombok</goal>
+              </goals>
+            </execution>
+          </executions>
+          <dependencies>
+            <dependency>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.8.0</version>
+          <configuration>
+            <sourcepath>target/generated-sources/delombok</sourcepath>
+            <doclint>all,-missing</doclint>
+          </configuration>
+          <executions>
+            <execution>
+              <phase>package</phase>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -241,6 +288,14 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+      <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
         <executions>
@@ -267,7 +322,7 @@
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.7.0</version>
+        <version>${nexus-staging-plugin.version}</version>
         <extensions>true</extensions>
         <configuration>
           <serverId>ossrh</serverId>
@@ -336,7 +391,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>3.3.0</version>
+            <version>${maven-source-plugin.version}</version>
             <executions>
               <execution>
                 <id>attach-sources</id>
@@ -348,21 +403,8 @@
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.8.0</version>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>3.2.4</version>
+            <version>${maven-gpg-plugin.version}</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>

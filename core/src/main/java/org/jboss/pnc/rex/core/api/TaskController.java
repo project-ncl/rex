@@ -29,7 +29,7 @@ import org.jboss.pnc.rex.common.enums.Origin;
  * <p>
  * TaskController does not hold any data.
  *
- * @author Jan Michalov <jmichalo@redhat.com>
+ * @author Jan Michalov {@literal <jmichalo@redhat.com>}
  */
 public interface TaskController {
     /**
