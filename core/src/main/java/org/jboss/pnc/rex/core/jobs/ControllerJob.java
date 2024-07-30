@@ -32,7 +32,7 @@ import java.util.Optional;
  * be executed within the bounds of the Transaction which scheduled the Job). Jobs that run after Transactions have to
  * handle fault tolerance (Retries) and creating new transactions on their own.
  *
- * @author Jan Michalov <jmichalo@redhat.com>
+ * @author Jan Michalov {@literal <jmichalo@redhat.com>}
  */
 public abstract class ControllerJob implements Runnable {
 

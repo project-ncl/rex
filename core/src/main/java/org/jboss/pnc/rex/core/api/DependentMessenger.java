@@ -20,7 +20,7 @@ package org.jboss.pnc.rex.core.api;
 /**
  * Interface for communicating/messaging dependents (tasks that depend on you).
  *
- * @author Jan Michalov <jmichalo@redhat.com>
+ * @author Jan Michalov {@literal <jmichalo@redhat.com>}
  */
 public interface DependentMessenger {
     /**

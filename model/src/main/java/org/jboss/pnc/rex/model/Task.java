@@ -45,7 +45,7 @@ import java.util.TreeSet;
  * Task has to be installed through BatchTaskInstaller that is provided by TaskTarget. After installation, Task's
  * data is held by Infinispan cache inside TaskRegistry/TaskContainer.
  *
- * @author Jan Michalov <jmichalo@redhat.com>
+ * @author Jan Michalov {@literal <jmichalo@redhat.com>}
  */
 @Setter
 @ToString

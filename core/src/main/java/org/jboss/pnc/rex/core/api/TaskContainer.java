@@ -20,7 +20,7 @@ package org.jboss.pnc.rex.core.api;
 /**
  * The interface Task container. Container is a registry and target for installations.
  *
- * @author Jan Michalov <jmichalo@redhat.com>
+ * @author Jan Michalov {@literal <jmichalo@redhat.com>}
  */
 public interface TaskContainer extends TaskRegistry, TaskTarget {
     /**

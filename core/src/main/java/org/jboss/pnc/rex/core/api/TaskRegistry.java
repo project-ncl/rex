@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * The registry is used to retrieve Tasks.
  *
- * @author Jan Michalov <jmichalo@redhat.com>
+ * @author Jan Michalov {@literal <jmichalo@redhat.com>}
  */
 public interface TaskRegistry {
     /**
