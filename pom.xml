@@ -75,7 +75,7 @@
     <assertj.version>3.23.1</assertj.version>
     <restassured.version>4.1.1</restassured.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
-    <pnc-api.version>2.5.1</pnc-api.version>
+    <pnc-api.version>3.0.5-SNAPSHOT</pnc-api.version>
     <nexus-staging-plugin.version>1.7.0</nexus-staging-plugin.version>
     <maven-gpg-plugin.version>3.2.4</maven-gpg-plugin.version>
     <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
