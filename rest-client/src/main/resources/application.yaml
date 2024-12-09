@@ -1,0 +1,6 @@
+quarkus:
+  openapi-generator:
+    codegen:
+      input-base-dir:
+  smallrye-openapi:
+    enum-as-string: true
