@@ -58,10 +58,12 @@
     <module>common</module>
     <module>model</module>
     <module>api</module>
+    <module>rest-client</module>
   </modules>
 
   <properties>
     <quarkus.version>3.8.5</quarkus.version>
+    <quarkus-openapi-generator.version>2.6.0-lts</quarkus-openapi-generator.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
@@ -117,6 +119,12 @@
         <version>${quarkus.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>io.quarkiverse.openapi.generator</groupId>
+        <artifactId>quarkus-openapi-generator</artifactId>
+        <version>${quarkus-openapi-generator.version}</version>
       </dependency>
 
       <!-- Regular dependencies -->
