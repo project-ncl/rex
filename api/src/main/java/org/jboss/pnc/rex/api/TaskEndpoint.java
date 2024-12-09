@@ -30,7 +30,6 @@ import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
-import org.jboss.pnc.rex.dto.responses.TaskSetResponse;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -66,8 +65,7 @@ public interface TaskEndpoint {
             " The tasks in vertices have to be strictly NEW tasks and referencing EXISTING ones will result in failure. \n",
             summary = "An endpoint for starting a graph of tasks.")
     @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
-                content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                 content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @APIResponse(responseCode = OpenapiConstants.CONFLICTED_CODE, description = OpenapiConstants.CONFLICTED_DESCRIPTION,
@@ -82,8 +80,7 @@ public interface TaskEndpoint {
 
     @Operation(summary = "Returns list of all tasks with optional filtering.")
     @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -131,8 +128,7 @@ public interface TaskEndpoint {
     @GET
     @Operation(summary = "Returns tasks grouped by correlation ID.")
     @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = TaskSetResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),

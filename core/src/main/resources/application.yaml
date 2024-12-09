@@ -83,6 +83,8 @@ quarkus:
 
   swagger-ui:
     always-include: true
+  smallrye-openapi:
+    store-schema-directory: src/main/resources/META-INF
 
   log:
     console:
@@ -100,6 +102,12 @@ quarkus:
 
   vertx:
     max-event-loop-execute-time: 10s
+
+mp:
+  openapi:
+    extensions:
+      smallrye:
+        operationIdStrategy: METHOD
 
 org:
   jboss:
