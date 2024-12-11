@@ -1,0 +1,708 @@
+---
+openapi: 3.0.3
+info:
+  title: rex API
+  version: 1.0.2-SNAPSHOT
+servers:
+- url: http://localhost:80
+  description: Auto generated value
+- url: http://0.0.0.0:80
+  description: Auto generated value
+tags:
+- name: Callback endpoint
+- name: Endpoint for queue administration
+- name: Maintenance endpoint
+- name: Task endpoint
+- name: Version Endpoint
+paths:
+  /rest/callback/{taskName}/fail:
+    post:
+      tags:
+      - Callback endpoint
+      summary: "[ADMIN] Used by remote entity to report failed Task completion."
+      operationId: fail
+      parameters:
+      - name: taskName
+        in: path
+        required: true
+        schema:
+          minLength: 1
+          type: string
+      - name: err
+        in: query
+        schema:
+          default: PASS_ERROR
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+      responses:
+        "200":
+          description: Success with results
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rest/callback/{taskName}/finish:
+    post:
+      tags:
+      - Callback endpoint
+      summary: "[ADMIN] Used by remote entity to report Task completion."
+      operationId: finish
+      parameters:
+      - name: taskName
+        in: path
+        required: true
+        schema:
+          minLength: 1
+          type: string
+      - name: err
+        in: query
+        schema:
+          default: PASS_ERROR
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FinishRequest"
+      responses:
+        "200":
+          description: Success with results
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      deprecated: true
+  /rest/callback/{taskName}/succeed:
+    post:
+      tags:
+      - Callback endpoint
+      summary: "[ADMIN] Used by remote entity to report successful Task completion."
+      operationId: succeed
+      parameters:
+      - name: taskName
+        in: path
+        required: true
+        schema:
+          minLength: 1
+          type: string
+      - name: err
+        in: query
+        schema:
+          default: PASS_ERROR
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+      responses:
+        "200":
+          description: Success with results
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rest/maintenance/clear-all:
+    post:
+      tags:
+      - Maintenance endpoint
+      summary: "[ADMIN] Resets everything internal to its initial state."
+      operationId: clearAll
+      responses:
+        "204":
+          description: Success but no content provided
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rest/queue/concurrency:
+    get:
+      tags:
+      - Endpoint for queue administration
+      summary: Returns amount of possible concurrent tasks.
+      operationId: getConcurrent
+      responses:
+        "200":
+          description: Success with results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LongResponse"
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+      - Endpoint for queue administration
+      summary: "[ADMIN] Sets the amount of possible concurrent tasks. Tasks that are\
+        \ currently running are never affected."
+      operationId: setConcurrent
+      parameters:
+      - name: amount
+        in: query
+        required: true
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      responses:
+        "204":
+          description: Success but no content provided
+        "400":
+          description: Invalid input parameters or validation error
+          content: {}
+        "500":
+          description: Server error
+          content: {}
+  /rest/queue/running:
+    get:
+      tags:
+      - Endpoint for queue administration
+      summary: Returns amount of active tasks in queue (excluding ENQUEUED).
+      operationId: getRunning
+      responses:
+        "200":
+          description: Success with results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LongResponse"
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rest/tasks:
+    get:
+      tags:
+      - Task endpoint
+      summary: Returns list of all tasks with optional filtering.
+      operationId: getAll
+      parameters:
+      - name: finished
+        in: query
+        description: Should include finished tasks?
+        schema:
+          default: "false"
+          type: boolean
+      - name: running
+        in: query
+        description: Should include running tasks?
+        schema:
+          default: "false"
+          type: boolean
+      - name: waiting
+        in: query
+        description: Should include waiting tasks?
+        schema:
+          default: "false"
+          type: boolean
+      responses:
+        "200":
+          description: Success with results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskSetResponse"
+        "204":
+          description: Success but no content provided
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+      - Task endpoint
+      summary: An endpoint for starting a graph of tasks.
+      description: "This endpoint schedules graph of tasks. \n The request has a regular\
+        \ graph structure with edges and vertices. \n The tasks in edges are identified\
+        \ by their ID and can be either tasks EXISTING or NEW tasks referenced in\
+        \ vertices.  Therefore, you can add an edge between already existing tasks,\
+        \ new tasks or between an existing task and new task referenced in vertices.\
+        \  Adding an edge where the dependant is running or has finished will result\
+        \ in failure. \n The tasks in vertices have to be strictly NEW tasks and referencing\
+        \ EXISTING ones will result in failure. \n"
+      operationId: start
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGraphRequest"
+      responses:
+        "200":
+          description: Success with results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskSetResponse"
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict while saving an entity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rest/tasks/by-correlation/{correlationID}:
+    get:
+      tags:
+      - Task endpoint
+      summary: Returns tasks grouped by correlation ID.
+      operationId: byCorrelation
+      parameters:
+      - name: correlationID
+        in: path
+        required: true
+        schema:
+          pattern: \S
+          type: string
+      responses:
+        "200":
+          description: Success with results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskSetResponse"
+        "204":
+          description: Success but no content provided
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Can not find specified result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rest/tasks/{taskID}:
+    get:
+      tags:
+      - Task endpoint
+      summary: Returns a specific task.
+      operationId: getSpecific
+      parameters:
+      - name: taskID
+        in: path
+        description: Unique identifier of the task
+        required: true
+        schema:
+          pattern: \S
+          type: string
+      responses:
+        "200":
+          description: Success with results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskDTO"
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Can not find specified result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rest/tasks/{taskID}/cancel:
+    put:
+      tags:
+      - Task endpoint
+      summary: Cancels execution of a task and the tasks which depend on it
+      operationId: cancel
+      parameters:
+      - name: taskID
+        in: path
+        description: Unique identifier of the task
+        required: true
+        schema:
+          pattern: \S
+          type: string
+      responses:
+        "202":
+          description: "202"
+        "400":
+          description: Invalid input parameters or validation error
+          content: {}
+        "404":
+          description: Can not find specified result
+          content: {}
+        "500":
+          description: Server error
+          content: {}
+  /rest/version:
+    get:
+      tags:
+      - Version Endpoint
+      operationId: getVersion
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComponentVersion"
+components:
+  schemas:
+    ComponentVersion:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        commit:
+          type: string
+        builtOn:
+          $ref: "#/components/schemas/ZonedDateTime"
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComponentVersion"
+    ConfigurationDTO:
+      type: object
+      properties:
+        passResultsOfDependencies:
+          type: boolean
+        passMDCInRequestBody:
+          type: boolean
+        passOTELInRequestBody:
+          type: boolean
+        mdcHeaderKeyMapping:
+          type: object
+          additionalProperties:
+            type: string
+        cancelTimeout:
+          $ref: "#/components/schemas/Duration"
+    CreateGraphRequest:
+      type: object
+      properties:
+        correlationID:
+          type: string
+        graphConfiguration:
+          $ref: "#/components/schemas/ConfigurationDTO"
+        edges:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/EdgeDTO"
+        vertices:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/CreateTaskDTO"
+    CreateTaskDTO:
+      required:
+      - name
+      - remoteStart
+      - remoteCancel
+      type: object
+      properties:
+        name:
+          pattern: \S
+          type: string
+        constraint:
+          type: string
+        remoteStart:
+          $ref: "#/components/schemas/Request"
+        remoteCancel:
+          $ref: "#/components/schemas/Request"
+        callerNotifications:
+          $ref: "#/components/schemas/Request"
+        controllerMode:
+          $ref: "#/components/schemas/Mode"
+        configuration:
+          $ref: "#/components/schemas/ConfigurationDTO"
+    Duration:
+      format: duration
+      type: string
+      example: P1D
+    EdgeDTO:
+      required:
+      - source
+      - target
+      type: object
+      properties:
+        source:
+          pattern: \S
+          type: string
+        target:
+          pattern: \S
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        errorType:
+          type: string
+        errorMessage:
+          type: string
+        object: {}
+        stackTrace:
+          type: string
+    FinishRequest:
+      required:
+      - status
+      type: object
+      properties:
+        status:
+          type: boolean
+        response: {}
+      deprecated: true
+    Header:
+      required:
+      - name
+      - value
+      type: object
+      properties:
+        name:
+          pattern: \S
+          type: string
+        value:
+          type: string
+    Instant:
+      format: date-time
+      type: string
+      example: 2022-03-10T16:15:50Z
+    LongResponse:
+      type: object
+      properties:
+        number:
+          format: int64
+          type: integer
+    Method:
+      enum:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - HEAD
+      - PATCH
+      - OPTIONS
+      type: string
+    Mode:
+      enum:
+      - IDLE
+      - ACTIVE
+      - CANCEL
+      type: string
+    Origin:
+      enum:
+      - REMOTE_ENTITY
+      - REX_INTERNAL_ERROR
+      - REX_TIMEOUT
+      type: string
+    Request:
+      required:
+      - method
+      type: object
+      properties:
+        method:
+          $ref: "#/components/schemas/Method"
+        uri:
+          format: uri
+          type: string
+        headers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Header"
+        attachment: {}
+    ServerResponseDTO:
+      type: object
+      properties:
+        state:
+          $ref: "#/components/schemas/State"
+        positive:
+          type: boolean
+        body: {}
+        origin:
+          $ref: "#/components/schemas/Origin"
+    State:
+      enum:
+      - NEW
+      - WAITING
+      - ENQUEUED
+      - STARTING
+      - UP
+      - STOP_REQUESTED
+      - STOPPING
+      - START_FAILED
+      - STOP_FAILED
+      - FAILED
+      - SUCCESSFUL
+      - STOPPED
+      type: string
+    StopFlag:
+      enum:
+      - NONE
+      - CANCELLED
+      - UNSUCCESSFUL
+      - DEPENDENCY_FAILED
+      type: string
+    TaskDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        constraint:
+          type: string
+        correlationID:
+          type: string
+        remoteStart:
+          $ref: "#/components/schemas/Request"
+        remoteCancel:
+          $ref: "#/components/schemas/Request"
+        callerNotifications:
+          $ref: "#/components/schemas/Request"
+        state:
+          $ref: "#/components/schemas/State"
+        stopFlag:
+          $ref: "#/components/schemas/StopFlag"
+        serverResponses:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServerResponseDTO"
+        dependants:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        dependencies:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+        configuration:
+          $ref: "#/components/schemas/ConfigurationDTO"
+        timestamps:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransitionTimeDTO"
+    TaskSetResponse:
+      type: object
+      properties:
+        taskDTOS:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskDTO"
+    Transition:
+      enum:
+      - NEW_to_WAITING
+      - NEW_to_ENQUEUED
+      - WAITING_to_ENQUEUED
+      - ENQUEUED_to_STARTING
+      - UP_to_STOP_REQUESTED
+      - STARTING_to_STOP_REQUESTED
+      - STOP_REQUESTED_to_STOPPING
+      - STOP_REQUESTED_to_STOP_FAILED
+      - STOPPING_TO_STOP_FAILED
+      - STOPPING_TO_STOPPED
+      - NEW_to_STOPPED
+      - WAITING_to_STOPPED
+      - ENQUEUED_to_STOPPED
+      - STARTING_to_UP
+      - STARTING_to_START_FAILED
+      - UP_to_FAILED
+      - UP_to_SUCCESSFUL
+      type: string
+    TransitionTimeDTO:
+      type: object
+      properties:
+        transition:
+          $ref: "#/components/schemas/Transition"
+        time:
+          $ref: "#/components/schemas/Instant"
+    ZonedDateTime:
+      format: date-time
+      type: string
+      example: 2022-03-10T12:15:50-04:00
+  securitySchemes:
+    SecurityScheme:
+      type: openIdConnect
+      description: Authentication
+      openIdConnectUrl: https://keycloak.com/auth/realms/quarkus/.well-known/openid-configuration
