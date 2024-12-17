@@ -1,0 +1,11 @@
+quarkus:
+  openapi-generator:
+    codegen:
+      input-base-dir: ../core/src/main/resources/META-INF
+      spec:
+        openapi_yaml:
+          import-mappings:
+            Request: org.jboss.pnc.api.dto.Request
+          base-package: org.jboss.pnc.rex.client
+      exclude: openapi.json
+      enable-security-generation: false

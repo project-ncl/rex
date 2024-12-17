@@ -83,6 +83,8 @@ quarkus:
 
   swagger-ui:
     always-include: true
+  smallrye-openapi:
+    store-schema-directory: src/main/resources/META-INF
 
   log:
     console:
@@ -168,3 +170,10 @@ org:
           MaintenanceEndpointImpl/clearAll/Retry/delay: ${scheduler.options.internal-retry-policy.delay}
           MaintenanceEndpointImpl/clearAll/Retry/jitter: ${scheduler.options.internal-retry-policy.jitter}
           MaintenanceEndpointImpl/clearAll/Retry/abortOn: ${scheduler.options.internal-retry-policy.abort-on}
+mp:
+  openapi:
+    scan:
+      disable: true
+    extensions:
+      smallrye:
+        operationIdStrategy: METHOD

@@ -52,3 +52,12 @@ quarkus:
       "io.opentelemetry":
         level: INFO
     min-level: FINEST
+  smallrye-openapi:
+    store-schema-directory: src/main/resources/META-INF
+mp:
+  openapi:
+    scan:
+      disable: true
+    extensions:
+      smallrye:
+        operationIdStrategy: METHOD
