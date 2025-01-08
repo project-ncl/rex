@@ -157,7 +157,10 @@ public class TreeJob extends ControllerJob {
             this.invocationPhase = invocationPhase;
             this.context = context;
             this.async = async;
-            this.graph = ValueGraphBuilder.directed().nodeOrder(ElementOrder.insertion()).build();
+            this.graph = ValueGraphBuilder.directed()
+                    .incidentEdgeOrder(ElementOrder.stable())
+                    .nodeOrder(ElementOrder.insertion())
+                    .build();
 
             graph.addNode(root);
         }
