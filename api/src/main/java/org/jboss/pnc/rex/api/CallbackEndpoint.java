@@ -66,7 +66,7 @@ public interface CallbackEndpoint {
     @Deprecated
     void finish(@PathParam("taskName") @NotEmpty String taskName,
                 @Valid @NotNull FinishRequest result,
-                @QueryParam("err") @DefaultValue("PASS_ERROR") ErrorOption err);
+                @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
 
     String OPERATION_SUCCESSFUL = "/{taskName}/succeed";
     @Path(OPERATION_SUCCESSFUL)
@@ -81,7 +81,7 @@ public interface CallbackEndpoint {
     @POST
     void succeed(@PathParam("taskName") @NotEmpty String taskName,
                  Object result,
-                 @QueryParam("err") @DefaultValue("PASS_ERROR") ErrorOption err);
+                 @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
 
     String OPERATION_FAILED = "/{taskName}/fail";
     @Path(OPERATION_FAILED)
@@ -96,5 +96,5 @@ public interface CallbackEndpoint {
     @POST
     void fail(@PathParam("taskName") @NotEmpty String taskName,
               Object result,
-              @QueryParam("err") @DefaultValue("PASS_ERROR") ErrorOption err);
+              @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
 }
