@@ -104,6 +104,14 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Override
+    @Transactional
+    public void cancelByCorrelationID(String correlationID) {
+        registry.getTasksByCorrelationID(correlationID).stream()
+                .map(Task::getName)
+                .forEach(taskName -> controller.setMode(taskName, Mode.CANCEL));
+    }
+
+    @Override
     public TaskDTO get(String taskName) {
         Task task;
         try {

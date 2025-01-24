@@ -123,6 +123,21 @@ public interface TaskEndpoint {
     @PUT
     Response cancel(@Parameter(description = TASK_ID) @PathParam("taskID") @NotBlank String taskID);
 
+    String CANCEL_BY_CORRELATION_ID = "/by-correlation/{correlationID}/cancel";
+    @Path(CANCEL_BY_CORRELATION_ID)
+    @Operation(summary = "Cancels execution of all the tasks belonging to a correlationID")
+    @APIResponses(value = {
+            @APIResponse(responseCode = OpenapiConstants.ACCEPTED_CODE, description = OpenapiConstants.ACCEPTED_CODE),
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.NOT_FOUND_CODE, description = OpenapiConstants.NOT_FOUND_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PUT
+    Response cancelByCorrelationID(@PathParam("correlationID") @NotBlank String correlationID);
+
     String GET_BY_CORRELATION_ID = "/by-correlation/{correlationID}";
     @Path(GET_BY_CORRELATION_ID)
     @GET

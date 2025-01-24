@@ -437,6 +437,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ComponentVersion"
+  /rest/tasks/by-correlation/{correlationID}/cancel:
+    put:
+      tags:
+      - Task endpoint
+      summary: Cancels execution of all the tasks belonging to a correlationID
+      operationId: cancelByCorrelationID
+      parameters:
+      - name: correlationID
+        in: path
+        required: true
+        schema:
+          pattern: \S
+          type: string
+      responses:
+        "202":
+          description: "202"
+        "400":
+          description: Invalid input parameters or validation error
+          content: {}
+        "404":
+          description: Can not find specified result
+          content: {}
+        "500":
+          description: Server error
+          content: {}
 components:
   schemas:
     ComponentVersion:

@@ -76,4 +76,13 @@ public class TaskEndpointImpl implements TaskEndpoint {
 
         return Response.accepted().build();
     }
+
+    @Override
+    @Retry
+    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
+    public Response cancelByCorrelationID(String correlationID) {
+        taskProvider.cancelByCorrelationID(correlationID);
+
+        return Response.accepted().build();
+    }
 }

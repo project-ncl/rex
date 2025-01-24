@@ -42,6 +42,13 @@ public interface TaskProvider {
     void cancel(String taskName);
 
     /**
+     * Cancels execution of all the tasks in the correlationID
+     *
+     * @param correlationID the correlationID of the tasks to cancel
+     */
+    void cancelByCorrelationID(String correlationID);
+
+    /**
      * Returns existing service based on param
      *
      * @param taskName name of existing service
