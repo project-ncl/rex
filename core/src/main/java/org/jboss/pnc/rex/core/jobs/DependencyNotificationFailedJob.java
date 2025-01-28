@@ -15,36 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.dto;
+package org.jboss.pnc.rex.core.jobs;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import jakarta.enterprise.event.TransactionPhase;
+import org.jboss.pnc.rex.model.Task;
 
-import java.time.Duration;
-import java.util.Map;
+public class DependencyNotificationFailedJob extends DependantMessageJob {
 
-/**
- * Class to specify metadata for a Task.
- */
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString
-public class ConfigurationDTO {
+    private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
 
-    public Boolean passResultsOfDependencies = null;
+    public DependencyNotificationFailedJob(Task task) {
+        super(task, INVOCATION_PHASE);
+    }
 
-    public Boolean passMDCInRequestBody = null;
-
-    public Boolean passOTELInRequestBody = null;
-
-    public Map<String, String> mdcHeaderKeyMapping = null;
-
-    public Duration cancelTimeout = null;
-
-    public Boolean delayDependantsForFinalNotification = null;
+    @Override
+    void inform(String dependentName) {
+        dependentAPI.dependencyNotificationFailed(dependentName);
+    }
 }

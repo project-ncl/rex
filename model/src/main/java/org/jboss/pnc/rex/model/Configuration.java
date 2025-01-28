@@ -24,7 +24,6 @@ import lombok.extern.jackson.Jacksonized;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.types.protobuf.DurationSchema;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -74,11 +73,21 @@ public class Configuration {
     @Getter(onMethod_ = {@ProtoField(number = 5)})
     private final Duration cancelTimeout;
 
+    /**
+     * If configured, dependants have delayed start and kept in waiting state until the final notification of this task
+     * is finished. The resulting status code of the notification determines whether dependants start or fail. Meaning,
+     * even if the Task is in state SUCCESS, 5xx or 4xx on the notification means that dependant tasks are signaled to
+     * FAIL (see StopFlag.DEPENDENCY_NOTIFICATION_FAILED).
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 6, defaultValue = "" + Defaults.delayDependantsForFinalNotification)})
+    private final boolean delayDependantsForFinalNotification;
+
     public static class Defaults {
         public static final boolean passResultsOfDependencies = false;
         public static final boolean passMDCInRequestBody = false;
         public static final boolean passOTELInRequestBody = false;
         public static final Duration cancelTimeout = Duration.ZERO;
         public static final String cancelTimeoutString = "PT0S";
+        public static final boolean delayDependantsForFinalNotification = false;
     }
 }
