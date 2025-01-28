@@ -46,7 +46,9 @@ quarkus:
       resource-attributes: "sampler_ratio=0.05,service.name=rex"
       sampler:
         ratio: 0.05
-
+  # Avoid blocking eventloop if Keycloak is slow to respond
+  smallrye-jwt:
+    blocking-authentication: true
   package:
     type: fast-jar
 
