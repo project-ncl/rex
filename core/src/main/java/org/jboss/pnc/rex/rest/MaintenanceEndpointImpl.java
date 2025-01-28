@@ -17,10 +17,9 @@
  */
 package org.jboss.pnc.rex.rest;
 
+import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
-import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.rex.api.MaintenanceEndpoint;
 import org.jboss.pnc.rex.facade.api.MaintenanceProvider;
 
@@ -35,7 +34,7 @@ public class MaintenanceEndpointImpl implements MaintenanceEndpoint {
 
     @Override
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-users-admin" })
-    @Retry
+    @ApplyFaultTolerance("internal-retry")
     public void clearAll() {
         provider.clearEverything();
     }

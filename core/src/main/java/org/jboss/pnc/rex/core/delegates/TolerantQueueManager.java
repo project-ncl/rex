@@ -18,7 +18,7 @@
 package org.jboss.pnc.rex.core.delegates;
 
 import io.quarkus.arc.Unremovable;
-import org.eclipse.microprofile.faulttolerance.Retry;
+import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
 import org.jboss.pnc.rex.core.api.QueueManager;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -35,37 +35,37 @@ public class TolerantQueueManager implements QueueManager {
     }
 
     @Override
-    @Retry
+    @ApplyFaultTolerance("internal-retry")
     public void poke() {
         delegate.poke();
     }
 
     @Override
-    @Retry
+    @ApplyFaultTolerance("internal-retry")
     public void decreaseRunningCounter() {
         delegate.decreaseRunningCounter();
     }
 
     @Override
-    @Retry
+    @ApplyFaultTolerance("internal-retry")
     public void setMaximumConcurrency(Long amount) {
         delegate.setMaximumConcurrency(amount);
     }
 
     @Override
-    @Retry
+    @ApplyFaultTolerance("internal-retry")
     public Long getMaximumConcurrency() {
         return delegate.getMaximumConcurrency();
     }
 
     @Override
-    @Retry
+    @ApplyFaultTolerance("internal-retry")
     public Long synchronizeRunningCounter() {
         return delegate.synchronizeRunningCounter();
     }
 
     @Override
-    @Retry
+    @ApplyFaultTolerance("internal-retry")
     public Long getRunningCounter() {
         return delegate.getRunningCounter();
     }

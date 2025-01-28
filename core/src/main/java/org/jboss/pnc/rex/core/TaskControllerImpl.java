@@ -30,6 +30,7 @@ import org.jboss.pnc.rex.core.api.DependentMessenger;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
+import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.core.jobs.ClearConstraintJob;
 import org.jboss.pnc.rex.core.jobs.DecreaseCounterJob;
 import org.jboss.pnc.rex.core.jobs.DelegateJob;
@@ -75,13 +76,17 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     private final TaskConfiguration config;
 
+    private final FaultToleranceDecorator ft;
+
 
     public TaskControllerImpl(TaskContainerImpl container,
                               Event<ControllerJob> scheduleJob,
-                              TaskConfiguration config) {
+                              TaskConfiguration config,
+                              FaultToleranceDecorator ftDecorator) {
         this.container = container;
         this.scheduleJob = scheduleJob;
         this.config = config;
+        this.ft = ftDecorator;
     }
 
     private List<ControllerJob> transition(Task task) {
@@ -182,7 +187,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         return DelegateJob.builder()
                 .async(false)
                 .invocationPhase(BEFORE_COMPLETION)
-                .tolerant(false)
+                .tolerant(false, null)
                 .transactional(true)
                 .transactionSemantics(TransactionSemantics.JOIN_EXISTING)
                 .context(delegate.getContext().orElse(null))
@@ -193,7 +198,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         return DelegateJob.builder()
                 .async(false)
                 .invocationPhase(IN_PROGRESS)
-                .tolerant(true)
+                .tolerant(true, ft)
                 .transactional(true)
                 .transactionSemantics(TransactionSemantics.REQUIRE_NEW)
                 .context(delegate.getContext().orElse(null))

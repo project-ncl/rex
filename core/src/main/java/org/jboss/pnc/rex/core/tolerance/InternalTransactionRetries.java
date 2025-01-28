@@ -15,28 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.delegates;
+package org.jboss.pnc.rex.core.tolerance;
 
-import io.quarkus.arc.Unremovable;
-import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
-import org.jboss.pnc.rex.core.api.CleaningManager;
-
+import io.smallrye.common.annotation.Identifier;
+import io.smallrye.faulttolerance.api.FaultTolerance;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
 
-@WithRetries
-@Unremovable
+
+@Slf4j
 @ApplicationScoped
-public class TolerantCleaningManager implements CleaningManager {
+public class InternalTransactionRetries {
 
-    private final CleaningManager delegate;
-
-    public TolerantCleaningManager(CleaningManager manager) {
-        this.delegate = manager;
-    }
-
-    @Override
-    @ApplyFaultTolerance("internal-retry")
-    public void tryClean() {
-        delegate.tryClean();
+    @Produces
+    @Singleton
+    @Identifier("internal-retry")
+    public FaultTolerance<Object> internalRetry(InternalRetryPolicy internalRetryPolicy) {
+        return internalRetryPolicy.toleranceBuilder().build();
     }
 }

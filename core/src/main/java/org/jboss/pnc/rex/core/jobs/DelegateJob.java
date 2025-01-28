@@ -19,12 +19,11 @@ package org.jboss.pnc.rex.core.jobs;
 
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.narayana.jta.TransactionSemantics;
-import io.smallrye.mutiny.Uni;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.model.Task;
 
 import jakarta.enterprise.event.TransactionPhase;
-import java.time.Duration;
 
 @Slf4j
 public class DelegateJob extends ControllerJob {
@@ -37,20 +36,27 @@ public class DelegateJob extends ControllerJob {
 
     private final boolean transactional;
 
+    private final FaultToleranceDecorator ft;
+
     private DelegateJob(TransactionPhase invocationPhase,
                         Task context,
                         boolean async,
                         boolean tolerant,
                         boolean transactional,
                         TransactionSemantics transactionSemantics,
-                        ControllerJob delegate) {
+                        ControllerJob delegate,
+                        FaultToleranceDecorator ft) {
         super(invocationPhase, context, async);
         this.delegate = delegate;
         this.tolerant = tolerant;
         this.txType = transactionSemantics;
         this.transactional = transactional;
+        this.ft = ft;
         if (transactional && transactionSemantics == null) {
             throw new IllegalArgumentException("Transaction semantics null while delegate declared transactional");
+        }
+        if (tolerant && ft == null) {
+            throw new IllegalArgumentException("Must provide FT decorator if tolerant.");
         }
     }
 
@@ -66,26 +72,19 @@ public class DelegateJob extends ControllerJob {
 
     @Override
     public boolean execute() {
-        Uni<Boolean> uni = Uni.createFrom().voidItem()
-                .onItem()
-                .transform(this::delegateExecute);
-
         if (tolerant) {
-            uni = uni.onFailure().retry()
-                    .withBackOff(Duration.ofMillis(10), Duration.ofMillis(100))
-                    .withJitter(0.5)
-                    .atMost(15);
+            return ft.withTolerance(this::delegateExecute);
         }
 
-        return uni.await().indefinitely();
+        return delegateExecute();
     }
 
-    boolean delegateExecute(Void ignore) {
-        if (!transactional) {
-            return delegate.execute();
+    boolean delegateExecute() {
+        if (transactional) {
+            return QuarkusTransaction.runner(txType).call(delegate::execute);
         }
 
-        return QuarkusTransaction.runner(txType).call(delegate::execute);
+        return delegate.execute();
     }
 
     @Override
@@ -108,6 +107,7 @@ public class DelegateJob extends ControllerJob {
         private boolean tolerant;
         private boolean transactional;
         private TransactionSemantics semantics;
+        private FaultToleranceDecorator ft;
 
         DelegateJobBuilder() {
         }
@@ -117,8 +117,9 @@ public class DelegateJob extends ControllerJob {
             return this;
         }
 
-        public DelegateJob.DelegateJobBuilder tolerant(boolean tolerant) {
+        public DelegateJob.DelegateJobBuilder tolerant(boolean tolerant, FaultToleranceDecorator ft) {
             this.tolerant = tolerant;
+            this.ft = ft;
             return this;
         }
 
@@ -148,7 +149,7 @@ public class DelegateJob extends ControllerJob {
         }
 
         public DelegateJob build() {
-            return new DelegateJob(invocationPhase, context, async, tolerant, transactional, semantics, delegate);
+            return new DelegateJob(invocationPhase, context, async, tolerant, transactional, semantics, delegate, ft);
         }
     }
 

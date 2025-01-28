@@ -18,11 +18,9 @@
 package org.jboss.pnc.rex.rest;
 
 import io.quarkus.arc.ArcUndeclaredThrowableException;
-import io.smallrye.mutiny.Uni;
+import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.faulttolerance.Fallback;
-import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.parameters.ErrorOption;
 import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
@@ -31,7 +29,6 @@ import org.jboss.pnc.rex.facade.api.TaskProvider;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.RollbackException;
 
 @Slf4j
 @ApplicationScoped
@@ -39,72 +36,77 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
 
     private final TaskProvider taskProvider;
 
+    // hacky self-delegate to trigger CDI interceptors (f.e. fault tolerance)
+    private final CallbackEndpointImpl self;
+
     @Inject
-    public CallbackEndpointImpl(TaskProvider provider) {
+    public CallbackEndpointImpl(TaskProvider provider, CallbackEndpointImpl self) {
         this.taskProvider = provider;
+        this.self = self;
     }
 
     @Override
-    @Fallback(fallbackMethod = "fallback", applyOn = {RollbackException.class,
-        ArcUndeclaredThrowableException.class,
-        TaskMissingException.class
-    })
-    @Retry
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     @Deprecated
     public void finish(String taskName, FinishRequest result, ErrorOption errorOption) {
-        taskProvider.acceptRemoteResponse(taskName, result.getStatus(), result.getResponse());
+        try {
+            self.finishInternal(taskName, result);
+        } catch (TaskMissingException e) {
+            handleWithErrorOption(errorOption, e);
+        } catch (ArcUndeclaredThrowableException e) {
+            self.systemFailure(taskName);
+        }
     }
 
     @Override
-    @Retry
-    @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class, TaskMissingException.class})
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public void succeed(String taskName, Object result, ErrorOption errorOption) {
-        taskProvider.acceptRemoteResponse(taskName, true, result);
+        try {
+            self.succeedInternal(taskName, result);
+        } catch (TaskMissingException e) {
+            handleWithErrorOption(errorOption, e);
+        } catch (ArcUndeclaredThrowableException e) {
+            self.systemFailure(taskName);
+        }
     }
 
     @Override
-    @Fallback(fallbackMethod = "objectFallback", applyOn = {RollbackException.class, ArcUndeclaredThrowableException.class, TaskMissingException.class})
-    @Retry
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public void fail(String taskName, Object result, ErrorOption errorOption) {
+        try {
+            self.failInternal(taskName, result);
+        } catch (TaskMissingException e) {
+            handleWithErrorOption(errorOption, e);
+        } catch (ArcUndeclaredThrowableException e) {
+            self.systemFailure(taskName);
+        }
+    }
+
+    @ApplyFaultTolerance("internal-retry")
+    void failInternal(String taskName, Object result) {
         taskProvider.acceptRemoteResponse(taskName, false, result);
     }
 
-    /**
-     * Return positive Status Code on ErrorOption.IGNORE if task is missing.
-     */
-    void fallback(String taskName, FinishRequest result, ErrorOption errorOption, TaskMissingException e) {
-        handleWithErrorOption(errorOption, e);
+    @ApplyFaultTolerance("internal-retry")
+    void succeedInternal(String taskName, Object result) {
+        taskProvider.acceptRemoteResponse(taskName, true, result);
     }
 
-    void objectFallback(String taskName, Object result, ErrorOption errorOption, TaskMissingException e) {
-        handleWithErrorOption(errorOption, e);
+    @ApplyFaultTolerance("internal-retry")
+    void finishInternal(String taskName, FinishRequest result) {
+        taskProvider.acceptRemoteResponse(taskName, result.getStatus(), result.getResponse());
     }
 
-    void fallback(String taskName, FinishRequest result, ErrorOption errorOption) {
-        systemFailure(taskName);
+    @ApplyFaultTolerance("internal-retry")
+    void systemFailure(String taskName) {
+        log.error("STOP {}: UNEXPECTED exception has been thrown.", taskName);
+        taskProvider.acceptRemoteResponse(taskName, false, "ACCEPT : System failure.");
     }
 
-    void objectFallback(String taskName, Object result, ErrorOption errorOption) {
-        systemFailure(taskName);
-    }
-
-    private void handleWithErrorOption(ErrorOption errorOption, RuntimeException e) {
+    void handleWithErrorOption(ErrorOption errorOption, RuntimeException e) {
         switch (errorOption) {
             case IGNORE -> {}
             case PASS_ERROR -> throw e;
         }
-    }
-
-    private void systemFailure(String taskName) {
-        log.error("STOP " + taskName + ": UNEXPECTED exception has been thrown.");
-        Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> taskProvider.acceptRemoteResponse(taskName, false,"ACCEPT : System failure."))
-                .onFailure().invoke((throwable) -> log.warn("ACCEPT " + taskName + ": Failed to transition task to FAILED state. Retrying.", throwable))
-                .onFailure().retry().atMost(5)
-                .onFailure().recoverWithNull()
-                .await().indefinitely();
     }
 }

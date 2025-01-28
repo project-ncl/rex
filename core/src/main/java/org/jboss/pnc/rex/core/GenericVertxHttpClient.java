@@ -19,7 +19,6 @@ package org.jboss.pnc.rex.core;
 
 
 import io.quarkus.oidc.client.OidcClient;
-import io.quarkus.oidc.client.Tokens;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.unchecked.Unchecked;
@@ -170,7 +169,7 @@ public class GenericVertxHttpClient {
     }
 
     private boolean abortOnNonRecoverable(Throwable failure) {
-        return !internalPolicy.abortOn().contains(failure)
+        return !internalPolicy.abortOn().contains(failure.getClass())
             // This is internal retry loop, RequestRetryException to go into outer Retry loop where the request is retried
             && !(failure instanceof RequestRetryException);
     }
