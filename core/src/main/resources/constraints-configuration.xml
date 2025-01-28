@@ -17,7 +17,12 @@
     limitations under the License.
 
 -->
-<infinispan>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-14.0.xsd
+                            urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
+        xmlns="urn:infinispan:config:14.0"
+        xmlns:server="urn:infinispan:server:14.0">
     <cache-container name="clustered">
         <distributed-cache name="rex-constraints" mode="SYNC" statistics="true">
             <locking isolation="REPEATABLE_READ"/>
