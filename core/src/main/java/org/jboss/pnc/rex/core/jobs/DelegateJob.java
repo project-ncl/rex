@@ -151,5 +151,18 @@ public class DelegateJob extends ControllerJob {
             return new DelegateJob(invocationPhase, context, async, tolerant, transactional, semantics, delegate);
         }
     }
+
+    @Override
+    public String toString() {
+        return delegate.toString(context, async, invocationPhase) + appendDelegateInfo();
+    }
+    private String appendDelegateInfo() {
+        if (transactional || tolerant) {
+            return " + [" + (transactional ? "inner TXs" : "") + (tolerant ? ", fault-tolerant" : "") +"]";
+        } else {
+            return "";
+        }
+    }
+
 }
 

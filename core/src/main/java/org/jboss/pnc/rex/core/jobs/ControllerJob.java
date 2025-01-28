@@ -107,6 +107,24 @@ public abstract class ControllerJob implements Runnable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "(of = " + (context == null ? "NONE" : context.getName()) + ")";
+        return toString(context, async, invocationPhase);
+    }
+
+    public String toString(Task overrideContext, boolean async, TransactionPhase phase) {
+        return this.getClass().getSimpleName()
+                + "(of = "
+                + (overrideContext == null ? "NONE" : overrideContext.getName())
+                + (async ? ", ASYNC" : "")
+                + ", run = " + printExecutionTime(phase) +")";
+    }
+
+    private String printExecutionTime(TransactionPhase phase) {
+        return switch (phase) {
+            case IN_PROGRESS -> "NOW";
+            case BEFORE_COMPLETION -> "BEFORE COMMIT";
+            case AFTER_COMPLETION -> "AFTER TX";
+            case AFTER_SUCCESS -> "AFTER TX SUCCESS";
+            case AFTER_FAILURE -> "AFTER TX FAIL";
+        };
     }
 }
