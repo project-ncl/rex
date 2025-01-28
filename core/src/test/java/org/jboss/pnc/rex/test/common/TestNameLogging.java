@@ -28,12 +28,14 @@ public class TestNameLogging implements QuarkusTestBeforeEachCallback, QuarkusTe
     @Override
     public void beforeEach(QuarkusTestMethodContext context) {
         Logger log = LoggerFactory.getLogger(context.getTestInstance().getClass());
-        log.info("Executing {}", context.getTestMethod());
+        log.info("Executing {}\n" +
+                "----------------------------------------------------------------------------------", context.getTestMethod());
     }
 
     @Override
     public void afterEach(QuarkusTestMethodContext context) {
         Logger log = LoggerFactory.getLogger(context.getTestInstance().getClass());
-        log.info("Execution of {} is finished", context.getTestMethod());
+        log.info("Execution of {} is finished\n" +
+                "----------------------------------------------------------------------------------", context.getTestMethod());
     }
 }

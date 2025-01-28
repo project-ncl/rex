@@ -58,6 +58,8 @@ quarkus:
       origins: "/.*/"
 
     port: 80
+    limits:
+      max-body-size: 1G
 
   oidc:
     enabled: true
@@ -81,7 +83,6 @@ quarkus:
     use-auth: true
     username: ${ISPN_USER}
     password: ${ISPN_PASS}
-    near-cache-max-entries: 100
 
   swagger-ui:
     always-include: true

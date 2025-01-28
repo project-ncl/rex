@@ -62,7 +62,6 @@ quarkus:
         configuration-resource: "cluster-jobs-configuration.xml"
         near-cache-mode: disabled
     devservices:
-
       tracing:
         enabled: true
       image-name: "quay.io/infinispan/server:14.0.28.Final"

@@ -77,7 +77,7 @@ public class TaskProviderImpl implements TaskProvider {
     @Transactional
     public Set<TaskDTO> create(CreateGraphRequest request) {
         try {
-            if (request.graphConfiguration != null) {
+            if (request.graphConfiguration != null && request.graphConfiguration.mdcHeaderKeyMapping != null) {
                 MDCUtils.applyMDCsFromHeadersMM(request.graphConfiguration.mdcHeaderKeyMapping, httpHeaders.getRequestHeaders());
             }
 
