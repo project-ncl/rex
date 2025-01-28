@@ -182,15 +182,13 @@
     <build>
         <plugins>
             <plugin>
+                <!-- inherits generate-code,generate-test-code goals from parent pluginManagement -->
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>
-                <version>${quarkus.version}</version>
                 <executions>
                     <execution>
                         <goals>
                             <goal>build</goal>
-                            <goal>generate-code</goal>
-                            <goal>generate-code-tests</goal>
                         </goals>
                         <configuration>
                             <systemProperties>
