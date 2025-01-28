@@ -45,5 +45,13 @@ public enum StopFlag {
      * A Task's dependency(can be transitive) has failed.
      */
     @ProtoEnumValue(number = 3)
-    DEPENDENCY_FAILED
+    DEPENDENCY_FAILED,
+
+    /**
+     * A Task's dependency(can be transitive) has configured to wait for successful final notification, which has failed.
+     *
+     * NOTE: The dependency will be in state SUCCESS but the notification request received 4xx+ result.
+     */
+    @ProtoEnumValue(number = 4)
+    DEPENDENCY_NOTIFY_FAILED
 }

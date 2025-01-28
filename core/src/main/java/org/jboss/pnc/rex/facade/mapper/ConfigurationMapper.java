@@ -37,5 +37,7 @@ public interface ConfigurationMapper extends EntityMapper<ConfigurationDTO, Conf
     @Mapping(target = "passMDCInRequestBody", defaultValue = "" + Defaults.passMDCInRequestBody)
     @Mapping(target = "passOTELInRequestBody", defaultValue = "" + Defaults.passOTELInRequestBody)
     @Mapping(target = "cancelTimeout", defaultValue = Defaults.cancelTimeoutString)
+    @Mapping(target = "delayDependantsForFinalNotification",
+            defaultValue = "" + Defaults.delayDependantsForFinalNotification)
     Configuration toDB(ConfigurationDTO dtoEntity);
 }

@@ -32,16 +32,17 @@ import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
 import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.core.jobs.ClearConstraintJob;
+import org.jboss.pnc.rex.core.jobs.ControllerJob;
 import org.jboss.pnc.rex.core.jobs.DecreaseCounterJob;
 import org.jboss.pnc.rex.core.jobs.DelegateJob;
 import org.jboss.pnc.rex.core.jobs.DeleteTaskJob;
 import org.jboss.pnc.rex.core.jobs.DependantDeletedJob;
-import org.jboss.pnc.rex.core.jobs.InvokeStartJob;
-import org.jboss.pnc.rex.core.jobs.InvokeStopJob;
-import org.jboss.pnc.rex.core.jobs.ControllerJob;
 import org.jboss.pnc.rex.core.jobs.DependencyCancelledJob;
+import org.jboss.pnc.rex.core.jobs.DependencyNotificationFailedJob;
 import org.jboss.pnc.rex.core.jobs.DependencyStoppedJob;
 import org.jboss.pnc.rex.core.jobs.DependencySucceededJob;
+import org.jboss.pnc.rex.core.jobs.InvokeStartJob;
+import org.jboss.pnc.rex.core.jobs.InvokeStopJob;
 import org.jboss.pnc.rex.core.jobs.MarkForCleaningJob;
 import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
 import org.jboss.pnc.rex.core.jobs.PokeCleanJob;
@@ -117,6 +118,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 switch (task.getStopFlag()) {
                     case CANCELLED -> jobs.add(new DependencyCancelledJob(task));
                     case DEPENDENCY_FAILED -> jobs.add(new DependencyStoppedJob(task));
+                    case DEPENDENCY_NOTIFY_FAILED -> jobs.add(new DependencyNotificationFailedJob(task));
                     // UNSUCCESSFUL is in FAILED transitions
                     case UNSUCCESSFUL, NONE -> {}
                 }
@@ -131,7 +133,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             //no tasks
             case STARTING_to_UP -> List.of();
 
-            case UP_to_SUCCESSFUL -> List.of(new DependencySucceededJob(task), new DecreaseCounterJob(task));
+            case UP_to_SUCCESSFUL -> {
+                var jobs = new ArrayList<ControllerJob>();
+                // either signal DEPENDANTS immediately or after notification (NotifyCallerJob)
+                if (task.getConfiguration() == null || !shouldWaitWithSuccessJob(task, transition)) {
+                    jobs.add(new DependencySucceededJob(task));
+                }
+                jobs.add(new DecreaseCounterJob(task));
+                yield jobs;
+            }
         });
 
         // add common tasks on transitioning from a specific StateGroup into specific StateGroup
@@ -158,10 +168,34 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         task.setState(transition.getAfter());
 
         // notify the caller about a transition
+        tasks.add(addNotificationRequestToTransition(task, transition));
+
+        log.info("SCHEDULE {}: {}", task.getName(), tasks);
+        return tasks;
+    }
+
+    private ControllerJob addNotificationRequestToTransition(Task task, Transition transition) {
         var notifyJob = new NotifyCallerJob(transition, task);
+
+        // only final transitions have edge cases
+        if (!transition.getAfter().isFinal()) {
+            return notifyJob;
+        }
+
+        if (!shouldMarkAfterNotification(task, transition)
+                && !shouldWaitWithSuccessJob(task, transition)) {
+            return notifyJob;
+        }
+
+        var treeJobBuilder = TreeJob.of(notifyJob);
+
+        // send notification but notify dependants after successful response
+        if (shouldWaitWithSuccessJob(task, transition)) {
+            addDependantPostNotifyJobs(task, treeJobBuilder, notifyJob);
+        }
+
+        // send notification and delete jobs after a success
         if (shouldMarkAfterNotification(task, transition)) {
-            // send notification and delete jobs after a success
-            var treeJobBuilder = TreeJob.of(notifyJob);
 
             // remove constraint after notification completes
             if (task.getConstraint() != null) {
@@ -171,16 +205,17 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
             var cleaningJob = withTransactionAndTolerance(new MarkForCleaningJob(task, true));
             treeJobBuilder.triggerAfterSuccess(notifyJob, cleaningJob);
-
-
-            tasks.add(treeJobBuilder.build());
-        } else {
-            // send notification
-            tasks.add(notifyJob);
         }
 
-        log.info("SCHEDULE {}: {}", task.getName(), tasks);
-        return tasks;
+        return treeJobBuilder.build();
+    }
+
+    private void addDependantPostNotifyJobs(Task task, TreeJob.TreeJobBuilder treeJobBuilder, NotifyCallerJob notifyJob) {
+        var successJob = withTransactionAndTolerance(new DependencySucceededJob(task));
+        treeJobBuilder.triggerAfterSuccess(notifyJob, successJob);
+        treeJobBuilder.triggerAfter(successJob, new PokeQueueJob());
+
+        treeJobBuilder.triggerAfterFailure(notifyJob, withTransactionAndTolerance(new DependencyNotificationFailedJob(task)));
     }
 
     private DelegateJob moveToTheEndOfTransaction(ControllerJob delegate) {
@@ -270,6 +305,12 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             // final states have no possible transitions
             case START_FAILED, STOP_FAILED, FAILED, SUCCESSFUL, STOPPED -> null;
         };
+    }
+
+    private static boolean shouldWaitWithSuccessJob(Task task, Transition transition) {
+        return task.getConfiguration() != null
+                && task.getConfiguration().isDelayDependantsForFinalNotification()
+                && transition.getAfter() == State.SUCCESSFUL;
     }
 
     private static boolean shouldWait(Task task) {
@@ -494,6 +535,26 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #2 ALTER
         //maybe assert it was NONE before
         task.setStopFlag(StopFlag.CANCELLED);
+
+        // #3 HANDLE
+        handle(taskMetadata, task);
+    }
+
+    @Override
+    @Transactional(MANDATORY)
+    public void dependencyNotificationFailed(String name) {
+        // #1 PULL
+        VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
+        if (taskMetadata == null) {
+            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+        }
+        Task task = taskMetadata.getValue();
+
+        // #2 ALTER
+        if (task.getState().isFinal()) {
+            return;
+        }
+        task.setStopFlag(StopFlag.DEPENDENCY_NOTIFY_FAILED);
 
         // #3 HANDLE
         handle(taskMetadata, task);

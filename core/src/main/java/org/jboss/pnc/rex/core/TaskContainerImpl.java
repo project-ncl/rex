@@ -18,9 +18,7 @@
 package org.jboss.pnc.rex.core;
 
 import io.quarkus.infinispan.client.Remote;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
@@ -296,10 +294,12 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     @Transactional(MANDATORY)
     public Set<Task> install(TaskGraph taskGraph) {
-        log.info("Install requested: " + taskGraph.toString());
+        log.info("Install requested: {}", taskGraph.toString());
         Set<Edge> edges = taskGraph.getEdges();
         Map<String, InitialTask> vertices = taskGraph.getVertices();
         Map<String, Task> taskCache = new HashMap<>();
+
+        assertValidConfiguration(vertices.values());
 
         // handle edge by edge
         for (Edge edge : edges) {
@@ -333,6 +333,17 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         // succeeds)
         jobEvent.fire(new PokeQueueJob());
         return newTasks;
+    }
+
+    private void assertValidConfiguration(Collection<InitialTask> values) throws BadRequestException {
+        for (InitialTask task : values) {
+            // assert that notifications are not null when waiting for them is configured
+            if (task.getConfiguration() != null
+                    && task.getConfiguration().isDelayDependantsForFinalNotification()
+                    && task.getCallerNotifications() == null) {
+                throw new BadRequestException("Task " + task.getName() + " is configured to delay for notifications but notification definition is null.");
+            }
+        }
     }
 
     private void assertEdgeValidity(Edge edge) {

@@ -93,7 +93,8 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
                     graphConfig.passMDCInRequestBody,
                     graphConfig.passOTELInRequestBody,
                     graphConfig.mdcHeaderKeyMapping,
-                    graphConfig.cancelTimeout);
+                    graphConfig.cancelTimeout,
+                    graphConfig.delayDependantsForFinalNotification);
         }
 
         Boolean passResultsOfDependencies = taskConfig.passResultsOfDependencies;
@@ -116,12 +117,17 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
         if (taskConfig.cancelTimeout == null && graphConfig.cancelTimeout != null) {
             cancelTimeout = graphConfig.cancelTimeout;
         }
+        Boolean delayDependantsForFinalNotification = taskConfig.delayDependantsForFinalNotification;
+        if (taskConfig.delayDependantsForFinalNotification == null && graphConfig.delayDependantsForFinalNotification != null) {
+            delayDependantsForFinalNotification = graphConfig.delayDependantsForFinalNotification;
+        }
 
         return new ConfigurationDTO(
                 passResultsOfDependencies,
                 passMDCInRequestBody,
                 passOTELInRequestBody,
                 mdcHeaderKeys,
-                cancelTimeout);
+                cancelTimeout,
+                delayDependantsForFinalNotification);
     }
 }

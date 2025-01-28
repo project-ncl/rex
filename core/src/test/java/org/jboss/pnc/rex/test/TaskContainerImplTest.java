@@ -406,6 +406,20 @@ class TaskContainerImplTest extends AbstractTest {
     }
 
     @Test
+    public void testValidConfigWithNoNotificationAndWaiting() {
+        CreateGraphRequest request = CreateGraphRequest.builder()
+                .vertex("ignore", getMockTaskWithoutStart("ignore", Mode.IDLE)
+                        .toBuilder()
+                        .callerNotifications(null)
+                        .configuration(ConfigurationDTO.builder().delayDependantsForFinalNotification(true).build())
+                        .build())
+                .build();
+
+        assertThatThrownBy(() -> taskEndpoint.start(request))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
     public void shouldFailOnAddingDependencyToNonIdleTask() throws Exception {
         TransactionManager manager = container.getTransactionManager();
         manager.begin();
@@ -538,7 +552,7 @@ class TaskContainerImplTest extends AbstractTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(true, false, false, null, null))
+                        .configuration(new ConfigurationDTO(true, false, false, null, null, false))
                         .build())
                 .build());
 
@@ -574,7 +588,7 @@ class TaskContainerImplTest extends AbstractTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(false, false, false, null, null))
+                        .configuration(new ConfigurationDTO(false, false, false, null, null, false))
                         .build())
                 .build());
 

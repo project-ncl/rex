@@ -24,20 +24,26 @@ package org.jboss.pnc.rex.core.api;
  */
 public interface DependentMessenger {
     /**
-     * Notify this dependent that it's dependency has succeeded.
+     * Notify this dependent that its dependency has succeeded.
      * @param name name of the dependent
      */
     void dependencySucceeded(String name);
 
     /**
-     * Notify this dependent that it's dependency has stopped.
+     * Notify this dependent that its dependency has stopped.
      * @param name name of the dependent
      */
     void dependencyStopped(String name);
 
     /**
-     * Notify this dependent that it's dependency has been cancelled.
+     * Notify this dependent that its dependency has been cancelled.
      * @param name name of the dependent
      */
     void dependencyCancelled(String name);
+
+    /**
+     * Notify this dependent that its dependency's notification failed.
+     * @param name name of the dependent
+     */
+    void dependencyNotificationFailed(String name);
 }
