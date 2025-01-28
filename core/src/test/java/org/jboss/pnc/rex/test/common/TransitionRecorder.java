@@ -20,7 +20,6 @@ package org.jboss.pnc.rex.test.common;
 import io.vertx.core.impl.ConcurrentHashSet;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.core.jobs.ChainingJob;
 import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -46,12 +45,6 @@ public class TransitionRecorder {
 
     void recordTransition(@Observes(during = TransactionPhase.AFTER_SUCCESS) NotifyCallerJob transitionJob) {
         extractTransitionAndRecord(transitionJob);
-    }
-
-    void recordTransition(@Observes(during = TransactionPhase.AFTER_SUCCESS) ChainingJob chainingJob) {
-        if (chainingJob.getChainLinks().get(0) instanceof NotifyCallerJob notification) {
-            extractTransitionAndRecord(notification);
-        }
     }
 
     void recordTransition(@Observes(during = TransactionPhase.AFTER_SUCCESS) TreeJob chainingJob) {
