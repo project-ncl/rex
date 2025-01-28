@@ -18,8 +18,8 @@
 package org.jboss.pnc.rex.core.delegates;
 
 import io.quarkus.arc.Unremovable;
+import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.faulttolerance.Retry;
 
 import java.util.function.Supplier;
 
@@ -27,12 +27,12 @@ import java.util.function.Supplier;
 @ApplicationScoped
 public class FaultToleranceDecorator {
 
-    @Retry
+    @ApplyFaultTolerance("internal-retry")
     public void withTolerance(Runnable runnable) {
         runnable.run();
     }
 
-    @Retry
+    @ApplyFaultTolerance("internal-retry")
     public <T> T withTolerance(Supplier<T> supplier) {
         return supplier.get();
     }
