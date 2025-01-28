@@ -17,6 +17,8 @@ quarkus:
       enabled: false
   http:
     port: 8181
+  smallrye-openapi:
+    store-schema-directory: ""
   infinispan-client:
     use-schema-registration: true
     use-auth: true

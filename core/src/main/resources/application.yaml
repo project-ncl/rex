@@ -108,6 +108,9 @@ quarkus:
 
 mp:
   openapi:
+    scan:
+      exclude:
+        packages: org.jboss.pnc.rex.test
     extensions:
       smallrye:
         operationIdStrategy: METHOD
