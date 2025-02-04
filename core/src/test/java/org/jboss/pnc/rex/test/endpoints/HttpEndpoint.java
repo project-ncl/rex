@@ -42,7 +42,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,7 +63,7 @@ public class HttpEndpoint {
     @Running
     Counter running;
 
-    private final Queue<Long> record = new ConcurrentLinkedQueue<>();
+    private final Map<String, Queue<Long>> record = new HashMap<>();
     private final Queue<Object> recordedRequestData = new ConcurrentLinkedQueue<>();
 
     private boolean shouldRecord = false;
@@ -167,7 +169,7 @@ public class HttpEndpoint {
 
     private void record(Object data) {
         if (shouldRecord) {
-            record.offer(running.getValue());
+            record.forEach((key, value) -> value.offer(running.getValue(key)));
             recordedRequestData.offer(data);
         }
     }
@@ -176,9 +178,14 @@ public class HttpEndpoint {
         record.clear();
         recordedRequestData.clear();
         shouldRecord = true;
+        record.put(null, new ConcurrentLinkedQueue<>());
     }
 
-    public Collection<Long> stopRecording() {
+    public void additionallyRecord(String queue) {
+        record.put(queue, new ConcurrentLinkedQueue<>());
+    }
+
+    public Map<String, ? extends Collection<Long>> stopRecording() {
         shouldRecord = false;
         return record;
     }

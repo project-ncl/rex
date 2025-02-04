@@ -67,7 +67,7 @@ public abstract class AbstractTest {
         httpEndpoint.clearRequestCounter();
 
         //Uncomment if you're encountering race conditions.
-        //Thread.sleep(100);
+        Thread.sleep(100);
     }
 
     public void resetEverythingWithMax(long max) {
