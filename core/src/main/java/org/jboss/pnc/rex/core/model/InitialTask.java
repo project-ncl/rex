@@ -37,6 +37,8 @@ public class InitialTask {
 
     private final String correlationID;
 
+    private final String queue;
+
     private final Request remoteStart;
 
     private final Request remoteCancel;

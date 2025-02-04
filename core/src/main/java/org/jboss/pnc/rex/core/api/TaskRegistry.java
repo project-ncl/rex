@@ -72,6 +72,8 @@ public interface TaskRegistry {
 
     List<Task> getEnqueuedTasks(long limit);
 
+    List<Task> getEnqueuedTasksByQueueName(String queue, long limit);
+
     List<Task> getTasksByCorrelationID(String correlationID);
 
     /**

@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.rest;
 
 import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.core.api.QueueManager;
@@ -44,16 +45,41 @@ public class QueueEndpointImpl implements QueueEndpoint {
     @ApplyFaultTolerance("internal-retry")
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public void setConcurrent(Long amount) {
-        optionsProvider.setConcurrency(amount);
+        setConcurrentNamed(null, amount);
+    }
+
+    @Override
+    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
+    public void setConcurrentNamed(String name, Long amount) {
+        optionsProvider.setConcurrency(name, amount);
     }
 
     @Override
     public LongResponse getConcurrent() {
-        return optionsProvider.getConcurrency();
+        return getConcurrentNamed(null);
+    }
+
+    @Override
+    public LongResponse getConcurrentNamed(String name) {
+        return optionsProvider.getConcurrency(name);
     }
 
     @Override
     public LongResponse getRunning() {
-        return LongResponse.builder().number(queue.getRunningCounter()).build();
+        return getRunningNamed(null);
+    }
+
+    @Override
+    public LongResponse getRunningNamed(String name) {
+        Long runningCounter = getRunningCounter(name);
+        if (runningCounter == null) {
+            throw new NotFoundException("No queue found with name: " + name);
+        }
+
+        return LongResponse.builder().number(runningCounter).build();
+    }
+
+    private Long getRunningCounter(String name) {
+        return queue.getRunningCounter(name);
     }
 }

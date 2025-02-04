@@ -17,6 +17,8 @@
  */
 package org.jboss.pnc.rex.facade;
 
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import jakarta.ws.rs.NotFoundException;
 import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.dto.responses.LongResponse;
 import org.jboss.pnc.rex.facade.api.OptionsProvider;
@@ -37,15 +39,21 @@ public class OptionsProviderImpl implements OptionsProvider {
 
     @Override
     @Transactional
-    public void setConcurrency(Long amount) {
-        manager.setMaximumConcurrency(amount);
+    public void setConcurrency(String queueName, Long amount) {
+        manager.setMaximumConcurrency(queueName, amount);
     }
 
     @Override
-    public LongResponse getConcurrency() {
+    public LongResponse getConcurrency(String queueName) {
+        Long concurrency = manager.getMaximumConcurrency(queueName);
+
+        if (concurrency == null) {
+            throw new NotFoundException("No queue found with name: " + queueName);
+        }
+
         return LongResponse
                 .builder()
-                .number(manager.getMaximumConcurrency())
+                .number(concurrency)
                 .build();
     }
 }

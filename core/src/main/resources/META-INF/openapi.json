@@ -226,7 +226,7 @@
     "/rest/queue/concurrency" : {
       "get" : {
         "tags" : [ "Endpoint for queue administration" ],
-        "summary" : "Returns amount of possible concurrent tasks.",
+        "summary" : "Returns amount of possible concurrent tasks from DEFAULT queue.",
         "operationId" : "getConcurrent",
         "responses" : {
           "200" : {
@@ -263,7 +263,7 @@
       },
       "post" : {
         "tags" : [ "Endpoint for queue administration" ],
-        "summary" : "[ADMIN] Sets the amount of possible concurrent tasks. Tasks that are currently running are never affected.",
+        "summary" : "[ADMIN] Sets the amount of possible concurrent tasks from DEFAULT queue. Tasks that are currently running are never affected.",
         "operationId" : "setConcurrent",
         "parameters" : [ {
           "name" : "amount",
@@ -636,6 +636,135 @@
           }
         }
       }
+    },
+    "/rest/queue/{name}/concurrency" : {
+      "get" : {
+        "tags" : [ "Endpoint for queue administration" ],
+        "summary" : "Returns amount of possible concurrent tasks from a NAMED queue.",
+        "operationId" : "getConcurrentNamed",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success with results",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LongResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid input parameters or validation error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Server error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "Endpoint for queue administration" ],
+        "summary" : "[ADMIN] Sets the amount of possible concurrent tasks in a NAMED queue. Tasks that are currently running are never affected.",
+        "operationId" : "setConcurrentNamed",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "amount",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Success but no content provided"
+          },
+          "400" : {
+            "description" : "Invalid input parameters or validation error",
+            "content" : { }
+          },
+          "500" : {
+            "description" : "Server error",
+            "content" : { }
+          }
+        }
+      }
+    },
+    "/rest/queue/{name}/running" : {
+      "get" : {
+        "tags" : [ "Endpoint for queue administration" ],
+        "summary" : "Returns amount of active tasks in queue (excluding ENQUEUED).",
+        "operationId" : "getRunningNamed",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success with results",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LongResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid input parameters or validation error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Server error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -710,6 +839,9 @@
             "additionalProperties" : {
               "$ref" : "#/components/schemas/CreateTaskDTO"
             }
+          },
+          "queue" : {
+            "type" : "string"
           }
         }
       },
@@ -738,6 +870,9 @@
           },
           "configuration" : {
             "$ref" : "#/components/schemas/ConfigurationDTO"
+          },
+          "queue" : {
+            "type" : "string"
           }
         }
       },
@@ -923,6 +1058,9 @@
             "items" : {
               "$ref" : "#/components/schemas/TransitionTimeDTO"
             }
+          },
+          "queue" : {
+            "type" : "string"
           }
         }
       },

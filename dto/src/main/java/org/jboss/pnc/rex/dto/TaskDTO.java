@@ -43,6 +43,8 @@ public class TaskDTO {
 
     public String constraint;
 
+    public String queue;
+
     public String correlationID;
 
     public Request remoteStart;

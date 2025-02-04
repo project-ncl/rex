@@ -93,7 +93,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     private List<ControllerJob> transition(Task task) {
         Transition transition = getTransition(task);
         if (transition != null) {
-            log.info("TRANSITION {}: before: {} after: {}", task.getName(), transition.getBefore().toString(), transition.getAfter().toString());
+            log.info("TRANSITION {}: {}", task.getName(), transition);
             task.getTimestamps().add(new TransitionTime(transition, Instant.now()));
         }
 

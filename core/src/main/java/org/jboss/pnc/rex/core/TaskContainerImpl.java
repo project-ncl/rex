@@ -96,15 +96,6 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         this.tasks = tasks;
     }
 
-    // FIXME implement
-    public void shutdown() {
-        throw new UnsupportedOperationException("Currently not implemented!");
-    }
-
-    public boolean isShutdown() {
-        return false;
-    }
-
     public Task getTask(String task) {
         return tasks.get(task);
     }
@@ -222,6 +213,19 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     public List<Task> getEnqueuedTasks(long limit) {
         QueryFactory factory = Search.getQueryFactory(tasks);
         Query<Task> query = factory.create("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "'");
+        return query.maxResults((int) limit).list();
+    }
+
+    @Override
+    public List<Task> getEnqueuedTasksByQueueName(String queue, long limit) {
+        QueryFactory factory = Search.getQueryFactory(tasks);
+        Query<Task> query;
+        if (queue == null) {
+            query = factory.create("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "' AND queue IS NULL");
+        } else {
+            query = factory.create("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "' AND queue = :queueName");
+            query.setParameter("queueName", queue);
+        }
         return query.maxResults((int) limit).list();
     }
 

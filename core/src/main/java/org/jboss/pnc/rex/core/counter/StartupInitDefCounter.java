@@ -15,27 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.facade.api;
+package org.jboss.pnc.rex.core.counter;
 
-import jakarta.annotation.Nullable;
-import org.jboss.pnc.rex.dto.responses.LongResponse;
+import io.quarkus.runtime.Startup;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.spi.ObserverMethod;
+import jakarta.inject.Inject;
 
-/**
- * Public interface for managing scheduler's settings on runtime.
- */
-public interface OptionsProvider {
+@ApplicationScoped
+public class StartupInitDefCounter {
 
-    /**
-     * Sets the maximum amount of concurrent Tasks. The method does not have effect on already running Tasks.
-     *
-     * @param amount amount to be set
-     */
-    void setConcurrency(@Nullable String queueName, Long amount);
+    @Inject
+    @MaxConcurrent
+    Counter maxConcurrentCounter;
 
-    /**
-     * Return current amount of concurrent builds.
-     *
-     * @return maximum concurrent Tasks
-     */
-    LongResponse getConcurrency(@Nullable String queueName);
+    @Inject
+    @Running
+    Counter runningCounter;
+
+    @Startup(ObserverMethod.DEFAULT_PRIORITY + 1)
+    void initCounters() {
+        // this triggers init of default queue's counters (if it already doesn't exist)
+        maxConcurrentCounter.getMetadataValue(null);
+        runningCounter.getMetadataValue(null);
+    }
+
 }
