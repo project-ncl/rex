@@ -333,6 +333,7 @@
       "get" : {
         "tags" : [ "Task endpoint" ],
         "summary" : "Returns list of all tasks with optional filtering.",
+        "description" : "Returns list of all tasks with optional filtering.\n Unspecified queueFilter returns all tasks.\nSpecifying more than one queueFilter will include all tasks in those queues.\nTo filter by 'default' queue use 'null' String.\n",
         "operationId" : "getAll",
         "parameters" : [ {
           "name" : "finished",
@@ -357,6 +358,15 @@
           "schema" : {
             "default" : "false",
             "type" : "boolean"
+          }
+        }, {
+          "name" : "queue",
+          "in" : "query",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         } ],
         "responses" : {

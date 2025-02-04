@@ -54,7 +54,7 @@ public class CorrelationTest extends AbstractTest {
 
         assertThat(start).extracting(task -> task.correlationID).containsOnly(correlationID);
 
-        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters(), null);
 
         assertThat(all)
                 .isNotEmpty()
@@ -89,7 +89,7 @@ public class CorrelationTest extends AbstractTest {
 
         taskEndpoint.start(request);
 
-        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters(), null);
 
         assertThat(all)
                 .isNotEmpty()

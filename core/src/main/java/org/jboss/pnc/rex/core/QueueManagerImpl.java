@@ -18,8 +18,6 @@
 package org.jboss.pnc.rex.core;
 
 import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.quarkus.narayana.jta.TransactionRunnerOptions;
-import io.smallrye.faulttolerance.api.FaultTolerance;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
@@ -167,7 +165,7 @@ public class QueueManagerImpl implements QueueManager {
     @Override
     @Transactional(MANDATORY)
     public void synchronizeRunningCounter() {
-        Map<String, List<Task>> tasksByQueue = container.getTasks(false, false, true, false)
+        Map<String, List<Task>> tasksByQueue = container.getTasks(false, false, true, false, null)
                 .stream()
                 .collect(groupingBy(Task::getQueue));
 

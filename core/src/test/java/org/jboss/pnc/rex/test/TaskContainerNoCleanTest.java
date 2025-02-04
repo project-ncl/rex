@@ -73,7 +73,7 @@ public class TaskContainerNoCleanTest extends AbstractTest {
         waitTillTasksAreFinishedWith(State.FAILED, "e");
         waitTillTasksAreFinishedWith(State.STOPPED, "g", "h", "i", "j");
 
-        Map<String, TaskDTO> tasks = taskEndpoint.getAll(getAllParameters()).stream()
+        Map<String, TaskDTO> tasks = taskEndpoint.getAll(getAllParameters(), null).stream()
                 .collect(Collectors.toMap(TaskDTO::getName, Function.identity()));
 
         assertThat(tasks).hasSize(10);
@@ -96,7 +96,7 @@ public class TaskContainerNoCleanTest extends AbstractTest {
         taskEndpoint.start(request);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, request.getVertices().keySet().toArray(new String[0]));
 
-        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters(), null);
         Thread.sleep(100);
 
         // Extract transitions+timestamps and order by timestamps
