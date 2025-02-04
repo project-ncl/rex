@@ -17,6 +17,10 @@
  */
 package org.jboss.pnc.rex.core;
 
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.narayana.jta.TransactionRunnerOptions;
+import io.smallrye.faulttolerance.api.FaultTolerance;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.core.api.QueueManager;
@@ -25,16 +29,17 @@ import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.MaxConcurrent;
 import org.jboss.pnc.rex.core.counter.Running;
+import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.model.Task;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
-import java.util.ConcurrentModificationException;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import static java.util.stream.Collectors.groupingBy;
 
 @Slf4j
 @ApplicationScoped
@@ -44,66 +49,86 @@ public class QueueManagerImpl implements QueueManager {
     private final Counter running;
     private final TaskRegistry container;
     private final TaskController controller;
+    private final FaultToleranceDecorator ft;
 
-    public QueueManagerImpl(@MaxConcurrent Counter max, @Running Counter running, TaskRegistry container, TaskController controller) {
+    public QueueManagerImpl(@MaxConcurrent Counter max,
+                            @Running Counter running,
+                            TaskRegistry container,
+                            TaskController controller,
+                            FaultToleranceDecorator ft) {
         this.max = max;
         this.running = running;
         this.container = container;
         this.controller = controller;
+        this.ft = ft;
     }
 
     @Override
     @Transactional
     public void poke() {
-        log.info("QUEUE: Poking Task queue");
-        VersionedValue<Long> maxMetadata = max.getMetadataValue();
-        Long maxValue = maxMetadata.getValue();
+        log.info("QUEUE: Poking Task queues");
+        Map<String, Long> maxEntries = max.entries();
+        Map<String, Long> runningEntries = running.entries();
 
-        VersionedValue<Long> runningMetadata = running.getMetadataValue();
-        Long runningValue = runningMetadata.getValue();
+        Set<String> consideredQueues = new HashSet<>();
+        for (var queue : maxEntries.keySet()) {
+            Long maxValue = maxEntries.get(queue);
+            Long runningValue = runningEntries.get(queue);
 
-        if (runningValue >= maxValue) {
-            log.debug("QUEUE: Maximum number of parallel builds reached.({} out of {})", runningValue, maxValue);
-            return;
+            if (runningValue >= maxValue) {
+                log.debug("QUEUE '{}': Maximum number of parallel builds reached.({} out of {})",
+                        queue == null ? "DEFAULT" : queue,
+                        runningValue,
+                        maxValue);
+            } else {
+                consideredQueues.add(queue);
+            }
         }
 
-        long freeSpace = maxValue - runningValue;
+        for (var queue : consideredQueues) {
+            Long maxValue = maxEntries.get(queue);
+            VersionedValue<Long> runningMetadata = running.getMetadataValue(queue);
+            Long runningValue = runningMetadata.getValue();
 
-        List<Task> randomEnqueuedTasks = container.getEnqueuedTasks(freeSpace);
+            long freeSpace = maxValue - runningValue;
+            List<Task> randomEnqueuedTasks = container.getEnqueuedTasksByQueueName(queue, freeSpace);
+            if (randomEnqueuedTasks.isEmpty()) {
+                continue;
+            }
 
-        if (randomEnqueuedTasks.isEmpty()) {
-            return;
-        }
+            log.info("QUEUE '{}': Free space of {} found. Scheduling {} task(s) of {}",
+                    queue == null ? "DEFAULT" : queue,
+                    freeSpace,
+                    randomEnqueuedTasks.size(),
+                    randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList())
+            );
 
-        log.info("QUEUE: Free space of {} found. Scheduling {} task(s) of {}",
-                freeSpace,
-                randomEnqueuedTasks.size(),
-                randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList())
-        );
+            randomEnqueuedTasks.forEach(task -> controller.dequeue(task.getName()));
 
-        randomEnqueuedTasks.forEach(task -> controller.dequeue(task.getName()));
-
-        log.info("QUEUE: Increasing running counter. ({} to {}) [ISPN-VERSION:{}]",
-                runningValue,
-                (runningValue + randomEnqueuedTasks.size()),
-                runningMetadata.getVersion());
-        if (!running.replaceValue(runningMetadata, runningValue + randomEnqueuedTasks.size())) {
-            RuntimeException e = new ConcurrentModificationException("Running counter was modified concurrently.");
-            log.error("QUEUE: Concurrent modification detected.", e);
-            throw e;
+            log.info("QUEUE '{}': Increasing running counter. ({} to {}) [ISPN-VERSION:{}]",
+                    queue == null ? "DEFAULT" : queue,
+                    runningValue,
+                    (runningValue + randomEnqueuedTasks.size()),
+                    runningMetadata.getVersion());
+            if (!running.replaceValue(queue, runningMetadata, runningValue + randomEnqueuedTasks.size())) {
+                RuntimeException e = new ConcurrentModificationException("Running counter was modified concurrently.");
+                log.error("QUEUE '{}': Concurrent modification detected.", queue == null ? "DEFAULT" : queue, e);
+                throw e;
+            }
         }
     }
 
     @Override
     @Transactional(MANDATORY)
-    public void decreaseRunningCounter() {
-        VersionedValue<Long> runningMetadata = running.getMetadataValue();
+    public void decreaseRunningCounter(@Nullable String name) {
+        VersionedValue<Long> runningMetadata = running.getMetadataValue(name);
         long runningValue = runningMetadata.getValue() - 1;
-        log.info("QUEUE: Decreasing running counter by one. ({} to {}) [ISPN-VERSION:{}]",
+        log.info("QUEUE '{}': Decreasing running counter by one. ({} to {}) [ISPN-VERSION:{}]",
+                name == null ? "DEFAULT" : name,
                 runningMetadata.getValue(),
                 runningValue,
                 runningMetadata.getVersion());
-        if (!running.replaceValue(runningMetadata, runningValue)) {
+        if (!running.replaceValue(name, runningMetadata, runningValue)) {
             RuntimeException e = new ConcurrentModificationException("Running counter was modified concurrently.");
             log.error("QUEUE: Concurrent modification detected.", e);
             throw e;
@@ -111,44 +136,64 @@ public class QueueManagerImpl implements QueueManager {
     }
 
     @Override
-    @Transactional(MANDATORY)
-    public void setMaximumConcurrency(Long amount) {
-        VersionedValue<Long> maxMetadata = max.getMetadataValue();
-        if (maxMetadata == null) {
-            max.initialize(amount);
-        } else {
-            max.replaceValue(maxMetadata, amount);
-        }
-        poke();
+    public void setMaximumConcurrency(@Nullable String name, Long amount) {
+        // we have to separate these 2 steps into distinct transactions because Counter#entries() doesnt return updated
+        // max Counter values in #poke()
+        ft.withTolerance(() -> QuarkusTransaction.requiringNew().run(() -> {
+            VersionedValue<Long> maxMetadata = max.getMetadataValue(name);
+            if (maxMetadata == null) {
+                initializeNamedQueue(name, amount);
+            } else {
+                max.replaceValue(name, maxMetadata, amount);
+            }
+
+        }));
+
+        ft.withTolerance(() -> QuarkusTransaction.requiringNew().run(this::poke));
     }
 
     @Override
-    public Long getMaximumConcurrency() {
-        VersionedValue<Long> meta = max.getMetadataValue();
+    public Long getMaximumConcurrency(@Nullable String name) {
+        VersionedValue<Long> meta = max.getMetadataValue(name);
         return meta == null ? null : meta.getValue();
     }
 
     @Override
-    public Long getRunningCounter() {
-        VersionedValue<Long> meta = running.getMetadataValue();
+    public Long getRunningCounter(@Nullable String name) {
+        VersionedValue<Long> meta = running.getMetadataValue(name);
         return meta == null ? null : meta.getValue();
     }
 
     @Override
     @Transactional(MANDATORY)
-    public Long synchronizeRunningCounter() {
-        VersionedValue<Long> runningMeta = running.getMetadataValue();
-        if (runningMeta == null) {
-            running.initialize(0L);
-            return 0L;
-        }
+    public void synchronizeRunningCounter() {
+        Map<String, List<Task>> tasksByQueue = container.getTasks(false, false, true, false)
+                .stream()
+                .collect(groupingBy(Task::getQueue));
 
-        List<Task> runningTasks = container.getTasks(false, false, true, false);
-        if (!runningMeta.getValue().equals((long) runningTasks.size())) {
-            log.info("Synchronizing running counter. Mismatch between active tasks and counter found. Previous value '{}' -> new value '{}'", runningMeta.getValue(),  runningTasks.size());
-            running.replaceValue(runningMeta, (long) runningTasks.size());
-        }
 
-        return running.getMetadataValue().getValue();
+        Set<String> existingQueues = running.entries().keySet();
+        for (String queue : existingQueues) {
+            var runningValue = running.getMetadataValue(queue);
+            var tasksInQueue = tasksByQueue.get(queue);
+
+            long actualValue;
+            if (tasksInQueue == null) {
+                actualValue = 0L;
+            } else {
+                actualValue = tasksInQueue.size();
+            }
+
+            if (!runningValue.getValue().equals(actualValue)) {
+                log.info("Synchronizing running counter. Mismatch between active tasks and counter found. Previous value '{}' -> new value '{}'", runningValue.getValue(), actualValue);
+                running.replaceValue(queue, runningValue, actualValue);
+            }
+
+        }
+    }
+
+    private void initializeNamedQueue(String name, Long amount) {
+        max.initialize(name, amount);
+        running.initialize(name, 0L);
     }
 }

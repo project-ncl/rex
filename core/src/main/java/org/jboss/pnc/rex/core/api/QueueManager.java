@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.core.api;
 
+import jakarta.annotation.Nullable;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StateGroup;
 
@@ -41,7 +42,7 @@ public interface QueueManager {
      * Decrease amount of running counter by one. The method is invoked when a Task transitions from
      * {@link StateGroup#RUNNING} state into {@link StateGroup#FINAL}.
      */
-    void decreaseRunningCounter();
+    void decreaseRunningCounter(@Nullable String name);
 
     /**
      * The method changes the maximum amount of concurrently running Tasks. If the amount is lower than the number of
@@ -50,26 +51,24 @@ public interface QueueManager {
      *
      * @param amount new amount of maximum concurrent running Tasks
      */
-    void setMaximumConcurrency(Long amount);
+    void setMaximumConcurrency(@Nullable String name, Long amount);
 
     /**
      * Returns current number in the maximum counter.
      *
      * @return maximum counter value
      */
-    Long getMaximumConcurrency();
+    Long getMaximumConcurrency(@Nullable String name);
 
     /**
      * Returns current number in the running counter. This value should reflect amount of running Tasks.
      *
      * @return
      */
-    Long getRunningCounter();
+    Long getRunningCounter(@Nullable String name);
 
     /**
-     * The method queries running tasks and synchronizes running counter in case it is different.
-     *
-     * @return returns synchronized value of the counter
+     * The method queries running tasks and synchronizes running counters in all queues in case it is different.
      */
-    Long synchronizeRunningCounter();
+    void synchronizeRunningCounter();
 }

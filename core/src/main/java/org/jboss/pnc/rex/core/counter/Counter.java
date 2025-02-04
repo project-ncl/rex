@@ -17,7 +17,10 @@
  */
 package org.jboss.pnc.rex.core.counter;
 
+import jakarta.annotation.Nullable;
 import org.infinispan.client.hotrod.VersionedValue;
+
+import java.util.Map;
 
 /**
  * Interface for interacting with counter. Use Metadata versions of get/replace methods to avoid concurrent updates in
@@ -25,15 +28,25 @@ import org.infinispan.client.hotrod.VersionedValue;
  */
 public interface Counter {
 
-    VersionedValue<Long> getMetadataValue();
+    VersionedValue<Long> getMetadataValue(@Nullable String key);
 
-    boolean replaceValue(VersionedValue<Long> previousValue, Long newValue);
-
-    @Deprecated
-    Long getValue();
+    boolean replaceValue(@Nullable String key, VersionedValue<Long> previousValue, Long newValue);
 
     @Deprecated
-    boolean replaceValue(Long previousValue, Long value);
+    Long getValue(@Nullable String key);
 
-    void initialize(Long initialValue);
+    @Deprecated
+    boolean replaceValue(@Nullable String key, Long previousValue, Long value);
+
+    void initialize(@Nullable String key, Long initialValue);
+
+    /**
+     * USE WITH CAUTION, due to a bug in INFINISPAN the contents are not updated if there are changes in the Counter
+     * during a transaction. (e.g. it will return the same entries regardless of modifications in the Counter)
+     *
+     * 'null' key is the DEFAULT counter key
+     *
+     * @return map of counter key -> counter value
+     */
+    Map<String, Long> entries();
 }

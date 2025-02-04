@@ -42,7 +42,7 @@ public class DecreaseCounterJob extends ControllerJob {
 
     @Override
     public boolean execute() {
-        queueManager.decreaseRunningCounter();
+        queueManager.decreaseRunningCounter(context.getQueue());
         return true;
     }
 

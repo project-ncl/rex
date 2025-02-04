@@ -164,6 +164,9 @@ public class Task {
     @Getter(onMethod_ = {@ProtoField(number = 17, defaultValue = "false"), @Basic})
     private boolean disposable;
 
+    @Getter(onMethod_ = {@ProtoField(number = 18), @Basic})
+    private String queue;
+
     public void incUnfinishedDependencies() {
         unfinishedDependencies++;
     }

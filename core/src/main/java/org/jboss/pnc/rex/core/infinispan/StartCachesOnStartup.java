@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.core.infinispan;
 
 import io.quarkus.infinispan.client.Remote;
 import io.quarkus.runtime.Startup;
+import jakarta.enterprise.inject.spi.ObserverMethod;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.model.NodeResource;
@@ -54,7 +55,7 @@ public class StartCachesOnStartup {
     @Remote("rex-signals")
     RemoteCache<String, NodeResource> signal;
 
-    @Startup
+    @Startup(ObserverMethod.DEFAULT_PRIORITY - 1)
     void onStart() {
         log.info("Startup: Initializing ISPN caches!");
         try {

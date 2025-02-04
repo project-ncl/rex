@@ -42,31 +42,30 @@ public class TolerantQueueManager implements QueueManager {
 
     @Override
     @ApplyFaultTolerance("internal-retry")
-    public void decreaseRunningCounter() {
-        delegate.decreaseRunningCounter();
+    public void decreaseRunningCounter(String name) {
+        delegate.decreaseRunningCounter(name);
+    }
+
+    @Override
+    public void setMaximumConcurrency(String name, Long amount) {
+        delegate.setMaximumConcurrency(name, amount);
     }
 
     @Override
     @ApplyFaultTolerance("internal-retry")
-    public void setMaximumConcurrency(Long amount) {
-        delegate.setMaximumConcurrency(amount);
+    public Long getMaximumConcurrency(String name) {
+        return delegate.getMaximumConcurrency(name);
     }
 
     @Override
     @ApplyFaultTolerance("internal-retry")
-    public Long getMaximumConcurrency() {
-        return delegate.getMaximumConcurrency();
+    public void synchronizeRunningCounter() {
+        delegate.synchronizeRunningCounter();
     }
 
     @Override
     @ApplyFaultTolerance("internal-retry")
-    public Long synchronizeRunningCounter() {
-        return delegate.synchronizeRunningCounter();
-    }
-
-    @Override
-    @ApplyFaultTolerance("internal-retry")
-    public Long getRunningCounter() {
-        return delegate.getRunningCounter();
+    public Long getRunningCounter(String name) {
+        return delegate.getRunningCounter(name);
     }
 }

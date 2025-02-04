@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.api;
 
+import jakarta.ws.rs.*;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -29,12 +30,6 @@ import org.jboss.pnc.rex.dto.responses.LongResponse;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
 @Tag(name = "Endpoint for queue administration")
@@ -43,7 +38,7 @@ public interface QueueEndpoint {
 
     String SET_CONCURRENT = "/concurrency";
     @Path(SET_CONCURRENT)
-    @Operation(summary = "[ADMIN] Sets the amount of possible concurrent tasks. Tasks that are currently running are never affected.")
+    @Operation(summary = "[ADMIN] Sets the amount of possible concurrent tasks from DEFAULT queue. Tasks that are currently running are never affected.")
     @APIResponses(value = {
         @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
         @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
@@ -54,10 +49,23 @@ public interface QueueEndpoint {
     @POST
     void setConcurrent(@QueryParam("amount") @NotNull @Min(0) Long amount);
 
+    String SET_CONCURRENT_NAMED = "/{name}/concurrency";
+    @Path(SET_CONCURRENT_NAMED)
+    @Operation(summary = "[ADMIN] Sets the amount of possible concurrent tasks in a NAMED queue. Tasks that are currently running are never affected.")
+    @APIResponses(value = {
+        @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
+        @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @POST
+    void setConcurrentNamed(@PathParam("name") String name, @QueryParam("amount") @NotNull @Min(0) Long amount);
+
     String GET_CONCURRENT = "/concurrency";
     @Path(GET_CONCURRENT)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Returns amount of possible concurrent tasks.")
+    @Operation(summary = "Returns amount of possible concurrent tasks from DEFAULT queue.")
     @APIResponses(value = {
         @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
             content = @Content(schema = @Schema(implementation = LongResponse.class))),
@@ -68,6 +76,21 @@ public interface QueueEndpoint {
     })
     @GET
     LongResponse getConcurrent();
+
+    String GET_CONCURRENT_NAMED = "/{name}/concurrency";
+    @Path(GET_CONCURRENT_NAMED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns amount of possible concurrent tasks from a NAMED queue.")
+    @APIResponses(value = {
+        @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = LongResponse.class))),
+        @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GET
+    LongResponse getConcurrentNamed(@PathParam("name") String name);
 
     String GET_RUNNING = "/running";
     @Path(GET_RUNNING)
@@ -83,4 +106,19 @@ public interface QueueEndpoint {
     })
     @GET
     LongResponse getRunning();
+
+    String GET_RUNNING_NAMED = "/{name}/running";
+    @Path(GET_RUNNING_NAMED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Returns amount of active tasks in queue (excluding ENQUEUED).")
+    @APIResponses(value = {
+        @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = LongResponse.class))),
+        @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GET
+    LongResponse getRunningNamed(@PathParam("name") String name);
 }

@@ -38,6 +38,8 @@ public class CreateTaskDTO {
 
     public String constraint;
 
+    public String queue;
+
     @NotNull
     public Request remoteStart;
 

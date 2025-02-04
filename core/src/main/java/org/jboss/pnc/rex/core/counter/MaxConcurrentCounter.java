@@ -18,6 +18,7 @@
 package org.jboss.pnc.rex.core.counter;
 
 import io.quarkus.infinispan.client.Remote;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
@@ -25,11 +26,16 @@ import org.infinispan.client.hotrod.VersionedValue;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
 
+import java.util.Map;
+
+import static java.util.stream.Collectors.toMap;
+
 @MaxConcurrent
 @ApplicationScoped
 public class MaxConcurrentCounter implements Counter {
 
     public static final String MAX_COUNTER_KEY = "MAX_CONCURRENT";
+    public static final String NAME_SEPARATOR = "-";
 
     @Remote("rex-counter")
     RemoteCache<String, Long> counterCache;
@@ -37,33 +43,67 @@ public class MaxConcurrentCounter implements Counter {
     @Inject
     TaskConfiguration taskConfig;
 
-    @Override
-    public VersionedValue<Long> getMetadataValue() {
-        VersionedValue<Long> metadata = counterCache.getWithMetadata(MAX_COUNTER_KEY);
-        if(metadata == null) {
-            initialize((long) taskConfig.defaultConcurrency());
-            metadata = counterCache.getWithMetadata(MAX_COUNTER_KEY);
+    private String resolveKey(String optionalKey) {
+        if (optionalKey == null) {
+            // DEFAULT QUEUE KEY
+            return MAX_COUNTER_KEY;
+        } else if (optionalKey.isBlank()) {
+            throw new IllegalArgumentException("Counter key must not be blank");
         }
+
+        // GENERATED NAMED QUEUE KEY
+        return MAX_COUNTER_KEY + NAME_SEPARATOR + optionalKey;
+    }
+
+    @Override
+    public VersionedValue<Long> getMetadataValue(String key) {
+        VersionedValue<Long> metadata = counterCache.getWithMetadata(resolveKey(key));
+
+        // init default queue
+        if (metadata == null && key == null) {
+            initialize(null, (long) taskConfig.defaultConcurrency());
+            metadata = counterCache.getWithMetadata(resolveKey(null));
+        }
+
         return metadata;
     }
 
     @Override
-    public boolean replaceValue(VersionedValue<Long> previousValue, Long value) {
-        return counterCache.replaceWithVersion(MAX_COUNTER_KEY, value, previousValue.getVersion());
+    public boolean replaceValue(String key, VersionedValue<Long> previousValue, Long value) {
+        return counterCache.replaceWithVersion(resolveKey(key), value, previousValue.getVersion());
     }
 
     @Override
-    public Long getValue() {
-        return counterCache.get(MAX_COUNTER_KEY);
+    public Long getValue(String key) {
+        return counterCache.get(resolveKey(key));
     }
 
     @Override
-    public boolean replaceValue(Long previousValue, Long newValue) {
-        return counterCache.replace(MAX_COUNTER_KEY, previousValue, newValue);
+    public boolean replaceValue(String key, Long previousValue, Long newValue) {
+        return counterCache.replace(resolveKey(key), previousValue, newValue);
     }
 
     @Override
-    public void initialize(Long initialValue) {
-        counterCache.put(MAX_COUNTER_KEY, initialValue);
+    public void initialize(@Nullable String key, Long initialValue) {
+        counterCache.put(resolveKey(key), initialValue);
+    }
+
+    @Override
+    public Map<String, Long> entries() {
+        Map<String, Long> entries = counterCache.entrySet().stream()
+                .filter(e -> e.getKey().startsWith(MAX_COUNTER_KEY))
+                .collect(toMap(
+                        entry -> entry.getKey()
+                                .replaceFirst(MAX_COUNTER_KEY, "")
+                                .replaceFirst(NAME_SEPARATOR, ""),
+                        Map.Entry::getValue));
+
+        // should be always true, unless default queue was never initialized
+        if (entries.containsKey("")) {
+            // make the default queue key be 'null' by which it is accessed in other methods
+            Long defaultQueueValue = entries.remove("");
+            entries.put(null, defaultQueueValue);
+        }
+        return entries;
     }
 }

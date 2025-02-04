@@ -40,6 +40,8 @@ public class CreateGraphRequest {
 
     public String correlationID;
 
+    public String queue;
+
     public ConfigurationDTO graphConfiguration;
 
     @Singular

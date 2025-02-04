@@ -36,6 +36,7 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
 
     @Override
     @Mapping(target = "edge", ignore = true)
+    @Mapping(target = "queue", ignore = true)
     @Mapping(target = "correlationID", ignore = true)
     @Mapping(target = "graphConfiguration", ignore = true)
     CreateGraphRequest toDTO(TaskGraph dbEntity);
@@ -44,7 +45,8 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
     @Mapping(target = "edge", ignore = true)
     //correlationID is used in applyCorrelationID method
     //graphConfiguration is used in mergeWithGraphConfig method
-    @BeanMapping(ignoreUnmappedSourceProperties = {"correlationID", "graphConfiguration"})
+    //queue is used in mergeWithGraphQueue method
+    @BeanMapping(ignoreUnmappedSourceProperties = {"correlationID", "graphConfiguration", "queue"})
     TaskGraph toDB(CreateGraphRequest dtoEntity);
 
     @AfterMapping
@@ -75,6 +77,23 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
 
             // apply merged configuration
             entry.getValue().configuration = merge(taskConfig, graphConfig);
+        }
+    }
+
+    @BeforeMapping
+    default void mergeWithGraphQueue(CreateGraphRequest request) {
+        if (request == null || request.getQueue() == null) {
+            return;
+        }
+
+        for (var entry : request.getVertices().entrySet()) {
+            var globalQueueSetting = request.getQueue();
+            var taskQueueSetting = entry.getValue().getQueue();
+
+            // apply queue configured in the top of the graph if task has it unspecified
+            if (taskQueueSetting == null) {
+                entry.getValue().queue = globalQueueSetting;
+            }
         }
     }
 
