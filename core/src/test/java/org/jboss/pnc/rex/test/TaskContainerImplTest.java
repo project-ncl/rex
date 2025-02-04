@@ -23,16 +23,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.jboss.pnc.rex.test.common.Assertions.assertCorrectTaskRelations;
 import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAre;
 import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.test.common.TestData.getComplexGraph;
-import static org.jboss.pnc.rex.test.common.TestData.getEndpointWithStart;
-import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithStart;
 import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
-import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithoutStart;
-import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
-import static org.jboss.pnc.rex.test.common.TestData.getRequestWithoutStart;
-import static org.jboss.pnc.rex.test.common.TestData.getSingleWithoutStart;
-import static org.jboss.pnc.rex.test.common.TestData.getStopRequest;
-import static org.jboss.pnc.rex.test.common.TestData.getStopRequestWithCallback;
+import static org.jboss.pnc.rex.test.common.TestData.*;
 
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.common.http.TestHTTPResource;
@@ -45,7 +37,9 @@ import jakarta.transaction.TransactionManager;
 import io.quarkus.test.security.TestSecurity;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
@@ -54,6 +48,7 @@ import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
 import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
 import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
 import org.jboss.pnc.rex.core.TaskContainerImpl;
+import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.core.counter.Counter;
@@ -76,6 +71,7 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -94,6 +90,9 @@ class TaskContainerImplTest extends AbstractTest {
 
     @Inject
     TaskEndpoint taskEndpoint;
+
+    @Inject
+    QueueEndpoint queue;
 
     @TestHTTPEndpoint(TaskEndpoint.class)
     @TestHTTPResource
@@ -322,7 +321,7 @@ class TaskContainerImplTest extends AbstractTest {
         // sleep because running counter takes time to update
         Thread.sleep(100);
         assertThat(running.getValue(null)).isEqualTo(0);
-        assertThat(container.getTasks(true, true, true, true)).extracting("name", String.class)
+        assertThat(container.getTasks(true, true, true, true, null)).extracting("name", String.class)
                 .doesNotContain(services);
     }
 
@@ -380,7 +379,7 @@ class TaskContainerImplTest extends AbstractTest {
 
         waitTillTasksAreFinishedWith(State.STOPPED, services);
 
-        assertThat(container.getTasks(true, true, true, true)).extracting("name", String.class)
+        assertThat(container.getTasks(true, true, true, true, null)).extracting("name", String.class)
                 .doesNotContain(request.getVertices().keySet().toArray(new String[0]));
     }
 
@@ -388,7 +387,7 @@ class TaskContainerImplTest extends AbstractTest {
     public void testQuery() throws Exception {
         taskEndpoint.start(getComplexGraph(false));
 
-        assertThat(container.getTasks(true, true, true, true)).hasSize(11);
+        assertThat(container.getTasks(true, true, true, true, null)).hasSize(11);
     }
 
     @Test
@@ -532,7 +531,7 @@ class TaskContainerImplTest extends AbstractTest {
         // sleep because running counter takes time to update
         Thread.sleep(50);
         assertThat(running.getValue(null)).isEqualTo(0);
-        assertThat(container.getTasks(true, true, true, true)).extracting("name", String.class)
+        assertThat(container.getTasks(true, true, true, true, null)).extracting("name", String.class)
                 .doesNotContain(randomDAG.getVertices().keySet().toArray(new String[0]));
     }
 
@@ -603,6 +602,58 @@ class TaskContainerImplTest extends AbstractTest {
 
         Map<String, Object> taskResults = startRequest.getTaskResults();
         assertThat(taskResults).isNull();
+    }
+
+    @Test
+    public void testGetTasksByQueue() throws InterruptedException {
+        // with
+        String NAMED_QUEUE = "named";
+        String NAMED_QUEUE_2 = "named-2";
+
+        queue.setConcurrent(0L);
+        queue.setConcurrentNamed(NAMED_QUEUE, 0L);
+        queue.setConcurrentNamed(NAMED_QUEUE_2, 0L);
+
+        CreateGraphRequest graph = getComplexGraph(false);
+
+        graph.getVertices().get("a").queue = null;
+        graph.getVertices().get("b").queue = NAMED_QUEUE_2;
+        graph.getVertices().get("c").queue = NAMED_QUEUE;
+        graph.getVertices().get("d").queue = NAMED_QUEUE_2;
+        graph.getVertices().get("e").queue = NAMED_QUEUE;
+        graph.getVertices().get("f").queue = null;
+        graph.getVertices().get("g").queue = null;
+        graph.getVertices().get("h").queue = NAMED_QUEUE_2;
+        graph.getVertices().get("i").queue = NAMED_QUEUE_2;
+        graph.getVertices().get("j").queue = NAMED_QUEUE;
+
+        // when
+        taskEndpoint.start(graph);
+        Thread.sleep(100);
+
+        //then
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters(), null);
+        assertThat(all).hasSize(11); // 10 + dummy
+
+        Set<TaskDTO> allNamed = taskEndpoint.getAll(getAllParameters(), List.of(NAMED_QUEUE));
+        assertThat(allNamed)
+                .hasSize(3)
+                .extracting("name", String.class)
+                .containsExactlyInAnyOrder("c", "e", "j");
+
+        Set<TaskDTO> allBothNamed = taskEndpoint.getAll(getAllParameters(), List.of(NAMED_QUEUE, NAMED_QUEUE_2));
+        assertThat(allBothNamed)
+                .hasSize(7)
+                .extracting("name", String.class)
+                .containsExactlyInAnyOrder("b", "c", "d", "e", "h", "i", "j");
+
+        Set<TaskDTO> alsoAll = taskEndpoint.getAll(getAllParameters(), List.of(NAMED_QUEUE, NAMED_QUEUE_2, "null"));
+        assertThat(alsoAll).hasSize(11); // 10 + dummy
+
+        Set<TaskDTO> justDefault = taskEndpoint.getAll(getAllParameters(), List.of("null"));
+        assertThat(justDefault).hasSize(4)
+                .extracting("name", String.class)
+                .containsExactlyInAnyOrder("a", "f", "g", EXISTING_KEY);
     }
 
     private void putDummyTask() {

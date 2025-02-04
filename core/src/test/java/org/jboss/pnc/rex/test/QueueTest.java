@@ -102,7 +102,7 @@ public class QueueTest extends AbstractTest {
 
         //wait a 1/10 sec
         Thread.sleep(100);
-        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters(), null);
         assertThat(all)
                 .extracting("state", State.class)
                 .allMatch((state -> state.isIdle() || state.isQueued()));
@@ -118,7 +118,7 @@ public class QueueTest extends AbstractTest {
         taskEndpoint.start(getSingleWithoutStart(EXISTING_KEY));
 
         TaskFilterParameters params = getAllParameters();
-        Set<TaskDTO> tasks = taskEndpoint.getAll(params);
+        Set<TaskDTO> tasks = taskEndpoint.getAll(params, null);
         assertThat(tasks).hasSize(1);
 
         TaskDTO task = tasks.iterator().next();
@@ -171,7 +171,7 @@ public class QueueTest extends AbstractTest {
         Thread.sleep(100);
 
         // then
-        var tasks = taskEndpoint.getAll(getAllParameters());
+        var tasks = taskEndpoint.getAll(getAllParameters(), null);
         assertThat(tasks).hasSize(10);
         assertThat(tasks).extracting("queue", String.class)
                 .doesNotContainNull()
@@ -194,7 +194,7 @@ public class QueueTest extends AbstractTest {
         Thread.sleep(100);
 
         // then
-        var tasks = taskEndpoint.getAll(getAllParameters());
+        var tasks = taskEndpoint.getAll(getAllParameters(), null);
         assertThat(tasks).hasSize(10);
         assertThat(tasks).extracting("queue", String.class)
                 .doesNotContainNull()
@@ -228,7 +228,7 @@ public class QueueTest extends AbstractTest {
 
         taskEndpoint.start(graph);
         Thread.sleep(100);
-        var tasks = taskEndpoint.getAll(getAllParameters());
+        var tasks = taskEndpoint.getAll(getAllParameters(), null);
 
 
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
@@ -257,7 +257,7 @@ public class QueueTest extends AbstractTest {
 
         taskEndpoint.start(graph);
         Thread.sleep(100);
-        var tasks = taskEndpoint.getAll(getAllParameters());
+        var tasks = taskEndpoint.getAll(getAllParameters(), null);
         assertThat(tasks).hasSize(10)
                 .allMatch((task) -> task.getState().isIdle() || task.getState().isQueued());
 
@@ -292,7 +292,7 @@ public class QueueTest extends AbstractTest {
         taskEndpoint.start(graph);
         Thread.sleep(100);
 
-        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters(), null);
         assertThat(all).hasSize(2);
         Map<String, TaskDTO> tasks = all.stream().collect(toMap(TaskDTO::getName, Function.identity()));
         assertThat(tasks.get("a")).extracting(TaskDTO::getState).isEqualTo(State.ENQUEUED);
@@ -302,7 +302,7 @@ public class QueueTest extends AbstractTest {
         queue.setConcurrent(1L);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, "a");
 
-        all = taskEndpoint.getAll(getAllParameters());
+        all = taskEndpoint.getAll(getAllParameters(), null);
 
         assertThat(all).hasSize(2);
         tasks = all.stream().collect(toMap(TaskDTO::getName, Function.identity()));
@@ -335,7 +335,7 @@ public class QueueTest extends AbstractTest {
         taskEndpoint.start(graph);
         Thread.sleep(100);
 
-        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters(), null);
         assertThat(all).hasSize(2);
         Map<String, TaskDTO> tasks = all.stream().collect(toMap(TaskDTO::getName, Function.identity()));
         assertThat(tasks.get("a")).extracting(TaskDTO::getState).isEqualTo(State.ENQUEUED);
@@ -346,7 +346,7 @@ public class QueueTest extends AbstractTest {
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, "a");
         Thread.sleep(100);
 
-        all = taskEndpoint.getAll(getAllParameters());
+        all = taskEndpoint.getAll(getAllParameters(), null);
 
         assertThat(all).hasSize(2);
         tasks = all.stream().collect(toMap(TaskDTO::getName, Function.identity()));
@@ -385,7 +385,7 @@ public class QueueTest extends AbstractTest {
         taskEndpoint.start(graph);
         Thread.sleep(100);
 
-        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters());
+        Set<TaskDTO> all = taskEndpoint.getAll(getAllParameters(), null);
         assertThat(all).hasSize(3);
         Map<String, TaskDTO> tasks = all.stream().collect(toMap(TaskDTO::getName, Function.identity()));
         assertThat(tasks.get("a")).extracting(TaskDTO::getState).isEqualTo(State.ENQUEUED);

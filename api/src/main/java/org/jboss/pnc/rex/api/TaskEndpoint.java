@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.api;
 
+import jakarta.annotation.Nullable;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -42,7 +43,10 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+
+import java.util.List;
 import java.util.Set;
 
 @Tag(name = "Task endpoint")
@@ -78,7 +82,11 @@ public interface TaskEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     Set<TaskDTO> start(@Valid @NotNull CreateGraphRequest request);
 
-    @Operation(summary = "Returns list of all tasks with optional filtering.")
+    @Operation(description = "Returns list of all tasks with optional filtering.\n " +
+            "Unspecified queueFilter returns all tasks.\n" +
+            "Specifying more than one queueFilter will include all tasks in those queues.\n" +
+            "To filter by 'default' queue use 'null' String.\n",
+            summary = "Returns list of all tasks with optional filtering.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.NO_CONTENT_CODE, description = OpenapiConstants.NO_CONTENT_DESCRIPTION),
@@ -89,7 +97,7 @@ public interface TaskEndpoint {
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    Set<TaskDTO> getAll(@BeanParam TaskFilterParameters filterParameters);
+    Set<TaskDTO> getAll(@BeanParam TaskFilterParameters filterParameters, @QueryParam("queue") @Nullable List<String> queueFilter);
 
     String GET_SPECIFIC_PATH = "/{taskID}";
     @Path(GET_SPECIFIC_PATH)

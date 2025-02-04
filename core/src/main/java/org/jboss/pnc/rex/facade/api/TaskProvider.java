@@ -32,7 +32,7 @@ public interface TaskProvider {
      *
      * @return set of services
      */
-    Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished);
+    Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished, List<String> queueFilter);
 
     /**
      * Cancels execution of the service and its dependants

@@ -91,8 +91,8 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Override
-    public Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished) {
-        return registry.getTasks(waiting, waiting, running, finished).stream()
+    public Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished, List<String> queueFilter) {
+        return registry.getTasks(waiting, waiting, running, finished, queueFilter).stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toSet());
     }

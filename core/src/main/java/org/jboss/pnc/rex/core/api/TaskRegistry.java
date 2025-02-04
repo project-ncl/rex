@@ -52,13 +52,14 @@ public interface TaskRegistry {
      * <p>
      * (Can be costly without filters)
      *
-     * @param waiting  is in StateGroup.IDLE state
-     * @param queued  is in StateGroup.QUEUED state
-     * @param running  is in StateGroup.RUNNING state
-     * @param finished  is in StateGroup.FINAL state
+     * @param waiting     is in StateGroup.IDLE state
+     * @param queued      is in StateGroup.QUEUED state
+     * @param running     is in StateGroup.RUNNING state
+     * @param finished    is in StateGroup.FINAL state
+     * @param queueFilter is in particular queue
      * @return list of filtered services
      */
-    List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished);
+    List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished, List<String> queueFilter);
 
 
     /**

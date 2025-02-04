@@ -149,7 +149,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     }
 
     @Override
-    public List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished) {
+    public List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished, List<String> queueFilter) {
         if (!waiting && !running && !finished)
             return Collections.emptyList();
 
@@ -180,7 +180,17 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                 .map(state -> "'" + state.toString() + "'")
                 .reduce((first, second) -> first + ',' + second)
                 .get();
-        Query<Task> query = factory.create("FROM rex_model.Task WHERE state IN (" + filter + ")");
+
+        String queueClause = "";
+        if (queueFilter != null) {
+            queueClause += " AND (";
+            queueClause += queueFilter.stream()
+                    .map(queue -> queue == null ? "queue IS NULL" : "queue = '" + queue + "'")
+                    .collect(Collectors.joining(" OR "));
+            queueClause += ")";
+        }
+
+        Query<Task> query = factory.create("FROM rex_model.Task WHERE state IN (" + filter + ")" + queueClause);
 
         return query.execute().list();
     }

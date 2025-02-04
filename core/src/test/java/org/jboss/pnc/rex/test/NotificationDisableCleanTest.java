@@ -67,7 +67,7 @@ public class NotificationDisableCleanTest extends AbstractTest {
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, request.getVertices().keySet().toArray(new String[0]));
 
         Thread.sleep(100);
-        Set<TaskDTO> all = endpoint.getAll(TestData.getAllParameters());
+        Set<TaskDTO> all = endpoint.getAll(TestData.getAllParameters(), null);
         Predicate<TaskDTO> sizePredicate = (task) -> task.getServerResponses() != null
                 && task.getServerResponses().size() == 2;
         Predicate<TaskDTO> responsePredicate = (task) -> {
@@ -165,7 +165,7 @@ public class NotificationDisableCleanTest extends AbstractTest {
                 .filter(task -> !List.of("a", "b").contains(task)) // both A and B will be SUCCESS; others STOPPED
                 .toArray(String[]::new));
         Thread.sleep(100);
-        Set<TaskDTO> all = endpoint.getAll(getAllParameters());
+        Set<TaskDTO> all = endpoint.getAll(getAllParameters(), null);
 
         // then
         assertThat(all).hasSize(10);

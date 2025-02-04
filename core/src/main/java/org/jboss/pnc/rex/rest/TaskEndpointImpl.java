@@ -28,6 +28,9 @@ import org.jboss.pnc.rex.facade.api.TaskProvider;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @ApplicationScoped
@@ -48,14 +51,25 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
-    public Set<TaskDTO> getAll(TaskFilterParameters filterParameters) {
+    public Set<TaskDTO> getAll(TaskFilterParameters filterParameters, List<String> queueFilter) {
+        // a small hack to be able to request only 'default' queue which is indexed by null
+        if (queueFilter != null && queueFilter.contains("null")) {
+            queueFilter = new ArrayList<>(queueFilter);
+            queueFilter.remove("null");
+            queueFilter.add(null);
+        }
+
         Boolean allFiltersAreFalse = !filterParameters.getFinished() && !filterParameters.getRunning() && !filterParameters.getWaiting();
 
         //If query is empty return all services
         if (allFiltersAreFalse) {
-            return taskProvider.getAll(true,true,true);
+            return taskProvider.getAll(true,true,true, queueFilter);
         }
-        return taskProvider.getAll(filterParameters.getWaiting(), filterParameters.getRunning(), filterParameters.getFinished());
+        return taskProvider.getAll(
+                filterParameters.getWaiting(),
+                filterParameters.getRunning(),
+                filterParameters.getFinished(),
+                queueFilter);
     }
 
     @Override

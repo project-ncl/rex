@@ -161,7 +161,7 @@ public class NotificationTest extends AbstractTest {
                 });
         Thread.sleep(100);
 
-        assertThat(endpoint.getAll(getAllParameters())).isEmpty();
+        assertThat(endpoint.getAll(getAllParameters(), null)).isEmpty();
     }
 
     @Test
@@ -188,7 +188,7 @@ public class NotificationTest extends AbstractTest {
         Thread.sleep(100);
 
         // assert task was deleted
-        assertThat(endpoint.getAll(getAllParameters())).extracting(TaskDTO::getName).doesNotContain(taskName);
+        assertThat(endpoint.getAll(getAllParameters(), null)).extracting(TaskDTO::getName).doesNotContain(taskName);
 
         endpoint.start(reqBadNot);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskName);
@@ -228,14 +228,14 @@ public class NotificationTest extends AbstractTest {
         Thread.sleep(100);
 
         // assert task was not deleted
-        assertThat(endpoint.getAll(getAllParameters())).extracting(TaskDTO::getName).contains(taskName);
+        assertThat(endpoint.getAll(getAllParameters(), null)).extracting(TaskDTO::getName).contains(taskName);
 
         // should proceed because shared constraint should be cleared
         assertThatNoException().isThrownBy(() -> endpoint.start(reqAfter));
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, otherTaskName);
         Thread.sleep(100);
 
-        assertThat(endpoint.getAll(getAllParameters())).extracting(TaskDTO::getName).doesNotContain(otherTaskName);
+        assertThat(endpoint.getAll(getAllParameters(), null)).extracting(TaskDTO::getName).doesNotContain(otherTaskName);
 
     }
 }
