@@ -74,7 +74,7 @@ public class QueueManagerImpl implements QueueManager {
             Long runningValue = runningEntries.get(queue);
 
             if (runningValue >= maxValue) {
-                log.debug("QUEUE '{}': Maximum number of parallel builds reached.({} out of {})",
+                log.debug("QUEUE '{}': Maximum number of parallel tasks reached.({} out of {})",
                         queue == null ? "DEFAULT" : queue,
                         runningValue,
                         maxValue);
