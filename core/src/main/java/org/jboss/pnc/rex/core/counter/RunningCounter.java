@@ -22,6 +22,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import org.jboss.pnc.rex.core.common.Constants;
 
 import java.util.Map;
 
@@ -31,22 +32,19 @@ import static java.util.stream.Collectors.toMap;
 @ApplicationScoped
 public class RunningCounter implements Counter {
 
-    public static final String RUNNING_KEY = "RUNNING";
-    public static final String NAME_SEPARATOR = "-";
-
     @Remote("rex-counter")
     RemoteCache<String, Long> counterCache;
 
     private String resolveKey(String optionalKey) {
         if (optionalKey == null) {
             // DEFAULT QUEUE KEY
-            return RUNNING_KEY;
+            return Constants.RUNNING_COUNTER_KEY;
         } else if (optionalKey.isBlank()) {
             throw new IllegalArgumentException("Counter key must not be blank");
         }
 
         // GENERATED NAMED QUEUE KEY
-        return RUNNING_KEY + NAME_SEPARATOR + optionalKey;
+        return Constants.RUNNING_COUNTER_KEY + Constants.NAME_SEPARATOR + optionalKey;
     }
 
     @Override
@@ -85,11 +83,11 @@ public class RunningCounter implements Counter {
     @Override
     public Map<String, Long> entries() {
         Map<String, Long> entries = counterCache.entrySet().stream()
-                .filter(e -> e.getKey().startsWith(RUNNING_KEY))
+                .filter(e -> e.getKey().startsWith(Constants.RUNNING_COUNTER_KEY))
                 .collect(toMap(
                         entry -> entry.getKey()
-                                .replaceFirst(RUNNING_KEY, "")
-                                .replaceFirst(NAME_SEPARATOR, ""),
+                                .replaceFirst(Constants.RUNNING_COUNTER_KEY, "")
+                                .replaceFirst(Constants.NAME_SEPARATOR, ""),
                         Map.Entry::getValue));
 
         // should be always true, unless default queue was never initialized

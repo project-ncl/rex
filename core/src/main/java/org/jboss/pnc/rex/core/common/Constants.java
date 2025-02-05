@@ -15,27 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.facade.api;
+package org.jboss.pnc.rex.core.common;
 
-import jakarta.annotation.Nullable;
-import org.jboss.pnc.rex.dto.responses.LongResponse;
-
-/**
- * Public interface for managing scheduler's settings on runtime.
- */
-public interface OptionsProvider {
+public class Constants {
 
     /**
-     * Sets the maximum amount of concurrent Tasks. The method does not have effect on already running Tasks.
-     *
-     * @param amount amount to be set
+     * This is a prefix key for Max counter used in Queue implementation.
      */
-    void setConcurrency(@Nullable String queueName, Long amount);
+    public static final String MAX_COUNTER_KEY = "MAX_CONCURRENT";
 
     /**
-     * Return current amount of concurrent tasks.
-     *
-     * @return maximum concurrent Tasks
+     * This is a prefix key for Running counter used in Queue implementation.
      */
-    LongResponse getConcurrency(@Nullable String queueName);
+    public static final String RUNNING_COUNTER_KEY = "RUNNING";
+
+    /**
+     * Separates prefix key and name in Counter.class implementations.
+     */
+    public static final String NAME_SEPARATOR = "-";
 }

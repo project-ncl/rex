@@ -24,6 +24,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import org.jboss.pnc.rex.core.common.Constants;
 import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
 
 import java.util.Map;
@@ -34,9 +35,6 @@ import static java.util.stream.Collectors.toMap;
 @ApplicationScoped
 public class MaxConcurrentCounter implements Counter {
 
-    public static final String MAX_COUNTER_KEY = "MAX_CONCURRENT";
-    public static final String NAME_SEPARATOR = "-";
-
     @Remote("rex-counter")
     RemoteCache<String, Long> counterCache;
 
@@ -46,13 +44,13 @@ public class MaxConcurrentCounter implements Counter {
     private String resolveKey(String optionalKey) {
         if (optionalKey == null) {
             // DEFAULT QUEUE KEY
-            return MAX_COUNTER_KEY;
+            return Constants.MAX_COUNTER_KEY;
         } else if (optionalKey.isBlank()) {
             throw new IllegalArgumentException("Counter key must not be blank");
         }
 
         // GENERATED NAMED QUEUE KEY
-        return MAX_COUNTER_KEY + NAME_SEPARATOR + optionalKey;
+        return Constants.MAX_COUNTER_KEY + Constants.NAME_SEPARATOR + optionalKey;
     }
 
     @Override
@@ -91,11 +89,11 @@ public class MaxConcurrentCounter implements Counter {
     @Override
     public Map<String, Long> entries() {
         Map<String, Long> entries = counterCache.entrySet().stream()
-                .filter(e -> e.getKey().startsWith(MAX_COUNTER_KEY))
+                .filter(e -> e.getKey().startsWith(Constants.MAX_COUNTER_KEY))
                 .collect(toMap(
                         entry -> entry.getKey()
-                                .replaceFirst(MAX_COUNTER_KEY, "")
-                                .replaceFirst(NAME_SEPARATOR, ""),
+                                .replaceFirst(Constants.MAX_COUNTER_KEY, "")
+                                .replaceFirst(Constants.NAME_SEPARATOR, ""),
                         Map.Entry::getValue));
 
         // should be always true, unless default queue was never initialized
