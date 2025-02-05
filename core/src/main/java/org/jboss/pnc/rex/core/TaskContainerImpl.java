@@ -182,7 +182,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                 .get();
 
         String queueClause = "";
-        if (queueFilter != null) {
+        if (queueFilter != null && !queueFilter.isEmpty()) {
             queueClause += " AND (";
             queueClause += queueFilter.stream()
                     .map(queue -> queue == null ? "queue IS NULL" : "queue = '" + queue + "'")
