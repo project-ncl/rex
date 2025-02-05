@@ -19,7 +19,10 @@ package org.jboss.pnc.rex.facade;
 
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import org.jboss.pnc.rex.common.exceptions.QueueMissingException;
 import org.jboss.pnc.rex.core.api.QueueManager;
+import org.jboss.pnc.rex.dto.responses.ErrorResponse;
 import org.jboss.pnc.rex.dto.responses.LongResponse;
 import org.jboss.pnc.rex.facade.api.OptionsProvider;
 
@@ -48,7 +51,7 @@ public class OptionsProviderImpl implements OptionsProvider {
         Long concurrency = manager.getMaximumConcurrency(queueName);
 
         if (concurrency == null) {
-            throw new NotFoundException("No queue found with name: " + queueName);
+            throw new QueueMissingException("Queue with name " + queueName + " not found.", queueName);
         }
 
         return LongResponse

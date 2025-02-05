@@ -22,6 +22,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.api.QueueEndpoint;
+import org.jboss.pnc.rex.common.exceptions.QueueMissingException;
 import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.dto.responses.LongResponse;
 import org.jboss.pnc.rex.facade.api.OptionsProvider;
@@ -73,7 +74,7 @@ public class QueueEndpointImpl implements QueueEndpoint {
     public LongResponse getRunningNamed(String name) {
         Long runningCounter = getRunningCounter(name);
         if (runningCounter == null) {
-            throw new NotFoundException("No queue found with name: " + name);
+            throw new QueueMissingException("Queue with name " + name + " not found.", name);
         }
 
         return LongResponse.builder().number(runningCounter).build();

@@ -86,6 +86,8 @@ public interface QueueEndpoint {
             content = @Content(schema = @Schema(implementation = LongResponse.class))),
         @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = OpenapiConstants.NOT_FOUND_CODE, description = OpenapiConstants.NOT_FOUND_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -115,6 +117,8 @@ public interface QueueEndpoint {
         @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION,
             content = @Content(schema = @Schema(implementation = LongResponse.class))),
         @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @APIResponse(responseCode = OpenapiConstants.NOT_FOUND_CODE, description = OpenapiConstants.NOT_FOUND_DESCRIPTION,
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
         @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
