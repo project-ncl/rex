@@ -690,6 +690,16 @@
                 }
               }
             }
+          },
+          "404" : {
+            "description" : "Can not find specified result",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -765,6 +775,16 @@
           },
           "500" : {
             "description" : "Server error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Can not find specified result",
             "content" : {
               "application/json" : {
                 "schema" : {
