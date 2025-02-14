@@ -50,6 +50,7 @@ import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
 import org.jboss.pnc.rex.core.TaskContainerImpl;
 import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
@@ -565,7 +566,7 @@ class TaskContainerImplTest extends AbstractTest {
         Object lastRequest = requests.toArray()[requests.size() - 1];
         StartRequest startRequest = (StartRequest) lastRequest;
 
-        Map<String, Object> taskResults = startRequest.getTaskResults();
+        Map<String, ServerResponse> taskResults = startRequest.getTaskResults();
         assertThat(taskResults).isNotEmpty();
         assertThat(taskResults.keySet()).contains("service1");
         assertThat(taskResults.get("service1")).isNotNull();
@@ -600,7 +601,7 @@ class TaskContainerImplTest extends AbstractTest {
         Object lastRequest = requests.toArray()[requests.size() - 1];
         StartRequest startRequest = (StartRequest) lastRequest;
 
-        Map<String, Object> taskResults = startRequest.getTaskResults();
+        Map<String, ServerResponse> taskResults = startRequest.getTaskResults();
         assertThat(taskResults).isNull();
     }
 

@@ -18,6 +18,7 @@
 package org.jboss.pnc.rex.core.api;
 
 import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
+import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 
 import java.util.Collection;
@@ -69,7 +70,7 @@ public interface TaskRegistry {
      * @param task task to return task results
      * @return Map of taskName and the result
      */
-    Map<String, Object> getTaskResults(Task task);
+    Map<String, ServerResponse> getTaskResults(Task task);
 
     List<Task> getEnqueuedTasks(long limit);
 

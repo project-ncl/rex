@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
+import org.jboss.pnc.rex.model.ServerResponse;
 
 import java.util.Map;
 
@@ -56,5 +57,5 @@ public class StartRequest {
 
     private final Map<String, String> mdc;
 
-    private final Map<String, Object> taskResults;
+    private final Map<String, ServerResponse> taskResults;
 }

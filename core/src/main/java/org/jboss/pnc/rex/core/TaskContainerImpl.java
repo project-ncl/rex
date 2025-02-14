@@ -195,9 +195,9 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         return query.execute().list();
     }
 
-    public Map<String, Object> getTaskResults(Task task) {
+    public Map<String, ServerResponse> getTaskResults(Task task) {
 
-        Map<String, Object> taskResults = new HashMap<>();
+        Map<String, ServerResponse> taskResults = new HashMap<>();
         // tasks that this task depends on
         Set<String> dependencies = task.getDependencies();
 
@@ -212,7 +212,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                 taskResults.put(taskName, serverResponses.get(serverResponses.size() - 1));
             } else {
                 // just add an empty object?
-                taskResults.put(taskName, new Object());
+                taskResults.put(taskName, ServerResponse.builder().build());
             }
         }
 

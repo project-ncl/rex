@@ -30,9 +30,11 @@ import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.core.config.ApplicationConfig;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
+import org.jboss.pnc.rex.dto.ServerResponseDTO;
 import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
+import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.jboss.pnc.rex.model.requests.StopRequest;
@@ -258,7 +260,7 @@ public class RemoteEntityClient {
      *
      * @return task results of dependencies
      */
-    private Map<String, Object> getTaskResultsIfConfigurationAllows(Task task) {
+    private Map<String, ServerResponse> getTaskResultsIfConfigurationAllows(Task task) {
         if (task.getConfiguration() != null && task.getConfiguration().isPassResultsOfDependencies()) {
             return taskRegistry.getTaskResults(task);
         } else {
