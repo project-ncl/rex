@@ -208,8 +208,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             List<ServerResponse> serverResponses = previousTask.getServerResponses();
 
             if (serverResponses != null && !serverResponses.isEmpty()) {
-                // add last positive server response to the data to send
-                taskResults.put(taskName, serverResponses.get(serverResponses.size() - 1));
+                // add last positive server response body to the data to send
+                taskResults.put(taskName, serverResponses.get(serverResponses.size() - 1).getBody());
             } else {
                 // just add an empty object?
                 taskResults.put(taskName, new Object());
