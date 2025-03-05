@@ -22,30 +22,15 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
-import io.restassured.http.ContentType;
-import io.restassured.http.Header;
-import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.Method;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
 import org.jboss.pnc.rex.core.GenericVertxHttpClient;
-import org.jboss.pnc.rex.dto.ConfigurationDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.jboss.pnc.rex.model.requests.StartRequest;
-import org.jboss.pnc.rex.test.common.AbstractTest;
-import org.jboss.pnc.rex.test.common.TestData;
-import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,11 +41,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.net.URI;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -69,11 +50,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
-import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.test.common.TestData.createMockTask;
-import static org.jboss.pnc.rex.test.common.TestData.getRequestFromSingleTask;
 
 @Slf4j
 @QuarkusTest
@@ -145,7 +122,7 @@ public class GenericHttpClientStandaloneTest {
 
     @ParameterizedTest
     @ValueSource(ints = {425, 429, 500, 503, 599})
-    void shouldRetryOnErrorCodeAndFail(int code) throws InterruptedException {
+    void shouldFailIfNoSuccessCodeReceived(int code) throws InterruptedException {
         // given
         // always respond with error
         stubFor(get(urlPathMatching("/.*"))
@@ -218,5 +195,4 @@ public class GenericHttpClientStandaloneTest {
         HttpResponse<Buffer> response = responses.poll(5, TimeUnit.SECONDS);
         assertThat(response.statusCode()).isEqualTo(200);
     }
-
 }

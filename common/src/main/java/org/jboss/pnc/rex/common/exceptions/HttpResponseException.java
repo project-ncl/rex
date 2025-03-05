@@ -18,7 +18,7 @@
 package org.jboss.pnc.rex.common.exceptions;
 
 /**
- * Representing 5xx responses.
+ * Representing http error responses.
  */
 public class HttpResponseException extends RuntimeException {
 

@@ -19,11 +19,10 @@ package org.jboss.pnc.rex.core.config.api;
 
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
-import io.smallrye.config.WithName;
-import org.jboss.pnc.rex.core.config.Backoff425Policy;
 import org.jboss.pnc.rex.core.config.HttpRetryPolicy;
 
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * Configuration for internal HTTP client requests from Rex.
@@ -59,31 +58,22 @@ public interface HttpConfiguration {
     HttpRetryPolicy requestRetryPolicy();
 
     /**
-     * Configuration of fault tolerance in case of '425 Too Early' code.
-     * If Rex sends request to a target which responds with 425, this means that the request should be repeated but at a
-     * later time (backoff). This configuration defines specifics of that behaviour.
+     * Configuration of http errors fault tolerance, where key is error code and value a FT policy.
      *
-     * @return FT backoff configuration on 425 Too Early
+     * Supported Keys:
+     *   '3xx', '4xx', '5xx': FT is applied to whole 'Nxx' group (string literal 'xx' must be used)
+     *   NNN: FT is applied to exact error code NNN (eg. 500, 503)
+     *
+     * When both keys match the error code, more specific one is applied.
+     * For example:
+     *   5xx max-retries is set to 3 and
+     *   500 max-retries is set to 5
+     * All 5xx responses will be retried max 3 times except 500 will be retried max 5 times.
+     * The configuration merge is done on a error group level (3xx, 4xx, 5xx), not on the individual fields defined in a `HttpRetryPolicy` object,
+     * meaning whole `HttpRetryPolicy` defined for NNN can override the Nxx `HttpRetryPolicy`
+     *
+     * @return map of http error codes and related FT configuration
      */
-    @WithName("425-backoff-policy")
-    Backoff425Policy backoff425RetryPolicy();
-
-    /**
-     * Configuration of fault tolerance in case of 429 "Too Many Requests" response.
-     *
-     * If the fault tolerance does not result in a successful request, usually a fallback is triggered.
-     *
-     * @return FT configuration for unexpected failures
-     */
-    HttpRetryPolicy requestRetryPolicy429();
-
-    /**
-     * Configuration of fault tolerance in case of 5xx response.
-     *
-     * If the fault tolerance does not result in a successful request, usually a fallback is triggered.
-     *
-     * @return FT configuration for unexpected failures
-     */
-    HttpRetryPolicy requestRetryPolicy5xx();
+    Map<String, HttpRetryPolicy> httpErrorRetryPolicy();
 
 }
