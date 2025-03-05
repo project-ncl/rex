@@ -26,13 +26,14 @@ scheduler:
           jitter-factor: 0.5
         max-retries: 0
         expire-in: 0
-      425-backoff-policy:
-        backoff:
-          min-delay: 200ms
-          max-delay: 1m # 1 minute
-          jitter-factor: 0.5
-        max-retries: 0
-        expire-in: 10m # 10minutes
+      http-error-retry-policy:
+        425:
+          backoff:
+            min-delay: 200ms
+            max-delay: 1m # 1 minute
+            jitter-factor: 0.5
+          max-retries: 0
+          expire-in: 10m # 10minutes
 
 quarkus:
   application:

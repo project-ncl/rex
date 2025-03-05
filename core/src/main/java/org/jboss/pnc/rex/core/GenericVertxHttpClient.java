@@ -34,12 +34,8 @@ import io.vertx.mutiny.ext.web.client.WebClient;
 import jakarta.enterprise.context.control.ActivateRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.common.enums.Method;
-import org.jboss.pnc.rex.common.exceptions.HttpResponse429Exception;
-import org.jboss.pnc.rex.common.exceptions.HttpResponse5xxException;
 import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
 import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
-import org.jboss.pnc.rex.common.exceptions.HttpResponse425Exception;
-import org.jboss.pnc.rex.core.config.Backoff425Policy;
 import org.jboss.pnc.rex.core.config.HttpRetryPolicy;
 import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
 import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
@@ -61,9 +57,7 @@ public class GenericVertxHttpClient {
     private final InternalRetryPolicy internalPolicy;
     private final HttpConfiguration configuration;
     private final HttpRetryPolicy requestRetryPolicy;
-    private final HttpRetryPolicy requestRetryPolicy429;
-    private final HttpRetryPolicy requestRetryPolicy5xx;
-    private final Backoff425Policy backoff425Policy;
+    private final HttpErrorRetryPolicyConfiguration httpErrorRetryPolicyConfiguration;
     private final OidcClient oidcClient;
 
     public GenericVertxHttpClient(Vertx vertx,
@@ -73,10 +67,8 @@ public class GenericVertxHttpClient {
         this.client = WebClient.create(vertx);
         this.internalPolicy = internalPolicy;
         this.configuration = configuration;
-        this.requestRetryPolicy = configuration.requestRetryPolicy();
-        this.requestRetryPolicy429 = configuration.requestRetryPolicy429();
-        this.requestRetryPolicy5xx = configuration.requestRetryPolicy5xx();
-        this.backoff425Policy = configuration.backoff425RetryPolicy();
+        requestRetryPolicy = configuration.requestRetryPolicy();
+        this.httpErrorRetryPolicyConfiguration = new HttpErrorRetryPolicyConfiguration(configuration.httpErrorRetryPolicy());
         this.oidcClient = oidcClient;
         WebClientInternal delegate = (WebClientInternal) client.getDelegate();
         delegate.addInterceptor(this::putOrRefreshToken);
@@ -128,26 +120,14 @@ public class GenericVertxHttpClient {
     }
 
     private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Consumer<Throwable> onConnectionUnreachable) {
-        // apply back-pressure if the receiving service responds with 425 Too Early
+        // apply retry if http response error is received
         uni = uni.onItem().invoke(Unchecked.consumer(resp -> {
-                    if (resp != null) {
-                        if (resp.statusCode() == 425) {
-                            log.warn("Receiver returned status 425 Too Early. Executing back-pressure. Resp: {}", resp.bodyAsString());
-                            throw new HttpResponse425Exception("Receiver returned 425 Too Early.");
-                        } else if (resp.statusCode() == 429) {
-                            throw new HttpResponse429Exception();
-                        } else if (500 <= resp.statusCode() && resp.statusCode() <= 599) {
-                            throw new HttpResponse5xxException(resp.statusCode());
-                        }
+                    if (resp != null && httpErrorRetryPolicyConfiguration.shouldRetry(resp.statusCode())) {
+                        throw new HttpResponseException(resp.statusCode());
                     }
                 }));
         // cases when http response if eligible for a retry
-        uni = backoff425Policy
-                .applyToleranceOn(HttpResponse425Exception.class, uni);
-        uni = requestRetryPolicy429
-            .applyToleranceOn(HttpResponse429Exception.class, uni);
-        uni = requestRetryPolicy5xx
-            .applyToleranceOn(HttpResponse5xxException.class, uni);
+        uni = httpErrorRetryPolicyConfiguration.applyRetryPolicy(uni);
 
         // case when http request succeeds and a body is received
         uni = uni.onItem()
@@ -172,12 +152,9 @@ public class GenericVertxHttpClient {
                         log.warn("HTTP-CLIENT : Http call failed. RETRYING.");
                     } else if (t instanceof HttpResponseException) {
                         log.warn("HTTP-CLIENT : Http call failed ({}). RETRYING.", ((HttpResponseException) t).getStatusCode());
-                    } else {
-                        log.warn("HTTP-CLIENT : Http call failed. RETRYING. Reason: ", t);
                     }
                 });
-        uni = requestRetryPolicy
-                .applyToleranceOn(this::skipOnResponse, uni);
+        uni = requestRetryPolicy.applyToleranceOn(this::skipOnResponse, uni);
 
         // fallback to connection unreachable after an exception
         uni = uni.onFailure().invoke(onConnectionUnreachable)
