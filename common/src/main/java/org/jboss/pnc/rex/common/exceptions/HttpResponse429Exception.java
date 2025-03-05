@@ -17,20 +17,12 @@
  */
 package org.jboss.pnc.rex.common.exceptions;
 
-public class TooEarlyException extends RuntimeException {
-    public TooEarlyException() {
-        super();
-    }
+/**
+ * Representing 429 "Too Many Requests" responses.
+ */
+public class HttpResponse429Exception extends HttpResponseException {
 
-    public TooEarlyException(String message) {
-        super(message);
-    }
-
-    public TooEarlyException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public TooEarlyException(Throwable cause) {
-        super(cause);
+    public HttpResponse429Exception() {
+        super(429);
     }
 }

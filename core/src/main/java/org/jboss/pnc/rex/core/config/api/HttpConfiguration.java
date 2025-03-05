@@ -67,4 +67,23 @@ public interface HttpConfiguration {
      */
     @WithName("425-backoff-policy")
     Backoff425Policy backoff425RetryPolicy();
+
+    /**
+     * Configuration of fault tolerance in case of 429 "Too Many Requests" response.
+     *
+     * If the fault tolerance does not result in a successful request, usually a fallback is triggered.
+     *
+     * @return FT configuration for unexpected failures
+     */
+    HttpRetryPolicy requestRetryPolicy429();
+
+    /**
+     * Configuration of fault tolerance in case of 5xx response.
+     *
+     * If the fault tolerance does not result in a successful request, usually a fallback is triggered.
+     *
+     * @return FT configuration for unexpected failures
+     */
+    HttpRetryPolicy requestRetryPolicy5xx();
+
 }
