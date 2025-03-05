@@ -2,11 +2,26 @@ scheduler:
   baseUrl: http://localhost:8081
   options:
     http-configuration:
+      request-retry-policy:
+        backoff:
+          min-delay: 10ms
+          max-delay: 10ms
+        max-retries: 5
       425-backoff-policy:
         backoff:
           min-delay: 10ms
           max-delay: 10ms
-        expire-in: 5s
+        max-retries: 5
+      request-retry-policy429:
+        backoff:
+          min-delay: 10ms
+          max-delay: 10ms
+        max-retries: 5
+      request-retry-policy5xx:
+        backoff:
+          min-delay: 10ms
+          max-delay: 10ms
+        max-retries: 5
 
 quarkus:
   log:

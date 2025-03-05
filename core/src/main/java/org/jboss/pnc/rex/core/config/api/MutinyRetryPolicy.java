@@ -24,6 +24,7 @@ import io.smallrye.mutiny.Uni;
 import org.jboss.pnc.rex.core.config.validation.ValidBackoff;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public interface MutinyRetryPolicy {
@@ -121,6 +122,14 @@ public interface MutinyRetryPolicy {
     default <T> Uni<T> applyToleranceOn(Class<? extends Throwable> typeOfFailure, Uni<T> uni) {
         return applyToleranceOn(typeOfFailure::isInstance, uni);
     }
+
+    /**
+     * Apply tolerance only if none of the listed types matches the exception type.
+     */
+    default <T> Uni<T> applyToleranceExceptOn(Set<Class<? extends RuntimeException>> shouldNotMatch, Uni<T> uni) {
+        return applyToleranceOn(t -> shouldNotMatch.stream().noneMatch(c -> c.isInstance(t)), uni);
+    }
+
 
     default <T> Uni<T> applyTolerance(Uni<T> uni) {
         return applyToleranceOn(__ -> true, uni);
