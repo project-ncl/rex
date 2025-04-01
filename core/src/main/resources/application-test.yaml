@@ -7,12 +7,13 @@ scheduler:
           min-delay: 10ms
           max-delay: 10ms
         max-retries: 5
-      http-error-retry-policy:
+      status-code-retry-policy:
         425:
           backoff:
             min-delay: 10ms
             max-delay: 10ms
           max-retries: 5
+          expire-in: 5s
         429:
           backoff:
             min-delay: 10ms
