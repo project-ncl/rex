@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
 import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
-import org.jboss.pnc.rex.core.config.HttpRetryPolicy;
+import org.jboss.pnc.rex.core.config.RequestRetryPolicy;
 import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
 import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
 import org.jboss.pnc.rex.model.Header;
@@ -56,8 +56,8 @@ public class GenericVertxHttpClient {
     private final WebClient client;
     private final InternalRetryPolicy internalPolicy;
     private final HttpConfiguration configuration;
-    private final HttpRetryPolicy requestRetryPolicy;
-    private final HttpErrorRetryPolicyConfiguration httpErrorRetryPolicyConfiguration;
+    private final RequestRetryPolicy requestRetryPolicy;
+    private final StatusCodeRetryPolicy statusCodeRetryPolicy;
     private final OidcClient oidcClient;
 
     public GenericVertxHttpClient(Vertx vertx,
@@ -67,8 +67,8 @@ public class GenericVertxHttpClient {
         this.client = WebClient.create(vertx);
         this.internalPolicy = internalPolicy;
         this.configuration = configuration;
-        requestRetryPolicy = configuration.requestRetryPolicy();
-        this.httpErrorRetryPolicyConfiguration = new HttpErrorRetryPolicyConfiguration(configuration.httpErrorRetryPolicy());
+        this.requestRetryPolicy = configuration.requestRetryPolicy();
+        this.statusCodeRetryPolicy = configuration.statusCodeRetryPolicy();
         this.oidcClient = oidcClient;
         WebClientInternal delegate = (WebClientInternal) client.getDelegate();
         delegate.addInterceptor(this::putOrRefreshToken);
@@ -122,12 +122,12 @@ public class GenericVertxHttpClient {
     private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Consumer<Throwable> onConnectionUnreachable) {
         // apply retry if http response error is received
         uni = uni.onItem().invoke(Unchecked.consumer(resp -> {
-                    if (resp != null && httpErrorRetryPolicyConfiguration.shouldRetry(resp.statusCode())) {
+                    if (resp != null && statusCodeRetryPolicy.shouldRetry(resp.statusCode())) {
                         throw new HttpResponseException(resp.statusCode());
                     }
                 }));
         // cases when http response if eligible for a retry
-        uni = httpErrorRetryPolicyConfiguration.applyRetryPolicy(uni);
+        uni = statusCodeRetryPolicy.applyRetryPolicy(uni);
 
         // case when http request succeeds and a body is received
         uni = uni.onItem()
@@ -150,8 +150,8 @@ public class GenericVertxHttpClient {
                 .invoke(t ->  {
                     if (t instanceof RequestRetryException) {
                         log.warn("HTTP-CLIENT : Http call failed. RETRYING.");
-                    } else if (t instanceof HttpResponseException) {
-                        log.warn("HTTP-CLIENT : Http call failed ({}). RETRYING.", ((HttpResponseException) t).getStatusCode());
+                    } else if (t instanceof HttpResponseException hre) {
+                        log.warn("HTTP-CLIENT : Http call failed ({}). RETRYING.", hre.getStatusCode());
                     }
                 });
         uni = requestRetryPolicy.applyToleranceOn(this::skipOnResponse, uni);

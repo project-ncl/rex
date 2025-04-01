@@ -20,6 +20,6 @@ package org.jboss.pnc.rex.core.config;
 import io.smallrye.config.ConfigMapping;
 import org.jboss.pnc.rex.core.config.api.MutinyRetryPolicy;
 
-@ConfigMapping(prefix = "scheduler.options.http-configuration.request-retry-policy")
-public interface HttpRetryPolicy extends MutinyRetryPolicy {
+@ConfigMapping
+public interface RequestRetryPolicy extends MutinyRetryPolicy {
 }
