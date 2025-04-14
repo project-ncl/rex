@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core;
+package org.jboss.pnc.rex.core.config;
 
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithParentName;

@@ -38,6 +38,7 @@ import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
 import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
 import org.jboss.pnc.rex.core.config.RequestRetryPolicy;
 import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
+import org.jboss.pnc.rex.core.config.StatusCodeRetryPolicy;
 import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
 import org.jboss.pnc.rex.model.Header;
 
