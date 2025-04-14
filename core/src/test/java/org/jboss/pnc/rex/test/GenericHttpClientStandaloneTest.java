@@ -22,6 +22,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.vertx.mutiny.core.buffer.Buffer;
@@ -42,14 +43,19 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getAllServeEvents;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
@@ -194,5 +200,58 @@ public class GenericHttpClientStandaloneTest {
         // expect
         HttpResponse<Buffer> response = responses.poll(5, TimeUnit.SECONDS);
         assertThat(response.statusCode()).isEqualTo(200);
+    }
+
+    @Test
+    void shouldNotRetryOn404() throws InterruptedException {
+        // given
+        stubFor(get(urlPathMatching("/.*"))
+                    .willReturn(aResponse().withStatus(404))
+        );
+
+        // when
+        httpClient.makeReactiveRequest(
+                      URI.create("http://localhost:" + MOCK_SERVER_PORT + "/not-found"),
+                      Method.GET,
+                      Collections.emptyList(),
+                      "",
+                      (r) -> {},
+                      (r) -> {}
+                  )
+                  .await().atMost(Duration.of(5, ChronoUnit.SECONDS));
+
+        // expect
+        verify(1, getRequestedFor(urlEqualTo("/not-found")));
+    }
+
+    @Test
+    void shouldExpireOn425() throws InterruptedException {
+        // given
+        stubFor(get(urlPathMatching("/.*"))
+                    .willReturn(aResponse().withStatus(425))
+        );
+
+        // when
+        httpClient.makeReactiveRequest(
+                      URI.create("http://localhost:" + MOCK_SERVER_PORT + "/back-off"),
+                      Method.GET,
+                      Collections.emptyList(),
+                      "",
+                      (r) -> {},
+                      (r) -> {}
+                  )
+                  .await().atMost(Duration.of(10, ChronoUnit.SECONDS));
+
+        // expect
+        List<ServeEvent> allServeEvents = getAllServeEvents();
+        log.info("Number of requests {}", allServeEvents.size());
+
+        Assertions.assertTrue(allServeEvents.size() >= 2, "There should be at least 2 requests.");
+
+        ServeEvent lastRequest = allServeEvents.get(0);
+        ServeEvent firstRequest = allServeEvents.get(allServeEvents.size() - 1);
+        log.info("First request {}, last request: {}", firstRequest.getRequest().getLoggedDate(), lastRequest.getRequest().getLoggedDate());
+        Duration duration = Duration.between(firstRequest.getRequest().getLoggedDate().toInstant(), lastRequest.getRequest().getLoggedDate().toInstant());
+        Assertions.assertTrue(duration.abs().toMillis() < 5000, "Should not retry for more than 5 sec.");
     }
 }
