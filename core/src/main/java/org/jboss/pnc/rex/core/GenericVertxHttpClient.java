@@ -123,6 +123,8 @@ public class GenericVertxHttpClient {
         // apply retry if http response error is received
         uni = uni.onItem().invoke(Unchecked.consumer(resp -> {
                     if (resp != null && statusCodeRetryPolicy.shouldRetry(resp.statusCode())) {
+                        log.warn("Received status code {} {}. Executing retry ...", resp.statusCode(), resp.statusMessage());
+                        if (log.isDebugEnabled()) log.debug("Received body {}.", resp.bodyAsString());
                         throw new HttpResponseException(resp.statusCode());
                     }
                 }));
