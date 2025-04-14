@@ -32,8 +32,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
 import org.jboss.pnc.rex.core.GenericVertxHttpClient;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -63,18 +65,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestSecurity(authorizationEnabled = false)
 public class GenericHttpClientStandaloneTest {
 
-    private WireMockServer wireMockServer;
+    private static WireMockServer wireMockServer;
     private static final int MOCK_SERVER_PORT = 8083;
 
-    @BeforeEach
-    void setup() {
+    @BeforeAll
+    static void setup() {
         wireMockServer = new WireMockServer(WireMockConfiguration.options().port(MOCK_SERVER_PORT));
         wireMockServer.start();
         WireMock.configureFor("localhost", MOCK_SERVER_PORT);
     }
 
-    @AfterEach
-    void teardown() {
+    @BeforeEach
+    void reset() {
+        wireMockServer.resetAll();
+    }
+
+    @AfterAll
+    static void teardown() {
         if (wireMockServer != null) {
             wireMockServer.stop();
         }
