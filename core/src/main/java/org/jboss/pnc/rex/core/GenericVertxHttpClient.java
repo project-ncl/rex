@@ -126,7 +126,7 @@ public class GenericVertxHttpClient {
                         throw new HttpResponseException(resp.statusCode());
                     }
                 }));
-        // cases when http response if eligible for a retry
+        // cases when http response is eligible for a retry
         uni = statusCodeRetryPolicy.applyRetryPolicy(uni);
 
         // case when http request succeeds and a body is received
