@@ -19,7 +19,7 @@ package org.jboss.pnc.rex.core.config.api;
 
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
-import org.jboss.pnc.rex.core.StatusCodeRetryPolicy;
+import org.jboss.pnc.rex.core.config.StatusCodeRetryPolicy;
 import org.jboss.pnc.rex.core.config.RequestRetryPolicy;
 
 import java.time.Duration;
@@ -57,6 +57,9 @@ public interface HttpConfiguration {
      */
     RequestRetryPolicy requestRetryPolicy();
 
+    /**
+     * Configuration of fault tolerance in case when http error response is received.
+     */
     StatusCodeRetryPolicy statusCodeRetryPolicy();
 
 }
