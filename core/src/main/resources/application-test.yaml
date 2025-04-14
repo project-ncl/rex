@@ -8,12 +8,18 @@ scheduler:
           max-delay: 10ms
         max-retries: 5
       status-code-retry-policy:
-        425:
+        4xx:
           backoff:
             min-delay: 10ms
             max-delay: 10ms
           max-retries: 5
-          expire-in: 5s
+        404:
+          max-retries: 0
+        425:
+          backoff:
+            min-delay: 10ms
+            max-delay: 10ms
+          expire-in: 4900ms
         429:
           backoff:
             min-delay: 10ms

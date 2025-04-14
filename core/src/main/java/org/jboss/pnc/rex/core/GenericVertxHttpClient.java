@@ -157,7 +157,15 @@ public class GenericVertxHttpClient {
         uni = requestRetryPolicy.applyToleranceOn(this::skipOnResponse, uni);
 
         // fallback to connection unreachable after an exception
-        uni = uni.onFailure().invoke(onConnectionUnreachable)
+        Consumer<Throwable> onErrorResponse = t -> {
+            if (!(t instanceof HttpResponseException) && t.getCause() instanceof HttpResponseException) {
+                // prevent java.lang.IllegalStateException in case of exhausted retries due to expire-in limit
+                onConnectionUnreachable.accept(t.getCause());
+            } else {
+                onConnectionUnreachable.accept(t);
+            }
+        };
+        uni = uni.onFailure().invoke(onErrorResponse)
                 // recover with null so that Uni doesn't propagate the exception
                 .onFailure().recoverWithNull();
 
