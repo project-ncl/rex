@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.core;
 
 
 import io.quarkus.oidc.client.OidcClient;
+import io.smallrye.mutiny.Context;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.unchecked.Unchecked;
@@ -46,6 +47,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import static java.time.Duration.of;
@@ -53,6 +55,8 @@ import static java.time.Duration.of;
 @Slf4j
 @ApplicationScoped
 public class GenericVertxHttpClient {
+
+    private static final String CTX_RESPONSE_KEY = "response";
 
     private final WebClient client;
     private final InternalRetryPolicy internalPolicy;
@@ -122,18 +126,19 @@ public class GenericVertxHttpClient {
 
     private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Consumer<Throwable> onConnectionUnreachable) {
         // apply retry if http response error is received
-        uni = uni.onItem().invoke(Unchecked.consumer(resp -> {
-                    if (resp != null && statusCodeRetryPolicy.shouldRetry(resp.statusCode())) {
-                        log.warn("Received status code {} {}. Executing retry ...", resp.statusCode(), resp.statusMessage());
-                        if (log.isDebugEnabled()) log.debug("Received body {}.", resp.bodyAsString());
-                        throw new HttpResponseException(resp.statusCode());
-                    }
-                }));
+        Uni<HttpResponse<Buffer>> uniWithCtx = uni.withContext((u, ctx) -> u.invoke(Unchecked.consumer(resp -> {
+            if (resp != null && statusCodeRetryPolicy.shouldRetry(resp.statusCode())) {
+                log.warn("Received status code {} {}. Executing retry ...", resp.statusCode(), resp.statusMessage());
+                ctx.put(CTX_RESPONSE_KEY, resp);
+                throw new HttpResponseException(resp.statusCode());
+            }
+        })));
+
         // cases when http response is eligible for a retry
-        uni = statusCodeRetryPolicy.applyRetryPolicy(uni);
+        uniWithCtx = statusCodeRetryPolicy.applyRetryPolicy(uniWithCtx);
 
         // case when http request succeeds and a body is received
-        uni = uni.onItem()
+        uniWithCtx = uniWithCtx.onItem()
                 // create a separate uni to decouple internal failure tolerance
                 .transformToUni(i -> Uni.createFrom()
                     .item(i)
@@ -149,7 +154,7 @@ public class GenericVertxHttpClient {
                 );
 
         // cases when http request method itself fails (unreachable host)
-        uni = uni.onFailure(this::skipOnResponse)
+        uniWithCtx = uniWithCtx.onFailure(this::skipOnResponse)
                 .invoke(t ->  {
                     if (t instanceof RequestRetryException) {
                         log.warn("HTTP-CLIENT : Http call failed. RETRYING.");
@@ -157,22 +162,29 @@ public class GenericVertxHttpClient {
                         log.warn("HTTP-CLIENT : Http call failed ({}). RETRYING.", hre.getStatusCode());
                     }
                 });
-        uni = requestRetryPolicy.applyToleranceOn(this::skipOnResponse, uni);
+        uniWithCtx = requestRetryPolicy.applyToleranceOn(this::skipOnResponse, uniWithCtx);
 
         // fallback to connection unreachable after an exception
-        Consumer<Throwable> onErrorResponse = t -> {
+        BiFunction<Throwable, Context, Void> onError = (t, ctx) -> {
             if (!(t instanceof HttpResponseException) && t.getCause() instanceof HttpResponseException) {
                 // prevent java.lang.IllegalStateException in case of exhausted retries due to expire-in limit
                 onConnectionUnreachable.accept(t.getCause());
             } else {
                 onConnectionUnreachable.accept(t);
             }
+            HttpResponse<Buffer> response = ctx.get(CTX_RESPONSE_KEY);
+            log.warn("Request failed with code: {}, body: {}.", response.statusCode(), response.bodyAsString());
+            return null;
         };
-        uni = uni.onFailure().invoke(onErrorResponse)
+
+        uniWithCtx = uniWithCtx.withContext((u, ctx) ->
+                u.onFailure().invoke(t -> {
+                    onError.apply(t, ctx);
+                }))
                 // recover with null so that Uni doesn't propagate the exception
                 .onFailure().recoverWithNull();
 
-        return uni;
+        return uniWithCtx;
     }
 
     private boolean abortOnNonRecoverable(Throwable failure) {
