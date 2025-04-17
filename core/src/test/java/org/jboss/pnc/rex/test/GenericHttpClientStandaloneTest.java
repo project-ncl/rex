@@ -139,7 +139,7 @@ public class GenericHttpClientStandaloneTest {
         // given
         // always respond with error
         stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withStatus(code))
+                    .willReturn(aResponse().withStatus(code).withBody("Error response body."))
         );
 
         ArrayBlockingQueue<Throwable> failures = new ArrayBlockingQueue<>(10);
