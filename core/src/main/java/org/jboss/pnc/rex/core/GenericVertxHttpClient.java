@@ -172,8 +172,13 @@ public class GenericVertxHttpClient {
             } else {
                 onConnectionUnreachable.accept(t);
             }
-            HttpResponse<Buffer> response = ctx.get(CTX_RESPONSE_KEY);
-            log.warn("Request failed with code: {}, body: {}.", response.statusCode(), response.bodyAsString());
+            if (ctx.contains(CTX_RESPONSE_KEY)) {
+                HttpResponse<Buffer> response = ctx.get(CTX_RESPONSE_KEY);
+                log.warn("Request failed with code: {}, body: {}.", response.statusCode(), response.bodyAsString());
+            } else {
+                // There is no response, most likely because of connection error.
+                log.warn("Request failed.", t);
+            }
             return null;
         };
 
