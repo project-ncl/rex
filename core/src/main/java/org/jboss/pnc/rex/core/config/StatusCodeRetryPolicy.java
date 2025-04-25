@@ -43,7 +43,7 @@ import java.util.Map;
  * meaning whole `HttpRetryPolicy` defined for NNN can override the Nxx `HttpRetryPolicy`
  *
  */
-@ConfigMapping
+@ConfigMapping(prefix = "scheduler.options.http-configuration.status-code-retry-policy")
 public interface StatusCodeRetryPolicy {
 
     @WithParentName
