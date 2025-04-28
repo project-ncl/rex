@@ -259,7 +259,7 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.8.0</version>
           <configuration>
-            <sourcepath>target/generated-sources/delombok</sourcepath>
+            <sourcepath>target/generated-sources/delombok;target/generated-sources/open-api-yaml</sourcepath>
             <doclint>all,-missing</doclint>
           </configuration>
           <executions>
