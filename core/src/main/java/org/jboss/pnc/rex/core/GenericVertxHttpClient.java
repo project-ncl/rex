@@ -166,18 +166,18 @@ public class GenericVertxHttpClient {
 
         // fallback to connection unreachable after an exception
         BiFunction<Throwable, Context, Void> onError = (t, ctx) -> {
-            if (!(t instanceof HttpResponseException) && t.getCause() instanceof HttpResponseException) {
-                // prevent java.lang.IllegalStateException in case of exhausted retries due to expire-in limit
-                onConnectionUnreachable.accept(t.getCause());
-            } else {
-                onConnectionUnreachable.accept(t);
-            }
             if (ctx.contains(CTX_RESPONSE_KEY)) {
                 HttpResponse<Buffer> response = ctx.get(CTX_RESPONSE_KEY);
                 log.warn("Request failed with code: {}, body: {}.", response.statusCode(), response.bodyAsString());
             } else {
                 // There is no response, most likely because of connection error.
                 log.warn("Request failed.", t);
+            }
+            if (!(t instanceof HttpResponseException) && t.getCause() instanceof HttpResponseException) {
+                // prevent java.lang.IllegalStateException in case of exhausted retries due to expire-in limit
+                onConnectionUnreachable.accept(t.getCause());
+            } else {
+                onConnectionUnreachable.accept(t);
             }
             return null;
         };
