@@ -337,6 +337,9 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
         hasCycle(taskCache.keySet());
 
+        Graph<Task> graphRepresentation = getGraphRepresentation(taskCache.keySet(), taskCache);
+        validateMilestoneTasks(newTasks, graphRepresentation);
+
         // start the tasks
         newTasks.forEach(task -> {
             if (task.getControllerMode() == Mode.ACTIVE)
@@ -347,6 +350,95 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         // succeeds)
         jobEvent.fire(new PokeQueueJob());
         return newTasks;
+    }
+
+    private void validateMilestoneTasks(Set<Task> newTasks, Graph<Task> graphRepresentation) {
+        for (var newTask : newTasks) {
+            String milestoneName = newTask.getMilestoneTask();
+            if (milestoneName == null) continue;
+
+            // bfs vs dfs?
+            Iterable<Task> transitiveDeps = Traverser.forGraph(graphRepresentation).breadthFirst(newTask);
+
+            var optionalMilestoneTask = Iterables.tryFind(transitiveDeps, (task) -> task.getName().equals(milestoneName));
+
+            if (!optionalMilestoneTask.isPresent()) {
+                log.warn("Task '{}' has milestone task '{}' that's not a transitive dependency", newTask.getName(), milestoneName);
+                throw new BadRequestException("Task '" + newTask.getName() + "' has milestone task '" + milestoneName + "' that's not a transitive dependency");
+            }
+        }
+    }
+
+    public Graph<Task> getGraphRepresentation(Set<String> taskNames, Map<String, Task> cache) {
+        var graph = stableMutableGraph();
+
+        Traverser<String> tasks = Traverser.forGraph(fillGraph(new HashMap<>(cache), graph));
+
+        // BFS is lazy so we need to forEach to get all nod
+        tasks.breadthFirst(taskNames).forEach((task) -> {});
+
+        return ImmutableGraph.copyOf(graph);
+    }
+
+    private static MutableGraph<Task> stableMutableGraph() {
+        return GraphBuilder.directed()
+                .incidentEdgeOrder(ElementOrder.stable())
+                .nodeOrder(ElementOrder.insertion())
+                .build();
+    }
+
+    /**
+     * This function returns both dependencies+dependants and fills up the
+     *
+     * @param cache
+     * @param toBuild graph that is filled up by the function
+     * @return
+     */
+    SuccessorsFunction<String> fillGraph(Map<String, Task> cache, MutableGraph<Task> toBuild) {
+        return (taskId) -> {
+            Task task = fromCacheOrContainer(taskId, cache);
+            toBuild.addNode(task);
+
+            Set<String> dependencies = task.getDependencies();
+            List<Task> dependencyTasks = dependencies.stream().map(dependency -> fromCacheOrContainer(dependency, cache)).toList();
+
+            Set<String> dependants = task.getDependants();
+            List<Task> dependantTasks = dependants.stream().map(dependant -> fromCacheOrContainer(dependant, cache)).toList();
+
+            Stream.concat(dependencyTasks.stream(), dependantTasks.stream()).forEach(toBuild::addNode);
+
+            for (var dependency : dependencyTasks) {
+                if (!toBuild.hasEdgeConnecting(task, dependency)) {
+                    toBuild.putEdge(task, dependency);
+                }
+            }
+
+            for (var dependant : dependantTasks) {
+                if (!toBuild.hasEdgeConnecting(dependant, task)) {
+                    toBuild.putEdge(dependant, task);
+                }
+            }
+
+            List<String> list = Stream.concat(dependencies.stream(), dependants.stream()).sorted().toList();
+            log.debug("BFS: taskId={} nextTasks: {}", taskId, list);
+            return list;
+        };
+    }
+
+    private Task fromCacheOrContainer(String dependency, Map<String, Task> cache) throws TaskMissingException {
+        if (cache.containsKey(dependency)) {
+            return cache.get(dependency);
+        }
+
+        Task task = getRequiredTask(dependency);
+        cache.put(dependency, task);
+
+        return task;
+    }
+
+    @Override
+    public Graph<Task> getTaskGraph(Set<String> taskIds) {
+        return getGraphRepresentation(taskIds, new HashMap<>());
     }
 
     private void assertValidConfiguration(Collection<InitialTask> values) throws BadRequestException {
@@ -428,6 +520,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         // increase amount of unfinished dependencies if the dependency hasn't finished
         if (!dependency.getState().isFinal()) {
             dependant.incUnfinishedDependencies();
+        } else if (dependency.getState() != State.SUCCESSFUL) {
+            throw new BadRequestException("Task cannot be added as dependant to a failed task.");
         }
     }
 

@@ -50,7 +50,7 @@ public class TaskListener {
     @Inject
     ManagedExecutor executor;
 
-    void onUnsuccessfulTransaction(@Observes(during = TransactionPhase.AFTER_SUCCESS) ControllerJob job) {
+    void onSuccessfulTransaction(@Observes(during = TransactionPhase.AFTER_SUCCESS) ControllerJob job) {
         if (job.getInvocationPhase() == TransactionPhase.AFTER_SUCCESS) {
             // disassociate the thread from previous transaction as it results in errors
             try {
@@ -111,9 +111,9 @@ public class TaskListener {
     }
 
     void failureListener(@Observes(during = TransactionPhase.AFTER_FAILURE) @BeforeDestroyed(TransactionScoped.class) @Priority(APPLICATION + 499) Object ignore) throws SystemException {
-        log.error("AFTER FAILURE: Transaction failed " + tm.getTransaction().toString());
+        log.error("AFTER FAILURE: Transaction failed {}", tm.getTransaction().toString());
     }
     void successListener(@Observes(during = TransactionPhase.AFTER_SUCCESS) @BeforeDestroyed(TransactionScoped.class) @Priority(APPLICATION + 499) Object ignore) throws SystemException {
-        log.trace("AFTER SUCCESS: Transaction successful " + tm.getTransaction().toString());
+        log.trace("AFTER SUCCESS: Transaction successful {}", tm.getTransaction().toString());
     }
 }
