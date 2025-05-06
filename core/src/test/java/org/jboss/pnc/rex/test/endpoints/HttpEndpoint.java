@@ -27,6 +27,7 @@ import org.jboss.pnc.rex.core.GenericVertxHttpClient;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.model.Header;
+import org.jboss.pnc.rex.model.requests.RollbackRequest;
 import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.jboss.pnc.rex.model.requests.StopRequest;
 
@@ -112,6 +113,25 @@ public class HttpEndpoint {
         executor.submit(() -> finishTask(request.getNegativeCallback()));
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
+
+    @POST
+    @Path("/acceptAndRollback")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response acceptAndRollback(RollbackRequest request) {
+        record(request);
+        executor.submit(() -> finishTask(request.getPositiveCallback()));
+        return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
+    }
+
+    @POST
+    @Path("/failAndRollback")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response failAndRollback(RollbackRequest request) {
+        record(request);
+        executor.submit(() -> finishTask(request.getNegativeCallback()));
+        return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
+    }
+
 
     @POST
     @Path("/425eventuallyOK")

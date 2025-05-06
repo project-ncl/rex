@@ -26,6 +26,7 @@ import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedW
 import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.*;
 
+import com.google.common.graph.Graph;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.common.mapper.TypeRef;
@@ -39,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
-import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
@@ -48,7 +48,6 @@ import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
 import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
 import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
 import org.jboss.pnc.rex.core.TaskContainerImpl;
-import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.core.counter.Counter;
@@ -132,7 +131,7 @@ class TaskContainerImplTest extends AbstractTest {
                 .isInstanceOf(RollbackException.class);
 
         assertThat(container.getTask(EXISTING_KEY).getRemoteStart().getAttachment()).isEqualTo("{id: 100}");
-        assertThat(running.getValue(null)).isEqualTo(0);
+        assertThat(queue.getRunning().getNumber()).isEqualTo(0);
     }
 
     @Test
@@ -220,7 +219,7 @@ class TaskContainerImplTest extends AbstractTest {
         waitTillTasksAre(State.UP, container, EXISTING_KEY);
 
         container.getTransactionManager().begin();
-        controller.accept(EXISTING_KEY, null, Origin.REMOTE_ENTITY);
+        controller.accept(EXISTING_KEY, null, Origin.REMOTE_ENTITY, false);
         container.getTransactionManager().commit();
 
         waitTillTasksAre(State.UP, container, dependant);
@@ -320,8 +319,8 @@ class TaskContainerImplTest extends AbstractTest {
 
         // sleep because running counter takes time to update
         Thread.sleep(100);
-        assertThat(running.getValue(null)).isEqualTo(0);
-        assertThat(container.getTasks(true, true, true, true, null)).extracting("name", String.class)
+        assertThat(queue.getRunning().getNumber()).isEqualTo(0);
+        assertThat(container.getTasks(true, true, true, true, true, null)).extracting("name", String.class)
                 .doesNotContain(services);
     }
 
@@ -379,7 +378,7 @@ class TaskContainerImplTest extends AbstractTest {
 
         waitTillTasksAreFinishedWith(State.STOPPED, services);
 
-        assertThat(container.getTasks(true, true, true, true, null)).extracting("name", String.class)
+        assertThat(container.getTasks(true, true, true, true, true, null)).extracting("name", String.class)
                 .doesNotContain(request.getVertices().keySet().toArray(new String[0]));
     }
 
@@ -387,7 +386,7 @@ class TaskContainerImplTest extends AbstractTest {
     public void testQuery() throws Exception {
         taskEndpoint.start(getComplexGraph(false));
 
-        assertThat(container.getTasks(true, true, true, true, null)).hasSize(11);
+        assertThat(container.getTasks(true, true, true, true, true, null)).hasSize(11);
     }
 
     @Test
@@ -530,9 +529,25 @@ class TaskContainerImplTest extends AbstractTest {
 
         // sleep because running counter takes time to update
         Thread.sleep(50);
-        assertThat(running.getValue(null)).isEqualTo(0);
-        assertThat(container.getTasks(true, true, true, true, null)).extracting("name", String.class)
+        assertThat(queue.getRunning().getNumber()).isEqualTo(0);
+        assertThat(container.getTasks(true, true, true, true, true, null)).extracting("name", String.class)
                 .doesNotContain(randomDAG.getVertices().keySet().toArray(new String[0]));
+    }
+
+    @Test
+    public void getGraphTest() {
+        CreateGraphRequest randomDAG = generateDAG(1000, 2, 10, 5, 10, 0.7F, false);
+        randomDAG.getVertices().values().forEach(task -> task.controllerMode = Mode.IDLE);
+        taskEndpoint.start(randomDAG);
+
+        CreateGraphRequest complexGraph = getComplexGraph(false);
+        complexGraph.getVertices().values().forEach(task -> task.controllerMode = Mode.IDLE);
+        complexGraph = complexGraph.toBuilder().edge(new EdgeDTO("f", "43")).build();
+        taskEndpoint.start(complexGraph);
+
+        Graph<Task> fullGraph = container.getTaskGraph(Set.of("a"));
+        assertThat(fullGraph.nodes()).hasSize(randomDAG.getVertices().size() + complexGraph.getVertices().size());
+        assertThat(fullGraph.edges()).hasSize(randomDAG.getEdges().size() + complexGraph.getEdges().size());
     }
 
     @Test
@@ -551,7 +566,7 @@ class TaskContainerImplTest extends AbstractTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(true, false, false, null, null, false))
+                        .configuration(new ConfigurationDTO(true, false, false, null, null, false, 3))
                         .build())
                 .build());
 
@@ -587,7 +602,7 @@ class TaskContainerImplTest extends AbstractTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(false, false, false, null, null, false))
+                        .configuration(new ConfigurationDTO(false, false, false, null, null, false, 3))
                         .build())
                 .build());
 

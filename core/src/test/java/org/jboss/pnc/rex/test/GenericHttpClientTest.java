@@ -79,7 +79,7 @@ public class GenericHttpClientTest extends AbstractTest {
 
     @Test
     void shouldRetryOn425AndFailToStart() {
-        int amountOf425UntilSuccessful = Integer.MAX_VALUE; // from application.yaml expiry for fallback is set to 5sec
+        int amountOf425UntilSuccessful = Integer.MAX_VALUE; // from application-test.yaml expiry for fallback is set to 5sec
         CreateGraphRequest request = getRequestFromSingleTask(createMockTask(
                 "backoff-test",
                 Mode.ACTIVE,
@@ -104,6 +104,7 @@ public class GenericHttpClientTest extends AbstractTest {
                 Mode.ACTIVE,
                 TestData.getRequestWithStart(null, List.of(new Request.Header("mdc-key", "mdc-value"))),
                 TestData.getStopRequest(null),
+                null,
                 null,
                 config));
 
@@ -177,7 +178,8 @@ public class GenericHttpClientTest extends AbstractTest {
                                     new Request.Header("mdc1-key", "mdc1-value"))),
                     TestData.getStopRequest(null),
                     null,
-                    localConfig))
+                    null,
+                localConfig))
                 .toBuilder()
                 .graphConfiguration(graphConfig)
                 .build();
@@ -227,7 +229,8 @@ public class GenericHttpClientTest extends AbstractTest {
                                     new Request.Header("mdc1-key", "mdc1-value"))),
                     TestData.getStopRequest(null),
                     null,
-                    localConfig))
+                    null,
+                localConfig))
                 .toBuilder()
                 .graphConfiguration(graphConfig)
                 .build();
