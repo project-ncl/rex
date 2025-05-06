@@ -25,12 +25,15 @@ public class DependencyCancelledJob extends DependantMessageJob {
 
     private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
 
-    public DependencyCancelledJob(Task task) {
+    private final String cause;
+
+    public DependencyCancelledJob(Task task, String cause) {
         super(task, INVOCATION_PHASE);
+        this.cause = cause;
     }
 
     @Override
-    void inform(String dependentName) {
-        dependentAPI.dependencyCancelled(dependentName);
+    protected void inform(String dependentName) {
+        dependentAPI.dependencyCancelled(dependentName, cause);
     }
 }

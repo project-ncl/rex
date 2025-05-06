@@ -24,12 +24,15 @@ public class DependencyNotificationFailedJob extends DependantMessageJob {
 
     private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
 
-    public DependencyNotificationFailedJob(Task task) {
+    private final String cause;
+
+    public DependencyNotificationFailedJob(Task task, String cause) {
         super(task, INVOCATION_PHASE);
+        this.cause = cause;
     }
 
     @Override
-    void inform(String dependentName) {
-        dependentAPI.dependencyNotificationFailed(dependentName);
+    protected void inform(String dependentName) {
+        dependentAPI.dependencyNotificationFailed(dependentName, cause);
     }
 }

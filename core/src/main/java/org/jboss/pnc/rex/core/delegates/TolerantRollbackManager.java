@@ -15,25 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.jobs;
+package org.jboss.pnc.rex.core.delegates;
 
-import org.jboss.pnc.rex.model.Task;
+import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.jboss.pnc.rex.core.api.RollbackManager;
 
-import jakarta.enterprise.event.TransactionPhase;
+@WithRetries
+@ApplicationScoped
+public class TolerantRollbackManager implements RollbackManager {
 
-public class DependencyStoppedJob extends DependantMessageJob {
+    private final RollbackManager delegate;
 
-    private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
-
-    private final String cause;
-
-    public DependencyStoppedJob(Task task, String cause) {
-        super(task, INVOCATION_PHASE);
-        this.cause = cause;
+    public TolerantRollbackManager(RollbackManager delegate) {
+        this.delegate = delegate;
     }
 
     @Override
-    protected void inform(String dependentName) {
-        dependentAPI.dependencyStopped(dependentName, cause);
+    @ApplyFaultTolerance("internal-retry")
+    public void rollbackFromMilestone(String name) {
+        delegate.rollbackFromMilestone(name);
     }
 }

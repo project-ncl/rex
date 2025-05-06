@@ -91,8 +91,8 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Override
-    public Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished, List<String> queueFilter) {
-        return registry.getTasks(waiting, waiting, running, finished, queueFilter).stream()
+    public Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished, boolean rollingback, List<String> queueFilter) {
+        return registry.getTasks(waiting, waiting, running, finished, rollingback, queueFilter).stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toSet());
     }
@@ -130,11 +130,11 @@ public class TaskProviderImpl implements TaskProvider {
 
     @Override
     @Transactional
-    public void acceptRemoteResponse(String taskName, boolean positive, Object response) {
+    public void acceptRemoteResponse(String taskName, boolean positive, boolean rollback, Object response) {
         if (positive) {
-            controller.accept(taskName, response, Origin.REMOTE_ENTITY);
+            controller.accept(taskName, response, Origin.REMOTE_ENTITY, rollback);
         } else {
-            controller.fail(taskName, response, Origin.REMOTE_ENTITY);
+            controller.fail(taskName, response, Origin.REMOTE_ENTITY, rollback);
         }
     }
 }
