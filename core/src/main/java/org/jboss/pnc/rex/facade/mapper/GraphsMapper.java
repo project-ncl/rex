@@ -20,12 +20,7 @@ package org.jboss.pnc.rex.facade.mapper;
 import org.jboss.pnc.rex.core.model.TaskGraph;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.mapstruct.AfterMapping;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.BeforeMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -113,7 +108,8 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
                     graphConfig.passOTELInRequestBody,
                     graphConfig.mdcHeaderKeyMapping,
                     graphConfig.cancelTimeout,
-                    graphConfig.delayDependantsForFinalNotification);
+                    graphConfig.delayDependantsForFinalNotification,
+                    graphConfig.rollbackLimit);
         }
 
         Boolean passResultsOfDependencies = taskConfig.passResultsOfDependencies;
@@ -140,6 +136,10 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
         if (taskConfig.delayDependantsForFinalNotification == null && graphConfig.delayDependantsForFinalNotification != null) {
             delayDependantsForFinalNotification = graphConfig.delayDependantsForFinalNotification;
         }
+        Integer rollbackLimit = taskConfig.rollbackLimit;
+        if (taskConfig.rollbackLimit == null && graphConfig.rollbackLimit != null) {
+            rollbackLimit = graphConfig.rollbackLimit;
+        }
 
         return new ConfigurationDTO(
                 passResultsOfDependencies,
@@ -147,6 +147,7 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
                 passOTELInRequestBody,
                 mdcHeaderKeys,
                 cancelTimeout,
-                delayDependantsForFinalNotification);
+                delayDependantsForFinalNotification,
+                rollbackLimit);
     }
 }

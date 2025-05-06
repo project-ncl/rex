@@ -55,20 +55,22 @@ public interface TaskController {
      * <p>
      * f.e. to signalize that remote Task has started/cancelled/finished.
      *
-     * @param name   id of the Task
-     * @param origin the origin of response
+     * @param name     id of the Task
+     * @param origin   the origin of response
+     * @param isRollback callback is from rollback endpoint
      */
-    void accept(String name, Object response, Origin origin);
+    void accept(String name, Object response, Origin origin, boolean isRollback);
 
     /**
      * Method used for negative callback. Needs to be called in a transaction.
      * <p>
      * f.e. to signalize that remote Task failed to start/cancel or failed during execution.
      *
-     * @param name   id of the Task
-     * @param origin the origin of response
+     * @param name     id of the Task
+     * @param origin   the origin of response
+     * @param isRollback callback is from rollback endpoint
      */
-    void fail(String name, Object response, Origin origin);
+    void fail(String name, Object response, Origin origin, boolean isRollback);
 
     void dequeue(String name);
 
@@ -96,4 +98,43 @@ public interface TaskController {
      * @param name id of the Task
      */
     void clearConstraint(String name);
+
+    void reset(String name);
+
+    /**
+     * Prepare this Task's metadata without any transitions. It will set expected number of dependants that this Task
+     * should wait for and expected number of running dependencies after rollback process finishes. It's important that
+     * these numbers are consistent because it may lead to stuck workflow.
+     *
+     * @param name id of the Task
+     * @param rollbackDependants number of expected active rollbacking dependants
+     * @param dependencies number of future running dependencies
+     */
+    void primeForRollback(String name, int rollbackDependants, int dependencies);
+
+    /**
+     * Increase trigger counter and start rollback process from the Milestone task.
+     *
+     * @param name id of the Task
+     */
+    void rollbackTriggered(String name);
+
+    /**
+     * Called on the milestone Task. It will recursively transition all dependants into correct StateGroup.ROLLBACK
+     * states (TO_ROLLBACK, ROLLBACK_REQUESTED, ROLLEDBACK...).
+     *
+     * @param name id of the Task
+     */
+    void startRollbackProcess(String name);
+
+    /**
+     * This method changes nothing on the Task but it will force the Task to participate in the Thread's transaction. If
+     * there is a concurrent change in another transaction, this or the other transaction will fail and restart with
+     * refreshed data.
+     *
+     * This method should be used if making critical decisions based on the state of this Task without modifying it.
+     *
+     * @param name id of the Task
+     */
+    void involveInTransaction(String name);
 }

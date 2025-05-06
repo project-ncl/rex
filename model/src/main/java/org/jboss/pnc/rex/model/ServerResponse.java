@@ -57,8 +57,11 @@ public class ServerResponse {
     @Getter(onMethod_ = {@ProtoField(number = 4, type = Type.ENUM)})
     private final Origin origin;
 
+    @Getter(onMethod_ = {@ProtoField(number = 5, defaultValue = "0")})
+    private final int rollbackCounter;
+
     @ProtoFactory
-    public ServerResponse(State state, boolean positive, byte[] byteBody, Origin origin) {
+    public ServerResponse(State state, boolean positive, byte[] byteBody, Origin origin, int rollbackCounter) {
         this.state = state;
         this.positive = positive;
         this.origin = origin;
@@ -66,13 +69,14 @@ public class ServerResponse {
         try {
             body = convertToObject(byteBody);
         } catch (IOException exception) {
-            log.error("Unexpected IO error during construction of ServerResponse.class object. " + this, exception);
+            log.error("Unexpected IO error during construction of ServerResponse.class object. {}", this, exception);
             body = null;
         } catch (ClassNotFoundException exception) {
-            log.error("Body byte array could not be casted into an existing class. " + this, exception);
+            log.error("Body byte array could not be casted into an existing class. {}", this, exception);
             body = null;
         }
         this.body = body;
+        this.rollbackCounter = rollbackCounter;
     }
 
     @JsonIgnore
@@ -86,11 +90,9 @@ public class ServerResponse {
         try {
             return convertToByteArray(this.body);
         } catch (IOException exception) {
-            log.error("Unexpected IO error when serializing ServerResponse.class body. " + this, exception);
+            log.error("Unexpected IO error when serializing ServerResponse.class body. {}", this, exception);
         }
         return null;
     }
-
-
 
 }

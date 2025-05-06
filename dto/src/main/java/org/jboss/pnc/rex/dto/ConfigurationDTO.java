@@ -47,4 +47,6 @@ public class ConfigurationDTO {
     public Duration cancelTimeout = null;
 
     public Boolean delayDependantsForFinalNotification = null;
+
+    public Integer rollbackLimit = null;
 }

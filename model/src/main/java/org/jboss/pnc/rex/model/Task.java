@@ -24,6 +24,7 @@ import lombok.Setter;
 import lombok.Singular;
 import lombok.ToString;
 import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -31,11 +32,7 @@ import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Task is an entity that holds data of remotely executed process.
@@ -153,7 +150,7 @@ public class Task {
      * INFINISPAN caveat: Infinispan doesn't serialize Maps, therefore Set is used
      */
     @Getter(onMethod_ = @ProtoField(number = 16, collectionImplementation = TreeSet.class))
-    private Set<TransitionTime> timestamps;
+    private SortedSet<TransitionTime> timestamps;
 
     /**
      * This flag indicates that this task can be removed from ISPN Cache. Usually a Task flagged to be removed after a
@@ -166,6 +163,27 @@ public class Task {
 
     @Getter(onMethod_ = {@ProtoField(number = 18), @Basic})
     private String queue;
+
+    @Getter(onMethod_ = {@ProtoField(number = 19)})
+    private String stoppedCause;
+
+    /**
+     * The Task used for rollback process. It has to be a transitive dependency.
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 20)})
+    private String milestoneTask;
+
+    /**
+     * Definition of a request towards remote entity to signal rollback of resources during rollback process.
+     */
+    @Getter(onMethod_ = @ProtoField(number = 21))
+    private Request remoteRollback;
+
+    /**
+     * Metadata containing fields used during rollback process.
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 22)})
+    private RollbackMetadata rollbackMeta;
 
     public void incUnfinishedDependencies() {
         unfinishedDependencies++;

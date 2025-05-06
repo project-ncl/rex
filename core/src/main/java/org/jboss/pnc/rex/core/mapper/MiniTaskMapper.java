@@ -27,6 +27,7 @@ import org.mapstruct.Mapper;
 @Mapper(config = MapperCentralConfig.class, uses = {TransitionTimeMapper.class})
 public interface MiniTaskMapper {
 
-    @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "starting", "controllerMode", "disposable"})
+    @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "starting", "controllerMode", "disposable",
+            "rollbackMeta"})
     MinimizedTask minimize(Task task);
 }
