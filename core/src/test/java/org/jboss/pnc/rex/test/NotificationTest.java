@@ -19,11 +19,20 @@ package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.Transition;
+import org.jboss.pnc.rex.core.GenericVertxHttpClient;
 import org.jboss.pnc.rex.core.TaskContainerImpl;
+import org.jboss.pnc.rex.dto.CreateTaskDTO;
+import org.jboss.pnc.rex.dto.EdgeDTO;
+import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
 import org.jboss.pnc.rex.dto.TaskDTO;
@@ -32,8 +41,12 @@ import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
 
+import java.net.URI;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,9 +71,12 @@ import static org.jboss.pnc.rex.test.common.TestData.getComplexGraph;
 import static org.jboss.pnc.rex.test.common.TestData.getComplexGraphWithoutEnd;
 import static org.jboss.pnc.rex.test.common.TestData.getNaughtyNotificationsRequest;
 import static org.jboss.pnc.rex.test.common.TestData.getNotificationsRequest;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestWithAcceptAndManualFinish;
 import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
+import static org.jboss.pnc.rex.test.common.TestData.getStopRequest;
 import static org.jboss.pnc.rex.test.common.TestData.getStopRequestWithCallback;
 
+@Slf4j
 @QuarkusTest
 @TestSecurity(authorizationEnabled = false)
 public class NotificationTest extends AbstractTest {
@@ -73,6 +89,9 @@ public class NotificationTest extends AbstractTest {
 
     @Inject
     TransitionRecorderEndpoint recorderEndpoint;
+
+    @Inject
+    GenericVertxHttpClient httpClient;
 
     @Test
     void testNotifications() throws InterruptedException {
@@ -119,6 +138,122 @@ public class NotificationTest extends AbstractTest {
         assertThat(records.get("h")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("i")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("j")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
+    }
+
+    /**
+     * Graph (NCL-9060):
+     * 1 -> 2
+     * 2 -> 3
+     * 2 -> 4 -> 5
+     */
+    @Test
+    void testDeletionAfterNotification() throws InterruptedException {
+        List<EdgeDTO> egdes = new ArrayList<>();
+
+        CreateGraphRequest.CreateGraphRequestBuilder builder = CreateGraphRequest.builder();
+        for (int i = 1; i <= 3; i++) {
+            String name = String.valueOf(i);
+            builder.vertex(name, CreateTaskDTO.builder()
+                                                .name(name)
+                                                .controllerMode(Mode.ACTIVE)
+                                                .remoteStart(getRequestWithStart(name))
+                                                .remoteCancel(getStopRequest(name))
+                                                .callerNotifications(getNotificationsRequest())
+                                                .build());
+        }
+        // don't complete 4 and 5
+        for (int i = 4; i <= 5; i++) {
+            String name = String.valueOf(i);
+            builder.vertex(name, CreateTaskDTO.builder()
+                                                .name(name)
+                                                .controllerMode(Mode.ACTIVE)
+                                                .remoteStart(getRequestWithAcceptAndManualFinish(name))
+                                                .remoteCancel(getStopRequest(name))
+                                                .callerNotifications(getNotificationsRequest())
+                                                .build());
+        }
+
+        egdes.add(new EdgeDTO("5","4"));
+        egdes.add(new EdgeDTO("4","2"));
+        egdes.add(new EdgeDTO("3","2"));
+        egdes.add(new EdgeDTO("2","1"));
+        builder.edges(egdes);
+        CreateGraphRequest graph = builder.build();
+
+        // when
+        endpoint.start(graph);
+
+        String[] taskNames = {"1", "2", "3"};
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskNames);
+        Thread.sleep(100);
+
+        Map<String, Set<Transition>> records = new HashMap<>(recorderEndpoint.getRecords());
+
+        // then
+        // 1st task
+        assertThat(records)
+            .extractingByKeys("1")
+            .allSatisfy((firstTransitions) -> {
+                assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                    Set.of(NEW_to_ENQUEUED,
+                           ENQUEUED_to_STARTING,
+                           STARTING_to_UP,
+                           UP_to_SUCCESSFUL));
+            });
+        // 2nd and 3rd task
+        assertThat(records)
+            .extractingByKeys("2", "3")
+            .allSatisfy((firstTransitions) -> {
+                assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                    Set.of(NEW_to_WAITING,
+                           WAITING_to_ENQUEUED,
+                           ENQUEUED_to_STARTING,
+                           STARTING_to_UP,
+                           UP_to_SUCCESSFUL));
+            });
+        // 4th task
+        assertThat(records)
+            .extractingByKeys("4")
+            .allSatisfy((firstTransitions) -> {
+                assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                    Set.of(NEW_to_WAITING,
+                           WAITING_to_ENQUEUED,
+                           ENQUEUED_to_STARTING,
+                           STARTING_to_UP));
+            });
+        // 5th task
+        assertThat(records)
+            .extractingByKeys("5")
+            .allSatisfy((firstTransitions) -> {
+                assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                    Set.of(NEW_to_WAITING));
+            });
+
+        Thread.sleep(100);
+        // only 3rd task has been deleted
+        Set<TaskDTO> all = endpoint.getAll(getAllParameters(), null);
+        assertThat(all)
+            .extracting("name")
+                .containsExactlyInAnyOrder("1", "2", "4", "5");
+
+        // then complete 4
+        finishTask("4");
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "4");
+        // the tasks shouldn't be deletet yet
+        Set<TaskDTO> allWhenCompleted4 = endpoint.getAll(getAllParameters(), null);
+        assertThat(allWhenCompleted4)
+            .extracting("name")
+            .containsExactlyInAnyOrder("1", "2", "4", "5");
+
+        // then complete 5
+        finishTask("5");
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, "5");
+        Thread.sleep(100);
+
+        // make sure all tasks have been deleted
+        Set<TaskDTO> allWhenCompleted5 = endpoint.getAll(getAllParameters(), null);
+        assertThat(allWhenCompleted5.size()).isEqualTo(0);
+
     }
 
     @Test
@@ -237,5 +372,20 @@ public class NotificationTest extends AbstractTest {
 
         assertThat(endpoint.getAll(getAllParameters(), null)).extracting(TaskDTO::getName).doesNotContain(otherTaskName);
 
+    }
+
+    private void finishTask(String name) {
+        var headers = new ArrayList<Header>();
+        headers.add(new Header("Content-Type", "application/json"));
+
+        Uni<HttpResponse<Buffer>> response = httpClient.makeReactiveRequest(
+            URI.create("http://localhost:8081/test/finish/" + name),
+            Method.PUT,
+            headers,
+            "",
+            (b) -> {},
+            (t) -> {}
+        );
+        response.await().atMost(Duration.ofMillis(3000));
     }
 }

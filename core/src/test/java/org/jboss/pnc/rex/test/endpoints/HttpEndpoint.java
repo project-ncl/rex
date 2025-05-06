@@ -19,6 +19,8 @@ package org.jboss.pnc.rex.test.endpoints;
 
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.api.dto.Request;
@@ -133,6 +135,32 @@ public class HttpEndpoint {
                 .entity("{\"you\":\"wait\"}")
                 .build();
     }
+
+    Map<Object, Runnable> waitingManualFinish = new HashMap<>();
+
+    @POST
+    @Path("/acceptAndRegisterFinish")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response acceptAndRegisterFinish(StartRequest request) {
+        record(request);
+        waitingManualFinish.put(request.getPayload(), () -> finishTask(request.getPositiveCallback()));
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/finish/{name}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response finish(@PathParam("name") String name) {
+        record(name);
+        var task = waitingManualFinish.get(name);
+        if (task != null) {
+            executor.submit(task);
+            return Response.ok().build();
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+    }
+
 
     private void finishTask(Request callback) {
         try {
