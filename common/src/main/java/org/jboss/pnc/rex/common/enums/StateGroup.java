@@ -46,5 +46,17 @@ public enum StateGroup {
      * <p>
      * In this state you are unable to add additional dependencies and cannot transition to any other state.
      */
-    FINAL
+    FINAL,
+    /**
+     * Task triggered rollback process from Milestone.
+     * <p>
+     * In this state you are unable to add additional dependencies.
+     */
+    ROLLBACK_TODO,
+    /**
+     * Task is actively participating in rollback process.
+     * <p>
+     * In this state you are unable to add additional dependencies.
+     */
+    ROLLBACK
 }

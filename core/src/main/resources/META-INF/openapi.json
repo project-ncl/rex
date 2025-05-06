@@ -368,6 +368,14 @@
               "type" : "string"
             }
           }
+        }, {
+          "name" : "rollingback",
+          "in" : "query",
+          "description" : "Should include task in process of rollback?",
+          "schema" : {
+            "default" : "false",
+            "type" : "boolean"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -795,6 +803,127 @@
           }
         }
       }
+    },
+    "/test/transaction" : {
+      "get" : {
+        "tags" : [ "Test Endpoint" ],
+        "operationId" : "testTransaction",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/rest/callback/{taskName}/rollback/fail" : {
+      "post" : {
+        "tags" : [ "Callback endpoint" ],
+        "summary" : "[ADMIN] Used by remote entity to report failed Task rollback process.",
+        "operationId" : "rollbackNOK",
+        "parameters" : [ {
+          "name" : "taskName",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        }, {
+          "name" : "err",
+          "in" : "query",
+          "schema" : {
+            "default" : "PASS_ERROR",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : { }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Success with results"
+          },
+          "400" : {
+            "description" : "Invalid input parameters or validation error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Server error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/callback/{taskName}/rollback/succeed" : {
+      "post" : {
+        "tags" : [ "Callback endpoint" ],
+        "summary" : "[ADMIN] Used by remote entity to report successful Task rollback process.",
+        "operationId" : "rollbackOK",
+        "parameters" : [ {
+          "name" : "taskName",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        }, {
+          "name" : "err",
+          "in" : "query",
+          "schema" : {
+            "default" : "PASS_ERROR",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : { }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Success with results"
+          },
+          "400" : {
+            "description" : "Invalid input parameters or validation error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Server error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -845,6 +974,10 @@
           },
           "delayDependantsForFinalNotification" : {
             "type" : "boolean"
+          },
+          "rollbackLimit" : {
+            "format" : "int32",
+            "type" : "integer"
           }
         }
       },
@@ -903,6 +1036,12 @@
           },
           "queue" : {
             "type" : "string"
+          },
+          "milestoneTask" : {
+            "type" : "string"
+          },
+          "remoteRollback" : {
+            "$ref" : "#/components/schemas/Request"
           }
         }
       },
@@ -1022,11 +1161,15 @@
           "body" : { },
           "origin" : {
             "$ref" : "#/components/schemas/Origin"
+          },
+          "rollbackCounter" : {
+            "format" : "int32",
+            "type" : "integer"
           }
         }
       },
       "State" : {
-        "enum" : [ "NEW", "WAITING", "ENQUEUED", "STARTING", "UP", "STOP_REQUESTED", "STOPPING", "START_FAILED", "STOP_FAILED", "FAILED", "SUCCESSFUL", "STOPPED" ],
+        "enum" : [ "NEW", "WAITING", "ENQUEUED", "STARTING", "UP", "STOP_REQUESTED", "STOPPING", "START_FAILED", "STOP_FAILED", "FAILED", "SUCCESSFUL", "STOPPED", "ROLLBACK_TRIGGERED", "TO_ROLLBACK", "ROLLBACK_REQUESTED", "ROLLINGBACK", "ROLLEDBACK", "ROLLBACK_FAILED" ],
         "type" : "string"
       },
       "StopFlag" : {
@@ -1091,11 +1234,20 @@
           },
           "queue" : {
             "type" : "string"
+          },
+          "remoteRollback" : {
+            "$ref" : "#/components/schemas/Request"
+          },
+          "milestoneTask" : {
+            "type" : "string"
+          },
+          "stoppedCause" : {
+            "type" : "string"
           }
         }
       },
       "Transition" : {
-        "enum" : [ "NEW_to_WAITING", "NEW_to_ENQUEUED", "WAITING_to_ENQUEUED", "ENQUEUED_to_STARTING", "UP_to_STOP_REQUESTED", "STARTING_to_STOP_REQUESTED", "STOP_REQUESTED_to_STOPPING", "STOP_REQUESTED_to_STOP_FAILED", "STOPPING_TO_STOP_FAILED", "STOPPING_TO_STOPPED", "NEW_to_STOPPED", "WAITING_to_STOPPED", "ENQUEUED_to_STOPPED", "STARTING_to_UP", "STARTING_to_START_FAILED", "UP_to_FAILED", "UP_to_SUCCESSFUL" ],
+        "enum" : [ "NEW_to_WAITING", "NEW_to_ENQUEUED", "WAITING_to_ENQUEUED", "ENQUEUED_to_STARTING", "UP_to_STOP_REQUESTED", "STARTING_to_STOP_REQUESTED", "STOP_REQUESTED_to_STOPPING", "STOP_REQUESTED_to_STOP_FAILED", "STOPPING_TO_STOP_FAILED", "STOPPING_TO_STOPPED", "NEW_to_STOPPED", "WAITING_to_STOPPED", "ENQUEUED_to_STOPPED", "STARTING_to_UP", "STARTING_to_START_FAILED", "UP_to_FAILED", "UP_to_SUCCESSFUL", "UP_to_ROLLBACK_TRIGGERED", "STARTING_to_ROLLBACK_TRIGGERED", "ROLLBACK_TRIGGERED_to_ROLLEDBACK", "ROLLBACK_TRIGGERED_to_ROLLBACK_REQUESTED", "NEW_to_ROLLEDBACK", "WAITING_to_ROLLEDBACK", "ENQUEUED_to_ROLLEDBACK", "STOPPED_to_ROLLEDBACK", "SUCCESSFUL_to_TO_ROLLBACK", "UP_to_ROLLBACK_REQUESTED", "STARTING_to_ROLLBACK_REQUESTED", "START_FAILED_to_ROLLBACK_REQUESTED", "FAILED_to_ROLLBACK_REQUESTED", "SUCCESSFUL_to_ROLLBACK_REQUESTED", "UP_to_ROLLEDBACK", "STARTING_to_ROLLEDBACK", "FAILED_to_ROLLEDBACK", "SUCCESSFUL_to_ROLLEDBACK", "START_FAILED_to_ROLLEDBACK", "TO_ROLLBACK_to_ROLLBACK_REQUESTED", "ROLLBACK_REQUESTED_to_ROLLINGBACK", "ROLLINGBACK_to_ROLLEDBACK", "TO_ROLLBACK_to_ROLLEDBACK", "ROLLINGBACK_to_ROLLBACK_FAILED", "ROLLBACK_REQUESTED_to_ROLLBACK_FAILED", "ROLLEDBACK_to_NEW", "ROLLBACK_FAILED_to_NEW", "ROLLEDBACK_to_STOPPED", "ROLLBACK_FAILED_to_STOPPED", "ROLLINGBACK_to_STOPPED", "TO_ROLLBACK_to_STOPPED", "ROLLBACK_REQUESTED_to_STOPPED" ],
         "type" : "string"
       },
       "TransitionTimeDTO" : {

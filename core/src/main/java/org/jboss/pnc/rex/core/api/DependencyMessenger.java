@@ -31,4 +31,12 @@ public interface DependencyMessenger {
      * @param name name of a dependency Task you send a message to
      */
     void dependantDeleted(String name, String deletedDependant);
+
+    /**
+     * Send a signal to your depenedncy that you've finished rollback. It may cause the dependency to begin it's remote
+     * rollback.
+     *
+     * @param name name of a dependency Task you send a message to
+     */
+    void dependantRolledBack(String name);
 }

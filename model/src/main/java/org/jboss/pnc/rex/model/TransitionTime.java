@@ -20,6 +20,7 @@ package org.jboss.pnc.rex.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -31,9 +32,11 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.Comparator;
 
 @Builder
 @Jacksonized
+@EqualsAndHashCode
 @AllArgsConstructor(onConstructor_ = {@ProtoFactory})
 public class TransitionTime implements Comparable<TransitionTime> {
 
@@ -45,7 +48,11 @@ public class TransitionTime implements Comparable<TransitionTime> {
 
     @Override
     public int compareTo(TransitionTime other) {
-        return this.getTime().compareTo(other.getTime());
+        int diff = this.getTime().compareTo(other.getTime());
+        if (diff == 0) {
+            return Integer.compare(this.getTransition().ordinal(), other.getTransition().ordinal());
+        }
+        return diff;
     }
 
     @Override

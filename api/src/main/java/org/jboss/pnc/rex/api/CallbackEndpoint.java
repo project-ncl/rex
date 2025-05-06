@@ -97,4 +97,34 @@ public interface CallbackEndpoint {
     void fail(@PathParam("taskName") @NotEmpty String taskName,
               Object result,
               @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
+
+    String ROLLBACK_SUCCESS = "/{taskName}/rollback/succeed";
+    @Path(ROLLBACK_SUCCESS)
+    @Operation(summary = "[ADMIN] Used by remote entity to report successful Task rollback process.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @POST
+    void rollbackOK(@PathParam("taskName") @NotEmpty String taskName,
+                    Object result,
+                    @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
+
+    String ROLLBACK_FAILED = "/{taskName}/rollback/fail";
+    @Path(ROLLBACK_FAILED)
+    @Operation(summary = "[ADMIN] Used by remote entity to report failed Task rollback process.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @POST
+    void rollbackNOK(@PathParam("taskName") @NotEmpty String taskName,
+                    Object result,
+                    @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
 }
