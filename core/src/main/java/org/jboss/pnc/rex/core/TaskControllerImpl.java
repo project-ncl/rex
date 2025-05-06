@@ -245,7 +245,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     private ControllerJob addNotificationRequestToTransition(Task task, Transition transition) {
         var notifyJob = new NotifyCallerJob(transition, task);
 
-        // only final transitions have edge cases
+        // only final transitions require additional operations (jobs)
         if (!transition.getAfter().isFinal()) {
             return notifyJob;
         }
@@ -879,17 +879,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         }
         Task task = taskMetadata.getValue();
 
-        if (!task.getState().isFinal() || !task.isDisposable()) {
-            log.info("TASK {}: Not in final state, removing deleted dependant {} from the task.", name, deletedDependant);
-            //REMOVE dependant so it doesn't get referenced later
-            task.getDependants().remove(deletedDependant);
-
-            saveChanges(taskMetadata, task);
-        } else {
-            // DELETE
+        log.trace("Triggered by deleted task: {}. Task {} has {} dependants: {}.", deletedDependant, task.getName(), task.getDependants().size(), task.getDependants());
+        if (task.getState().isFinal() && task.isDisposable() && task.getDependants().size() <= 1) {
+            // DELETE the task if deletedDependant is the last dependant that has been deleted
             doExecute(List.of(new DeleteTaskJob(task)));
+        } else {
+            task.getDependants().remove(deletedDependant);
+            saveChanges(taskMetadata, task);
         }
-
+        // else: DO NOTHING: there are still dependents that might need the results from this task
     }
 
     @Override
