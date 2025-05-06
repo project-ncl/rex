@@ -34,6 +34,7 @@ import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
+import org.jboss.pnc.rex.model.requests.RollbackRequest;
 import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.jboss.pnc.rex.model.requests.StopRequest;
 import org.slf4j.MDC;
@@ -58,7 +59,9 @@ public class RemoteEntityClient {
 
     private static final String INTERNAL_ENDPOINT_PATH = "/rest/callback";
     private static final String SUCCESS_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/succeed";
+    private static final String SUCCESS_ROLLBACK_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/rollback/succeed";
     private static final String FAILED_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/fail";
+    private static final String FAILED_ROLLBACK_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/rollback/fail";
     private static final String SINGLE_FINISH_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/finish";
 
     private final TaskController controller;
@@ -105,6 +108,17 @@ public class RemoteEntityClient {
         }
     }
 
+    public void rollbackJob(Task task) {
+        if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeyMapping() != null) {
+            var keys = task.getConfiguration().getMdcHeaderKeyMapping();
+            var headers = task.getRemoteRollback().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
+
+            wrapWithMDC(keys, headers, () -> rollbackJobInternal(task));
+        } else {
+            rollbackJobInternal(task);
+        }
+    }
+
     private void stopJobInternal(Task task) {
         Request requestDefinition = task.getRemoteCancel();
 
@@ -134,8 +148,8 @@ public class RemoteEntityClient {
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
-                response -> handleResponse(response, task),
-                throwable -> handleConnectionFailure(throwable, task));
+                response -> handleResponse(response, task, false),
+                throwable -> handleConnectionFailure(throwable, task, false));
     }
 
     private Map<String, String> getOptionalMDCAndOTELValues(Task task) {
@@ -186,32 +200,64 @@ public class RemoteEntityClient {
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
-                response -> handleResponse(response, task),
-                throwable -> handleConnectionFailure(throwable, task));
+                response -> handleResponse(response, task, false),
+                throwable -> handleConnectionFailure(throwable, task, false));
     }
 
-    private void handleResponse(HttpResponse<Buffer> response, Task task) {
+    private void rollbackJobInternal(Task task) {
+        Request requestDefinition = task.getRemoteRollback();
+
+        URI url;
+        try {
+            url = new URI(requestDefinition.getUrl());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("remoteRollback.url is not a valid URL for task with name " +
+                    task.getName(), e);
+        }
+
+
+        org.jboss.pnc.api.dto.Request positiveCallback = getCallbackRequest(task.getName(), SUCCESS_ROLLBACK_ENDPOINT_PATH);
+        org.jboss.pnc.api.dto.Request negativeCallback = getCallbackRequest(task.getName(), FAILED_ROLLBACK_ENDPOINT_PATH);
+
+        RollbackRequest request = RollbackRequest.builder()
+                .payload(requestDefinition.getAttachment())
+                .taskResults(getTaskResultsIfConfigurationAllows(task))
+                .positiveCallback(positiveCallback)
+                .negativeCallback(negativeCallback)
+                .mdc(getOptionalMDCAndOTELValues(task))
+                .build();
+
+        client.makeRequest(url,
+                requestDefinition.getMethod(),
+                requestDefinition.getHeaders(),
+                request,
+                response -> handleResponse(response, task, true),
+                throwable -> handleConnectionFailure(throwable, task, true));
+    }
+
+    private void handleResponse(HttpResponse<Buffer> response, Task task, boolean rollback) {
         if (200 <= response.statusCode() && response.statusCode() <= 299) {
             log.info("RESPONSE {}: Got positive response.", task.getName());
-            controller.accept(task.getName(), parseBody(response), Origin.REMOTE_ENTITY);
+            controller.accept(task.getName(), parseBody(response), Origin.REMOTE_ENTITY, rollback);
         } else if (300 <= response.statusCode() && response.statusCode() <= 399) {
             log.info("RESPONSE {}: Got redirect to {}", task.getName(), response.getHeader("Location"));
             // TODO do not fail after proper redirect handling
-            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY);
+            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY, rollback);
         } else {
             log.info("RESPONSE {}: Got negative response. (STATUS CODE: {})", task.getName(), response.statusCode());
-            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY);
+            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY, rollback);
         }
     }
 
-    private void handleConnectionFailure(Throwable exception, Task task) {
+    private void handleConnectionFailure(Throwable exception, Task task, boolean rollback) {
         log.error("ERROR {}: Couldn't reach the remote entity.", task.getName(), exception);
         Uni.createFrom().voidItem()
             .onItem().invoke(
                 () -> controller.fail(
                     task.getName(),
                     convertToHashMap(new ErrorResponse(exception.getClass().getSimpleName(), exception.getMessage(), "Rex couldn't contact remote entity.")),
-                    Origin.REX_INTERNAL_ERROR))
+                    Origin.REX_INTERNAL_ERROR,
+                    rollback))
             .onFailure().retry().atMost(5)
             .onFailure().invoke((throwable) -> log.error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
             .onFailure().recoverWithNull()

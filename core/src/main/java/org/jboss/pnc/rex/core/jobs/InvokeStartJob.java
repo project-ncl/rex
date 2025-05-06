@@ -45,7 +45,6 @@ public class InvokeStartJob extends ControllerJob {
     private static final Logger logger = LoggerFactory.getLogger(InvokeStartJob.class);
 
     public InvokeStartJob(Task task) {
-        // dilemma whether this Job should be async or not
         super(INVOCATION_PHASE, task, true);
         this.client = CDI.current().select(RemoteEntityClient.class).get();
         this.controller = CDI.current().select(TaskController.class, () -> WithTransactions.class).get();
@@ -72,7 +71,7 @@ public class InvokeStartJob extends ControllerJob {
     protected void onException(Throwable e) {
         logger.error("START {}: UNEXPECTED exception has been thrown.", context.getName(), e);
         Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR))
+                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, false))
                 .onFailure().invoke((throwable) -> logger.warn("START {}: Failed to transition task to START_FAILED state. Retrying.", context.getName(), throwable))
                 .onFailure().retry().atMost(5)
                 .onFailure().recoverWithNull()

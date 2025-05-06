@@ -30,7 +30,7 @@ public class DependantDeletedJob extends DependencyMessageJob {
     }
 
     @Override
-    void inform(String dependencyName) {
+    protected void inform(String dependencyName) {
         dependencyAPI.dependantDeleted(dependencyName, context.getName());
     }
 }

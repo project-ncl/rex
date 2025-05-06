@@ -17,6 +17,14 @@
  */
 package org.jboss.pnc.rex.core;
 
+import com.google.common.collect.Iterables;
+import com.google.common.graph.ElementOrder;
+import com.google.common.graph.Graph;
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.ImmutableGraph;
+import com.google.common.graph.MutableGraph;
+import com.google.common.graph.SuccessorsFunction;
+import com.google.common.graph.Traverser;
 import io.quarkus.infinispan.client.Remote;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.Flag;
@@ -62,6 +70,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static jakarta.transaction.Transactional.TxType.MANDATORY;
 
@@ -149,8 +158,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     }
 
     @Override
-    public List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished, List<String> queueFilter) {
-        if (!waiting && !running && !finished)
+    public List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished, boolean rollingback, List<String> queueFilter) {
+        if (!waiting && !running && !finished && !queued && !rollingback)
             return Collections.emptyList();
 
         List<State> states = new ArrayList<>();
@@ -174,6 +183,15 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                     .filter(State::isFinal)
                     .collect(Collectors.toSet()));
         }
+        if (rollingback) {
+            states.addAll(EnumSet.allOf(State.class).stream()
+                    .filter(State::isAwaitingRollback)
+                    .collect(Collectors.toSet()));
+            states.addAll(EnumSet.allOf(State.class).stream()
+                    .filter(State::isRollback)
+                    .collect(Collectors.toSet()));
+        }
+
         QueryFactory factory = Search.getQueryFactory(tasks);
         // reduce to 'NEW','WAITING'.... format
         String filter = states.stream()

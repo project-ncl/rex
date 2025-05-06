@@ -15,25 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.jobs;
-
-import org.jboss.pnc.rex.model.Task;
+package org.jboss.pnc.rex.core.jobs.rollback;
 
 import jakarta.enterprise.event.TransactionPhase;
+import org.jboss.pnc.rex.core.jobs.DependantMessageJob;
+import org.jboss.pnc.rex.model.Task;
 
-public class DependencyStoppedJob extends DependantMessageJob {
+public class DependencyResetJob extends DependantMessageJob {
 
     private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.IN_PROGRESS;
 
-    private final String cause;
-
-    public DependencyStoppedJob(Task task, String cause) {
+    public DependencyResetJob(Task task) {
         super(task, INVOCATION_PHASE);
-        this.cause = cause;
     }
 
     @Override
     protected void inform(String dependentName) {
-        dependentAPI.dependencyStopped(dependentName, cause);
+        dependentAPI.dependencyReset(dependentName);
     }
 }

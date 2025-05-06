@@ -30,7 +30,7 @@ public class DependencySucceededJob extends DependantMessageJob {
     }
 
     @Override
-    void inform(String dependentName) {
+    protected void inform(String dependentName) {
         dependentAPI.dependencySucceeded(dependentName);
     }
 }

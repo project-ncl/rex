@@ -44,7 +44,7 @@ public abstract class DependencyMessageJob extends ControllerJob {
         return true;
     }
 
-    abstract void inform(final String dependencyName);
+    protected abstract void inform(final String dependencyName);
 
     @Override
     protected void beforeExecute() {}
