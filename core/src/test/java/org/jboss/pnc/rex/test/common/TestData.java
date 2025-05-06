@@ -131,6 +131,18 @@ public class TestData {
                 .build();
     }
 
+    public static org.jboss.pnc.api.dto.Request getRequestWithAcceptAndManualFinish(Object payload) {
+        var headerList = new ArrayList<org.jboss.pnc.api.dto.Request.Header>();
+        headerList.add(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json"));
+
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/test/acceptAndRegisterFinish"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(headerList)
+                .attachment(payload)
+                .build();
+    }
+    
     public static org.jboss.pnc.api.dto.Request getRequestWithBackoff(Object payload, int failsUntilOK) {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/test/425eventuallyOK?fails=" + failsUntilOK))
