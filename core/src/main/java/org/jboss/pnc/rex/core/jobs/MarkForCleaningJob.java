@@ -23,6 +23,9 @@ import org.jboss.pnc.rex.model.Task;
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
 
+/**
+ * Job to mark a task as disposable.
+ */
 public class MarkForCleaningJob extends ControllerJob {
 
     private final TaskController controller;
