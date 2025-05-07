@@ -35,7 +35,6 @@ import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.getAllParameters;
 
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 public class CorrelationTest extends AbstractTest {
 
     @Inject

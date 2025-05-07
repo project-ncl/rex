@@ -20,9 +20,7 @@ package org.jboss.pnc.rex.test;
 import static io.restassured.RestAssured.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.jboss.pnc.rex.test.common.Assertions.assertCorrectTaskRelations;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAre;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.Assertions.*;
 import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.*;
 
@@ -76,7 +74,6 @@ import java.util.Set;
 
 @QuarkusTest
 @Slf4j
-@TestSecurity(authorizationEnabled = false)
 class TaskContainerImplTest extends AbstractTest {
 
     public static final String EXISTING_KEY = "omg.wtf.whatt";
@@ -174,7 +171,7 @@ class TaskContainerImplTest extends AbstractTest {
         controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
         manager.commit();
 
-        waitTillTasksAre(State.UP, container, EXISTING_KEY);
+        waitTillTaskTransitionsInto(State.UP, EXISTING_KEY);
         Task task = container.getTask(EXISTING_KEY);
         assertThat(task.getState()).isEqualTo(State.UP);
     }
@@ -216,13 +213,13 @@ class TaskContainerImplTest extends AbstractTest {
         controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
         container.getTransactionManager().commit();
 
-        waitTillTasksAre(State.UP, container, EXISTING_KEY);
+        waitTillTaskTransitionsInto(State.UP, EXISTING_KEY);
 
         container.getTransactionManager().begin();
         controller.accept(EXISTING_KEY, null, Origin.REMOTE_ENTITY, false);
         container.getTransactionManager().commit();
 
-        waitTillTasksAre(State.UP, container, dependant);
+        waitTillTaskTransitionsInto(State.UP, dependant);
     }
 
     @Test

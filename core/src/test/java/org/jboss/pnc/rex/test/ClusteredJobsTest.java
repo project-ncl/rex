@@ -39,6 +39,7 @@ import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.common.Assertions;
 import org.jboss.pnc.rex.test.common.TestData;
 import org.junit.jupiter.api.Test;
 
@@ -54,12 +55,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAre;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.Assertions.*;
 
-@QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 @Slf4j
+@QuarkusTest
 public class ClusteredJobsTest extends AbstractTest {
 
     @Inject
@@ -98,12 +97,12 @@ public class ClusteredJobsTest extends AbstractTest {
             .post(taskURI.getPath())
             .then()
             .statusCode(200);
-        waitTillTasksAre(State.UP, container, task);
+        waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
         Instant beforeTimeout = Instant.now();
 
-        waitTillTasksAre(State.STOPPING, container, task);
+        waitTillTaskTransitionsInto(State.STOPPING, task);
 
         // then
         waitTillTasksAreFinishedWith(State.STOPPED, task);
@@ -133,11 +132,11 @@ public class ClusteredJobsTest extends AbstractTest {
             .post(taskURI.getPath())
             .then()
             .statusCode(200);
-        waitTillTasksAre(State.UP, container, task);
+        waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
 
-        waitTillTasksAre(State.STOPPING, container, task);
+        waitTillTaskTransitionsInto(State.STOPPING, task);
         Thread.sleep(50);
         ClusteredJobReference enlistedJob = registry.getById(referenceId);
 
@@ -168,7 +167,7 @@ public class ClusteredJobsTest extends AbstractTest {
             .post(taskURI.getPath())
             .then()
             .statusCode(200);
-        waitTillTasksAre(State.UP, container, task);
+        waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
 
@@ -200,11 +199,11 @@ public class ClusteredJobsTest extends AbstractTest {
             .post(taskURI.getPath())
             .then()
             .statusCode(200);
-        waitTillTasksAre(State.UP, container, task);
+        waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
 
-        waitTillTasksAre(State.STOPPING, container, task);
+        waitTillTaskTransitionsInto(State.STOPPING, task);
         Thread.sleep(50);
         ClusteredJobReference enlistedJob = registry.getById(referenceId);
         assertThat(enlistedJob).isNotNull();
@@ -236,11 +235,11 @@ public class ClusteredJobsTest extends AbstractTest {
             .post(taskURI.getPath())
             .then()
             .statusCode(200);
-        waitTillTasksAre(State.UP, container, task);
+        waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
 
-        waitTillTasksAre(State.STOPPING, container, task);
+        waitTillTaskTransitionsInto(State.STOPPING, task);
         Thread.sleep(50);
 
         // when
@@ -285,12 +284,12 @@ public class ClusteredJobsTest extends AbstractTest {
             .post(taskURI.getPath())
             .then()
             .statusCode(200);
-        waitTillTasksAre(State.UP, container, task);
+        waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
 
         // remove Job scheduled by /cancel
-        waitTillTasksAre(State.STOPPING, container, task);
+        waitTillTaskTransitionsInto(State.STOPPING, task);
         Thread.sleep(50);
 
         var jobReference = registry.getById(referenceId);

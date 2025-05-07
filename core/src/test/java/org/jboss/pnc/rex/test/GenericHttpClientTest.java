@@ -49,7 +49,6 @@ import static org.jboss.pnc.rex.test.common.TestData.getRequestFromSingleTask;
 import static io.restassured.RestAssured.given;
 
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 public class GenericHttpClientTest extends AbstractTest {
     @Inject
     HttpEndpoint endpoint;

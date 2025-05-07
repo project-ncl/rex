@@ -49,8 +49,7 @@ import static org.jboss.pnc.rex.common.enums.Transition.UP_to_STOP_REQUESTED;
 import static org.jboss.pnc.rex.common.enums.Transition.UP_to_SUCCESSFUL;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_ENQUEUED;
 import static org.jboss.pnc.rex.common.enums.Transition.WAITING_to_STOPPED;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAre;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.Assertions.*;
 import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.createMockTask;
 import static org.jboss.pnc.rex.test.common.TestData.getAllParameters;
@@ -62,7 +61,6 @@ import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
 import static org.jboss.pnc.rex.test.common.TestData.getStopRequestWithCallback;
 
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 public class NotificationTest extends AbstractTest {
 
     @Inject
@@ -99,7 +97,8 @@ public class NotificationTest extends AbstractTest {
     void testNotificationOnCancel() throws InterruptedException {
         CreateGraphRequest request = getComplexGraphWithoutEnd(true, true);
         endpoint.start(request);
-        waitTillTasksAre(State.UP, container, "a", "b");
+        waitTillTaskTransitionsInto(State.UP, "a");
+        waitTillTaskTransitionsInto(State.UP, "b");
 
         endpoint.cancel("a");
         endpoint.cancel("b");
