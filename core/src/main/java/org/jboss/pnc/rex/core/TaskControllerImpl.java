@@ -423,7 +423,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                     yield Transition.ROLLBACK_TRIGGERED_to_ROLLEDBACK;
                 if (shouldRequestRollback(task))
                     yield Transition.ROLLBACK_TRIGGERED_to_ROLLBACK_REQUESTED;
-                if (shouldStop(task)) //fixme
+                if (shouldStop(task))
                     yield Transition.ROLLBACK_TRIGGERED_to_STOPPED;
                 yield null;
             }
@@ -432,7 +432,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                     yield Transition.TO_ROLLBACK_to_ROLLEDBACK;
                 if (shouldRequestRollback(task))
                     yield Transition.TO_ROLLBACK_to_ROLLBACK_REQUESTED;
-                if (shouldStop(task)) //fixme
+                if (shouldStop(task))
                     yield Transition.TO_ROLLBACK_to_STOPPED;
                 yield null;
             }
@@ -443,7 +443,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                     yield Transition.ROLLBACK_REQUESTED_to_ROLLINGBACK;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
                     yield Transition.ROLLBACK_REQUESTED_to_ROLLBACK_FAILED;
-                if (shouldStop(task)) //fixme
+                if (shouldStop(task))
                     yield Transition.ROLLBACK_REQUESTED_to_STOPPED;
                 yield null;
             }
@@ -454,7 +454,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                     yield Transition.ROLLINGBACK_to_ROLLEDBACK;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
                     yield Transition.ROLLINGBACK_to_ROLLBACK_FAILED;
-                if (shouldStop(task)) //fixme
+                if (shouldStop(task))
                     yield Transition.ROLLINGBACK_to_STOPPED;
                 yield null;
             }
@@ -462,14 +462,14 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             case ROLLEDBACK -> {
                 if (shouldResetTask(task))
                     yield Transition.ROLLEDBACK_to_NEW;
-                if (shouldStop(task)) //fixme
+                if (shouldStop(task))
                     yield Transition.ROLLEDBACK_to_STOPPED;
                 yield null;
             }
             case ROLLBACK_FAILED -> {
                 if (shouldResetTask(task))
                     yield Transition.ROLLBACK_FAILED_to_NEW;
-                if (shouldStop(task)) //fixme
+                if (shouldStop(task))
                     yield Transition.ROLLBACK_FAILED_to_STOPPED;
                 yield null;
             }
