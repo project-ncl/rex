@@ -954,6 +954,7 @@ components:
       - ROLLINGBACK_to_STOPPED
       - TO_ROLLBACK_to_STOPPED
       - ROLLBACK_REQUESTED_to_STOPPED
+      - ROLLBACK_TRIGGERED_to_STOPPED
       type: string
     TransitionTimeDTO:
       type: object
