@@ -19,25 +19,38 @@ package org.jboss.pnc.rex.facade.mapper;
 
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.model.Configuration;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
 import static org.jboss.pnc.rex.model.Configuration.*;
 
 @Mapper(config = MapperCentralConfig.class,
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_DEFAULT)
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_DEFAULT,
+        nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
 public interface ConfigurationMapper extends EntityMapper<ConfigurationDTO, Configuration> {
 
     @Override
     ConfigurationDTO toDTO(Configuration dbEntity);
 
-    @Override
     @Mapping(target = "passResultsOfDependencies", defaultValue = "" + Defaults.passResultsOfDependencies)
     @Mapping(target = "passMDCInRequestBody", defaultValue = "" + Defaults.passMDCInRequestBody)
     @Mapping(target = "passOTELInRequestBody", defaultValue = "" + Defaults.passOTELInRequestBody)
     @Mapping(target = "cancelTimeout", defaultValue = Defaults.cancelTimeoutString)
     @Mapping(target = "delayDependantsForFinalNotification",
             defaultValue = "" + Defaults.delayDependantsForFinalNotification)
-    Configuration toDB(ConfigurationDTO dtoEntity);
+    @Mapping(target = "rollbackLimit", defaultValue = "" + Defaults.rollbackLimit)
+    @Named("std") //avoid ambiguity
+    Configuration _toDB(ConfigurationDTO dtoEntity);
+
+
+    /**
+     * Creating empty ConfigurationDTO will cause Mapstruct to fill default ConfigurationDTO.* properties if null.
+     */
+    @Override
+    default Configuration toDB(ConfigurationDTO dtoEntity) {
+        if (dtoEntity == null) {
+            return _toDB(new ConfigurationDTO());
+        }
+
+        return _toDB(dtoEntity);
+    }
 }

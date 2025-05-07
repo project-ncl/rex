@@ -46,15 +46,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.jboss.pnc.rex.common.enums.State.ENQUEUED;
 import static org.jboss.pnc.rex.common.enums.State.WAITING;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAre;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.Assertions.*;
 import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.getAllParameters;
 import static org.jboss.pnc.rex.test.common.TestData.getComplexGraph;
 import static org.jboss.pnc.rex.test.common.TestData.getSingleWithoutStart;
 
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 public class QueueTest extends AbstractTest {
 
     public static final String EXISTING_KEY = "omg.wtf.whatt";
@@ -126,7 +124,7 @@ public class QueueTest extends AbstractTest {
         assertThat(task.getState()).isEqualTo(ENQUEUED);
 
         queue.setConcurrent(1L);
-        waitTillTasksAre(State.UP, container, container.getTask(EXISTING_KEY));
+        waitTillTaskTransitionsInto(State.UP,EXISTING_KEY);
     }
 
     @Test

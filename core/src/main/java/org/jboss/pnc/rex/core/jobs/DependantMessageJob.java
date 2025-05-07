@@ -50,7 +50,7 @@ public abstract class DependantMessageJob extends ControllerJob {
         return true;
     }
 
-    abstract void inform(final String dependentName);
+    protected abstract void inform(final String dependentName);
 
     @Override
     protected void beforeExecute() {}

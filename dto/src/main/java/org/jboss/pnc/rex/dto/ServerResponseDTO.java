@@ -36,6 +36,8 @@ public class ServerResponseDTO {
 
     public Boolean positive;
 
+    public Integer rollbackCounter;
+
     public Object body;
 
     public Origin origin;

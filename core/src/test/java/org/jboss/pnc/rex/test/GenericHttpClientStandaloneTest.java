@@ -62,7 +62,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 public class GenericHttpClientStandaloneTest {
 
     private static WireMockServer wireMockServer;

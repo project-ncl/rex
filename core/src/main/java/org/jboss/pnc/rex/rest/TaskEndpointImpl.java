@@ -59,16 +59,17 @@ public class TaskEndpointImpl implements TaskEndpoint {
             queueFilter.add(null);
         }
 
-        Boolean allFiltersAreFalse = !filterParameters.getFinished() && !filterParameters.getRunning() && !filterParameters.getWaiting();
+        Boolean allFiltersAreFalse = !filterParameters.getFinished() && !filterParameters.getRunning() && !filterParameters.getWaiting() && !filterParameters.getRollingback();
 
-        //If query is empty return all services
+        //If query is empty return all tasks
         if (allFiltersAreFalse) {
-            return taskProvider.getAll(true,true,true, queueFilter);
+            return taskProvider.getAll(true,true,true, true, queueFilter);
         }
         return taskProvider.getAll(
                 filterParameters.getWaiting(),
                 filterParameters.getRunning(),
                 filterParameters.getFinished(),
+                filterParameters.getRollingback(),
                 queueFilter);
     }
 

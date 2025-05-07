@@ -38,7 +38,11 @@ public class TransitionTimeDTO implements Comparable<TransitionTimeDTO> {
     public Instant time;
 
     @Override
-    public int compareTo(TransitionTimeDTO o) {
-        return this.getTime().compareTo(o.getTime());
+    public int compareTo(TransitionTimeDTO other) {
+        int diff = this.getTime().compareTo(other.getTime());
+        if (diff == 0) {
+            return Integer.compare(this.getTransition().ordinal(), other.getTransition().ordinal());
+        }
+        return diff;
     }
 }

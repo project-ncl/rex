@@ -41,4 +41,9 @@ public class TaskFilterParameters {
     @DefaultValue("false")
     private Boolean finished;
 
+    @Parameter(description = "Should include task in process of rollback?")
+    @QueryParam("rollingback")
+    @DefaultValue("false")
+    private Boolean rollingback;
+
 }

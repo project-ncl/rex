@@ -27,6 +27,9 @@ import org.slf4j.LoggerFactory;
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
 
+import java.util.ArrayList;
+import java.util.TreeSet;
+
 public class NotifyCallerJob extends ControllerJob {
 
     private static final Logger log = LoggerFactory.getLogger(NotifyCallerJob.class);
@@ -38,9 +41,18 @@ public class NotifyCallerJob extends ControllerJob {
     private final CallerNotificationClient client;
 
     public NotifyCallerJob(Transition transition, Task task) {
-        super(INVOCATION_PHASE, task, true);
+        super(INVOCATION_PHASE, bestEffortCopy(task), true);
         this.transition = transition;
         this.client = CDI.current().select(CallerNotificationClient.class).get();
+    }
+
+    private static Task bestEffortCopy(Task task) {
+        return task.toBuilder()
+                .timestamps(new TreeSet<>(task.getTimestamps()))
+                .serverResponses(new ArrayList<>(task.getServerResponses()))
+                .rollbackMeta(task.getRollbackMeta().toBuilder().build())
+                .configuration(task.getConfiguration().toBuilder().build())
+                .build();
     }
 
     @Override

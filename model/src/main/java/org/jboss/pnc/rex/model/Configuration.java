@@ -82,6 +82,12 @@ public class Configuration {
     @Getter(onMethod_ = {@ProtoField(number = 6, defaultValue = "" + Defaults.delayDependantsForFinalNotification)})
     private final boolean delayDependantsForFinalNotification;
 
+    /**
+     * The amount of times this Task will try to trigger rollback process from Milestone Task. Default is 3 times.
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 7, defaultValue = "" + Defaults.rollbackLimit)})
+    private final int rollbackLimit;
+
     public static class Defaults {
         public static final boolean passResultsOfDependencies = false;
         public static final boolean passMDCInRequestBody = false;
@@ -89,5 +95,6 @@ public class Configuration {
         public static final Duration cancelTimeout = Duration.ZERO;
         public static final String cancelTimeoutString = "PT0S";
         public static final boolean delayDependantsForFinalNotification = false;
+        public static final int rollbackLimit = 3;
     }
 }

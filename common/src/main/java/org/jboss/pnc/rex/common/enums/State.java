@@ -89,7 +89,42 @@ public enum State {
      * Remote Task stopped successfully.
      */
     @ProtoEnumValue(number = 11)
-    STOPPED(StateGroup.FINAL);
+    STOPPED(StateGroup.FINAL),
+    /**
+     * Task triggered rollback. Controller will tell Milestone Task to start rollback process.
+     */
+    @ProtoEnumValue(number = 12)
+    ROLLBACK_TRIGGERED(StateGroup.ROLLBACK_TODO),
+    /**
+     * Task was marked to rollback.
+     */
+    @ProtoEnumValue(number = 13)
+    TO_ROLLBACK(StateGroup.ROLLBACK),
+    /**
+     * Task is in process of rolling back. Controller was requested to rollback the remote Task and waits for a response
+     * from remote entity. The response (both positive+negative) will transition the Task into ROLLEDBACK state.
+     *
+     * (There's no ROLLBACK_FAILED state to not block the rollback process.)
+     */
+    @ProtoEnumValue(number = 14)
+    ROLLBACK_REQUESTED(StateGroup.ROLLBACK),
+    /**
+     * Task is in process of rolling back. Controller is waiting for a callback.
+     */
+    @ProtoEnumValue(number = 15)
+    ROLLINGBACK(StateGroup.ROLLBACK),
+    /**
+     * Task has rolledback (successfully or not). Soon it will restart its state and Transition back to IDLE or
+     * QUEUED state.
+     */
+    @ProtoEnumValue(number = 16)
+    ROLLEDBACK(StateGroup.ROLLBACK),
+    /**
+     * Task has failed to rollback. This does not affect the rollback process negatively.
+     */
+    @ProtoEnumValue(number = 17)
+    ROLLBACK_FAILED(StateGroup.ROLLBACK);
+
     private final StateGroup type;
 
     State(StateGroup type) {
@@ -114,5 +149,13 @@ public enum State {
 
     public boolean isQueued() {
         return type.equals(StateGroup.QUEUED);
+    }
+
+    public boolean isAwaitingRollback() {
+        return type.equals(StateGroup.ROLLBACK_TODO);
+    }
+
+    public boolean isRollback() {
+        return type.equals(StateGroup.ROLLBACK);
     }
 }

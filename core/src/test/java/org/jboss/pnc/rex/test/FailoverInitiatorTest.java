@@ -53,11 +53,11 @@ import java.time.Duration;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.jboss.pnc.rex.test.ClusteredJobsTest.taskID;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTaskTransitionsInto;
 import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAre;
 
 @Slf4j
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 public class FailoverInitiatorTest extends AbstractTest {
 
     @TestHTTPEndpoint(TaskEndpoint.class)
@@ -108,11 +108,11 @@ public class FailoverInitiatorTest extends AbstractTest {
             .post(taskURI.getPath())
             .then()
             .statusCode(200);
-        waitTillTasksAre(State.UP, container, task);
+        waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
 
-        waitTillTasksAre(State.STOPPING, container, task);
+        waitTillTaskTransitionsInto(State.STOPPING, task);
         waitt();
 
         // when
@@ -145,10 +145,10 @@ public class FailoverInitiatorTest extends AbstractTest {
             .post(taskURI.getPath())
             .then()
             .statusCode(200);
-        waitTillTasksAre(State.UP, container, task);
+        waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
-        waitTillTasksAre(State.STOPPING, container, task);
+        waitTillTaskTransitionsInto(State.STOPPING, task);
         waitt(); // async stuff
 
         // when

@@ -54,7 +54,7 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
         } catch (TaskMissingException e) {
             handleWithErrorOption(errorOption, e);
         } catch (ArcUndeclaredThrowableException e) {
-            self.systemFailure(taskName);
+            self.systemFailure(taskName, false);
         }
     }
 
@@ -62,11 +62,11 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public void succeed(String taskName, Object result, ErrorOption errorOption) {
         try {
-            self.succeedInternal(taskName, result);
+            self.succeedInternal(taskName, result, false);
         } catch (TaskMissingException e) {
             handleWithErrorOption(errorOption, e);
         } catch (ArcUndeclaredThrowableException e) {
-            self.systemFailure(taskName);
+            self.systemFailure(taskName, false);
         }
     }
 
@@ -74,33 +74,57 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public void fail(String taskName, Object result, ErrorOption errorOption) {
         try {
-            self.failInternal(taskName, result);
+            self.failInternal(taskName, result, false);
         } catch (TaskMissingException e) {
             handleWithErrorOption(errorOption, e);
         } catch (ArcUndeclaredThrowableException e) {
-            self.systemFailure(taskName);
+            self.systemFailure(taskName, false);
         }
     }
 
     @ApplyFaultTolerance("internal-retry")
-    void failInternal(String taskName, Object result) {
-        taskProvider.acceptRemoteResponse(taskName, false, result);
+    void failInternal(String taskName, Object result, boolean rollback) {
+        taskProvider.acceptRemoteResponse(taskName, false, rollback, result);
     }
 
     @ApplyFaultTolerance("internal-retry")
-    void succeedInternal(String taskName, Object result) {
-        taskProvider.acceptRemoteResponse(taskName, true, result);
+    void succeedInternal(String taskName, Object result, boolean rollback) {
+        taskProvider.acceptRemoteResponse(taskName, true, rollback, result);
     }
 
     @ApplyFaultTolerance("internal-retry")
     void finishInternal(String taskName, FinishRequest result) {
-        taskProvider.acceptRemoteResponse(taskName, result.getStatus(), result.getResponse());
+        taskProvider.acceptRemoteResponse(taskName, result.getStatus(), false, result.getResponse());
+    }
+
+    @Override
+    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
+    public void rollbackOK(String taskName, Object result, ErrorOption err) {
+        try {
+            self.succeedInternal(taskName, result, true);
+        } catch (TaskMissingException e) {
+            handleWithErrorOption(err, e);
+        } catch (ArcUndeclaredThrowableException e) {
+            self.systemFailure(taskName, true);
+        }
+    }
+
+    @Override
+    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
+    public void rollbackNOK(String taskName, Object result, ErrorOption err) {
+        try {
+            self.failInternal(taskName, result, true);
+        } catch (TaskMissingException e) {
+            handleWithErrorOption(err, e);
+        } catch (ArcUndeclaredThrowableException e) {
+            self.systemFailure(taskName, true);
+        }
     }
 
     @ApplyFaultTolerance("internal-retry")
-    void systemFailure(String taskName) {
+    void systemFailure(String taskName, boolean rollback) {
         log.error("STOP {}: UNEXPECTED exception has been thrown.", taskName);
-        taskProvider.acceptRemoteResponse(taskName, false, "ACCEPT : System failure.");
+        taskProvider.acceptRemoteResponse(taskName, false, rollback, "ACCEPT : System failure.");
     }
 
     void handleWithErrorOption(ErrorOption errorOption, RuntimeException e) {

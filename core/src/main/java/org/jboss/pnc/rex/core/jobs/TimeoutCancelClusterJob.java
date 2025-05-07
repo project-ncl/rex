@@ -132,7 +132,7 @@ public class TimeoutCancelClusterJob extends ClusteredJob {
             return true;
         }
         log.info("TIMEOUT: Timing out task {}.", refreshedTask.getName());
-        taskController.accept(refreshedTask.getName(), null, Origin.REX_TIMEOUT);
+        taskController.accept(refreshedTask.getName(), null, Origin.REX_TIMEOUT, false);
         return true;
     }
 }

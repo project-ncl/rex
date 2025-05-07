@@ -40,11 +40,15 @@ public class CreateTaskDTO {
 
     public String queue;
 
+    public String milestoneTask;
+
     @NotNull
     public Request remoteStart;
 
     @NotNull
     public Request remoteCancel;
+
+    public Request remoteRollback;
 
     public Request callerNotifications;
 

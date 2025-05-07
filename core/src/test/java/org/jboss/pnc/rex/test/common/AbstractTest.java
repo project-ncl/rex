@@ -20,6 +20,7 @@ package org.jboss.pnc.rex.test.common;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ import static io.restassured.RestAssured.*;
 
 @Slf4j
 @QuarkusTest
+@TestSecurity(user = "admin", roles = {"pnc-users-admin"})
 public abstract class AbstractTest {
 
     @TestHTTPEndpoint(QueueEndpoint.class)
@@ -67,18 +69,10 @@ public abstract class AbstractTest {
         httpEndpoint.clearRequestCounter();
 
         //Uncomment if you're encountering race conditions.
-        Thread.sleep(100);
+        // Thread.sleep(100);
     }
 
     public void resetEverythingWithMax(long max) {
-        // reset Maximum setting
-        given()
-            .queryParam("amount", max)
-            .contentType(ContentType.JSON)
-            .post(queueEndpoint.getPath() + QueueEndpoint.SET_CONCURRENT)
-            .then()
-            .statusCode(204);
-
         // clear caches
         given()
             .contentType(ContentType.JSON)
@@ -86,6 +80,13 @@ public abstract class AbstractTest {
             .then()
                 .statusCode(204);
 
+        // reset Maximum setting
+        given()
+                .queryParam("amount", max)
+                .contentType(ContentType.JSON)
+                .post(queueEndpoint.getPath() + QueueEndpoint.SET_CONCURRENT)
+                .then()
+                .statusCode(204);
         log.info("Clearing data completed.");
     }
 }

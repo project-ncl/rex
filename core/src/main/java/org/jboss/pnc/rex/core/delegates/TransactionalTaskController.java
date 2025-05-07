@@ -28,6 +28,7 @@ import org.jboss.pnc.rex.core.api.TaskController;
 @WithTransactions
 @Unremovable
 @ApplicationScoped
+@Transactional
 public class TransactionalTaskController implements TaskController {
 
     private final TaskController delegate;
@@ -37,50 +38,67 @@ public class TransactionalTaskController implements TaskController {
     }
 
     @Override
-    @Transactional
     public void setMode(String name, Mode mode) {
         delegate.setMode(name, mode);
     }
 
     @Override
-    @Transactional
     public void setMode(String name, Mode mode, boolean pokeQueue) {
         delegate.setMode(name, mode, pokeQueue);
     }
 
     @Override
-    @Transactional
-    public void accept(String name, Object response, Origin origin) {
-        delegate.accept(name, response, origin);
+    public void accept(String name, Object response, Origin origin, boolean isRollback) {
+        delegate.accept(name, response, origin, isRollback);
     }
 
     @Override
-    @Transactional
-    public void fail(String name, Object response, Origin origin) {
-        delegate.fail(name, response, origin);
+    public void fail(String name, Object response, Origin origin, boolean isRollback) {
+        delegate.fail(name, response, origin, isRollback);
     }
 
     @Override
-    @Transactional
     public void dequeue(String name) {
         delegate.dequeue(name);
     }
 
     @Override
-    @Transactional
     public void delete(String name) {
         delegate.delete(name);
     }
 
     @Override
-    @Transactional
     public void markForDisposal(String name, boolean pokeCleaner) {
         delegate.markForDisposal(name, pokeCleaner);
     }
 
     @Override
-    @Transactional
     public void clearConstraint(String name) {
         delegate.clearConstraint(name);
+    }
+
+    @Override
+    public void reset(String name) {
+        this.delegate.reset(name);
+    }
+
+    @Override
+    public void primeForRollback(String name, int rollbackDependants, int dependencies) {
+        delegate.primeForRollback(name, rollbackDependants, dependencies);
+    }
+
+    @Override
+    public void rollbackTriggered(String name) {
+        delegate.rollbackTriggered(name);
+    }
+
+    @Override
+    public void startRollbackProcess(String name) {
+        delegate.startRollbackProcess(name);
+    }
+
+    @Override
+    public void involveInTransaction(String name) {
+        delegate.involveInTransaction(name);
     }
 }

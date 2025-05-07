@@ -113,6 +113,35 @@ public class Assertions {
         } catch (InterruptedException e) {
             // shouldn't happen
         }
+    }
 
+    /**
+     * This subscription guarantees only that the Task has transitioned into the subscribed state at some time. It does
+     * not guarantee that the Task is CURRENTLY in the subscribed state.
+     *
+     * The method will block until the Task has transitioned 'occurrences' amount of times into the state.
+     */
+    public static List<Task> waitTillTaskTransitionsInto(State state, String taskName, int occurrences) {
+        TransitionRecorder recorder = CDI.current().select(TransitionRecorder.class).get();
+        BlockingQueue<Task> queue = recorder.subscribeForTaskState(taskName, state);
+        List<Task> toReturn = new ArrayList<>(occurrences);
+
+        try {
+            for (int i = 0; i < occurrences; i++) {
+                var task = queue.poll(15, TimeUnit.SECONDS);
+                if (task == null) {
+                    throw new AssertionError("Timeout " + 10 + " " + TimeUnit.SECONDS + " reached while waiting for some task " + taskName + " to transition to " + state);
+                }
+                toReturn.add(task);
+            }
+        } catch (InterruptedException e) {
+            // shouldn't happen
+        }
+
+        return toReturn;
+    }
+
+    public static List<Task> waitTillTaskTransitionsInto(State state, String taskName) {
+        return waitTillTaskTransitionsInto(state, taskName, 1);
     }
 }

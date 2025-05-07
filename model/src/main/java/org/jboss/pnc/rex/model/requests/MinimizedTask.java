@@ -48,9 +48,13 @@ public class MinimizedTask {
 
     private final String queue;
 
+    private final String milestoneTask;
+
     private final Request remoteStart;
 
     private final Request remoteCancel;
+
+    private final Request remoteRollback;
 
     private final Request callerNotifications;
 
@@ -63,6 +67,8 @@ public class MinimizedTask {
     private final List<ServerResponse> serverResponses;
 
     private final StopFlag stopFlag;
+
+    private final String stoppedCause;
 
     private final Configuration configuration;
 

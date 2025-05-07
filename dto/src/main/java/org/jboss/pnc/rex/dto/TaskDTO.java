@@ -53,9 +53,13 @@ public class TaskDTO {
 
     public Request callerNotifications;
 
+    public Request remoteRollback;
+
     public State state;
 
     public StopFlag stopFlag;
+
+    public String stoppedCause;
 
     public List<ServerResponseDTO> serverResponses = new ArrayList<>();
 
@@ -69,4 +73,6 @@ public class TaskDTO {
      * The list of timestamps is order from the earliest transitions
      */
     public List<TransitionTimeDTO> timestamps = new ArrayList<>();
+
+    public String milestoneTask;
 }

@@ -165,7 +165,7 @@ public class QueueManagerImpl implements QueueManager {
     @Override
     @Transactional(MANDATORY)
     public void synchronizeRunningCounter() {
-        Map<String, List<Task>> tasksByQueue = container.getTasks(false, false, true, false, null)
+        Map<String, List<Task>> tasksByQueue = container.getTasks(false, false, true, false, false, null)
                 .stream()
                 .collect(groupingBy(Task::getQueue));
 

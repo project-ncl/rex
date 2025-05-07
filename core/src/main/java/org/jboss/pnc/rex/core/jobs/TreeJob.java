@@ -24,7 +24,10 @@ import com.google.common.graph.SuccessorsFunction;
 import com.google.common.graph.Traverser;
 import com.google.common.graph.ValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
+import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.enterprise.util.TypeLiteral;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.model.Task;
@@ -38,6 +41,7 @@ public class TreeJob extends ControllerJob {
     @Getter
     private final ControllerJob root;
     private final ValueGraph<ControllerJob, ChainTrigger> graph;
+    private final Event<ControllerJob> jobEvent;
 
     /**
      * Special job that consists of Controller Jobs connected by edges like in
@@ -56,6 +60,8 @@ public class TreeJob extends ControllerJob {
         super(invocationPhase, context, async);
         this.graph = graph;
         this.root = root;
+        var event = new TypeLiteral<Event<ControllerJob>>() {};
+        this.jobEvent = CDI.current().select(event).get();
     }
 
     @Override
@@ -98,7 +104,7 @@ public class TreeJob extends ControllerJob {
         return new TreeJobBuilder(root, invocationPhase, context, async);
     }
 
-    private static class ChainSuccessorFunction implements SuccessorsFunction<ControllerJob> {
+    private class ChainSuccessorFunction implements SuccessorsFunction<ControllerJob> {
         private final ValueGraph<ControllerJob, ChainTrigger> graph;
 
         private ChainSuccessorFunction(ValueGraph<ControllerJob, ChainTrigger> graph) {
@@ -111,7 +117,7 @@ public class TreeJob extends ControllerJob {
             if (!parent.isFinished()) {
                 try {
                     log.info("Running {}", parent);
-                    parent.run();
+                    jobEvent.fire(parent);
                 } catch (Exception e) {
                     log.warn("Job {} has thrown an exception. Executing Job defined in the TreeJob regardless.", parent, e);
                 }
@@ -153,6 +159,8 @@ public class TreeJob extends ControllerJob {
             if (root == null) {
                 throw new IllegalArgumentException("Root must not be null");
             }
+            root.invocationPhase = TransactionPhase.IN_PROGRESS;
+            root.async = false;
             this.root = root;
             this.invocationPhase = invocationPhase;
             this.context = context;
@@ -188,7 +196,8 @@ public class TreeJob extends ControllerJob {
             if (graph.nodes().contains(child)) {
                 throw new IllegalArgumentException("Child can't be present in the tree graph");
             }
-
+            child.invocationPhase = TransactionPhase.IN_PROGRESS;
+            child.async = false;
             graph.putEdgeValue(parent, child, trigger);
 
             return this;
@@ -199,4 +208,8 @@ public class TreeJob extends ControllerJob {
         }
     }
 
+    @Override
+    public String toString() {
+        return graph.toString();
+    }
 }

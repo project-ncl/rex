@@ -32,7 +32,7 @@ public interface TaskProvider {
      *
      * @return set of services
      */
-    Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished, List<String> queueFilter);
+    Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished, boolean rollingback, List<String> queueFilter);
 
     /**
      * Cancels execution of the service and its dependants
@@ -64,8 +64,8 @@ public interface TaskProvider {
      * Used for communication with remote entity. Invoked by remote entity by provided callback.
      *
      * @param positive callback is positive or negative
-     *          true == remote entity responds that it has finished execution of the service
-     *          false == remote entity responds that the service has failed its execution
+     *                 true == remote entity responds that it has finished execution of the service
+     *                 false == remote entity responds that the service has failed its execution
      */
-    void acceptRemoteResponse(String taskName, boolean positive, Object response);
+    void acceptRemoteResponse(String taskName, boolean positive, boolean rollback, Object response);
 }

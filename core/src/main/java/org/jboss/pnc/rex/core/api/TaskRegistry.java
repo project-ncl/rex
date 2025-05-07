@@ -17,12 +17,14 @@
  */
 package org.jboss.pnc.rex.core.api;
 
+import com.google.common.graph.Graph;
 import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
 import org.jboss.pnc.rex.model.Task;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The registry is used to retrieve Tasks.
@@ -56,11 +58,13 @@ public interface TaskRegistry {
      * @param queued      is in StateGroup.QUEUED state
      * @param running     is in StateGroup.RUNNING state
      * @param finished    is in StateGroup.FINAL state
+     * @param rollingback
      * @param queueFilter is in particular queue
      * @return list of filtered services
      */
-    List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished, List<String> queueFilter);
+    List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished, boolean rollingback, List<String> queueFilter);
 
+    Graph<Task> getTaskGraph(Set<String> taskContext);
 
     /**
      * Get the task results of the direct dependencies of the task, irrespective of the task configuration to allow

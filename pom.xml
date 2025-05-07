@@ -74,7 +74,7 @@
     <lombok.version>1.18.32</lombok.version>
     <delombok-plugin.version>1.18.20.0</delombok-plugin.version>
     <slf4j.version>1.7.28</slf4j.version>
-    <assertj.version>3.23.1</assertj.version>
+    <assertj.version>3.27.3</assertj.version>
     <restassured.version>4.1.1</restassured.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <pnc-api.version>3.0.5</pnc-api.version>

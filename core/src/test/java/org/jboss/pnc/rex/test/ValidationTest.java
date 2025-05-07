@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithoutStart;
 
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
+@TestSecurity(user = "user", roles = {"pnc-app-rex-user"})
 public class ValidationTest {
 
     @TestHTTPEndpoint(TaskEndpoint.class)

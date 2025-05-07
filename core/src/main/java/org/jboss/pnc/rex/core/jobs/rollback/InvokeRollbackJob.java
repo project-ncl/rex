@@ -15,24 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.core.jobs;
+package org.jboss.pnc.rex.core.jobs.rollback;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
 import org.jboss.pnc.api.dto.ErrorResponse;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.RemoteEntityClient;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
+import org.jboss.pnc.rex.core.jobs.ControllerJob;
 import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.enterprise.event.TransactionPhase;
-import jakarta.enterprise.inject.spi.CDI;
 import java.util.HashMap;
 
-public class InvokeStopJob extends ControllerJob {
+public class InvokeRollbackJob extends ControllerJob {
 
     private static final TransactionPhase INVOCATION_PHASE = TransactionPhase.AFTER_SUCCESS;
 
@@ -42,7 +43,14 @@ public class InvokeStopJob extends ControllerJob {
 
     private final ObjectMapper mapper;
 
-    private static final Logger logger = LoggerFactory.getLogger(InvokeStopJob.class);
+    private static final Logger logger = LoggerFactory.getLogger(InvokeRollbackJob.class);
+
+    public InvokeRollbackJob(Task task) {
+        super(INVOCATION_PHASE, task, true);
+        this.client = CDI.current().select(RemoteEntityClient.class).get();
+        this.controller = CDI.current().select(TaskController.class, () -> WithTransactions.class).get();
+        this.mapper = CDI.current().select(ObjectMapper.class).get();
+    }
 
     @Override
     protected void beforeExecute() {}
@@ -51,11 +59,21 @@ public class InvokeStopJob extends ControllerJob {
     protected void afterExecute() {}
 
     @Override
+    public boolean execute() {
+        logger.info("ROLLBACK {}: RESTORING", context.getName());
+        client.rollbackJob(context);
+        return true;
+    }
+
+    @Override
+    protected void onFailure() {}
+
+    @Override
     protected void onException(Throwable e) {
-        logger.error("STOP " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
+        logger.error("ROLLBACK {}: UNEXPECTED exception has been thrown.", context.getName(), e);
         Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, false))
-                .onFailure().invoke((throwable) -> logger.warn("STOP " + context.getName() + ": Failed to transition task to STOP_FAILED state. Retrying.", throwable))
+                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, true))
+                .onFailure().invoke((throwable) -> logger.warn("ROLLBACK {}: Failed to transition task to START_FAILED state. Retrying.", context.getName(), throwable))
                 .onFailure().retry().atMost(5)
                 .onFailure().recoverWithNull()
                 .await().indefinitely();
@@ -63,24 +81,6 @@ public class InvokeStopJob extends ControllerJob {
 
     private Object createResponse(Throwable e) {
         return mapper.convertValue(
-                new ErrorResponse(e, "Rex couldn't invoke cancel on the remote entity."), HashMap.class);
+                new ErrorResponse(e, "Rex failed to rollback a Task on the remote entity."), HashMap.class);
     }
-
-    public InvokeStopJob(Task task) {
-        super(INVOCATION_PHASE, task, true);
-        this.client = CDI.current().select(RemoteEntityClient.class).get();
-        this.controller = CDI.current().select(TaskController.class, () -> WithTransactions.class).get();
-        this.mapper = CDI.current().select(ObjectMapper.class).get();
-
-    }
-
-    @Override
-    public boolean execute() {
-        logger.info("STOP {}: STOPPING", context.getName());
-        client.stopJob(context);
-        return true;
-    }
-
-    @Override
-    protected void onFailure() {}
 }

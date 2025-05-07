@@ -32,6 +32,7 @@ import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.NodeResource;
 import org.jboss.pnc.rex.model.Request;
+import org.jboss.pnc.rex.model.RollbackMetadata;
 import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.TransitionTime;
@@ -65,7 +66,8 @@ import org.jboss.pnc.rex.model.ispn.adapter.KeyValueString;
                 NodeResource.class,
                 ClusteredJobReference.class,
                 ResourceType.class,
-                CJobOperation.class
+                CJobOperation.class,
+                RollbackMetadata.class
                 })
 interface ProtoSchemaGenerator extends GeneratedSchema {
 }

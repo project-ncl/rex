@@ -25,15 +25,14 @@ import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.TransactionPhase;
-import org.jboss.pnc.rex.core.jobs.TreeJob;
+import org.jboss.pnc.rex.model.Task;
+import org.jboss.pnc.rex.model.TransitionTime;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @ApplicationScoped
 @Slf4j
@@ -43,13 +42,47 @@ public class TransitionRecorder {
 
     private final Set<Tuple<String, State>> records = new ConcurrentHashSet<>();
 
+    private final Map<String, Set<Tuple<TransitionTime, Task>>> snapshots = new ConcurrentHashMap<>();
+
+    private final Map<String, Map<State, List<BlockingQueue<Task>>>> subscriptionDos = new ConcurrentHashMap<>();
+
     void recordTransition(@Observes(during = TransactionPhase.AFTER_SUCCESS) NotifyCallerJob transitionJob) {
+        recordSnapshot(transitionJob);
         extractTransitionAndRecord(transitionJob);
+        secondarySubscription(transitionJob);
     }
 
-    void recordTransition(@Observes(during = TransactionPhase.AFTER_SUCCESS) TreeJob chainingJob) {
-        if (chainingJob.getRoot() instanceof NotifyCallerJob notification) {
-            extractTransitionAndRecord(notification);
+    private void recordSnapshot(NotifyCallerJob transitionJob) {
+        TransitionTime tt = transitionJob.getContext()
+                .orElseThrow()
+                .getTimestamps()
+                .stream()
+                    .filter(ttime -> ttime.getTransition() == transitionJob.getTransition())
+                    .max(Comparator.naturalOrder())
+                    .get();
+        Task task = transitionJob.getContext().get().toBuilder().build();
+
+        Tuple<TransitionTime, Task> snapshot = new Tuple<>(tt, task);
+
+        if (!snapshots.containsKey(task.getName())) {
+            snapshots.put(task.getName(), new ConcurrentHashSet<>());
+        }
+
+        snapshots.get(task.getName()).add(snapshot);
+    }
+
+    private void secondarySubscription(NotifyCallerJob transitionJob) {
+        TransitionTime tt = transitionJob.getContext()
+                .orElseThrow()
+                .getTimestamps()
+                .stream()
+                .filter(ttime -> ttime.getTransition() == transitionJob.getTransition())
+                .max(Comparator.naturalOrder()).get();
+        Task task = transitionJob.getContext().get().toBuilder().build();
+
+        if (subscriptionDos.containsKey(task.getName()) &&
+                subscriptionDos.get(task.getName()).containsKey(tt.getTransition().getAfter())) {
+            subscriptionDos.get(task.getName()).get(tt.getTransition().getAfter()).forEach(queue -> queue.add(task));
         }
     }
 
@@ -60,7 +93,7 @@ public class TransitionRecorder {
         );
 
         if (transitionJob.getTransition().getAfter().isFinal()) {
-            log.info("Adding state {}", state.toString());
+            log.info("Adding state {}", state);
             records.add(state);
             for (Set<String> subscription : subscriptions.keySet()) {
                 if (subscription.contains(transitionJob.getContext().get().getName())) {
@@ -75,7 +108,9 @@ public class TransitionRecorder {
             value.drainTo(new ArrayList<>());
         }
         subscriptions.clear();
+        subscriptionDos.clear();
         records.clear();
+        snapshots.clear();
     }
 
     public BlockingQueue<Tuple<String, State>> subscribe(Collection<String> subscription) {
@@ -91,6 +126,52 @@ public class TransitionRecorder {
             }
         }
         return queue;
+    }
+
+    public BlockingQueue<Task> subscribeForTaskState(String taskName, State state) {
+        BlockingQueue<Task> queue = new ArrayBlockingQueue<>(10);
+        if (!subscriptionDos.containsKey(taskName)) {
+            subscriptionDos.put(taskName, new ConcurrentHashMap<>());
+        }
+        if (!subscriptionDos.get(taskName).containsKey(state)) {
+            subscriptionDos.get(taskName).put(state, new CopyOnWriteArrayList<>());
+        }
+        subscriptionDos.get(taskName).get(state).add(queue);
+
+        // go through all records up until now to make sure subscriber didn't miss a transition
+        if (snapshots.containsKey(taskName)) {
+            for (var tuple : snapshots.get(taskName)) {
+                if (tuple.first.getTransition().getAfter() == state) {
+                    queue.add(tuple.second);
+                }
+            }
+        }
+        return queue;
+    }
+
+    public Map<String, SortedSet<Tuple<TransitionTime, Task>>> snapshots() {
+        Map<String, SortedSet<Tuple<TransitionTime, Task>>> toReturn = new ConcurrentHashMap<>(snapshots.size());
+        snapshots.forEach((key, value) -> {
+            var sset = new TreeSet<Tuple<TransitionTime, Task>>(Comparator.comparing(Tuple::first));
+            sset.addAll(value);
+            toReturn.put(key, sset);
+        });
+        return toReturn;
+    }
+
+    public int count(String taskName, State state) {
+        if (snapshots.get(taskName) == null) {
+            return 0;
+        };
+
+        int count = 0;
+        var transitions = snapshots.get(taskName);
+        for (var transition : transitions) {
+            State after = transition.first.getTransition().getAfter();
+            if (after == state) count++;
+        }
+
+        return count;
     }
 
     public record Tuple<T1, T2>(T1 first, T2 second) {}

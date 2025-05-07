@@ -29,7 +29,6 @@ import org.jboss.pnc.rex.model.Request;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class TestData {
@@ -40,10 +39,9 @@ public class TestData {
 
     public static CreateTaskDTO getMockTaskWithoutStart(String name, Mode mode, boolean withNotifications) {
         String payload = String.format("I'm an %s!", name);
-        if (withNotifications) {
-            return createMockTask(name, mode, getRequestWithoutStart(payload), getStopRequestWithCallback(payload), getNotificationsRequest());
-        }
-        return createMockTask(name, mode, getRequestWithoutStart(payload), getStopRequestWithCallback(payload), null);
+        var notificationsRequest = withNotifications ? getNotificationsRequest() : null;
+
+        return createMockTask(name, mode, getRequestWithoutStart(payload), getStopRequestWithCallback(payload), notificationsRequest);
     }
 
     public static CreateTaskDTO getMockTaskWithStart(String name, Mode mode) {
@@ -51,10 +49,14 @@ public class TestData {
     }
 
     public static CreateTaskDTO getMockTaskWithStart(String name, Mode mode, boolean withNotifications) {
-        if (withNotifications) {
-            return createMockTask(name, mode, getRequestWithStart(name), getStopRequestWithCallback(name), getNotificationsRequest());
-        }
-        return createMockTask(name, mode, getRequestWithStart(name), getStopRequestWithCallback(name), null);
+        return getMockTaskWithStart(name, mode, withNotifications, false);
+    }
+
+    public static CreateTaskDTO getMockTaskWithStart(String name, Mode mode, boolean withNotifications, boolean withRollback) {
+        var notificationsRequest = withNotifications ? getNotificationsRequest() : null;
+        var rollbackRequest = withRollback ? getRequestForRollback() : null;
+
+        return createMockTask(name, mode, getRequestWithStart(name), getStopRequestWithCallback(name), notificationsRequest, rollbackRequest);
     }
 
     public static CreateGraphRequest getSingleWithoutStart(String name) {
@@ -78,12 +80,17 @@ public class TestData {
         return createMockTask(name, mode, startRequest, stopRequest, notificationsRequest, null);
     }
 
-    public static CreateTaskDTO createMockTask(String name, Mode mode, org.jboss.pnc.api.dto.Request startRequest, org.jboss.pnc.api.dto.Request stopRequest, org.jboss.pnc.api.dto.Request notificationsRequest, ConfigurationDTO config) {
+    public static CreateTaskDTO createMockTask(String name, Mode mode, org.jboss.pnc.api.dto.Request startRequest, org.jboss.pnc.api.dto.Request stopRequest, org.jboss.pnc.api.dto.Request notificationsRequest, org.jboss.pnc.api.dto.Request rollbackEndpoint) {
+        return createMockTask(name, mode, startRequest, stopRequest, notificationsRequest, rollbackEndpoint, null);
+    }
+
+    public static CreateTaskDTO createMockTask(String name, Mode mode, org.jboss.pnc.api.dto.Request startRequest, org.jboss.pnc.api.dto.Request stopRequest, org.jboss.pnc.api.dto.Request notificationsRequest, org.jboss.pnc.api.dto.Request rollbackRequest, ConfigurationDTO config) {
         return CreateTaskDTO.builder()
                 .name(name)
                 .controllerMode(mode)
                 .remoteStart(startRequest)
                 .remoteCancel(stopRequest)
+                .remoteRollback(rollbackRequest)
                 .callerNotifications(notificationsRequest)
                 .configuration(config)
                 .build();
@@ -149,6 +156,24 @@ public class TestData {
                 .build();
     }
 
+    public static org.jboss.pnc.api.dto.Request getRequestForRollback() {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/test/acceptAndRollback"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
+                .attachment("hello")
+                .build();
+    }
+
+    public static org.jboss.pnc.api.dto.Request getRequestForRollbackWithFail() {
+        return org.jboss.pnc.api.dto.Request.builder()
+                .uri(URI.create("http://localhost:8081/test/failAndRollback"))
+                .method(org.jboss.pnc.api.dto.Request.Method.POST)
+                .headers(List.of(new org.jboss.pnc.api.dto.Request.Header("Content-Type", "application/json")))
+                .attachment("hello")
+                .build();
+    }
+
     public static org.jboss.pnc.api.dto.Request getNotificationsRequest() {
         return org.jboss.pnc.api.dto.Request.builder()
                 .uri(URI.create("http://localhost:8081/transition/record"))
@@ -183,6 +208,7 @@ public class TestData {
         params.setFinished(true);
         params.setRunning(true);
         params.setWaiting(true);
+        params.setRollingback(true);
         return params;
     }
 
