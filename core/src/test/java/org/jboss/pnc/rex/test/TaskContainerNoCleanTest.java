@@ -56,7 +56,6 @@ import static org.jboss.pnc.rex.test.common.TestData.getRequestWithNegativeCallb
  * Use this class instead of TaskContainerTest if you want to verify data in tasks after completion.
  */
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks
 public class TaskContainerNoCleanTest extends AbstractTest {
 

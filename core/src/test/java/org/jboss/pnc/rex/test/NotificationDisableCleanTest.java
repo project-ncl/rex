@@ -32,6 +32,7 @@ import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
 import org.jboss.pnc.rex.test.profile.WithoutTaskCleaning;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
@@ -50,7 +51,6 @@ import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedW
 import static org.jboss.pnc.rex.test.common.TestData.*;
 
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks
 public class NotificationDisableCleanTest extends AbstractTest {
 
@@ -160,11 +160,14 @@ public class NotificationDisableCleanTest extends AbstractTest {
 
         // when
         endpoint.start(request);
+        waitTillTasksAreFinishedWith(State.SUCCESSFUL, request.getVertices()
+                .keySet().stream()
+                .filter(task -> List.of("a", "b").contains(task)) // both A and B will be SUCCESS; others STOPPED
+                .toArray(String[]::new));
         waitTillTasksAreFinishedWith(State.STOPPED, request.getVertices()
                 .keySet().stream()
-                .filter(task -> !List.of("a", "b").contains(task)) // both A and B will be SUCCESS; others STOPPED
+                .filter(task -> !List.of("a", "b").contains(task))
                 .toArray(String[]::new));
-        Thread.sleep(100);
         Set<TaskDTO> all = endpoint.getAll(getAllParameters(), null);
 
         // then

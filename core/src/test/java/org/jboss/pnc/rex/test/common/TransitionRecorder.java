@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @ApplicationScoped
 @Slf4j
@@ -43,7 +44,7 @@ public class TransitionRecorder {
 
     private final Map<String, Set<Tuple<TransitionTime, Task>>> snapshots = new ConcurrentHashMap<>();
 
-    private final Map<String, Map<State, BlockingQueue<Task>>> subscriptionDos = new ConcurrentHashMap<>();
+    private final Map<String, Map<State, List<BlockingQueue<Task>>>> subscriptionDos = new ConcurrentHashMap<>();
 
     void recordTransition(@Observes(during = TransactionPhase.AFTER_SUCCESS) NotifyCallerJob transitionJob) {
         recordSnapshot(transitionJob);
@@ -81,7 +82,7 @@ public class TransitionRecorder {
 
         if (subscriptionDos.containsKey(task.getName()) &&
                 subscriptionDos.get(task.getName()).containsKey(tt.getTransition().getAfter())) {
-            subscriptionDos.get(task.getName()).get(tt.getTransition().getAfter()).add(task);
+            subscriptionDos.get(task.getName()).get(tt.getTransition().getAfter()).forEach(queue -> queue.add(task));
         }
     }
 
@@ -132,7 +133,10 @@ public class TransitionRecorder {
         if (!subscriptionDos.containsKey(taskName)) {
             subscriptionDos.put(taskName, new ConcurrentHashMap<>());
         }
-        subscriptionDos.get(taskName).put(state, queue);
+        if (!subscriptionDos.get(taskName).containsKey(state)) {
+            subscriptionDos.get(taskName).put(state, new CopyOnWriteArrayList<>());
+        }
+        subscriptionDos.get(taskName).get(state).add(queue);
 
         // go through all records up until now to make sure subscriber didn't miss a transition
         if (snapshots.containsKey(taskName)) {
@@ -153,6 +157,21 @@ public class TransitionRecorder {
             toReturn.put(key, sset);
         });
         return toReturn;
+    }
+
+    public int count(String taskName, State state) {
+        if (snapshots.get(taskName) == null) {
+            return 0;
+        };
+
+        int count = 0;
+        var transitions = snapshots.get(taskName);
+        for (var transition : transitions) {
+            State after = transition.first.getTransition().getAfter();
+            if (after == state) count++;
+        }
+
+        return count;
     }
 
     public record Tuple<T1, T2>(T1 first, T2 second) {}

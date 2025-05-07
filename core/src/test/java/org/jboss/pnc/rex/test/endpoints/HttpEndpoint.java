@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.rex.common.enums.Method;
+import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.core.GenericVertxHttpClient;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
@@ -39,6 +40,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.jboss.pnc.rex.test.common.Assertions;
+import org.jboss.pnc.rex.test.common.TransitionRecorder;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -63,6 +67,9 @@ public class HttpEndpoint {
     @Inject
     @Running
     Counter running;
+
+    @Inject
+    TransitionRecorder recorder;
 
     private final Map<String, Queue<Long>> record = new HashMap<>();
     private final Queue<Object> recordedRequestData = new ConcurrentLinkedQueue<>();
@@ -92,7 +99,9 @@ public class HttpEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response stopAndCallback(StopRequest request) {
         record(request);
-        executor.submit(() -> finishTask(request.getPositiveCallback()));
+
+        finishAsync(request.getPositiveCallback(), State.STOPPING);
+
         return Response.ok().build();
     }
 
@@ -101,7 +110,9 @@ public class HttpEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response acceptAndStart(StartRequest request) {
         record(request);
-        executor.submit(() -> finishTask(request.getPositiveCallback()));
+
+        finishAsync(request.getPositiveCallback(), State.UP);
+
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
 
@@ -110,7 +121,9 @@ public class HttpEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response acceptAndFail(StartRequest request) {
         record(request);
-        executor.submit(() -> finishTask(request.getNegativeCallback()));
+
+        finishAsync(request.getNegativeCallback(), State.UP);
+
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
 
@@ -119,7 +132,9 @@ public class HttpEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response acceptAndRollback(RollbackRequest request) {
         record(request);
-        executor.submit(() -> finishTask(request.getPositiveCallback()));
+
+        finishAsync(request.getPositiveCallback(), State.ROLLINGBACK);
+
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
 
@@ -128,7 +143,9 @@ public class HttpEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response failAndRollback(RollbackRequest request) {
         record(request);
-        executor.submit(() -> finishTask(request.getNegativeCallback()));
+
+        finishAsync(request.getNegativeCallback(), State.ROLLINGBACK);
+
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
 
@@ -140,7 +157,7 @@ public class HttpEndpoint {
     public Response eventuallyAccept(StartRequest request, @QueryParam("fails") int fails) {
 
         if (fails == counter.get()) {
-            executor.submit(() -> finishTask(request.getPositiveCallback()));
+            finishAsync(request.getPositiveCallback(), State.UP);
             return Response.status(200)
                     .header("Content-Type", "application/json")
                     .entity("{\"you\":\"cool\"}")
@@ -154,11 +171,33 @@ public class HttpEndpoint {
                 .build();
     }
 
-    private void finishTask(Request callback) {
-        try {
-            Thread.sleep(Duration.between(Instant.now(), Instant.now().plusMillis(20)).toMillis()+10);
-        } catch (InterruptedException e) {
-            //ignore
+    private String parseTaskID(Request request) {
+        String endpoint = "/rest/callback/";
+
+        if (request.getUri().getPath().startsWith(endpoint)) {
+            int endpointIndex = request.getUri().getPath().indexOf(endpoint);
+            String withoutEndpoint = request.getUri().getPath().substring(endpointIndex + endpoint.length());
+            return withoutEndpoint.substring(0, withoutEndpoint.indexOf("/"));
+        }
+        return null;
+    }
+
+    private void finishAsync(Request request, State waitFor) {
+        int count = recorder.count(parseTaskID(request), waitFor);
+
+        executor.submit(() -> finishTask(request, waitFor, count + 1));
+    }
+
+    private void finishTask(Request callback, State waitFor, int occurrences) {
+        String taskName = parseTaskID(callback);
+        if (taskName != null && waitFor != null && occurrences > 0) {
+            Assertions.waitTillTaskTransitionsInto(waitFor, taskName, occurrences);
+        } else {
+            try {
+                Thread.sleep(Duration.between(Instant.now(), Instant.now().plusMillis(20)).toMillis()+10);
+            } catch (InterruptedException e) {
+                //ignore
+            }
         }
         String body = "ALL IS OK";
 

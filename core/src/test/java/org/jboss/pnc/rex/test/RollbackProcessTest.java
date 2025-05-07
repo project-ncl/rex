@@ -52,7 +52,6 @@ import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.*;
 
 @QuarkusTest
-@TestSecurity(authorizationEnabled = false)
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks
 public class RollbackProcessTest extends AbstractTest {
 
