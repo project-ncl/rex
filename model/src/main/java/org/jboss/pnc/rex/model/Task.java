@@ -164,6 +164,9 @@ public class Task {
     @Getter(onMethod_ = {@ProtoField(number = 18), @Basic})
     private String queue;
 
+    /**
+     * If this Task is in STOPPED/FAILED state, this will be the name of the Task which was the initial cause.
+     */
     @Getter(onMethod_ = {@ProtoField(number = 19)})
     private String stoppedCause;
 
