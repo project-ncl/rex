@@ -121,8 +121,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
             case STOPPING_TO_STOPPED -> List.of(new DependencyCancelledJob(task, task.getName()));
 
-            case NEW_to_STOPPED, WAITING_to_STOPPED, ENQUEUED_to_STOPPED, ROLLEDBACK_to_STOPPED,
-                 ROLLBACK_FAILED_to_STOPPED, ROLLBACK_REQUESTED_to_STOPPED -> {
+            case NEW_to_STOPPED, WAITING_to_STOPPED, ENQUEUED_to_STOPPED, ROLLBACK_TRIGGERED_to_STOPPED,
+                 ROLLEDBACK_to_STOPPED, ROLLBACK_FAILED_to_STOPPED -> {
                 var jobs = new ArrayList<ControllerJob>();
                 switch (task.getStopFlag()) {
                     case CANCELLED -> jobs.add(new DependencyCancelledJob(task, task.getStoppedCause()));
@@ -187,9 +187,11 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             case UP_to_ROLLEDBACK, STARTING_to_ROLLEDBACK, FAILED_to_ROLLEDBACK, START_FAILED_to_ROLLEDBACK,
                  ROLLBACK_REQUESTED_to_ROLLINGBACK-> List.of();
 
-            case TO_ROLLBACK_to_STOPPED, ROLLINGBACK_to_STOPPED -> {
+            case TO_ROLLBACK_to_STOPPED, ROLLBACK_REQUESTED_to_STOPPED, ROLLINGBACK_to_STOPPED -> {
                 var jobs = new ArrayList<ControllerJob>();
+
                 jobs.add(new DependantRolledBackJob(task));
+
                 switch (task.getStopFlag()) {
                     case CANCELLED -> jobs.add(new DependencyCancelledJob(task, task.getStoppedCause()));
                     case DEPENDENCY_FAILED -> jobs.add(new DependencyStoppedJob(task, task.getStoppedCause()));
@@ -421,6 +423,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                     yield Transition.ROLLBACK_TRIGGERED_to_ROLLEDBACK;
                 if (shouldRequestRollback(task))
                     yield Transition.ROLLBACK_TRIGGERED_to_ROLLBACK_REQUESTED;
+                if (shouldStop(task)) //fixme
+                    yield Transition.ROLLBACK_TRIGGERED_to_STOPPED;
                 yield null;
             }
             case TO_ROLLBACK -> {
@@ -1021,6 +1025,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         if (task.getState() != State.ROLLBACK_TRIGGERED) {
             throw new IllegalStateException("Task '" + task.getName() + "' not in ROLLBACK_TRIGGERED state. Can't increase counter.");
         }
+        task.setStopFlag(StopFlag.NONE);
         task.getRollbackMeta().incTriggerCounter();
 
         // #3 HANDLE (shouldn't do Transitions though)

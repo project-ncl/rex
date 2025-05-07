@@ -330,40 +330,42 @@ public enum Transition {
     @ProtoEnumValue(number = 41)
     ROLLBACK_REQUESTED_to_ROLLBACK_FAILED(State.ROLLBACK_REQUESTED, State.ROLLBACK_FAILED),
 
-    /**
-     * User has set Controllers mode to Mode.CANCEL.
-     *
-     * Controller informs Task's dependants that the Task stopped.
-     */
     @ProtoEnumValue(number = 44)
-    ROLLEDBACK_to_STOPPED(State.ROLLEDBACK, State.STOPPED),
+    ROLLBACK_TRIGGERED_to_STOPPED(State.ROLLBACK_TRIGGERED, State.STOPPED),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
      * Controller informs Task's dependants that the Task stopped.
      */
     @ProtoEnumValue(number = 45)
-    ROLLBACK_FAILED_to_STOPPED(State.ROLLBACK_FAILED, State.STOPPED),
+    ROLLEDBACK_to_STOPPED(State.ROLLEDBACK, State.STOPPED),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
      * Controller informs Task's dependants that the Task stopped.
      */
     @ProtoEnumValue(number = 46)
-    ROLLINGBACK_to_STOPPED(State.ROLLEDBACK, State.STOPPED),
+    ROLLBACK_FAILED_to_STOPPED(State.ROLLBACK_FAILED, State.STOPPED),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
      * Controller informs Task's dependants that the Task stopped.
      */
     @ProtoEnumValue(number = 47)
-    TO_ROLLBACK_to_STOPPED(State.TO_ROLLBACK, State.STOPPED),
+    ROLLINGBACK_to_STOPPED(State.ROLLEDBACK, State.STOPPED),
     /**
      * User has set Controllers mode to Mode.CANCEL.
      *
      * Controller informs Task's dependants that the Task stopped.
      */
     @ProtoEnumValue(number = 48)
+    TO_ROLLBACK_to_STOPPED(State.TO_ROLLBACK, State.STOPPED),
+    /**
+     * User has set Controllers mode to Mode.CANCEL.
+     *
+     * Controller informs Task's dependants that the Task stopped.
+     */
+    @ProtoEnumValue(number = 49)
     ROLLBACK_REQUESTED_to_STOPPED(State.ROLLBACK_REQUESTED, State.STOPPED);
 
 
