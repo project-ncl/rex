@@ -111,7 +111,7 @@ public class TaskListener {
     }
 
     void failureListener(@Observes(during = TransactionPhase.AFTER_FAILURE) @BeforeDestroyed(TransactionScoped.class) @Priority(APPLICATION + 499) Object ignore) throws SystemException {
-        log.error("AFTER FAILURE: Transaction failed {}", tm.getTransaction().toString());
+        log.warn("AFTER FAILURE: Transaction failed {}", tm.getTransaction().toString());
     }
     void successListener(@Observes(during = TransactionPhase.AFTER_SUCCESS) @BeforeDestroyed(TransactionScoped.class) @Priority(APPLICATION + 499) Object ignore) throws SystemException {
         log.trace("AFTER SUCCESS: Transaction successful {}", tm.getTransaction().toString());
