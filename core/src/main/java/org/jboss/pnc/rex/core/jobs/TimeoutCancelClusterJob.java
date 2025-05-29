@@ -19,7 +19,7 @@ package org.jboss.pnc.rex.core.jobs;
 
 import io.opentelemetry.context.Context;
 import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.vertx.core.Timer;
+import io.smallrye.mutiny.Uni;
 import io.vertx.core.Vertx;
 import jakarta.enterprise.inject.spi.CDI;
 import org.jboss.pnc.rex.common.enums.CJobOperation;
@@ -103,10 +103,7 @@ public class TimeoutCancelClusterJob extends ClusteredJob {
             log.info("Setting cancel timer to {}",
                 ZonedDateTime.ofInstant(supposedStart, ZoneId.systemDefault()).format(ISO_OFFSET_DATE_TIME));
 
-            // setup timer
-            Timer timer = vertx.timer(between(Instant.now(), supposedStart).toMillis());
-            // wait for timer in a blocking manner
-            timer.toCompletionStage().toCompletableFuture().join();
+            Uni.createFrom().nullItem().onItem().delayIt().by(between(Instant.now(), supposedStart)).await().indefinitely();
         }
 
         // verify owner didn't change
