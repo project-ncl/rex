@@ -25,5 +25,7 @@ import org.infinispan.protostream.annotations.ProtoEnumValue;
  */
 public enum CJobOperation {
     @ProtoEnumValue(number = 1)
-    CANCEL_TIMEOUT
+    CANCEL_TIMEOUT,
+    @ProtoEnumValue(number = 2)
+    HEARTBEAT_VERIFY
 }

@@ -34,15 +34,6 @@ import java.util.Map;
 public class RollbackRequest {
 
     /**
-     * The referenced endpoint is application/JSON only and serves for both positive and negative callback.
-     * Additionally, it uses a specific JSON body
-     *
-     * Don't use it
-     */
-    @Deprecated
-    private final org.jboss.pnc.api.dto.Request callback;
-
-    /**
      * The referenced endpoint is generic and serves for positive callback.
      */
     private final org.jboss.pnc.api.dto.Request positiveCallback;

@@ -21,7 +21,6 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -39,7 +38,6 @@ import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.test.common.AbstractTest;
-import org.jboss.pnc.rex.test.common.Assertions;
 import org.jboss.pnc.rex.test.common.TestData;
 import org.junit.jupiter.api.Test;
 
@@ -293,6 +291,7 @@ public class ClusteredJobsTest extends AbstractTest {
         Thread.sleep(50);
 
         var jobReference = registry.getById(referenceId);
+        assertThat(jobReference).isNotNull();
         QuarkusTransaction.requiringNew().run(() -> registry.delete(jobReference.getId()));
         Thread.sleep(300); // waiting for async job to trigger and verify task is still stopping
         var taskDTO = get(taskURI.getPath() + TaskEndpoint.GET_SPECIFIC_FMT.formatted(task)).as(TaskDTO.class);

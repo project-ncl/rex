@@ -20,10 +20,12 @@ package org.jboss.pnc.rex.model;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.jboss.pnc.rex.common.ConfigurationDefaults;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -36,24 +38,25 @@ import java.util.Map;
 @AllArgsConstructor(onConstructor_ = {@ProtoFactory})
 @Slf4j
 @Jacksonized
+@ToString
 public class Configuration {
 
     /**
      * Specify whether we want to pass results of direct dependencies in the StartRequest and StopRequest
      */
-    @Getter(onMethod_ = {@ProtoField(number = 1, defaultValue = "" + Defaults.passResultsOfDependencies)})
+    @Getter(onMethod_ = {@ProtoField(number = 1, defaultValue = "" + ConfigurationDefaults.passResultsOfDependencies)})
     private final boolean passResultsOfDependencies;
 
     /**
      * Specify whether to put applied MDC values into the request body. MDCHeaderKeyMapping MUST be configured.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 2, defaultValue = "" + Defaults.passMDCInRequestBody)})
+    @Getter(onMethod_ = {@ProtoField(number = 2, defaultValue = "" + ConfigurationDefaults.passMDCInRequestBody)})
     private final boolean passMDCInRequestBody;
 
     /**
      * Specify whether to put OTEL values into the request body. MDCHeaderKeyMapping MUST be configured.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 3, defaultValue = "" + Defaults.passOTELInRequestBody)})
+    @Getter(onMethod_ = {@ProtoField(number = 3, defaultValue = "" + ConfigurationDefaults.passOTELInRequestBody)})
     private final boolean passOTELInRequestBody;
 
     /**
@@ -79,22 +82,25 @@ public class Configuration {
      * even if the Task is in state SUCCESS, 5xx or 4xx on the notification means that dependant tasks are signaled to
      * FAIL (see StopFlag.DEPENDENCY_NOTIFICATION_FAILED).
      */
-    @Getter(onMethod_ = {@ProtoField(number = 6, defaultValue = "" + Defaults.delayDependantsForFinalNotification)})
+    @Getter(onMethod_ = {@ProtoField(number = 6, defaultValue = "" + ConfigurationDefaults.delayDependantsForFinalNotification)})
     private final boolean delayDependantsForFinalNotification;
 
     /**
      * The amount of times this Task will try to trigger rollback process from Milestone Task. Default is 3 times.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 7, defaultValue = "" + Defaults.rollbackLimit)})
+    @Getter(onMethod_ = {@ProtoField(number = 7, defaultValue = "" + ConfigurationDefaults.rollbackLimit)})
     private final int rollbackLimit;
 
-    public static class Defaults {
-        public static final boolean passResultsOfDependencies = false;
-        public static final boolean passMDCInRequestBody = false;
-        public static final boolean passOTELInRequestBody = false;
-        public static final Duration cancelTimeout = Duration.ZERO;
-        public static final String cancelTimeoutString = "PT0S";
-        public static final boolean delayDependantsForFinalNotification = false;
-        public static final int rollbackLimit = 3;
-    }
+    @Getter(onMethod_ = {@ProtoField(number = 8, defaultValue = "" + ConfigurationDefaults.heartbeatEnable)})
+    private final boolean heartbeatEnable;
+
+    @Getter(onMethod_ = {@ProtoField(number = 9)})
+    private final Duration heartbeatInitialDelay;
+
+    @Getter(onMethod_ = {@ProtoField(number = 10)})
+    private final Duration heartbeatInterval;
+
+    @Getter(onMethod_ = {@ProtoField(number = 11, defaultValue = "" + ConfigurationDefaults.heartbeatToleranceThreshold)})
+    private final int heartbeatToleranceThreshold;
+
 }

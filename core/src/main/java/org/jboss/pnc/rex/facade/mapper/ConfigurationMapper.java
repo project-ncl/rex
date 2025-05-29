@@ -17,11 +17,10 @@
  */
 package org.jboss.pnc.rex.facade.mapper;
 
+import org.jboss.pnc.rex.common.ConfigurationDefaults;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.model.Configuration;
 import org.mapstruct.*;
-
-import static org.jboss.pnc.rex.model.Configuration.*;
 
 @Mapper(config = MapperCentralConfig.class,
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_DEFAULT,
@@ -31,13 +30,13 @@ public interface ConfigurationMapper extends EntityMapper<ConfigurationDTO, Conf
     @Override
     ConfigurationDTO toDTO(Configuration dbEntity);
 
-    @Mapping(target = "passResultsOfDependencies", defaultValue = "" + Defaults.passResultsOfDependencies)
-    @Mapping(target = "passMDCInRequestBody", defaultValue = "" + Defaults.passMDCInRequestBody)
-    @Mapping(target = "passOTELInRequestBody", defaultValue = "" + Defaults.passOTELInRequestBody)
-    @Mapping(target = "cancelTimeout", defaultValue = Defaults.cancelTimeoutString)
+    @Mapping(target = "passResultsOfDependencies", defaultValue = "" + ConfigurationDefaults.passResultsOfDependencies)
+    @Mapping(target = "passMDCInRequestBody", defaultValue = "" + ConfigurationDefaults.passMDCInRequestBody)
+    @Mapping(target = "passOTELInRequestBody", defaultValue = "" + ConfigurationDefaults.passOTELInRequestBody)
+    @Mapping(target = "cancelTimeout", defaultValue = ConfigurationDefaults.cancelTimeoutString)
     @Mapping(target = "delayDependantsForFinalNotification",
-            defaultValue = "" + Defaults.delayDependantsForFinalNotification)
-    @Mapping(target = "rollbackLimit", defaultValue = "" + Defaults.rollbackLimit)
+            defaultValue = "" + ConfigurationDefaults.delayDependantsForFinalNotification)
+    @Mapping(target = "rollbackLimit", defaultValue = "" + ConfigurationDefaults.rollbackLimit)
     @Named("std") //avoid ambiguity
     Configuration _toDB(ConfigurationDTO dtoEntity);
 

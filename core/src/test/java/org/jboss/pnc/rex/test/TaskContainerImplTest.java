@@ -563,7 +563,7 @@ class TaskContainerImplTest extends AbstractTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(true, false, false, null, null, false, 3))
+                        .configuration(new ConfigurationDTO(true, false, false, null, null, false, 3, false, null, null, null))
                         .build())
                 .build());
 
@@ -599,7 +599,7 @@ class TaskContainerImplTest extends AbstractTest {
                         .name("service2")
                         .remoteStart(getRequestWithStart("I am service2!"))
                         .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(false, false, false, null, null, false, 3))
+                        .configuration(new ConfigurationDTO(false, false, false, null, null, false, 3, false, null, null, null))
                         .build())
                 .build());
 

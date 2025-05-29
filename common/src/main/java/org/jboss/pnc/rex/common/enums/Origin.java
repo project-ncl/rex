@@ -42,5 +42,11 @@ public enum Origin {
      * The response originates out of Rex which was reached after timeout.
      */
     @ProtoEnumValue(number = 2)
-    REX_TIMEOUT
+    REX_TIMEOUT,
+
+    /**
+     * The response originates out of Rex, which was triggered after Task failed to comply with Heartbeat criteria
+     */
+    @ProtoEnumValue(number = 3)
+    REX_HEARTBEAT_TIMEOUT
 }

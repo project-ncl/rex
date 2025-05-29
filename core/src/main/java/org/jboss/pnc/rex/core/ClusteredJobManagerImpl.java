@@ -26,6 +26,7 @@ import org.jboss.pnc.rex.core.api.ClusteredJobManager;
 import org.jboss.pnc.rex.core.api.ClusteredJobRegistry;
 import org.jboss.pnc.rex.core.api.ResourceHolder;
 import org.jboss.pnc.rex.core.config.ApplicationConfig;
+import org.jboss.pnc.rex.core.jobs.HeartbeatVerifierClusterJob;
 import org.jboss.pnc.rex.core.jobs.TimeoutCancelClusterJob;
 import org.jboss.pnc.rex.core.jobs.cluster.ClusteredJob;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
@@ -119,6 +120,7 @@ public class ClusteredJobManagerImpl implements ClusteredJobManager, ResourceHol
         // THESE THINGS NEED TO BE ASYNC AND ONLY RUN ON SUCCESSFUL UNDERLYING TRANSACTION
         scheduleCJob.fire(switch (oldJob.getType()) {
             case CANCEL_TIMEOUT -> new TimeoutCancelClusterJob(newOwnedJob);
+            case HEARTBEAT_VERIFY -> new HeartbeatVerifierClusterJob(newOwnedJob);
         });
     }
 

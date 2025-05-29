@@ -25,6 +25,7 @@ import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
+import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.core.api.DependencyMessenger;
 import org.jboss.pnc.rex.core.api.DependentMessenger;
 import org.jboss.pnc.rex.core.api.TaskController;
@@ -41,6 +42,7 @@ import org.jboss.pnc.rex.core.jobs.DependencyCancelledJob;
 import org.jboss.pnc.rex.core.jobs.DependencyNotificationFailedJob;
 import org.jboss.pnc.rex.core.jobs.DependencyStoppedJob;
 import org.jboss.pnc.rex.core.jobs.DependencySucceededJob;
+import org.jboss.pnc.rex.core.jobs.HeartbeatVerifierClusterJob;
 import org.jboss.pnc.rex.core.jobs.InvokeStartJob;
 import org.jboss.pnc.rex.core.jobs.InvokeStopJob;
 import org.jboss.pnc.rex.core.jobs.MarkForCleaningJob;
@@ -56,6 +58,8 @@ import org.jboss.pnc.rex.core.jobs.rollback.InvokeRollbackJob;
 import org.jboss.pnc.rex.core.jobs.rollback.ResetFromMilestoneJob;
 import org.jboss.pnc.rex.core.jobs.rollback.RollbackFromMilestoneJob;
 import org.jboss.pnc.rex.core.jobs.rollback.RollbackTriggeredJob;
+import org.jboss.pnc.rex.model.HeartbeatMetadata;
+import org.jboss.pnc.rex.model.RollbackMetadata;
 import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.TransitionTime;
@@ -139,8 +143,12 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
             case STOP_REQUESTED_to_STOPPING -> List.of(new TimeoutCancelClusterJob(task));
 
-            // no jobs
-            case STARTING_to_UP -> List.of();
+            case STARTING_to_UP -> {
+                var jobs = new ArrayList<ControllerJob>();
+                if (task.getConfiguration().isHeartbeatEnable())
+                    jobs.add(new HeartbeatVerifierClusterJob(task));
+                yield jobs;
+            }
 
             case UP_to_SUCCESSFUL -> {
                 var jobs = new ArrayList<ControllerJob>();
@@ -571,7 +579,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     }
 
     private void saveChanges(VersionedValue<Task> taskMetadata, Task task) {
-        log.debug("SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
+        log.trace("SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
                 task.getName(),
                 taskMetadata.getVersion(),
                 task);
@@ -660,6 +668,30 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         task.setStopFlag(StopFlag.UNSUCCESSFUL);
         task.setStoppedCause(task.getName());
+
+        // #3 HANDLE
+        handle(taskMetadata, task);
+    }
+
+    @Override
+    @Transactional(MANDATORY)
+    public void beat(String name, Object response) {
+        // #1 PULL
+        VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
+        Task task = taskMetadata.getValue();
+
+        // #2 ALTER
+        if (task.getState() != State.UP) {
+            // todo figure out what to return
+            throw new BadRequestException("Task " + task.getName() + " is not in state UP.");
+        };
+
+        if (task.getConfiguration() == null
+                || !task.getConfiguration().isHeartbeatEnable()) {
+            throw new IllegalStateException("Task "+task.getName()+" does not have Heartbeat enabled.");
+        }
+
+        task.setHeartbeatMeta(new HeartbeatMetadata(Instant.now(), response));
 
         // #3 HANDLE
         handle(taskMetadata, task);
@@ -827,7 +859,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         if (!Set.of(State.ROLLEDBACK, State.ROLLBACK_FAILED).contains(task.getState())) {
             return;
         }
-        resetTask(task);
+        task = resetTask(task);
 
         // #3 HANDLE (-> NEW)
         handle(taskMetadata, task);
@@ -1058,20 +1090,56 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         task.getRollbackMeta().setToRollback(true);
     }
 
-    private void resetTask(Task task) {
+    /**
+     * This method is used for transition from State.ROLLEDBACK State into State.NEW State.
+     *
+     * Generally if some of the Task fields need to be reset so that the Task runs/cancels/enqueues AGAIN smoothly, you
+     * have to handle it here.
+     */
+    private Task resetTask(Task task) {
         reintroduceConstraint(task);
+
         // unfinishedDependencies must be preset by RollbackManager to Transition from NEW
-        task.setStopFlag(StopFlag.NONE);
-        task.setStoppedCause(null);
-        task.setStarting(false);
-        task.setDisposable(false);
-        
-        
-        task.getRollbackMeta().setUnrestoredDependants(-1);
-        task.getRollbackMeta().setRollbackSource(false);
+        StopFlag stopFlag = StopFlag.NONE;
+        String stoppedCause = null;
+        boolean starting = false;
+        boolean disposable = false;
+
+        RollbackMetadata rollbackMeta = task.getRollbackMeta();
+        rollbackMeta.setUnrestoredDependants(-1);
+        rollbackMeta.setRollbackSource(false);
         // state will get reset to NEW by this
-        task.getRollbackMeta().setToRollback(false);
-        task.getRollbackMeta().incRollbackCounter();
+        rollbackMeta.setToRollback(false);
+        rollbackMeta.incRollbackCounter();
+
+        HeartbeatMetadata heartbeatMeta = null;
+
+        // FORCED CONSTRUCTOR for compilation errors. Brand-new fields may need to be handled/reset in this method so
+        // that Task rollbacks to NEW properly.
+        return new Task(task.getName(),
+                task.getConstraint(),
+                task.getCorrelationID(),
+                task.getRemoteStart(),
+                task.getRemoteCancel(),
+                task.getCallerNotifications(),
+                task.getControllerMode(),
+                task.getState(),
+                task.getDependants(),
+                task.getUnfinishedDependencies(),
+                task.getDependencies(),
+                stopFlag,
+                task.getServerResponses(),
+                starting,
+                task.getConfiguration(),
+                task.getTimestamps(),
+                disposable,
+                task.getQueue(),
+                stoppedCause,
+                task.getMilestoneTask(),
+                task.getRemoteRollback(),
+                rollbackMeta,
+                heartbeatMeta
+        );
     }
 
     private void reintroduceConstraint(Task task) {

@@ -84,7 +84,7 @@ public class TaskListener {
     void beforeCompletion(@Observes(during = TransactionPhase.BEFORE_COMPLETION) ControllerJob job) {
         if (job.getInvocationPhase() == TransactionPhase.BEFORE_COMPLETION) {
             String contextMessage = job.getContext().isPresent() ? ' ' + job.getContext().get().getName() : "";
-            log.debug("BEFORE COMPLETION: " + contextMessage);
+            log.debug("BEFORE COMPLETION: {}", contextMessage);
             if (job.isAsync()) {
                 executor.execute(() -> correctlyPropagateMDC(job));
             } else {

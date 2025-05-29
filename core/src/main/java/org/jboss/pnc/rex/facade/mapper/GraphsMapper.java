@@ -109,7 +109,11 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
                     graphConfig.mdcHeaderKeyMapping,
                     graphConfig.cancelTimeout,
                     graphConfig.delayDependantsForFinalNotification,
-                    graphConfig.rollbackLimit);
+                    graphConfig.rollbackLimit,
+                    graphConfig.heartbeatEnable,
+                    graphConfig.heartbeatInitialDelay,
+                    graphConfig.heartbeatInterval,
+                    graphConfig.heartbeatToleranceThreshold);
         }
 
         Boolean passResultsOfDependencies = taskConfig.passResultsOfDependencies;
@@ -140,6 +144,22 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
         if (taskConfig.rollbackLimit == null && graphConfig.rollbackLimit != null) {
             rollbackLimit = graphConfig.rollbackLimit;
         }
+        Boolean heartbeatEnable = taskConfig.heartbeatEnable;
+        if (taskConfig.heartbeatEnable == null && graphConfig.heartbeatEnable != null) {
+            heartbeatEnable = graphConfig.heartbeatEnable;
+        }
+        Duration heartbeatInitialDelay = taskConfig.heartbeatInitialDelay;
+        if (taskConfig.heartbeatInitialDelay == null && graphConfig.heartbeatInitialDelay != null) {
+            heartbeatInitialDelay = graphConfig.heartbeatInitialDelay;
+        }
+        Duration heartbeatInterval = taskConfig.heartbeatInterval;
+        if (taskConfig.heartbeatInterval == null && graphConfig.heartbeatInterval != null) {
+            heartbeatInterval = graphConfig.heartbeatInterval;
+        }
+        Integer heartbeatToleranceThreshold = taskConfig.heartbeatToleranceThreshold;
+        if (taskConfig.heartbeatToleranceThreshold == null && graphConfig.heartbeatToleranceThreshold != null) {
+            heartbeatToleranceThreshold = graphConfig.heartbeatToleranceThreshold;
+        }
 
         return new ConfigurationDTO(
                 passResultsOfDependencies,
@@ -148,6 +168,10 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
                 mdcHeaderKeys,
                 cancelTimeout,
                 delayDependantsForFinalNotification,
-                rollbackLimit);
+                rollbackLimit,
+                heartbeatEnable,
+                heartbeatInitialDelay,
+                heartbeatInterval,
+                heartbeatToleranceThreshold);
     }
 }

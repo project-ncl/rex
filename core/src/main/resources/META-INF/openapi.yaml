@@ -19,7 +19,7 @@ paths:
     post:
       tags:
       - Callback endpoint
-      summary: "[ADMIN] Used by remote entity to report failed Task completion."
+      summary: "[USER] Used by remote entity to report failed Task completion."
       operationId: fail
       parameters:
       - name: taskName
@@ -56,7 +56,7 @@ paths:
     post:
       tags:
       - Callback endpoint
-      summary: "[ADMIN] Used by remote entity to report Task completion."
+      summary: "[USER] Used by remote entity to report Task completion."
       operationId: finish
       parameters:
       - name: taskName
@@ -95,7 +95,7 @@ paths:
     post:
       tags:
       - Callback endpoint
-      summary: "[ADMIN] Used by remote entity to report successful Task completion."
+      summary: "[USER] Used by remote entity to report successful Task completion."
       operationId: succeed
       parameters:
       - name: taskName
@@ -568,7 +568,7 @@ paths:
     post:
       tags:
       - Callback endpoint
-      summary: "[ADMIN] Used by remote entity to report failed Task rollback process."
+      summary: "[USER] Used by remote entity to report failed Task rollback process."
       operationId: rollbackNOK
       parameters:
       - name: taskName
@@ -605,7 +605,7 @@ paths:
     post:
       tags:
       - Callback endpoint
-      summary: "[ADMIN] Used by remote entity to report successful Task rollback process."
+      summary: "[USER] Used by remote entity to report successful Task rollback process."
       operationId: rollbackOK
       parameters:
       - name: taskName
@@ -638,6 +638,46 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /rest/callback/{taskName}/beat:
+    post:
+      tags:
+      - Callback endpoint
+      summary: "[USER] Used by remote entity for liveness check (heartbeat)."
+      operationId: beat
+      parameters:
+      - name: taskName
+        in: path
+        required: true
+        schema:
+          minLength: 1
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+      responses:
+        "200":
+          description: Success with results
+        "400":
+          description: Invalid input parameters or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /test/ticker:
+    get:
+      tags:
+      - Test Endpoint
+      operationId: tryOutTicker
+      responses:
+        "200":
+          description: OK
 components:
   schemas:
     ComponentVersion:
@@ -673,6 +713,15 @@ components:
         delayDependantsForFinalNotification:
           type: boolean
         rollbackLimit:
+          format: int32
+          type: integer
+        heartbeatEnable:
+          type: boolean
+        heartbeatInitialDelay:
+          $ref: "#/components/schemas/Duration"
+        heartbeatInterval:
+          $ref: "#/components/schemas/Duration"
+        heartbeatToleranceThreshold:
           format: int32
           type: integer
     CreateGraphRequest:
@@ -798,6 +847,7 @@ components:
       - REMOTE_ENTITY
       - REX_INTERNAL_ERROR
       - REX_TIMEOUT
+      - REX_HEARTBEAT_TIMEOUT
       type: string
     Request:
       required:
