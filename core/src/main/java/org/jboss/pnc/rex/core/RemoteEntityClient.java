@@ -25,6 +25,7 @@ import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.api.dto.ErrorResponse;
+import org.jboss.pnc.api.dto.HeartbeatConfig;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
@@ -42,9 +43,11 @@ import org.slf4j.MDC;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -63,6 +66,7 @@ public class RemoteEntityClient {
     private static final String FAILED_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/fail";
     private static final String FAILED_ROLLBACK_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/rollback/fail";
     private static final String SINGLE_FINISH_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/finish";
+    private static final String HEART_BEAT_ENDPOINT_PATH = INTERNAL_ENDPOINT_PATH + "/%s/beat";
 
     private final TaskController controller;
 
@@ -186,6 +190,7 @@ public class RemoteEntityClient {
         org.jboss.pnc.api.dto.Request callbackRequest = getCallbackRequest(task.getName(), SINGLE_FINISH_ENDPOINT_PATH);
         org.jboss.pnc.api.dto.Request positiveCallback = getCallbackRequest(task.getName(), SUCCESS_ENDPOINT_PATH);
         org.jboss.pnc.api.dto.Request negativeCallback = getCallbackRequest(task.getName(), FAILED_ENDPOINT_PATH);
+        HeartbeatConfig heartbeat = getHeartbeatConfig(task);
 
         StartRequest request = StartRequest.builder()
                 .payload(requestDefinition.getAttachment())
@@ -193,6 +198,7 @@ public class RemoteEntityClient {
                 .callback(callbackRequest)
                 .positiveCallback(positiveCallback)
                 .negativeCallback(negativeCallback)
+                .heartbeatConfig(heartbeat)
                 .mdc(getOptionalMDCAndOTELValues(task))
                 .build();
 
@@ -202,6 +208,19 @@ public class RemoteEntityClient {
                 request,
                 response -> handleResponse(response, task, false),
                 throwable -> handleConnectionFailure(throwable, task, false));
+    }
+
+    private HeartbeatConfig getHeartbeatConfig(Task task) {
+        if (task.getConfiguration() == null || !task.getConfiguration().isHeartbeatEnable()) {
+            return null;
+        }
+
+        Duration heartbeatInterval = task.getConfiguration().getHeartbeatInterval();
+        return HeartbeatConfig.builder()
+                .request(getCallbackRequest(task.getName(), HEART_BEAT_ENDPOINT_PATH))
+                .delay(heartbeatInterval.toMillis())
+                .delayTimeUnit(TimeUnit.MILLISECONDS)
+                .build();
     }
 
     private void rollbackJobInternal(Task task) {

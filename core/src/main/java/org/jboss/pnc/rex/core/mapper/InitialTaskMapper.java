@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.core.mapper;
 
 import org.jboss.pnc.rex.core.model.InitialTask;
 import org.jboss.pnc.rex.facade.mapper.MapperCentralConfig;
+import org.jboss.pnc.rex.model.HeartbeatMetadata;
 import org.jboss.pnc.rex.model.RollbackMetadata;
 import org.jboss.pnc.rex.model.Task;
 import org.mapstruct.Mapper;
@@ -28,7 +29,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.TreeSet;
 
-@Mapper(config = MapperCentralConfig.class, imports = {TreeSet.class, RollbackMetadata.class},
+@Mapper(config = MapperCentralConfig.class, imports = {TreeSet.class, RollbackMetadata.class, HeartbeatMetadata.class},
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_DEFAULT,
         nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT
 )
@@ -46,10 +47,11 @@ public interface InitialTaskMapper {
     @Mapping(target = "starting", constant = "false")
     @Mapping(target = "disposable", constant = "false")
     @Mapping(target = "timestamps", expression = "java( new TreeSet() )")
+    @Mapping(target = "rollbackMeta", expression = "java( RollbackMetadata.init() )")
+    @Mapping(target = "heartbeatMeta", expression = "java( HeartbeatMetadata.init() )")
     // Singular additions
     @Mapping(target = "serverResponse", ignore = true)
     @Mapping(target = "dependant", ignore = true)
     @Mapping(target = "dependency", ignore = true)
-    @Mapping(target = "rollbackMeta", expression = "java( RollbackMetadata.init() )")
     Task fromInitialTask(InitialTask initialTask);
 }

@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.jboss.pnc.rex.common.ConfigurationDefaults;
 
 import java.time.Duration;
 import java.util.Map;
@@ -36,17 +37,25 @@ import java.util.Map;
 @ToString
 public class ConfigurationDTO {
 
-    public Boolean passResultsOfDependencies = null;
+    public Boolean passResultsOfDependencies = ConfigurationDefaults.passResultsOfDependencies;
 
-    public Boolean passMDCInRequestBody = null;
+    public Boolean passMDCInRequestBody = ConfigurationDefaults.passMDCInRequestBody;
 
-    public Boolean passOTELInRequestBody = null;
+    public Boolean passOTELInRequestBody = ConfigurationDefaults.passOTELInRequestBody;
 
     public Map<String, String> mdcHeaderKeyMapping = null;
 
-    public Duration cancelTimeout = null;
+    public Duration cancelTimeout = ConfigurationDefaults.cancelTimeout;
 
-    public Boolean delayDependantsForFinalNotification = null;
+    public Boolean delayDependantsForFinalNotification = ConfigurationDefaults.delayDependantsForFinalNotification;
 
-    public Integer rollbackLimit = null;
+    public Integer rollbackLimit = ConfigurationDefaults.rollbackLimit;
+
+    public Boolean heartbeatEnable = ConfigurationDefaults.heartbeatEnable;
+
+    public Duration heartbeatInitialDelay = ConfigurationDefaults.heartbeatInitialDelay;
+
+    public Duration heartbeatInterval = ConfigurationDefaults.heartbeatInterval;
+
+    public Integer heartbeatToleranceThreshold = ConfigurationDefaults.heartbeatToleranceThreshold;
 }

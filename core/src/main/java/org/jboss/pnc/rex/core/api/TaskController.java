@@ -72,6 +72,9 @@ public interface TaskController {
      */
     void fail(String name, Object response, Origin origin, boolean isRollback);
 
+    // todo documentation
+    void beat(String name, Object response);
+
     void dequeue(String name);
 
     /**

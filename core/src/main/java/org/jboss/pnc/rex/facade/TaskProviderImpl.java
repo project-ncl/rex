@@ -137,4 +137,10 @@ public class TaskProviderImpl implements TaskProvider {
             controller.fail(taskName, response, Origin.REMOTE_ENTITY, rollback);
         }
     }
+
+    @Override
+    @Transactional
+    public void beat(String taskName, Object body) {
+        controller.beat(taskName, body);
+    }
 }

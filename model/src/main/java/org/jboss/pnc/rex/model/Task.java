@@ -188,6 +188,12 @@ public class Task {
     @Getter(onMethod_ = {@ProtoField(number = 22)})
     private RollbackMetadata rollbackMeta;
 
+    /**
+     * Metadata used for keeping in touch with heartbeats
+     */
+    @Getter(onMethod_ = {@ProtoField(number = 23)})
+    private HeartbeatMetadata heartbeatMeta;
+
     public void incUnfinishedDependencies() {
         unfinishedDependencies++;
     }

@@ -54,7 +54,7 @@ public interface CallbackEndpoint {
 
     String FINISH_TASK = "/{taskName}/finish";
     @Path(FINISH_TASK)
-    @Operation(summary = "[ADMIN] Used by remote entity to report Task completion.")
+    @Operation(summary = "[USER] Used by remote entity to report Task completion.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
@@ -70,7 +70,7 @@ public interface CallbackEndpoint {
 
     String OPERATION_SUCCESSFUL = "/{taskName}/succeed";
     @Path(OPERATION_SUCCESSFUL)
-    @Operation(summary = "[ADMIN] Used by remote entity to report successful Task completion.")
+    @Operation(summary = "[USER] Used by remote entity to report successful Task completion.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
@@ -85,7 +85,7 @@ public interface CallbackEndpoint {
 
     String OPERATION_FAILED = "/{taskName}/fail";
     @Path(OPERATION_FAILED)
-    @Operation(summary = "[ADMIN] Used by remote entity to report failed Task completion.")
+    @Operation(summary = "[USER] Used by remote entity to report failed Task completion.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
@@ -100,7 +100,7 @@ public interface CallbackEndpoint {
 
     String ROLLBACK_SUCCESS = "/{taskName}/rollback/succeed";
     @Path(ROLLBACK_SUCCESS)
-    @Operation(summary = "[ADMIN] Used by remote entity to report successful Task rollback process.")
+    @Operation(summary = "[USER] Used by remote entity to report successful Task rollback process.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
@@ -115,7 +115,7 @@ public interface CallbackEndpoint {
 
     String ROLLBACK_FAILED = "/{taskName}/rollback/fail";
     @Path(ROLLBACK_FAILED)
-    @Operation(summary = "[ADMIN] Used by remote entity to report failed Task rollback process.")
+    @Operation(summary = "[USER] Used by remote entity to report failed Task rollback process.")
     @APIResponses(value = {
             @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
             @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
@@ -127,4 +127,18 @@ public interface CallbackEndpoint {
     void rollbackNOK(@PathParam("taskName") @NotEmpty String taskName,
                     Object result,
                     @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
+
+    String HEARTBEAT = "/{taskName}/beat";
+    @Path(HEARTBEAT)
+    @Operation(summary = "[USER] Used by remote entity for liveness check (heartbeat).")
+    @APIResponses(value = {
+            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
+            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @POST
+    void beat(@PathParam("taskName") @NotEmpty String taskName,
+              Object body);
 }

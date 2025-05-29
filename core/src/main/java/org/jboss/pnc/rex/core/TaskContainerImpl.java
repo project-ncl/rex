@@ -51,6 +51,7 @@ import org.jboss.pnc.rex.core.mapper.InitialTaskMapper;
 import org.jboss.pnc.rex.core.model.Edge;
 import org.jboss.pnc.rex.core.model.InitialTask;
 import org.jboss.pnc.rex.core.model.TaskGraph;
+import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 
@@ -438,7 +439,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             }
 
             List<String> list = Stream.concat(dependencies.stream(), dependants.stream()).sorted().toList();
-            log.debug("BFS: taskId={} nextTasks: {}", taskId, list);
+            log.trace("BFS: taskId={} nextTasks: {}", taskId, list);
             return list;
         };
     }
@@ -461,11 +462,30 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     private void assertValidConfiguration(Collection<InitialTask> values) throws BadRequestException {
         for (InitialTask task : values) {
+            if (task.getConfiguration() == null) {
+                continue;
+            }
+
+            Configuration config = task.getConfiguration();
             // assert that notifications are not null when waiting for them is configured
-            if (task.getConfiguration() != null
-                    && task.getConfiguration().isDelayDependantsForFinalNotification()
+            if (config.isDelayDependantsForFinalNotification()
                     && task.getCallerNotifications() == null) {
                 throw new BadRequestException("Task " + task.getName() + " is configured to delay for notifications but notification definition is null.");
+            }
+
+            if (config.isHeartbeatEnable()) {
+                if (config.getHeartbeatInterval() == null) {
+                    throw new BadRequestException("Task " + task.getName() + " is configured for heartbeats but the refresh interval is null.");
+                }
+                if (config.getHeartbeatToleranceThreshold() < 0) {
+                    throw new BadRequestException("Task " + task.getName() + " is misconfigured. Heartbeat tolerance threshold is negative.");
+                }
+                if (config.getHeartbeatInterval().isNegative()) {
+                    throw new BadRequestException("Task " + task.getName() + " is misconfigured. Heartbeat interval cannot be negative.");
+                }
+                if (config.getHeartbeatInitialDelay() != null && config.getHeartbeatInitialDelay().isNegative()) {
+                    throw new BadRequestException("Task " + task.getName() + " is misconfigured. Heartbeat initial delay cannot be negative.");
+                }
             }
         }
     }
@@ -494,8 +514,6 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             } else {
                 // we have to get the previous version
                 VersionedValue<Task> versioned = getWithMetadata(entry.getKey());
-                // could be optimized by using #putAll method of remote cache (only 'else' part could be; the 'then'
-                // part required FORCE_RETURN_VALUE flag which is not available in putAll)
                 boolean success = getCache().replaceWithVersion(entry.getKey(), versioned.getValue(), versioned.getVersion());
                 if (!success) {
                     throw new ConcurrentUpdateException(

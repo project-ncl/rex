@@ -121,6 +121,11 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
         }
     }
 
+    @Override
+    public void beat(String taskName, Object body) {
+        taskProvider.beat(taskName, body);
+    }
+
     @ApplyFaultTolerance("internal-retry")
     void systemFailure(String taskName, boolean rollback) {
         log.error("STOP {}: UNEXPECTED exception has been thrown.", taskName);

@@ -28,6 +28,6 @@ import org.mapstruct.Mapper;
 public interface MiniTaskMapper {
 
     @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "starting", "controllerMode", "disposable",
-            "rollbackMeta"})
+            "rollbackMeta", "heartbeatMeta"})
     MinimizedTask minimize(Task task);
 }

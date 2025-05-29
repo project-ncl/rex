@@ -68,4 +68,7 @@ public interface TaskProvider {
      *                 false == remote entity responds that the service has failed its execution
      */
     void acceptRemoteResponse(String taskName, boolean positive, boolean rollback, Object response);
+
+    //TODO documentation
+    void beat(String taskName, Object body);
 }

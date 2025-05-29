@@ -30,6 +30,7 @@ import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.model.Configuration;
 import org.jboss.pnc.rex.model.Header;
+import org.jboss.pnc.rex.model.HeartbeatMetadata;
 import org.jboss.pnc.rex.model.NodeResource;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.RollbackMetadata;
@@ -67,7 +68,8 @@ import org.jboss.pnc.rex.model.ispn.adapter.KeyValueString;
                 ClusteredJobReference.class,
                 ResourceType.class,
                 CJobOperation.class,
-                RollbackMetadata.class
+                RollbackMetadata.class,
+                HeartbeatMetadata.class
                 })
 interface ProtoSchemaGenerator extends GeneratedSchema {
 }

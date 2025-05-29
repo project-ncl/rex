@@ -58,6 +58,11 @@ public class TransactionalTaskController implements TaskController {
     }
 
     @Override
+    public void beat(String name, Object response) {
+        delegate.beat(name, response);
+    }
+
+    @Override
     public void dequeue(String name) {
         delegate.dequeue(name);
     }

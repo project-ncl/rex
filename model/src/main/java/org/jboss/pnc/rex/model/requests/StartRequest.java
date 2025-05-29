@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
+import org.jboss.pnc.api.dto.HeartbeatConfig;
 
 import java.util.Map;
 
@@ -51,6 +52,8 @@ public class StartRequest {
      * The referenced endpoint is generic and serves for negative callback.
      */
     private final org.jboss.pnc.api.dto.Request negativeCallback;
+
+    private final HeartbeatConfig heartbeatConfig;
 
     private final Object payload;
 

@@ -27,7 +27,7 @@ public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
 
     @Override
     @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "serverResponses", "starting",
-            "controllerMode", "disposable", "rollbackMeta"})
+            "controllerMode", "disposable", "rollbackMeta", "heartbeatMeta"})
     TaskDTO toDTO(Task dbEntity);
 
     @Override
@@ -39,6 +39,7 @@ public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
     @Mapping(target = "starting", ignore = true)
     @Mapping(target = "disposable", ignore = true)
     @Mapping(target = "rollbackMeta", ignore = true)
+    @Mapping(target = "heartbeatMeta", ignore = true)
 //    @BeanMapping(ignoreUnmappedSourceProperties = {"stopFlag"})
     Task toDB(TaskDTO dtoEntity);
 }
