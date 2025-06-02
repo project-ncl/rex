@@ -25,7 +25,6 @@ public class ConfigurationDefaults {
     public static final boolean passMDCInRequestBody = false;
     public static final boolean passOTELInRequestBody = false;
     public static final Duration cancelTimeout = Duration.ZERO;
-    public static final String cancelTimeoutString = "PT0S";
     public static final boolean delayDependantsForFinalNotification = false;
     public static final int rollbackLimit = 3;
     public static final boolean heartbeatEnable = false;
