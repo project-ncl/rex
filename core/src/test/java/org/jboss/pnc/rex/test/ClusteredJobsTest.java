@@ -22,11 +22,17 @@ import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import io.restassured.response.ValidatableResponse;
+import io.vertx.core.impl.ConcurrentHashSet;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.context.ManagedExecutor;
+import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.CJobOperation;
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.core.ClusteredJobRegistryImpl;
 import org.jboss.pnc.rex.core.api.ClusteredJobRegistry;
@@ -35,10 +41,18 @@ import org.jboss.pnc.rex.core.config.ApplicationConfig;
 import org.jboss.pnc.rex.core.jobs.TimeoutCancelClusterJob;
 import org.jboss.pnc.rex.core.jobs.cluster.ClusteredJob;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
+import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
+import org.jboss.pnc.rex.model.ServerResponse;
+import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.test.common.TestData;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -46,10 +60,15 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.restassured.RestAssured.get;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -71,11 +90,30 @@ public class ClusteredJobsTest extends AbstractTest {
     @Inject
     ApplicationConfig appConfig;
 
+    @Inject
+    ManagedExecutor executor;
+
+    private Set<Future<?>> futures = new ConcurrentHashSet<>();
+
     @TestHTTPEndpoint(TaskEndpoint.class)
     @TestHTTPResource
     URI taskURI;
 
+    @TestHTTPEndpoint(CallbackEndpoint.class)
+    @TestHTTPResource
+    URI callbackURI;
+
     private static final AtomicInteger counter = new AtomicInteger(0);
+
+    @AfterEach
+    void clean() {
+        for (Future<?> future : futures) {
+            if (!future.isDone()) {
+                future.cancel(true);
+            }
+        }
+        futures.clear();
+    }
 
     @Test
     void testTaskGetsCancelledTimeout() throws InterruptedException {
@@ -304,6 +342,140 @@ public class ClusteredJobsTest extends AbstractTest {
 
         //then
         waitTillTasksAreFinishedWith(State.STOPPED, task);
+    }
+
+    @Test
+    void testHeartbeatBeats() throws InterruptedException {
+        //given
+        String taskId = taskID();
+        Duration interval = Duration.ofMillis(100);
+        var task = TestData.getMockTaskWithoutStart(taskId, Mode.ACTIVE);
+        task.configuration = new ConfigurationDTO();
+        task.configuration.heartbeatEnable = true;
+        task.configuration.heartbeatInterval = interval;
+        task.configuration.heartbeatToleranceThreshold = 1;
+
+        var graph = CreateGraphRequest.builder().vertex(taskId, task).build();
+
+        //when
+        given()
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
+
+        waitTillTaskTransitionsInto(State.UP, taskId);
+        futures.add(executor.submit(() -> beat(taskId, interval)));
+
+        Thread.sleep(200);
+
+        //then
+        Task internalTask = container.getTask(taskId);
+        assertThat(internalTask).isNotNull();
+        assertThat(internalTask.getState()).isEqualTo(State.UP);
+        assertThat(internalTask.getHeartbeatMeta()).isNotNull();
+        assertThat(internalTask.getHeartbeatMeta().getLastBeat()).isNotNull().isBefore(Instant.now());
+    }
+
+    @Test
+    void testHeartbeatFails() throws InterruptedException {
+        //given
+        String taskId = taskID();
+        Duration interval = Duration.ofMillis(100);
+        var task = TestData.getMockTaskWithoutStart(taskId, Mode.ACTIVE);
+        task.configuration = new ConfigurationDTO();
+        task.configuration.heartbeatEnable = true;
+        task.configuration.heartbeatInterval = interval;
+        task.configuration.heartbeatToleranceThreshold = 1;
+
+        var graph = CreateGraphRequest.builder().vertex(taskId, task).build();
+
+        //when
+        given()
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
+        waitTillTaskTransitionsInto(State.UP, taskId);
+
+        Instant startTimer = Instant.now();
+        Task internalTask = waitTillTaskTransitionsInto(State.FAILED, taskId).get(0);
+        Instant endTime = Instant.now();
+
+        //then
+        assertThat(internalTask).isNotNull();
+        assertThat(internalTask.getState()).isEqualTo(State.FAILED);
+        assertThat(internalTask.getHeartbeatMeta()).isNotNull();
+        assertThat(internalTask.getServerResponses().get(internalTask.getServerResponses().size() - 1))
+                .isNotNull().extracting(ServerResponse::getOrigin).isEqualTo(Origin.REX_HEARTBEAT_TIMEOUT);
+        assertThat(Duration.between(startTimer, endTime)).isCloseTo(interval, Duration.ofMillis(50));
+    }
+
+    @RepeatedTest(100)
+    void testHeartbeatFailsAfterCoupleBeats() throws InterruptedException {
+        //given
+        String taskId = taskID();
+
+        Duration processingLeeway = Duration.ofMillis(200); // depends on the machine unfortunately
+        Duration interval = Duration.ofMillis(100);
+
+        var task = TestData.getMockTaskWithoutStart(taskId, Mode.ACTIVE);
+        task.configuration = new ConfigurationDTO();
+        task.configuration.heartbeatEnable = true;
+        task.configuration.heartbeatInterval = interval;
+        task.configuration.heartbeatToleranceThreshold = 1;
+
+        var graph = CreateGraphRequest.builder().vertex(taskId, task).build();
+
+        //when
+        given()
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
+        waitTillTaskTransitionsInto(State.UP, taskId);
+        Instant startTimer = Instant.now();
+
+        Future<?> beat = executor.submit(() -> beat(taskId, interval)); // start beating
+        futures.add(beat);
+
+        Duration sleeping = interval.multipliedBy(6);
+        Thread.sleep(sleeping.toMillis()); // sleep for couple beats
+
+        beat.cancel(true); // stop beeting
+
+        Task internalTask = waitTillTaskTransitionsInto(State.FAILED, taskId).get(0);
+        Instant endTime = Instant.now();
+
+        //then
+        assertThat(internalTask).isNotNull();
+        assertThat(internalTask.getState()).isEqualTo(State.FAILED);
+        assertThat(internalTask.getHeartbeatMeta()).isNotNull();
+        assertThat(internalTask.getHeartbeatMeta().getLastBeat())// there should be at least 4/5 beats after startTime
+                .isAfter(startTimer.plus(interval.multipliedBy(4)))
+                .isBefore(endTime);
+        assertThat(internalTask.getServerResponses().get(internalTask.getServerResponses().size() - 1))
+                .isNotNull().extracting(ServerResponse::getOrigin).isEqualTo(Origin.REX_HEARTBEAT_TIMEOUT);
+        assertThat(Duration.between(startTimer, endTime))
+                .isCloseTo(sleeping.plus(interval.multipliedBy(2)), processingLeeway);
+    }
+
+    private void beat(String taskId, Duration interval) {
+        try {
+            while (true) {
+                given()
+                        .contentType(ContentType.JSON)
+                        .post(callbackURI.getPath() + CallbackEndpoint.HEARTBEAT_FMT.formatted(taskId))
+                        .then().statusCode(204);
+                Thread.sleep(interval.toMillis());
+            }
+        } catch (InterruptedException e) {}
     }
 
     public static String taskID() {
