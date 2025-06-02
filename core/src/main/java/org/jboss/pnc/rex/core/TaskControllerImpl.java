@@ -220,7 +220,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             // add common tasks on transitioning from a specific StateGroup
             tasks.addAll(switch (transition.getBefore().getGroup()) {
                 case IDLE, FINAL, ROLLBACK_TODO, ROLLBACK -> List.of();
-                case QUEUED -> List.of(new PokeQueueJob());
+                case QUEUED -> List.of();
                 case RUNNING -> List.of(new DecreaseCounterJob(task), new PokeQueueJob());
             });
 
