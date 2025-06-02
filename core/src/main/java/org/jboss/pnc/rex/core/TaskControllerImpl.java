@@ -220,7 +220,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             // add common tasks on transitioning from a specific StateGroup
             tasks.addAll(switch (transition.getBefore().getGroup()) {
                 case IDLE, FINAL, ROLLBACK_TODO, ROLLBACK -> List.of();
-                case QUEUED -> List.of(new PokeQueueJob());
+                case QUEUED -> List.of();
                 case RUNNING -> List.of(new DecreaseCounterJob(task), new PokeQueueJob());
             });
 
@@ -675,23 +675,22 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     @Override
     @Transactional(MANDATORY)
-    public void beat(String name, Object response) {
+    public void beat(String name, Object response, Instant beatTime) {
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
         if (!Set.of(State.UP, State.STARTING).contains(task.getState())) {
-            // todo figure out what to return
             throw new BadRequestException("Task " + task.getName() + " is not in state UP nor STARTING.");
         };
 
         if (task.getConfiguration() == null
                 || !task.getConfiguration().isHeartbeatEnable()) {
-            throw new BadRequestException("Task "+task.getName()+" does not have Heartbeat enabled.");
+            throw new BadRequestException("Task "+ task.getName() + " does not have Heartbeat enabled.");
         }
 
-        task.setHeartbeatMeta(new HeartbeatMetadata(Instant.now(), response));
+        task.setHeartbeatMeta(new HeartbeatMetadata(beatTime, response));
 
         // #3 HANDLE
         handle(taskMetadata, task);

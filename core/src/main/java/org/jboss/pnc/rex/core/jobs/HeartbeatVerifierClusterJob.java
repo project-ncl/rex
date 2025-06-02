@@ -22,13 +22,15 @@ import io.smallrye.mutiny.Context;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.subscription.Cancellable;
-import io.vertx.core.Vertx;
 import jakarta.enterprise.inject.spi.CDI;
 import org.jboss.pnc.rex.common.enums.CJobOperation;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.common.enums.StateGroup;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
+import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
+import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration.HeartbeatConfig;
 import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.core.jobs.cluster.ClusteredJob;
 import org.jboss.pnc.rex.core.utils.OTELUtils;
@@ -40,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
@@ -48,23 +51,23 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
     private static final CJobOperation CLUSTER_JOB_OPERATION_TYPE = CJobOperation.HEARTBEAT_VERIFY;
     private static final Logger log = LoggerFactory.getLogger(HeartbeatVerifierClusterJob.class);
 
-    private final Vertx vertx;
     private final TaskRegistry taskRegistry;
+    private final HeartbeatConfig config;
     private final TaskController taskController;
     private final FaultToleranceDecorator decorator;
 
     public HeartbeatVerifierClusterJob(Task context) {
         super(context, CLUSTER_JOB_OPERATION_TYPE);
-        this.vertx = CDI.current().select(Vertx.class).get();
         this.taskRegistry = CDI.current().select(TaskRegistry.class).get();
+        this.config = CDI.current().select(TaskConfiguration.class).get().heartbeat();
         this.taskController = CDI.current().select(TaskController.class).get();
         this.decorator = CDI.current().select(FaultToleranceDecorator.class).get();
     }
 
     public HeartbeatVerifierClusterJob(ClusteredJobReference reference) {
         super(reference, CLUSTER_JOB_OPERATION_TYPE);
-        this.vertx = CDI.current().select(Vertx.class).get();
         this.taskRegistry = CDI.current().select(TaskRegistry.class).get();
+        this.config = CDI.current().select(TaskConfiguration.class).get().heartbeat();
         this.taskController = CDI.current().select(TaskController.class).get();
         this.decorator = CDI.current().select(FaultToleranceDecorator.class).get();
     }
@@ -121,35 +124,41 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
             return;
         }
 
+        if (EnumSet.of(StateGroup.FINAL, StateGroup.ROLLBACK, StateGroup.ROLLBACK_TODO).contains(refreshedTask.getState().getGroup())) {
+            log.info("HEARTBEAT {}: Task is in {} state, cancelling verifier.", refreshedTask.getName(), refreshedTask.getState());
+            complete.complete(null);
+            return;
+        }
+
         if (!isOwned()) {
             complete.complete(null);
             return;
         }
 
+        int failureCount = context.getOrElse("failureCount", () -> 0);
         if (refreshedTask.getHeartbeatMeta() == null || refreshedTask.getHeartbeatMeta().getLastBeat() == null) {
-            int failureCount = context.getOrElse("failureCount", () -> 0);
             failureCount++;
+        } else {
+            HeartbeatMetadata meta = refreshedTask.getHeartbeatMeta();
+            Instant lastBeat = meta.getLastBeat();
 
-            if (failureCount >= failureThreshold) {
-                taskController.fail(refreshedTask.getName(), null, Origin.REX_HEARTBEAT_TIMEOUT, false);
-                complete.complete(null);
+            Duration diff = Duration.between(lastBeat, timeCheck);
+            if (diff.compareTo(interval.plus(config.processingTolerance())) > 0) {
+                failureCount++;
+            } else {
+                failureCount = 0;
             }
-            context.put("failureCount", failureCount);
+        }
+
+        log.info("failure count is {} ", failureCount);
+        if (failureCount > failureThreshold) {
+            log.info("HEARTBEAT {}: Threshold reached, failing Task.", refreshedTask.getName());
+            taskController.fail(refreshedTask.getName(), null, Origin.REX_HEARTBEAT_TIMEOUT, false);
+            complete.complete(null);
             return;
         }
 
-        HeartbeatMetadata meta = refreshedTask.getHeartbeatMeta();
-        Instant lastBeat = meta.getLastBeat();
-
-        Duration diff = Duration.between(lastBeat, timeCheck);
-
-        long fails = diff.dividedBy(interval);
-        if (fails > failureThreshold) {
-            taskController.fail(refreshedTask.getName(), null, Origin.REX_HEARTBEAT_TIMEOUT, false);
-            complete.complete(null);
-        }
-
-        context.put("failureCount", 0);
+        context.put("failureCount", failureCount);
     }
 
     private void theTicker(Duration interval,

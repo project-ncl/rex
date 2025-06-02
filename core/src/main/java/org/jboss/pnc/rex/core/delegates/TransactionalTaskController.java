@@ -25,6 +25,8 @@ import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.api.TaskController;
 
+import java.time.Instant;
+
 @WithTransactions
 @Unremovable
 @ApplicationScoped
@@ -58,8 +60,8 @@ public class TransactionalTaskController implements TaskController {
     }
 
     @Override
-    public void beat(String name, Object response) {
-        delegate.beat(name, response);
+    public void beat(String name, Object response, Instant beatTime) {
+        delegate.beat(name, response, beatTime);
     }
 
     @Override

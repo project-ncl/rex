@@ -50,6 +50,7 @@ public interface CallbackEndpoint {
     String FINISH_TASK_FMT = "/%s/finish";
     String OPERATION_SUCCESSFUL_FMT = "/%s/succeed";
     String OPERATION_FAILED_FMT = "/%s/fail";
+    String HEARTBEAT_FMT = "/%s/beat";
     //endregion
 
     String FINISH_TASK = "/{taskName}/finish";

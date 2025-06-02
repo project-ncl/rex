@@ -5,6 +5,8 @@ scheduler:
     task-configuration:
       clean: true
       default-concurrency: 5
+      heartbeat:
+        processing-tolerance: 200ms
     internal-retry-policy:
       delay: 100
       jitter: 80

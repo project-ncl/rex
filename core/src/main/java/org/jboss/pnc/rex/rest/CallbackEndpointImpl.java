@@ -30,6 +30,8 @@ import org.jboss.pnc.rex.facade.api.TaskProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.time.Instant;
+
 @Slf4j
 @ApplicationScoped
 public class CallbackEndpointImpl implements CallbackEndpoint {
@@ -122,8 +124,10 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
     }
 
     @Override
+//    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
+    @ApplyFaultTolerance("internal-retry")
     public void beat(String taskName, Object body) {
-        taskProvider.beat(taskName, body);
+        taskProvider.beat(taskName, body, Instant.now());
     }
 
     @ApplyFaultTolerance("internal-retry")
