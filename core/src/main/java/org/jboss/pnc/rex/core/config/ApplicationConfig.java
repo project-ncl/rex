@@ -22,6 +22,8 @@ import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
 
+import java.time.Duration;
+
 @ConfigMapping(prefix = "scheduler")
 public interface ApplicationConfig {
 
@@ -94,6 +96,31 @@ public interface ApplicationConfig {
             @WithName("default-concurrency")
             @WithDefault("5")
             int defaultConcurrency();
+
+            /**
+             * Configuration related to Task heartbeats.
+             *
+             * @return heartbeat configuration
+             */
+            HeartbeatConfig heartbeat();
+
+            @ConfigMapping(prefix = "scheduler.options.task-configuration.heartbeat") //CDI
+            interface HeartbeatConfig {
+
+                /**
+                 * Jitter tolerance a HeartbeatVerifierJob should account for when deciding that the last beat is
+                 * early enough.
+                 *
+                 * There is a lot of DB operations in the verify loop, in the beat processing and there can be
+                 * concurrency issues if the remote entity beat is very close to the verify loop. This is a setting that
+                 * tries to account for these operations, where speed and time depends on the underlying hardware and
+                 * could mistake the beat as being too slow.
+                 *
+                 * @return processing tolerance
+                 */
+                @WithDefault("200ms")
+                Duration processingTolerance();
+            }
         }
     }
 }

@@ -20,6 +20,7 @@ package org.jboss.pnc.rex.facade.api;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -28,24 +29,24 @@ public interface TaskProvider {
     //todo document
     Set<TaskDTO> create(CreateGraphRequest request);
     /**
-     * returns all services based on filter
+     * returns all tasks based on filter
      *
-     * @return set of services
+     * @return set of tasks
      */
     Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished, boolean rollingback, List<String> queueFilter);
 
     /**
-     * Cancels execution of the service and its dependants
+     * Cancels execution of the task and its dependants
      *
-     * @param taskName existing service
+     * @param taskName existing task
      */
     void cancel(String taskName);
 
     /**
      * Returns existing service based on param
      *
-     * @param taskName name of existing service
-     * @return service entity
+     * @param taskName name of existing task
+     * @return task entity
      */
     TaskDTO get(String taskName);
 
@@ -55,8 +56,8 @@ public interface TaskProvider {
      * Returns all related services
      * (all dependants, all dependencies, dependants of dependencies, dependencies of dependants)
      *
-     * @param taskName name of existing service
-     * @return set of related services
+     * @param taskName name of existing task
+     * @return set of related tasks
      */
     List<TaskDTO> getAllRelated(String taskName);
 
@@ -69,6 +70,12 @@ public interface TaskProvider {
      */
     void acceptRemoteResponse(String taskName, boolean positive, boolean rollback, Object response);
 
-    //TODO documentation
-    void beat(String taskName, Object body);
+    /**
+     * Notifies the task controller that the remotely running task is alive.
+     *
+     * @param taskName name of existing task
+     * @param body request body
+     * @param beatTime the earliest time of the received request
+     */
+    void beat(String taskName, Object body, Instant beatTime);
 }

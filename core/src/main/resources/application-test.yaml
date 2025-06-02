@@ -1,6 +1,9 @@
 scheduler:
   baseUrl: http://localhost:8081
   options:
+    task-configuration:
+      heartbeat:
+        processing-tolerance: 50ms
     http-configuration:
       request-retry-policy:
         backoff:
@@ -42,7 +45,7 @@ quarkus:
   log:
     category:
       "org.testcontainers":
-        level: DEBUG
+        level: INFO
       "io.quarkus.infinispan.client":
         level: INFO
   smallrye-openapi:

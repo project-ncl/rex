@@ -1,5 +1,8 @@
 scheduler:
   baseUrl: http://localhost:8181
+  options:
+    task-configuration:
+      clean: false
 
 disable:
   authorization: true

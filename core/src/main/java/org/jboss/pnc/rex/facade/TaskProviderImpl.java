@@ -40,6 +40,8 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -140,7 +142,7 @@ public class TaskProviderImpl implements TaskProvider {
 
     @Override
     @Transactional
-    public void beat(String taskName, Object body) {
-        controller.beat(taskName, body);
+    public void beat(String taskName, Object body, Instant beatTime) {
+        controller.beat(taskName, body, beatTime);
     }
 }

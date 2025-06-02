@@ -20,6 +20,8 @@ package org.jboss.pnc.rex.core.api;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
 
+import java.time.Instant;
+
 /**
  * This is API for TaskController.
  * <p>
@@ -72,8 +74,14 @@ public interface TaskController {
      */
     void fail(String name, Object response, Origin origin, boolean isRollback);
 
-    // todo documentation
-    void beat(String name, Object response);
+    /**
+     * Registers a beat of remotely running Task.
+     *
+     * @param name id of the Task
+     * @param response response of the beat
+     * @param time earliest time that beat arrived
+     */
+    void beat(String name, Object response, Instant time);
 
     void dequeue(String name);
 
