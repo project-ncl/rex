@@ -37,25 +37,35 @@ import java.util.Map;
 @ToString
 public class ConfigurationDTO {
 
+    @Builder.Default
     public Boolean passResultsOfDependencies = ConfigurationDefaults.passResultsOfDependencies;
 
+    @Builder.Default
     public Boolean passMDCInRequestBody = ConfigurationDefaults.passMDCInRequestBody;
 
+    @Builder.Default
     public Boolean passOTELInRequestBody = ConfigurationDefaults.passOTELInRequestBody;
 
     public Map<String, String> mdcHeaderKeyMapping = null;
 
+    @Builder.Default
     public Duration cancelTimeout = ConfigurationDefaults.cancelTimeout;
 
+    @Builder.Default
     public Boolean delayDependantsForFinalNotification = ConfigurationDefaults.delayDependantsForFinalNotification;
 
+    @Builder.Default
     public Integer rollbackLimit = ConfigurationDefaults.rollbackLimit;
 
+    @Builder.Default
     public Boolean heartbeatEnable = ConfigurationDefaults.heartbeatEnable;
 
+    @Builder.Default
     public Duration heartbeatInitialDelay = ConfigurationDefaults.heartbeatInitialDelay;
 
+    @Builder.Default
     public Duration heartbeatInterval = ConfigurationDefaults.heartbeatInterval;
 
+    @Builder.Default
     public Integer heartbeatToleranceThreshold = ConfigurationDefaults.heartbeatToleranceThreshold;
 }
