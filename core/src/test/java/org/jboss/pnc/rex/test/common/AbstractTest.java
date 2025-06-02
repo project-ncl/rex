@@ -66,7 +66,7 @@ public abstract class AbstractTest {
     public void clearResources() throws InterruptedException {
         recorder.clear();
         recorderEndpoint.flush();
-        httpEndpoint.clearRequestCounter();
+        httpEndpoint.clear();
 
         //Uncomment if you're encountering race conditions.
         // Thread.sleep(100);
