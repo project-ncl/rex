@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.test.endpoints;
 
+import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +52,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -73,6 +76,7 @@ public class HttpEndpoint {
 
     private final Map<String, Queue<Long>> record = new HashMap<>();
     private final Queue<Object> recordedRequestData = new ConcurrentLinkedQueue<>();
+    private final Set<Future<?>> futures = new ConcurrentHashSet<>();
 
     private boolean shouldRecord = false;
 
@@ -185,7 +189,7 @@ public class HttpEndpoint {
     private void finishAsync(Request request, State waitFor) {
         int count = recorder.count(parseTaskID(request), waitFor);
 
-        executor.submit(() -> finishTask(request, waitFor, count + 1));
+        futures.add(executor.submit(() -> finishTask(request, waitFor, count + 1)));
     }
 
     private void finishTask(Request callback, State waitFor, int occurrences) {
@@ -253,8 +257,14 @@ public class HttpEndpoint {
         return recordedRequestData;
     }
 
-    public void clearRequestCounter() {
+    public void clear() {
         counter.set(0);
+        for (Future<?> future : futures) {
+            if (!future.isDone()) {
+                future.cancel(true);
+            }
+        }
+        futures.clear();
     }
 
     public int getCount() {
