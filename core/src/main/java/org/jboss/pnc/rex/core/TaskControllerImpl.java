@@ -681,14 +681,14 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        if (task.getState() != State.UP) {
+        if (!Set.of(State.UP, State.STARTING).contains(task.getState())) {
             // todo figure out what to return
-            throw new BadRequestException("Task " + task.getName() + " is not in state UP.");
+            throw new BadRequestException("Task " + task.getName() + " is not in state UP nor STARTING.");
         };
 
         if (task.getConfiguration() == null
                 || !task.getConfiguration().isHeartbeatEnable()) {
-            throw new IllegalStateException("Task "+task.getName()+" does not have Heartbeat enabled.");
+            throw new BadRequestException("Task "+task.getName()+" does not have Heartbeat enabled.");
         }
 
         task.setHeartbeatMeta(new HeartbeatMetadata(Instant.now(), response));
