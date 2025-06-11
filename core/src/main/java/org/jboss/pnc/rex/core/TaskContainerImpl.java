@@ -29,10 +29,8 @@ import io.quarkus.infinispan.client.Remote;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.commons.api.query.Query;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
 import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
@@ -193,7 +191,6 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                     .collect(Collectors.toSet()));
         }
 
-        QueryFactory factory = Search.getQueryFactory(tasks);
         // reduce to 'NEW','WAITING'.... format
         String filter = states.stream()
                 .map(state -> "'" + state.toString() + "'")
@@ -209,7 +206,7 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             queueClause += ")";
         }
 
-        Query<Task> query = factory.create("FROM rex_model.Task WHERE state IN (" + filter + ")" + queueClause);
+        Query<Task> query = tasks.query("FROM rex_model.Task WHERE state IN (" + filter + ")" + queueClause);
 
         return query.execute().list();
     }
@@ -240,19 +237,17 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     @Override
     public List<Task> getEnqueuedTasks(long limit) {
-        QueryFactory factory = Search.getQueryFactory(tasks);
-        Query<Task> query = factory.create("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "'");
+        Query<Task> query = tasks.query("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "'");
         return query.maxResults((int) limit).list();
     }
 
     @Override
     public List<Task> getEnqueuedTasksByQueueName(String queue, long limit) {
-        QueryFactory factory = Search.getQueryFactory(tasks);
         Query<Task> query;
         if (queue == null) {
-            query = factory.create("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "' AND queue IS NULL");
+            query = tasks.query("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "' AND queue IS NULL");
         } else {
-            query = factory.create("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "' AND queue = :queueName");
+            query = tasks.query("FROM rex_model.Task WHERE state = '" + State.ENQUEUED + "' AND queue = :queueName");
             query.setParameter("queueName", queue);
         }
         return query.maxResults((int) limit).list();
@@ -260,16 +255,14 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
 
     @Override
     public List<Task> getTasksByCorrelationID(String correlationID) {
-        QueryFactory factory = Search.getQueryFactory(tasks);
-        Query<Task> taskQuery = factory.create("FROM rex_model.Task WHERE correlationID = :correlationID");
+        Query<Task> taskQuery = tasks.query("FROM rex_model.Task WHERE correlationID = :correlationID");
         taskQuery.setParameter("correlationID", correlationID);
         return taskQuery.execute().list();
     }
 
     @Override
     public List<Task> getMarkedTasksWithoutDependants() {
-        QueryFactory factory = Search.getQueryFactory(tasks);
-        Query<Task> taskQuery = factory.create("FROM rex_model.Task WHERE disposable = true AND dependants IS NULL");
+        Query<Task> taskQuery = tasks.query("FROM rex_model.Task WHERE disposable = true AND dependants IS NULL");
         return taskQuery.execute().list();
     }
 

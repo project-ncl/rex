@@ -37,6 +37,7 @@ paths:
         content:
           application/json:
             schema: {}
+        required: true
       responses:
         "200":
           description: Success with results
@@ -75,6 +76,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/FinishRequest"
+        required: true
       responses:
         "200":
           description: Success with results
@@ -113,6 +115,7 @@ paths:
         content:
           application/json:
             schema: {}
+        required: true
       responses:
         "200":
           description: Success with results
@@ -306,6 +309,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateGraphRequest"
+        required: true
       responses:
         "200":
           description: Success with results
@@ -454,6 +458,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ComponentVersion"
+      summary: Get Version
   /rest/queue/{name}/concurrency:
     get:
       tags:
@@ -564,6 +569,7 @@ paths:
       responses:
         "200":
           description: OK
+      summary: Test Transaction
   /rest/callback/{taskName}/rollback/fail:
     post:
       tags:
@@ -586,6 +592,7 @@ paths:
         content:
           application/json:
             schema: {}
+        required: true
       responses:
         "200":
           description: Success with results
@@ -623,6 +630,7 @@ paths:
         content:
           application/json:
             schema: {}
+        required: true
       responses:
         "200":
           description: Success with results
@@ -655,6 +663,7 @@ paths:
         content:
           application/json:
             schema: {}
+        required: true
       responses:
         "200":
           description: Success with results
@@ -678,6 +687,7 @@ paths:
       responses:
         "200":
           description: OK
+      summary: Try Out Ticker
 components:
   schemas:
     ComponentVersion:

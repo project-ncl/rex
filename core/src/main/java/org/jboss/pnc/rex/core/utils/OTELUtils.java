@@ -22,9 +22,9 @@ import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapGetter;
+import jakarta.annotation.Nullable;
 import org.jboss.pnc.api.constants.MDCHeaderKeys;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 

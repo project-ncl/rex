@@ -53,17 +53,10 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-infinispan-client</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.infinispan</groupId>
-                    <artifactId>infinispan-commons</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-<!--            <artifactId>quarkus-rest-jackson</artifactId> 3.9+-->
-            <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
+            <artifactId>quarkus-rest-jackson</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>

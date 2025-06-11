@@ -30,8 +30,8 @@ public class PokeCleanJob extends ControllerJob {
 
     private final CleaningManager manager;
 
-    public PokeCleanJob(Task context) {
-        super(INVOCATION_PHASE, context, false);
+    public PokeCleanJob() {
+        super(INVOCATION_PHASE, null, false);
         this.manager = CDI.current().select(CleaningManager.class, () -> WithRetries.class).get();
     }
 

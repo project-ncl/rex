@@ -31,6 +31,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
 
@@ -50,7 +52,7 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-oidc-client-filter</artifactId>
+            <artifactId>quarkus-resteasy-client-oidc-filter</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>

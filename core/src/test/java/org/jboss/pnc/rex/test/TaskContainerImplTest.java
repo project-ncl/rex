@@ -33,7 +33,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.TransactionManager;
 
-import io.quarkus.test.security.TestSecurity;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.api.QueueEndpoint;
