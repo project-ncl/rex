@@ -50,7 +50,8 @@ public class OidcClientAlternative {
                 Duration.ofNanos(Long.MAX_VALUE),
                 "refresh-token",
                 Long.MAX_VALUE,
-                JsonObject.of()));
+                JsonObject.of(),
+                ""));
         }
 
         @Override

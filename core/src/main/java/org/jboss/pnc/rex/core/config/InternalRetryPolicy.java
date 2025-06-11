@@ -18,7 +18,7 @@
 package org.jboss.pnc.rex.core.config;
 
 import io.smallrye.config.ConfigMapping;
-import io.smallrye.faulttolerance.api.FaultTolerance;
+import io.smallrye.faulttolerance.api.Guard;
 import org.jboss.pnc.rex.core.config.api.MPRetryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ public interface InternalRetryPolicy extends MPRetryPolicy {
             data. Therefore the operation/action is not lost and data should be consistent.
             """;
 
-    default FaultTolerance.Builder<Object, FaultTolerance<Object>> toleranceBuilder() {
+    default Guard.Builder toleranceBuilder() {
         return MPRetryPolicy.super.toleranceBuilder(
                 Object.class,
                 () -> log.debug("Transaction may failed. This is normal. Retrying actions!"),

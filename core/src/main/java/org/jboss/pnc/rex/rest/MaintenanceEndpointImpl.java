@@ -17,7 +17,7 @@
  */
 package org.jboss.pnc.rex.rest;
 
-import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
+import io.smallrye.faulttolerance.api.ApplyGuard;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.pnc.rex.api.MaintenanceEndpoint;
@@ -34,7 +34,7 @@ public class MaintenanceEndpointImpl implements MaintenanceEndpoint {
 
     @Override
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-users-admin" })
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     public void clearAll() {
         provider.clearEverything();
     }

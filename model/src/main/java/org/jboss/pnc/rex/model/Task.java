@@ -26,6 +26,7 @@ import lombok.ToString;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.jboss.pnc.rex.common.enums.Mode;
@@ -65,7 +66,7 @@ public class Task {
     /*
      * Correlation ID between tasks that were triggered at the same time.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 3), @Basic})
+    @Getter(onMethod_ = {@ProtoField(number = 3), @Keyword})
     private final String correlationID;
 
     /**
@@ -161,7 +162,7 @@ public class Task {
     @Getter(onMethod_ = {@ProtoField(number = 17, defaultValue = "false"), @Basic})
     private boolean disposable;
 
-    @Getter(onMethod_ = {@ProtoField(number = 18), @Basic})
+    @Getter(onMethod_ = {@ProtoField(number = 18), @Keyword})
     private String queue;
 
     /**

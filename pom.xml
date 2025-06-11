@@ -62,14 +62,14 @@
   </modules>
 
   <properties>
-    <quarkus.version>3.8.6</quarkus.version>
-    <quarkus-openapi-generator.version>2.7.1-lts</quarkus-openapi-generator.version>
+    <quarkus.version>3.21.4</quarkus.version>
+    <quarkus-openapi-generator.version>2.10.0-lts</quarkus-openapi-generator.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
     <surefire-plugin.version>3.2.3</surefire-plugin.version>
     <lombok.version>1.18.32</lombok.version>
     <delombok-plugin.version>1.18.20.0</delombok-plugin.version>

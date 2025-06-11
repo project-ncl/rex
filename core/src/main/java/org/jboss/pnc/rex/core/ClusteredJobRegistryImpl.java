@@ -23,8 +23,6 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
-import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.pnc.rex.core.api.ClusteredJobRegistry;
 import org.jboss.pnc.rex.core.config.ApplicationConfig;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
@@ -50,17 +48,13 @@ public class ClusteredJobRegistryImpl implements ClusteredJobRegistry {
 
     @Override
     public List<ClusteredJobReference> getAll() {
-        QueryFactory factory = Search.getQueryFactory(jobs);
-
-        return factory.<ClusteredJobReference>create("FROM rex_model.ClusteredJobReference")
+        return jobs.<ClusteredJobReference>query("FROM rex_model.ClusteredJobReference")
             .list();
     }
 
     @Override
     public List<ClusteredJobReference> getByTask(String taskId) {
-        QueryFactory factory = Search.getQueryFactory(jobs);
-
-        return factory.<ClusteredJobReference>create("FROM rex_model.ClusteredJobReference WHERE taskId = :taskId")
+        return jobs.<ClusteredJobReference>query("FROM rex_model.ClusteredJobReference WHERE taskId = :taskId")
             .setParameter("taskId", taskId)
             .list();
     }
@@ -76,9 +70,7 @@ public class ClusteredJobRegistryImpl implements ClusteredJobRegistry {
             throw new IllegalArgumentException("Instance name cannot be null");
         }
 
-        QueryFactory factory = Search.getQueryFactory(jobs);
-
-        return factory.<ClusteredJobReference>create("FROM rex_model.ClusteredJobReference WHERE owner = :instanceName")
+        return jobs.<ClusteredJobReference>query("FROM rex_model.ClusteredJobReference WHERE owner = :instanceName")
             .setParameter("instanceName", instanceName)
             .list();
     }
