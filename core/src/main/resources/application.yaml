@@ -53,7 +53,8 @@ quarkus:
   smallrye-jwt:
     blocking-authentication: true
   package:
-    type: fast-jar
+    jar:
+      type: fast-jar
 
   http:
     cors:

@@ -17,7 +17,7 @@
  */
 package org.jboss.pnc.rex.core.delegates;
 
-import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
+import io.smallrye.faulttolerance.api.ApplyGuard;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.pnc.rex.core.api.RollbackManager;
 
@@ -32,7 +32,7 @@ public class TolerantRollbackManager implements RollbackManager {
     }
 
     @Override
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     public void rollbackFromMilestone(String name) {
         delegate.rollbackFromMilestone(name);
     }

@@ -20,6 +20,6 @@ package org.jboss.pnc.rex.common.enums;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 
 public enum ResourceType {
-    @ProtoEnumValue(1)
+    @ProtoEnumValue(0)
     CLUSTERED_JOB
 }

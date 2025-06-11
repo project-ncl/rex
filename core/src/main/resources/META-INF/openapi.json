@@ -49,7 +49,8 @@
             "application/json" : {
               "schema" : { }
             }
-          }
+          },
+          "required" : true
         },
         "responses" : {
           "200" : {
@@ -106,7 +107,8 @@
                 "$ref" : "#/components/schemas/FinishRequest"
               }
             }
-          }
+          },
+          "required" : true
         },
         "responses" : {
           "200" : {
@@ -162,7 +164,8 @@
             "application/json" : {
               "schema" : { }
             }
-          }
+          },
+          "required" : true
         },
         "responses" : {
           "200" : {
@@ -429,7 +432,8 @@
                 "$ref" : "#/components/schemas/CreateGraphRequest"
               }
             }
-          }
+          },
+          "required" : true
         },
         "responses" : {
           "200" : {
@@ -652,7 +656,8 @@
               }
             }
           }
-        }
+        },
+        "summary" : "Get Version"
       }
     },
     "/rest/queue/{name}/concurrency" : {
@@ -812,7 +817,8 @@
           "200" : {
             "description" : "OK"
           }
-        }
+        },
+        "summary" : "Test Transaction"
       }
     },
     "/rest/callback/{taskName}/rollback/fail" : {
@@ -841,7 +847,8 @@
             "application/json" : {
               "schema" : { }
             }
-          }
+          },
+          "required" : true
         },
         "responses" : {
           "200" : {
@@ -896,7 +903,8 @@
             "application/json" : {
               "schema" : { }
             }
-          }
+          },
+          "required" : true
         },
         "responses" : {
           "200" : {
@@ -944,7 +952,8 @@
             "application/json" : {
               "schema" : { }
             }
-          }
+          },
+          "required" : true
         },
         "responses" : {
           "200" : {
@@ -981,7 +990,8 @@
           "200" : {
             "description" : "OK"
           }
-        }
+        },
+        "summary" : "Try Out Ticker"
       }
     }
   },

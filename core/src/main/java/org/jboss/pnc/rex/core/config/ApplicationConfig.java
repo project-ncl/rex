@@ -52,7 +52,7 @@ public interface ApplicationConfig {
         TaskConfiguration taskConfiguration();
 
         /**
-         * Internal retry policy is mainly used for @ApplyFaultTolerance FT annotations. Its configuration should
+         * Internal retry policy is mainly used for @ApplyGuard FT annotations. Its configuration should
          * reflect how should Rex behave when a Transaction fails, and it needs to be retried.
          *
          * @return internal retry policy

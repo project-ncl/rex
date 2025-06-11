@@ -25,8 +25,10 @@ import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.descriptors.Type;
 import org.jboss.pnc.rex.common.enums.CJobOperation;
 
 import java.util.HashMap;
@@ -48,12 +50,8 @@ public class ClusteredJobReference {
     @Getter(onMethod_ = {@ProtoField(number = 3), @Basic})
     private final CJobOperation type;
 
-    private final HashMap<String,String> telemetry;
-
-    @ProtoField(number = 4, javaType = HashMap.class)
-    public Map<String, String> getTelemetry() {
-        return telemetry;
-    }
+    @Getter(onMethod_ = {@ProtoField(number = 4, mapImplementation = HashMap.class)})
+    private final Map<String,String> telemetry;
 
     @Getter(onMethod_ = {@ProtoField(number = 5), @Basic})
     private final String taskName;

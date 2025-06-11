@@ -18,7 +18,7 @@
 package org.jboss.pnc.rex.core.delegates;
 
 import io.quarkus.arc.Unremovable;
-import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
+import io.smallrye.faulttolerance.api.ApplyGuard;
 import org.jboss.pnc.rex.core.api.CleaningManager;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -35,7 +35,7 @@ public class TolerantCleaningManager implements CleaningManager {
     }
 
     @Override
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     public void tryClean() {
         delegate.tryClean();
     }

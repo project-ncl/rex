@@ -294,7 +294,7 @@ public class NotificationTest extends AbstractTest {
                                     STARTING_to_UP,
                                     UP_to_SUCCESSFUL));
                 });
-        Thread.sleep(100);
+        Thread.sleep(200);
 
         assertThat(endpoint.getAll(getAllParameters(), null)).isEmpty();
     }

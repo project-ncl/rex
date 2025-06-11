@@ -18,7 +18,7 @@
 package org.jboss.pnc.rex.rest;
 
 import io.quarkus.arc.ArcUndeclaredThrowableException;
-import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
+import io.smallrye.faulttolerance.api.ApplyGuard;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.pnc.rex.api.CallbackEndpoint;
@@ -84,17 +84,17 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
         }
     }
 
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     void failInternal(String taskName, Object result, boolean rollback) {
         taskProvider.acceptRemoteResponse(taskName, false, rollback, result);
     }
 
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     void succeedInternal(String taskName, Object result, boolean rollback) {
         taskProvider.acceptRemoteResponse(taskName, true, rollback, result);
     }
 
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     void finishInternal(String taskName, FinishRequest result) {
         taskProvider.acceptRemoteResponse(taskName, result.getStatus(), false, result.getResponse());
     }
@@ -124,13 +124,13 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
     }
 
     @Override
-//    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
-    @ApplyFaultTolerance("internal-retry")
+    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
+    @ApplyGuard("internal-retry")
     public void beat(String taskName, Object body) {
         taskProvider.beat(taskName, body, Instant.now());
     }
 
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     void systemFailure(String taskName, boolean rollback) {
         log.error("STOP {}: UNEXPECTED exception has been thrown.", taskName);
         taskProvider.acceptRemoteResponse(taskName, false, rollback, "ACCEPT : System failure.");

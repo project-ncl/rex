@@ -17,7 +17,7 @@
  */
 package org.jboss.pnc.rex.rest;
 
-import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
+import io.smallrye.faulttolerance.api.ApplyGuard;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +43,7 @@ public class QueueEndpointImpl implements QueueEndpoint {
     }
 
     @Override
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public void setConcurrent(Long amount) {
         setConcurrentNamed(null, amount);

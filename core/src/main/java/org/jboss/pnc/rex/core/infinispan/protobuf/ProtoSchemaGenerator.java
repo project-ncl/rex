@@ -18,7 +18,9 @@
 package org.jboss.pnc.rex.core.infinispan.protobuf;
 
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
+import org.infinispan.protostream.annotations.ProtoSyntax;
+import org.infinispan.protostream.types.java.CommonTypes;
 import org.jboss.pnc.rex.common.enums.CJobOperation;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
@@ -38,16 +40,15 @@ import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.TransitionTime;
 import org.jboss.pnc.rex.model.ispn.adapter.DurationAdapter;
-import org.jboss.pnc.rex.model.ispn.adapter.HashMapStringyAdapter;
-import org.jboss.pnc.rex.model.ispn.adapter.KeyValueString;
 
 /**
  * Generates .proto schemas and infinispan protobuf marshallers of proto-annotated classes in includeClasses
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
         schemaPackageName = "rex_model",
         schemaFilePath = "META-INF/",
         schemaFileName = "RexModel.proto",
+        dependsOn = {CommonTypes.class},
         includeClasses = {
                 ServerResponse.class,
                 Task.class,
@@ -61,8 +62,6 @@ import org.jboss.pnc.rex.model.ispn.adapter.KeyValueString;
                 Configuration.class,
                 Transition.class,
                 TransitionTime.class,
-                KeyValueString.class,
-                HashMapStringyAdapter.class,
                 DurationAdapter.class,
                 NodeResource.class,
                 ClusteredJobReference.class,
@@ -70,6 +69,9 @@ import org.jboss.pnc.rex.model.ispn.adapter.KeyValueString;
                 CJobOperation.class,
                 RollbackMetadata.class,
                 HeartbeatMetadata.class
-                })
+                },
+        syntax = ProtoSyntax.PROTO3,
+        allowNullFields = true
+)
 interface ProtoSchemaGenerator extends GeneratedSchema {
 }
