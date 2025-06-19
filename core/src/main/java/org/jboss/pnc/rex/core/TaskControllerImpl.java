@@ -961,7 +961,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         // #3 HANDLE (there is no transition)
         if (pokeCleaner) {
-            doExecute(List.of(new PokeCleanJob(task)));
+            doExecute(List.of(new PokeCleanJob()));
         }
     }
 

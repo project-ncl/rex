@@ -19,7 +19,7 @@ package org.jboss.pnc.rex.core.config.api;
 
 import io.smallrye.config.WithDefault;
 
-import io.smallrye.faulttolerance.api.FaultTolerance;
+import io.smallrye.faulttolerance.api.Guard;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.time.temporal.ChronoUnit;
@@ -67,8 +67,8 @@ public interface MPRetryPolicy {
      */
     List<Class<? extends Throwable>> abortOn();
 
-    default <T> FaultTolerance.Builder<T, FaultTolerance<T>> toleranceBuilder(Class<T> clazz, Runnable onRetry, String description) {
-        return FaultTolerance.<T>create()
+    default <T> Guard.Builder toleranceBuilder(Class<T> clazz, Runnable onRetry, String description) {
+        return Guard.<T>create()
                 .withDescription(description)
                 .withRetry()
                     .maxRetries(maxRetries())

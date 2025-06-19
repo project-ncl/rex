@@ -17,7 +17,7 @@
  */
 package org.jboss.pnc.rex.rest;
 
-import io.smallrye.faulttolerance.api.ApplyFaultTolerance;
+import io.smallrye.faulttolerance.api.ApplyGuard;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.core.Response;
 import org.jboss.pnc.rex.api.TaskEndpoint;
@@ -44,7 +44,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public Set<TaskDTO> start(CreateGraphRequest request) {
         return taskProvider.create(request);
@@ -84,7 +84,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
-    @ApplyFaultTolerance("internal-retry")
+    @ApplyGuard("internal-retry")
     @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-user", "pnc-users-admin" })
     public Response cancel(String taskID) {
         taskProvider.cancel(taskID);

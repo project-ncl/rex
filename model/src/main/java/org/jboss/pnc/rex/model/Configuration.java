@@ -25,6 +25,7 @@ import lombok.extern.jackson.Jacksonized;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.descriptors.Type;
 import org.jboss.pnc.rex.common.ConfigurationDefaults;
 
 import java.time.Duration;
@@ -63,15 +64,9 @@ public class Configuration {
      * If configured, Rex looks at a Request headers and extracts values and maps them into it's MDC.
      *
      * (Header Key -> MDC Key)
-     *
-     * Has to be HashMap for ISPN inference in AllArgsConstructor
      */
-    private final HashMap<String, String> mdcHeaderKeyMapping;
-
-    @ProtoField(number = 4, javaType = HashMap.class)
-    public Map<String, String> getMdcHeaderKeyMapping() {
-        return mdcHeaderKeyMapping;
-    }
+    @Getter(onMethod_ = {@ProtoField(number = 4, mapImplementation = HashMap.class)})
+    private final Map<String, String> mdcHeaderKeyMapping;
 
     @Getter(onMethod_ = {@ProtoField(number = 5)})
     private final Duration cancelTimeout;

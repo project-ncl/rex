@@ -24,8 +24,8 @@ import org.infinispan.protostream.annotations.ProtoEnumValue;
  * ClusteredJobReferences so that they can be instantiated again after Job Failover.
  */
 public enum CJobOperation {
-    @ProtoEnumValue(number = 1)
+    @ProtoEnumValue(number = 0)
     CANCEL_TIMEOUT,
-    @ProtoEnumValue(number = 2)
+    @ProtoEnumValue(number = 1)
     HEARTBEAT_VERIFY
 }

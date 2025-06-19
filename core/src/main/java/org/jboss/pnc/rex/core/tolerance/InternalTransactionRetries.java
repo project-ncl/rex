@@ -18,7 +18,7 @@
 package org.jboss.pnc.rex.core.tolerance;
 
 import io.smallrye.common.annotation.Identifier;
-import io.smallrye.faulttolerance.api.FaultTolerance;
+import io.smallrye.faulttolerance.api.Guard;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Singleton;
@@ -33,7 +33,7 @@ public class InternalTransactionRetries {
     @Produces
     @Singleton
     @Identifier("internal-retry")
-    public FaultTolerance<Object> internalRetry(InternalRetryPolicy internalRetryPolicy) {
+    public static Guard internalRetry(InternalRetryPolicy internalRetryPolicy) {
         return internalRetryPolicy.toleranceBuilder().build();
     }
 }
