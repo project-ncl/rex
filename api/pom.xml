@@ -27,6 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>rex-api</artifactId>
+    <name>rex-api</name>
     <packaging>jar</packaging>
 
     <properties>

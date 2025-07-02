@@ -27,6 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>rex-model</artifactId>
+    <name>rex-model</name>
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
