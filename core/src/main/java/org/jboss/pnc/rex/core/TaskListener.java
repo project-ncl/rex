@@ -44,11 +44,14 @@ import static jakarta.interceptor.Interceptor.Priority.APPLICATION;
 @Slf4j
 public class TaskListener {
 
-    @Inject
-    TransactionManager tm;
+    private final TransactionManager tm;
 
-    @Inject
-    ManagedExecutor executor;
+    private final ManagedExecutor executor;
+
+    public TaskListener(TransactionManager tm, ManagedExecutor executor) {
+        this.tm = tm;
+        this.executor = executor;
+    }
 
     void onSuccessfulTransaction(@Observes(during = TransactionPhase.AFTER_SUCCESS) ControllerJob job) {
         if (job.getInvocationPhase() == TransactionPhase.AFTER_SUCCESS) {

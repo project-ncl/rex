@@ -35,11 +35,15 @@ import static java.util.stream.Collectors.toMap;
 @ApplicationScoped
 public class MaxConcurrentCounter implements Counter {
 
-    @Remote("rex-counter")
-    RemoteCache<String, Long> counterCache;
+    private final RemoteCache<String, Long> counterCache;
 
-    @Inject
-    TaskConfiguration taskConfig;
+    private final TaskConfiguration taskConfig;
+
+    public MaxConcurrentCounter(@Remote("rex-counter") RemoteCache<String, Long> counterCache,
+                                TaskConfiguration taskConfig) {
+        this.counterCache = counterCache;
+        this.taskConfig = taskConfig;
+    }
 
     private String resolveKey(String optionalKey) {
         if (optionalKey == null) {

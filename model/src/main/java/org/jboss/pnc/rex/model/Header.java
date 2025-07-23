@@ -46,8 +46,14 @@ public class Header {
                 case "BEARER":
                 case "SCRAM":
                 case "NEGOTIATE":
+                case "AWS4-HMAC-SHA256":
+                case "MUTUAL":
+                case "HOBA":
+                case "NTLM":
                     headerValue = method + " ***";
                     break;
+                default:
+                    headerValue = value;
             };
         }
 

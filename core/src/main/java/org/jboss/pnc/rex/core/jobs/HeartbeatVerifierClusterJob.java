@@ -50,6 +50,8 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
 
     private static final CJobOperation CLUSTER_JOB_OPERATION_TYPE = CJobOperation.HEARTBEAT_VERIFY;
     private static final Logger log = LoggerFactory.getLogger(HeartbeatVerifierClusterJob.class);
+    private static final String START_TIME = "startTime";
+    private static final String FAILURE_COUNT = "failureCount";
 
     private final TaskRegistry taskRegistry;
     private final HeartbeatConfig config;
@@ -114,7 +116,7 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
     }
 
     private void verify(Context context, CompletableFuture<Void> complete, Duration interval, int failureThreshold) {
-        Instant timeCheck = context.get("startTime");
+        Instant timeCheck = context.get(START_TIME);
 
         // preconditions
         Task refreshedTask = taskRegistry.getTask(this.context.getName());
@@ -135,7 +137,7 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
             return;
         }
 
-        int failureCount = context.getOrElse("failureCount", () -> 0);
+        int failureCount = context.getOrElse(FAILURE_COUNT, () -> 0);
         if (refreshedTask.getHeartbeatMeta() == null || refreshedTask.getHeartbeatMeta().getLastBeat() == null) {
             failureCount++;
         } else {
@@ -157,7 +159,7 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
             return;
         }
 
-        context.put("failureCount", failureCount);
+        context.put(FAILURE_COUNT, failureCount);
     }
 
     private void theTicker(Duration interval,
@@ -169,9 +171,9 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
                         .call(ictx -> {
                             var delay = Uni.createFrom().item(ictx).onItem().delayIt();
 
-                            return delay.by(calculateNextTick(initialDelay, interval, ictx.context().getOrElse("startTime", () -> null)));
+                            return delay.by(calculateNextTick(initialDelay, interval, ictx.context().getOrElse(START_TIME, () -> null)));
                         })
-                        .invoke(ictx -> ictx.context().put("startTime", Instant.now())) // capture startTime of the action
+                        .invoke(ictx -> ictx.context().put(START_TIME, Instant.now())) // capture startTime of the action
                         .invoke(ictx -> workAction.accept(ictx.context(), future))
                         .onFailure().invoke(() -> future.complete(null)))
                 .until(item -> future.isDone())
