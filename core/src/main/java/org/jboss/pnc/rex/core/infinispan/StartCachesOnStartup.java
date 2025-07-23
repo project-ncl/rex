@@ -35,25 +35,27 @@ import jakarta.inject.Inject;
 public class StartCachesOnStartup {
     private static final Logger log = LoggerFactory.getLogger(StartCachesOnStartup.class);
 
-    @Inject
-    @Remote("rex-tasks")
-    RemoteCache<String, Task> tasks;
+    private final RemoteCache<String, Task> tasks;
 
-    @Inject
-    @Remote("rex-constraints")
-    RemoteCache<String, String> constraints;
+    private final RemoteCache<String, String> constraints;
 
-    @Inject
-    @Remote("rex-counter")
-    RemoteCache<String, Long> counters;
+    private final RemoteCache<String, Long> counters;
 
-    @Inject
-    @Remote("rex-cluster-jobs")
-    RemoteCache<String, ClusteredJobReference> clusterJobs;
+    private final RemoteCache<String, ClusteredJobReference> clusterJobs;
 
-    @Inject
-    @Remote("rex-signals")
-    RemoteCache<String, NodeResource> signal;
+    private final RemoteCache<String, NodeResource> signal;
+
+    public StartCachesOnStartup(@Remote("rex-tasks") RemoteCache<String, Task> tasks,
+                                @Remote("rex-constraints") RemoteCache<String, String> constraints,
+                                @Remote("rex-counter") RemoteCache<String, Long> counters,
+                                @Remote("rex-cluster-jobs") RemoteCache<String, ClusteredJobReference> clusterJobs,
+                                @Remote("rex-signals") RemoteCache<String, NodeResource> signal) {
+        this.tasks = tasks;
+        this.constraints = constraints;
+        this.counters = counters;
+        this.clusterJobs = clusterJobs;
+        this.signal = signal;
+    }
 
     @Startup(ObserverMethod.DEFAULT_PRIORITY - 1)
     void onStart() {

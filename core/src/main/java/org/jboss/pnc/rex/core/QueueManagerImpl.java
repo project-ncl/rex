@@ -43,6 +43,7 @@ import static java.util.stream.Collectors.groupingBy;
 @ApplicationScoped
 public class QueueManagerImpl implements QueueManager {
 
+    private static final String DEFAULT_QUEUE_NAMING = "DEFAULT";
     private final Counter max;
     private final Counter running;
     private final TaskRegistry container;
@@ -75,7 +76,7 @@ public class QueueManagerImpl implements QueueManager {
 
             if (runningValue >= maxValue) {
                 log.debug("QUEUE '{}': Maximum number of parallel tasks reached.({} out of {})",
-                        queue == null ? "DEFAULT" : queue,
+                        queue == null ? DEFAULT_QUEUE_NAMING : queue,
                         runningValue,
                         maxValue);
             } else {
@@ -95,7 +96,7 @@ public class QueueManagerImpl implements QueueManager {
             }
 
             log.info("QUEUE '{}': Free space of {} found. Scheduling {} task(s) of {}",
-                    queue == null ? "DEFAULT" : queue,
+                    queue == null ? DEFAULT_QUEUE_NAMING : queue,
                     freeSpace,
                     randomEnqueuedTasks.size(),
                     randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList())
@@ -104,13 +105,13 @@ public class QueueManagerImpl implements QueueManager {
             randomEnqueuedTasks.forEach(task -> controller.dequeue(task.getName()));
 
             log.info("QUEUE '{}': Increasing running counter. ({} to {}) [ISPN-VERSION:{}]",
-                    queue == null ? "DEFAULT" : queue,
+                    queue == null ? DEFAULT_QUEUE_NAMING : queue,
                     runningValue,
                     (runningValue + randomEnqueuedTasks.size()),
                     runningMetadata.getVersion());
             if (!running.replaceValue(queue, runningMetadata, runningValue + randomEnqueuedTasks.size())) {
                 RuntimeException e = new ConcurrentModificationException("Running counter was modified concurrently.");
-                log.error("QUEUE '{}': Concurrent modification detected.", queue == null ? "DEFAULT" : queue, e);
+                log.error("QUEUE '{}': Concurrent modification detected.", queue == null ? DEFAULT_QUEUE_NAMING : queue, e);
                 throw e;
             }
         }
@@ -122,7 +123,7 @@ public class QueueManagerImpl implements QueueManager {
         VersionedValue<Long> runningMetadata = running.getMetadataValue(name);
         long runningValue = runningMetadata.getValue() - 1;
         log.info("QUEUE '{}': Decreasing running counter by one. ({} to {}) [ISPN-VERSION:{}]",
-                name == null ? "DEFAULT" : name,
+                name == null ? DEFAULT_QUEUE_NAMING : name,
                 runningMetadata.getValue(),
                 runningValue,
                 runningMetadata.getVersion());

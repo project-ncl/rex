@@ -25,13 +25,15 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class StartupInitDefCounter {
 
-    @Inject
-    @MaxConcurrent
-    Counter maxConcurrentCounter;
+    private final Counter maxConcurrentCounter;
 
-    @Inject
-    @Running
-    Counter runningCounter;
+    private final Counter runningCounter;
+
+    public StartupInitDefCounter(@MaxConcurrent Counter maxConcurrentCounter,
+                                 @Running Counter runningCounter) {
+        this.maxConcurrentCounter = maxConcurrentCounter;
+        this.runningCounter = runningCounter;
+    }
 
     @Startup(ObserverMethod.DEFAULT_PRIORITY + 1)
     void initCounters() {

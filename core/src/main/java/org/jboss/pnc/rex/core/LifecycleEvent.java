@@ -29,8 +29,11 @@ import org.jboss.pnc.rex.core.config.ApplicationConfig;
 @Slf4j
 public class LifecycleEvent {
 
-    @Inject
-    ApplicationConfig appConfig;
+    private final ApplicationConfig appConfig;
+
+    public LifecycleEvent(ApplicationConfig appConfig) {
+        this.appConfig = appConfig;
+    }
 
     @Startup(ObserverMethod.DEFAULT_PRIORITY + 1000) // last observer on start
     void start() {
