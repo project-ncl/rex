@@ -154,7 +154,6 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
         if (failureCount > failureThreshold) {
             log.info("HEARTBEAT {}: Threshold reached, failing Task.", refreshedTask.getName());
             taskController.fail(refreshedTask.getName(), null, Origin.REX_HEARTBEAT_TIMEOUT, false);
-            complete.complete(null);
             return;
         }
 
