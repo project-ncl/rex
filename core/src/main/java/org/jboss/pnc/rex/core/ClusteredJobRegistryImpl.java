@@ -60,8 +60,8 @@ public class ClusteredJobRegistryImpl implements ClusteredJobRegistry {
     public List<ClusteredJobReference> getByTask(String taskId) {
         QueryFactory factory = Search.getQueryFactory(jobs);
 
-        return factory.<ClusteredJobReference>create("FROM rex_model.ClusteredJobReference WHERE taskId = :taskId")
-            .setParameter("taskId", taskId)
+        return factory.<ClusteredJobReference>create("FROM rex_model.ClusteredJobReference WHERE taskName = :taskName")
+            .setParameter("taskName", taskId)
             .list();
     }
 
