@@ -54,8 +54,8 @@ public class ClusteredJobRegistryImpl implements ClusteredJobRegistry {
 
     @Override
     public List<ClusteredJobReference> getByTask(String taskId) {
-        return jobs.<ClusteredJobReference>query("FROM rex_model.ClusteredJobReference WHERE taskId = :taskId")
-            .setParameter("taskId", taskId)
+        return jobs.<ClusteredJobReference>query("FROM rex_model.ClusteredJobReference WHERE taskName = :taskName")
+            .setParameter("taskName", taskId)
             .list();
     }
 
