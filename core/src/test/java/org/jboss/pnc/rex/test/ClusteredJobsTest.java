@@ -540,6 +540,50 @@ public class ClusteredJobsTest extends AbstractTest {
         assertThat(Duration.between(startTimer, endTime)).isGreaterThan(officialDelay).isLessThan(officialDelay.plus(PROCESSING_LEEWAY));
     }
 
+    @Test
+    void testConcurrentHeartbeatFails() {
+        //given
+        String taskId1 = taskID();
+        String taskId2 = taskID();
+        String taskId3 = taskID();
+        var task1 = TestData.getMockTaskWithoutStart(taskId1, Mode.ACTIVE);
+        var task2 = TestData.getMockTaskWithoutStart(taskId2, Mode.ACTIVE);
+        var task3 = TestData.getMockTaskWithoutStart(taskId3, Mode.ACTIVE);
+        var graph = CreateGraphRequest.builder()
+                .graphConfiguration(ConfigurationDTO.builder()
+                        .heartbeatEnable(true)
+                        .heartbeatInterval(Duration.ofMillis(100))
+                        .heartbeatToleranceThreshold(2)
+                        .heartbeatInitialDelay(Duration.ofMillis(200))
+                        .build())
+                .vertex(taskId1, task1)
+                .vertex(taskId2, task2)
+                .vertex(taskId3, task3)
+                .build();
+
+        //when
+        given()
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
+
+        //then
+        Task task1fail = waitTillTaskTransitionsInto(State.FAILED, taskId1).getFirst();
+        Task task2fail = waitTillTaskTransitionsInto(State.FAILED, taskId2).getFirst();
+        Task task3fail = waitTillTaskTransitionsInto(State.FAILED, taskId3).getFirst();
+
+        assertThat(task1fail).isNotNull();
+        assertThat(task1fail.getServerResponses()).isNotEmpty().anyMatch(serverResponse -> serverResponse.getOrigin().equals(Origin.REX_HEARTBEAT_TIMEOUT));
+        assertThat(task2fail).isNotNull();
+        assertThat(task2fail.getServerResponses()).isNotEmpty().anyMatch(serverResponse -> serverResponse.getOrigin().equals(Origin.REX_HEARTBEAT_TIMEOUT));
+        assertThat(task3fail).isNotNull();
+        assertThat(task3fail.getServerResponses()).isNotEmpty().anyMatch(serverResponse -> serverResponse.getOrigin().equals(Origin.REX_HEARTBEAT_TIMEOUT));
+
+    }
+
     private void beat(String taskId, Duration interval) {
         try {
             while (true) {
