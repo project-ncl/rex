@@ -124,7 +124,7 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
     }
 
     @Override
-    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-banger", "pnc-app-rex-user", "pnc-users-admin" })
+//    @RolesAllowed({ "pnc-app-rex-editor", "pnc-app-rex-banger", "pnc-app-rex-user", "pnc-users-admin" })
     @ApplyGuard("internal-retry")
     public void beat(String taskName, Object body) {
         taskProvider.beat(taskName, body, Instant.now());
