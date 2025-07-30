@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
@@ -154,7 +155,7 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
 
         if (failureCount > failureThreshold) {
             log.info("HEARTBEAT {}: Threshold reached, failing Task.", refreshedTask.getName());
-            taskController.fail(refreshedTask.getName(), null, Origin.REX_HEARTBEAT_TIMEOUT, false);
+            taskController.fail(refreshedTask.getName(), null, Origin.REX_HEARTBEAT_TIMEOUT, false, Set.of());
             return;
         }
 

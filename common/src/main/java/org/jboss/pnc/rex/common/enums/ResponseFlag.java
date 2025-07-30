@@ -15,36 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.rex.dto;
+package org.jboss.pnc.rex.common.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import org.jboss.pnc.rex.common.enums.Origin;
-import org.jboss.pnc.rex.common.enums.ResponseFlag;
-import org.jboss.pnc.rex.common.enums.State;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
 
-import java.util.Map;
-import java.util.Set;
-
-@Getter
-@Builder
-@ToString
-@NoArgsConstructor
-@AllArgsConstructor
-public class ServerResponseDTO {
-
-    public State state;
-
-    public Boolean positive;
-
-    public Integer rollbackCounter;
-
-    public Object body;
-
-    public Origin origin;
-
-    public Set<ResponseFlag> flags;
+/**
+ * Flags that can be set by remote entity on callback which slightly change the behaviour of Task Controller.
+ */
+public enum ResponseFlag {
+    /**
+     * If set, the controller will not trigger rollback from a Milestone even if the Task could.
+     *
+     * APPLICABLE only to negative callbacks. The flag doesn't do anything for positive callback.
+     */
+    @ProtoEnumValue(0)
+    SKIP_ROLLBACK
 }

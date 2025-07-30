@@ -19,7 +19,6 @@ package org.jboss.pnc.rex.test;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
-import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.rex.api.CallbackEndpoint;
@@ -36,7 +35,6 @@ import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.TransitionTimeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Task;
-import org.jboss.pnc.rex.model.TransitionTime;
 import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.test.common.TestData;
 import org.jboss.pnc.rex.test.common.TransitionRecorder;
@@ -46,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
 import static org.jboss.pnc.rex.test.common.Assertions.waitTillTaskTransitionsInto;
 import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
 import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
@@ -260,7 +259,7 @@ public class RollbackProcessTest extends AbstractTest {
         waitTillTaskTransitionsInto(State.FAILED, failedState);
 
         // trigger milestone
-        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE));
+        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE, Set.of()));
 
         waitTillTaskTransitionsInto(State.FAILED, failedState, 2);
 
@@ -322,7 +321,7 @@ public class RollbackProcessTest extends AbstractTest {
 
         waitTillTaskTransitionsInto(State.UP, upState);
 
-        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         waitTillTaskTransitionsInto(State.UP, trigger, 2);
 
@@ -381,7 +380,7 @@ public class RollbackProcessTest extends AbstractTest {
 
         waitTillTaskTransitionsInto(State.SUCCESSFUL, success);
 
-        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         waitTillTaskTransitionsInto(State.SUCCESSFUL, success, 2);
 
@@ -449,7 +448,7 @@ public class RollbackProcessTest extends AbstractTest {
         waitTillTaskTransitionsInto(State.UP, up);
         waitTillTaskTransitionsInto(State.WAITING, waiting);
 
-        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         waitTillTaskTransitionsInto(State.WAITING, waiting, 2);
         waitTillTaskTransitionsInto(State.UP, trigger, 2);
@@ -526,7 +525,7 @@ public class RollbackProcessTest extends AbstractTest {
         executor.runAsync(() -> taskEndpoint.cancel(cancelledDep)); // cancel dependency of cancelled-task
         waitTillTaskTransitionsInto(State.STOPPED, cancelled);
 
-        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         waitTillTaskTransitionsInto(State.UP, trigger, 2);
 
@@ -587,11 +586,11 @@ public class RollbackProcessTest extends AbstractTest {
         waitTillTaskTransitionsInto(State.UP, trigger);
         waitTillTaskTransitionsInto(State.WAITING, stopped);
 
-        executor.runAsync(() -> callbackEndpoint.fail(failed, "lul", ErrorOption.IGNORE)); // fail dependency of stopped-task
+        executor.runAsync(() -> callbackEndpoint.fail(failed, "lul", ErrorOption.IGNORE, Set.of())); // fail dependency of stopped-task
         waitTillTaskTransitionsInto(State.FAILED, failed);
         waitTillTaskTransitionsInto(State.STOPPED, stopped);
 
-        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         waitTillTaskTransitionsInto(State.UP, trigger, 2);
 
@@ -647,11 +646,11 @@ public class RollbackProcessTest extends AbstractTest {
         waitTillTaskTransitionsInto(State.UP, trigger);
         waitTillTaskTransitionsInto(State.WAITING, stopped);
 
-        executor.runAsync(() -> callbackEndpoint.fail(failed, "lul", ErrorOption.IGNORE)); // fail dependency of stopped-task
+        executor.runAsync(() -> callbackEndpoint.fail(failed, "lul", ErrorOption.IGNORE, Set.of())); // fail dependency of stopped-task
         waitTillTaskTransitionsInto(State.FAILED, failed);
         waitTillTaskTransitionsInto(State.STOPPED, stopped);
 
-        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         waitTillTaskTransitionsInto(State.UP, trigger, 2);
 
@@ -731,12 +730,12 @@ public class RollbackProcessTest extends AbstractTest {
         waitTillTaskTransitionsInto(State.UP, notifyFailed);
 
         // succeed dependency of stopped-task but with failing final notification
-        executor.runAsync(() -> callbackEndpoint.succeed(notifyFailed, "lul", ErrorOption.IGNORE));
+        executor.runAsync(() -> callbackEndpoint.succeed(notifyFailed, "lul", ErrorOption.IGNORE, Set.of()));
 
         waitTillTaskTransitionsInto(State.SUCCESSFUL, notifyFailed);
         Task stoppedTaskModel = waitTillTaskTransitionsInto(State.STOPPED, stopped).get(0);
 
-        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         waitTillTaskTransitionsInto(State.UP, trigger, 2);
 
@@ -797,7 +796,7 @@ public class RollbackProcessTest extends AbstractTest {
         waitTillTaskTransitionsInto(State.UP, trigger);
         waitTillTaskTransitionsInto(State.SUCCESSFUL, success);
 
-        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail(trigger, "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         waitTillTaskTransitionsInto(State.UP, trigger, 2);
         waitTillTaskTransitionsInto(State.SUCCESSFUL, success, 2);
@@ -885,7 +884,7 @@ public class RollbackProcessTest extends AbstractTest {
 
         waitTillTaskTransitionsInto(State.SUCCESSFUL, "i");
 
-        executor.runAsync(() -> callbackEndpoint.fail("h", "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail("h", "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         waitTillTaskTransitionsInto(State.WAITING, "j",2);
         waitTillTaskTransitionsInto(State.SUCCESSFUL, "i",2);
@@ -922,7 +921,6 @@ public class RollbackProcessTest extends AbstractTest {
                             Transition.UP_to_SUCCESSFUL
                     );
                 });
-
     }
 
     @Test
@@ -949,12 +947,75 @@ public class RollbackProcessTest extends AbstractTest {
         taskEndpoint.start(graph);
 
         waitTillTaskTransitionsInto(State.UP, "0",1);
-        executor.runAsync(() -> callbackEndpoint.fail("0", "lol", ErrorOption.IGNORE)); //trigger rollback
+        executor.runAsync(() -> callbackEndpoint.fail("0", "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         // then
         waitTillTaskTransitionsInto(State.UP, "0",2);
-        executor.runAsync(() -> callbackEndpoint.succeed("0", "lol", ErrorOption.IGNORE));
+        executor.runAsync(() -> callbackEndpoint.succeed("0", "lol", ErrorOption.IGNORE, Set.of()));
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
+    }
+
+    @Test
+    void testResponseWithFlagDoesntTriggerRollback() {
+        //with
+        CreateGraphRequest graph = getComplexGraph(true);
+
+        graph.getVertices().forEach((ign, task) -> {
+            task.remoteRollback = getRequestForRollback();
+        });
+
+        graph.getVertices().get("h").remoteStart = getRequestWithoutStart("payload");
+        graph.getVertices().get("h").milestoneTask = "d";
+        graph.getVertices().get("h").configuration = ConfigurationDTO.builder().rollbackLimit(10).build();
+
+        // when
+        taskEndpoint.start(graph);
+
+        waitTillTaskTransitionsInto(State.SUCCESSFUL, "i");
+
+        executor.runAsync(() -> callbackEndpoint.fail("h", "lol", ErrorOption.IGNORE, Set.of(SKIP_ROLLBACK))); //trigger rollback
+
+        waitTillTaskTransitionsInto(State.STOPPED, "j",1);
+        waitTillTaskTransitionsInto(State.FAILED, "h",1);
+
+        var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
+
+        // then
+
+        assertThat(tasks.stream().filter(task -> "h".equals(task.getName())).map(TaskDTO::getTimestamps).toList())
+                .allSatisfy(records -> {
+                    assertThat(records)
+                            .extracting(TransitionTimeDTO::getTransition)
+                            .containsExactly(
+                                    Transition.NEW_to_WAITING,
+                                    Transition.WAITING_to_ENQUEUED,
+                                    Transition.ENQUEUED_to_STARTING,
+                                    Transition.STARTING_to_UP,
+                                    Transition.UP_to_FAILED
+                            );
+                });
+        assertThat(tasks.stream().filter(task -> "j".equals(task.getName())).map(TaskDTO::getTimestamps).toList())
+                .allSatisfy(records -> {
+                    assertThat(records)
+                            .extracting(TransitionTimeDTO::getTransition)
+                            .containsExactly(
+                                    Transition.NEW_to_WAITING,
+                                    Transition.WAITING_to_STOPPED
+                            );
+                });
+        assertThat(tasks.stream().filter(task -> Set.of("d", "e", "g", "i").contains(task.getName())).map(TaskDTO::getTimestamps).toList())
+                .allSatisfy(records -> {
+                    assertThat(records)
+                            .extracting(TransitionTimeDTO::getTransition)
+                            .containsExactly(
+                                    Transition.NEW_to_WAITING,
+                                    Transition.WAITING_to_ENQUEUED,
+                                    Transition.ENQUEUED_to_STARTING,
+                                    Transition.STARTING_to_UP,
+                                    Transition.UP_to_SUCCESSFUL
+                            );
+                });
+
     }
 
     private static void assertMilestoneTrigger(List<TransitionTimeDTO> triggerRecords, boolean withCallback, boolean endsWithFail) {

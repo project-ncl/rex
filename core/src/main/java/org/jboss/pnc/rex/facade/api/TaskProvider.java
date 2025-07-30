@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.facade.api;
 
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 
@@ -62,13 +63,28 @@ public interface TaskProvider {
     List<TaskDTO> getAllRelated(String taskName);
 
     /**
-     * Used for communication with remote entity. Invoked by remote entity by provided callback.
+     * Used for communication with remote entity. Invoked by remote entity by provided callback. Remote entity responds
+     * that it has finished execution of the service.
      *
-     * @param positive callback is positive or negative
-     *                 true == remote entity responds that it has finished execution of the service
-     *                 false == remote entity responds that the service has failed its execution
+     * @param taskName name of existing task
+     * @param rollback whether this response comes from rollback endpoint
+     * @param response body of the response
+     * @param flags        OPTIONAL flags that slightly modify the behaviour of schedule (for example SKIP_ROLLBACK will
+     *                     skip rollback process and fail the Task immediately)
      */
-    void acceptRemoteResponse(String taskName, boolean positive, boolean rollback, Object response);
+    void positiveRemoteResponse(String taskName, boolean rollback, Object response, Set<ResponseFlag> flags);
+
+    /**
+     * Used for communication with remote entity. Invoked by remote entity by provided callback. Remote entity responds
+     * that the service has failed its execution.
+     *
+     * @param taskName     name of existing task
+     * @param rollback     whether this response comes from rollback endpoint
+     * @param response     body of the response
+     * @param flags        OPTIONAL flags that slightly modify the behaviour of schedule (for example SKIP_ROLLBACK will
+     *                     skip rollback process and fail the Task immediately)
+     */
+    void negativeRemoteResponse(String taskName, boolean rollback, Object response, Set<ResponseFlag> flags);
 
     /**
      * Notifies the task controller that the remotely running task is alive.

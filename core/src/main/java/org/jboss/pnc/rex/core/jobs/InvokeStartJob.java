@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
 import java.util.HashMap;
+import java.util.Set;
 
 public class InvokeStartJob extends ControllerJob {
 
@@ -71,7 +72,7 @@ public class InvokeStartJob extends ControllerJob {
     protected void onException(Throwable e) {
         logger.error("START {}: UNEXPECTED exception has been thrown.", context.getName(), e);
         Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, false))
+                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, false, Set.of()))
                 .onFailure().invoke((throwable) -> logger.warn("START {}: Failed to transition task to START_FAILED state. Retrying.", context.getName(), throwable))
                 .onFailure().retry().atMost(5)
                 .onFailure().recoverWithNull()

@@ -215,7 +215,7 @@ class TaskContainerImplTest extends AbstractTest {
         waitTillTaskTransitionsInto(State.UP, EXISTING_KEY);
 
         container.getTransactionManager().begin();
-        controller.accept(EXISTING_KEY, null, Origin.REMOTE_ENTITY, false);
+        controller.accept(EXISTING_KEY, null, Origin.REMOTE_ENTITY, false, Set.of());
         container.getTransactionManager().commit();
 
         waitTillTaskTransitionsInto(State.UP, dependant);

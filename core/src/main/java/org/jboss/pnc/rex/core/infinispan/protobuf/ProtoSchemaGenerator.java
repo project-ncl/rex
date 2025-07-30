@@ -26,6 +26,7 @@ import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.ResourceType;
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
@@ -68,7 +69,8 @@ import org.jboss.pnc.rex.model.ispn.adapter.DurationAdapter;
                 ResourceType.class,
                 CJobOperation.class,
                 RollbackMetadata.class,
-                HeartbeatMetadata.class
+                HeartbeatMetadata.class,
+                ResponseFlag.class,
                 },
         syntax = ProtoSyntax.PROTO3,
         allowNullFields = true

@@ -23,9 +23,11 @@ import jakarta.transaction.Transactional;
 import io.quarkus.arc.Unremovable;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.core.api.TaskController;
 
 import java.time.Instant;
+import java.util.Set;
 
 @WithTransactions
 @Unremovable
@@ -50,13 +52,13 @@ public class TransactionalTaskController implements TaskController {
     }
 
     @Override
-    public void accept(String name, Object response, Origin origin, boolean isRollback) {
-        delegate.accept(name, response, origin, isRollback);
+    public void accept(String name, Object response, Origin origin, boolean isRollback, Set<ResponseFlag> flags) {
+        delegate.accept(name, response, origin, isRollback, flags);
     }
 
     @Override
-    public void fail(String name, Object response, Origin origin, boolean isRollback) {
-        delegate.fail(name, response, origin, isRollback);
+    public void fail(String name, Object response, Origin origin, boolean isRollback, Set<ResponseFlag> flags) {
+        delegate.fail(name, response, origin, isRollback, flags);
     }
 
     @Override

@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.Set;
 
 public class InvokeRollbackJob extends ControllerJob {
 
@@ -72,7 +73,7 @@ public class InvokeRollbackJob extends ControllerJob {
     protected void onException(Throwable e) {
         logger.error("ROLLBACK {}: UNEXPECTED exception has been thrown.", context.getName(), e);
         Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, true))
+                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, true, Set.of()))
                 .onFailure().invoke((throwable) -> logger.warn("ROLLBACK {}: Failed to transition task to START_FAILED state. Retrying.", context.getName(), throwable))
                 .onFailure().retry().atMost(5)
                 .onFailure().recoverWithNull()

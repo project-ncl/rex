@@ -237,7 +237,7 @@ public class NotificationTest extends AbstractTest {
                 .containsExactlyInAnyOrder("1", "2", "4", "5");
 
         // then complete 4
-        executor.runAsync(() -> callbackEndpoint.succeed("4", "the-result", ErrorOption.IGNORE));
+        executor.runAsync(() -> callbackEndpoint.succeed("4", "the-result", ErrorOption.IGNORE, Set.of()));
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, "4");
         // the tasks shouldn't be deleted yet
         Set<TaskDTO> allWhenCompleted4 = endpoint.getAll(getAllParameters(), null);
@@ -246,7 +246,7 @@ public class NotificationTest extends AbstractTest {
             .containsExactlyInAnyOrder("1", "2", "4", "5");
 
         // then complete 5
-        executor.runAsync(() -> callbackEndpoint.succeed("5", "the-result", ErrorOption.IGNORE));
+        executor.runAsync(() -> callbackEndpoint.succeed("5", "the-result", ErrorOption.IGNORE, Set.of()));
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, "5");
         Thread.sleep(100);
 
