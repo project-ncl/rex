@@ -40,6 +40,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import static java.time.Duration.between;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
@@ -129,7 +130,7 @@ public class TimeoutCancelClusterJob extends ClusteredJob {
             return true;
         }
         log.info("TIMEOUT: Timing out task {}.", refreshedTask.getName());
-        taskController.accept(refreshedTask.getName(), null, Origin.REX_TIMEOUT, false);
+        taskController.accept(refreshedTask.getName(), null, Origin.REX_TIMEOUT, false, Set.of());
         return true;
     }
 }

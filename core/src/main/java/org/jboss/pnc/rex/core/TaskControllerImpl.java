@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
@@ -78,6 +79,7 @@ import java.util.Set;
 import static jakarta.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
 import static jakarta.enterprise.event.TransactionPhase.IN_PROGRESS;
 import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
 
 @Slf4j
 @ApplicationScoped
@@ -349,41 +351,47 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 yield null;
             }
             case STARTING -> {
+                int counter = task.getRollbackMeta().getRollbackCounter();
+                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.STARTING, counter)).toList();
+
                 if (shouldRequestRollback(task))
                     yield Transition.STARTING_to_ROLLBACK_REQUESTED;
                 if (shouldRollbackWithNoActions(task))
                     yield Transition.STARTING_to_ROLLEDBACK;
                 if (task.getStopFlag() == StopFlag.CANCELLED)
                     yield Transition.STARTING_to_STOP_REQUESTED;
-                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STARTING).toList();
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.STARTING_to_UP;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
-                    if (shouldTriggerRollback(task))
+                    if (shouldTriggerRollback(task, responses.getFirst()))
                         yield Transition.STARTING_to_ROLLBACK_TRIGGERED;
                     else
                         yield Transition.STARTING_to_START_FAILED;
                 yield null;
             }
             case UP -> {
+                int counter = task.getRollbackMeta().getRollbackCounter();
+                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.UP, counter)).toList();
+
                 if (shouldRequestRollback(task))
                     yield Transition.UP_to_ROLLBACK_REQUESTED;
                 if (shouldRollbackWithNoActions(task))
                     yield Transition.UP_to_ROLLEDBACK;
                 if (task.getStopFlag() == StopFlag.CANCELLED)
                     yield Transition.UP_to_STOP_REQUESTED;
-                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.UP).toList();
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.UP_to_SUCCESSFUL;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
-                    if (shouldTriggerRollback(task))
+                    if (shouldTriggerRollback(task, responses.getFirst()))
                         yield Transition.UP_to_ROLLBACK_TRIGGERED;
                     else
                         yield Transition.UP_to_FAILED;
                 yield null;
             }
             case STOP_REQUESTED -> {
-                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STOP_REQUESTED).toList();
+                int counter = task.getRollbackMeta().getRollbackCounter();
+                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.STOP_REQUESTED, counter)).toList();
+
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.STOP_REQUESTED_to_STOPPING;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
@@ -391,7 +399,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 yield null;
             }
             case STOPPING -> {
-                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> sr.getState() == State.STOPPING).toList();
+                int counter = task.getRollbackMeta().getRollbackCounter();
+                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.STOPPING, counter)).toList();
+
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.STOPPING_TO_STOPPED;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
@@ -446,7 +456,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             }
             case ROLLBACK_REQUESTED -> {
                 int counter = task.getRollbackMeta().getRollbackCounter();
-                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> counter == sr.getRollbackCounter() && sr.getState() == State.ROLLBACK_REQUESTED).toList();
+                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.ROLLBACK_REQUESTED, counter)).toList();
+
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.ROLLBACK_REQUESTED_to_ROLLINGBACK;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
@@ -457,7 +468,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             }
             case ROLLINGBACK -> {
                 int counter = task.getRollbackMeta().getRollbackCounter();
-                List<ServerResponse> responses = task.getServerResponses().stream().filter(sr -> counter == sr.getRollbackCounter() && sr.getState() == State.ROLLINGBACK).toList();
+                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.ROLLINGBACK, counter)).toList();
+
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.ROLLINGBACK_to_ROLLEDBACK;
                 if (responses.stream().anyMatch(ServerResponse::isNegative))
@@ -486,10 +498,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         };
     }
 
-    private boolean shouldTriggerRollback(Task task) {
+    private static boolean filterForThisState(ServerResponse sr, State stateResponse, int rollbackCounter) {
+        return sr.getState() == stateResponse && sr.getRollbackCounter() == rollbackCounter;
+    }
+
+    private boolean shouldTriggerRollback(Task task, ServerResponse response) {
         return task.getMilestoneTask() != null
                 && task.getRollbackMeta().getTriggerCounter() < task.getConfiguration().getRollbackLimit()
-                && !task.getRollbackMeta().isToRollback();
+                && !task.getRollbackMeta().isToRollback()
+                && !response.getFlags().contains(ResponseFlag.SKIP_ROLLBACK);
     }
 
     private boolean shouldRollback(Task task) {
@@ -636,15 +653,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     @Override
     @Transactional(MANDATORY)
-    public void accept(String name, Object response, Origin origin, boolean isRollback) {
+    public void accept(String name, Object response, Origin origin, boolean isRollback, Set<ResponseFlag> flags) {
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        if (assertStateForResponses(task, isRollback, true)) return;
+        if (assertStateForResponses(task, isRollback, true, flags)) return;
 
-        ServerResponse positiveResponse = new ServerResponse(task.getState(), true, response, origin, task.getRollbackMeta().getRollbackCounter());
+        ServerResponse positiveResponse = new ServerResponse(task.getState(), true, response, origin, task.getRollbackMeta().getRollbackCounter(), flags);
         List<ServerResponse> responses = task.getServerResponses();
         responses.add(positiveResponse);
 
@@ -654,15 +671,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     @Override
     @Transactional(MANDATORY)
-    public void fail(String name, Object response, Origin origin, boolean isRollback) {
+    public void fail(String name, Object response, Origin origin, boolean isRollback, Set<ResponseFlag> flags) {
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        if (assertStateForResponses(task, isRollback, false)) return;
+        if (assertStateForResponses(task, isRollback, false, flags)) return;
 
-        ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response, origin, task.getRollbackMeta().getRollbackCounter());
+        ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response, origin, task.getRollbackMeta().getRollbackCounter(), flags);
         List<ServerResponse> responses = task.getServerResponses();
         responses.add(negativeResponse);
 
@@ -696,10 +713,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         handle(taskMetadata, task);
     }
 
-    private static boolean assertStateForResponses(Task task, boolean isRollback, boolean isPositive) {
+    private static boolean assertStateForResponses(Task task, boolean isRollback, boolean isPositive, Set<ResponseFlag> flags) {
         var acceptedRollbackStates = EnumSet.of(State.TO_ROLLBACK, State.ROLLBACK_REQUESTED, State.ROLLINGBACK);
         var acceptedStandardStates = EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED, State.STOPPING);
         var failFast = false;
+
+        if (isRollback && flags.contains(SKIP_ROLLBACK)) {
+            throw new BadRequestException("Invalid parameter combination." +
+                    " 'skipRollback' flag doesn't work with Rollback endpoints.");
+        }
 
         if (isRollback) {
             if (acceptedStandardStates.contains(task.getState())) {

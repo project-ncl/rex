@@ -27,6 +27,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.rex.api.openapi.OpenapiConstants;
 import org.jboss.pnc.rex.api.parameters.ErrorOption;
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
 
@@ -39,6 +40,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+
+import java.util.Set;
 
 @Tag(name = "Callback endpoint")
 @Path("/rest/callback")
@@ -82,7 +85,8 @@ public interface CallbackEndpoint {
     @POST
     void succeed(@PathParam("taskName") @NotEmpty String taskName,
                  Object result,
-                 @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
+                 @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err,
+                 @QueryParam("flags") Set<ResponseFlag> flags);
 
     String OPERATION_FAILED = "/{taskName}/fail";
     @Path(OPERATION_FAILED)
@@ -97,7 +101,8 @@ public interface CallbackEndpoint {
     @POST
     void fail(@PathParam("taskName") @NotEmpty String taskName,
               Object result,
-              @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
+              @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err,
+              @QueryParam("flags") Set<ResponseFlag> flags);
 
     String ROLLBACK_SUCCESS = "/{taskName}/rollback/succeed";
     @Path(ROLLBACK_SUCCESS)

@@ -28,9 +28,12 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
 import org.jboss.pnc.rex.common.enums.Origin;
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.common.enums.State;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToByteArray;
 import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToObject;
@@ -60,8 +63,16 @@ public class ServerResponse {
     @Getter(onMethod_ = {@ProtoField(number = 5, defaultValue = "0")})
     private final int rollbackCounter;
 
+    @Getter(onMethod_ = {@ProtoField(number = 6)})
+    private final Set<ResponseFlag> flags;
+
     @ProtoFactory
-    public ServerResponse(State state, boolean positive, byte[] byteBody, Origin origin, int rollbackCounter) {
+    public ServerResponse(State state,
+                          boolean positive,
+                          byte[] byteBody,
+                          Origin origin,
+                          int rollbackCounter,
+                          Set<ResponseFlag> flags) {
         this.state = state;
         this.positive = positive;
         this.origin = origin;
@@ -77,6 +88,7 @@ public class ServerResponse {
         }
         this.body = body;
         this.rollbackCounter = rollbackCounter;
+        this.flags = flags;
     }
 
     @JsonIgnore

@@ -19,6 +19,7 @@ package org.jboss.pnc.rex.facade;
 
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
 import org.jboss.pnc.rex.common.util.MDCUtils;
 import org.jboss.pnc.rex.core.api.TaskContainer;
@@ -132,12 +133,14 @@ public class TaskProviderImpl implements TaskProvider {
 
     @Override
     @Transactional
-    public void acceptRemoteResponse(String taskName, boolean positive, boolean rollback, Object response) {
-        if (positive) {
-            controller.accept(taskName, response, Origin.REMOTE_ENTITY, rollback);
-        } else {
-            controller.fail(taskName, response, Origin.REMOTE_ENTITY, rollback);
-        }
+    public void positiveRemoteResponse(String taskName, boolean rollback, Object response, Set<ResponseFlag> flags) {
+        controller.accept(taskName, response, Origin.REMOTE_ENTITY, rollback, flags);
+    }
+
+    @Override
+    @Transactional
+    public void negativeRemoteResponse(String taskName, boolean rollback, Object response, Set<ResponseFlag> flags) {
+        controller.fail(taskName, response, Origin.REMOTE_ENTITY, rollback, flags);
     }
 
     @Override

@@ -1,5 +1,5 @@
 scheduler:
-  baseUrl: http://localhost:8181
+  baseUrl: http://localhost:8081
   options:
     task-configuration:
       clean: false
@@ -19,7 +19,7 @@ quarkus:
     traces:
       enabled: false
   http:
-    port: 8181
+    port: 8081
   smallrye-openapi:
     store-schema-directory: ""
   infinispan-client:

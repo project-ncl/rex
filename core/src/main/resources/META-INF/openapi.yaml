@@ -33,6 +33,18 @@ paths:
         schema:
           default: PASS_ERROR
           type: string
+      - name: skipRollback
+        in: query
+        schema:
+          default: "false"
+          type: boolean
+      - name: flags
+        in: query
+        schema:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseFlag"
       requestBody:
         content:
           application/json:
@@ -111,6 +123,13 @@ paths:
         schema:
           default: PASS_ERROR
           type: string
+      - name: flags
+        in: query
+        schema:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseFlag"
       requestBody:
         content:
           application/json:
@@ -887,6 +906,11 @@ components:
         rollbackCounter:
           format: int32
           type: integer
+        flags:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseFlag"
     State:
       enum:
       - NEW
@@ -1027,6 +1051,10 @@ components:
       format: date-time
       type: string
       example: 2022-03-10T12:15:50-04:00
+    ResponseFlag:
+      enum:
+      - SKIP_ROLLBACK
+      type: string
   securitySchemes:
     SecurityScheme:
       type: openIdConnect

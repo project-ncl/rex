@@ -19,8 +19,10 @@ package org.jboss.pnc.rex.core.api;
 
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
 
 import java.time.Instant;
+import java.util.Set;
 
 /**
  * This is API for TaskController.
@@ -60,19 +62,21 @@ public interface TaskController {
      * @param name     id of the Task
      * @param origin   the origin of response
      * @param isRollback callback is from rollback endpoint
+     * @param flags        remote entity flags for special cases
      */
-    void accept(String name, Object response, Origin origin, boolean isRollback);
+    void accept(String name, Object response, Origin origin, boolean isRollback, Set<ResponseFlag> flags);
 
     /**
      * Method used for negative callback. Needs to be called in a transaction.
      * <p>
      * f.e. to signalize that remote Task failed to start/cancel or failed during execution.
      *
-     * @param name     id of the Task
-     * @param origin   the origin of response
-     * @param isRollback callback is from rollback endpoint
+     * @param name         id of the Task
+     * @param origin       the origin of response
+     * @param isRollback   callback is from rollback endpoint
+     * @param flags        remote entity flags for special cases
      */
-    void fail(String name, Object response, Origin origin, boolean isRollback);
+    void fail(String name, Object response, Origin origin, boolean isRollback, Set<ResponseFlag> flags);
 
     /**
      * Registers a beat of remotely running Task.

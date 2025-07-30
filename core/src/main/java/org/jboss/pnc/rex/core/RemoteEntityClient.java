@@ -47,6 +47,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -257,14 +258,14 @@ public class RemoteEntityClient {
     private void handleResponse(HttpResponse<Buffer> response, Task task, boolean rollback) {
         if (200 <= response.statusCode() && response.statusCode() <= 299) {
             log.info("RESPONSE {}: Got positive response.", task.getName());
-            controller.accept(task.getName(), parseBody(response), Origin.REMOTE_ENTITY, rollback);
+            controller.accept(task.getName(), parseBody(response), Origin.REMOTE_ENTITY, rollback, Set.of());
         } else if (300 <= response.statusCode() && response.statusCode() <= 399) {
             log.info("RESPONSE {}: Got redirect to {}", task.getName(), response.getHeader("Location"));
             // TODO do not fail after proper redirect handling
-            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY, rollback);
+            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY, rollback, Set.of());
         } else {
             log.info("RESPONSE {}: Got negative response. (STATUS CODE: {})", task.getName(), response.statusCode());
-            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY, rollback);
+            controller.fail(task.getName(), parseBody(response), Origin.REMOTE_ENTITY, rollback, Set.of());
         }
     }
 
@@ -276,7 +277,8 @@ public class RemoteEntityClient {
                     task.getName(),
                     convertToHashMap(new ErrorResponse(exception.getClass().getSimpleName(), exception.getMessage(), "Rex couldn't contact remote entity.")),
                     Origin.REX_INTERNAL_ERROR,
-                    rollback))
+                    rollback,
+                    Set.of()))
             .onFailure().retry().atMost(5)
             .onFailure().invoke((throwable) -> log.error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
             .onFailure().recoverWithNull()

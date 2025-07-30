@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
 import java.util.HashMap;
+import java.util.Set;
 
 public class InvokeStopJob extends ControllerJob {
 
@@ -54,7 +55,7 @@ public class InvokeStopJob extends ControllerJob {
     protected void onException(Throwable e) {
         logger.error("STOP " + context.getName() + ": UNEXPECTED exception has been thrown.", e);
         Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, false))
+                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, false, Set.of()))
                 .onFailure().invoke((throwable) -> logger.warn("STOP " + context.getName() + ": Failed to transition task to STOP_FAILED state. Retrying.", throwable))
                 .onFailure().retry().atMost(5)
                 .onFailure().recoverWithNull()
