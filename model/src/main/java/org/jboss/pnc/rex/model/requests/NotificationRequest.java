@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.model.requests;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -30,6 +31,7 @@ import org.jboss.pnc.rex.common.enums.State;
 @Builder
 @Getter
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class NotificationRequest {
 
     private final State before;
