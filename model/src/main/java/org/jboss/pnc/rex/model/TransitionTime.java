@@ -18,6 +18,7 @@
 package org.jboss.pnc.rex.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -38,6 +39,7 @@ import java.util.Comparator;
 @Jacksonized
 @EqualsAndHashCode
 @AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TransitionTime implements Comparable<TransitionTime> {
 
     @Getter(onMethod_ = {@ProtoField(number = 1)})

@@ -27,6 +27,7 @@ import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
+import org.infinispan.api.annotations.indexing.option.Structure;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.jboss.pnc.rex.common.enums.Mode;
@@ -105,7 +106,7 @@ public class Task {
      * Parents of this Task.
      */
     @Singular
-    @Getter(onMethod_ = @ProtoField(number = 9))
+    @Getter(onMethod_ = {@ProtoField(number = 9), @Embedded(includeDepth = 1, structure = Structure.FLATTENED)})
     private Set<String> dependants;
 
     /**

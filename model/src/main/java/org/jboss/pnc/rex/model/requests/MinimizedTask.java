@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.model.requests;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -38,6 +39,7 @@ import java.util.Set;
 @Builder(toBuilder = true)
 @Getter
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MinimizedTask {
 
     private final String name;

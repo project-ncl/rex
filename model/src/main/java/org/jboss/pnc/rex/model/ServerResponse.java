@@ -18,6 +18,7 @@
 package org.jboss.pnc.rex.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,6 +44,7 @@ import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToObject;
 @ToString
 @Slf4j
 @Jacksonized
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ServerResponse {
 
     /**
