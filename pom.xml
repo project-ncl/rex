@@ -214,6 +214,9 @@
               <exclude>**/.cache/**</exclude>
               <exclude>**/rest-config.json</exclude>
               <exclude>**/Test*.html</exclude>
+
+              <!-- Exclude everything under ignore subforder -->
+              <exclude>**/ignore/**</exclude>
             </excludes>
           </configuration>
         </plugin>
@@ -260,7 +263,7 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.8.0</version>
           <configuration>
-            <sourcepath>target/generated-sources/delombok;target/generated-sources/open-api-yaml</sourcepath>
+            <sourcepath>target/generated-sources/delombok;target/generated-sources/open-api</sourcepath>
             <doclint>all,-missing</doclint>
           </configuration>
           <executions>
