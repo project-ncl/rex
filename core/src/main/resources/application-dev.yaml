@@ -32,7 +32,7 @@ quarkus:
       config-files: infinispan-devservice-config.xml
     tracing:
       propagation:
-        enabled: false
+        enabled: true
   devservices:
     launch-on-shared-network: true
   log:
