@@ -1,5 +1,5 @@
 scheduler:
-  baseUrl: http://localhost:8081
+  baseUrl: http://localhost:8082
   options:
     task-configuration:
       clean: false
@@ -15,11 +15,11 @@ quarkus:
   transaction-manager:
     default-transaction-timeout: 10m
   otel:
-    enabled: false
-    traces:
-      enabled: false
+    enabled: true
+    resource:
+      attributes: deployment.environment=dev,service.name=REX
   http:
-    port: 8081
+    port: 8082
   smallrye-openapi:
     store-schema-directory: ""
   infinispan-client:
@@ -27,27 +27,14 @@ quarkus:
     use-auth: true
     username: admin
     password: password
-    cache:
-      "rex-counter":
-        configuration-resource: "counter-configuration.xml"
-        near-cache-mode: disabled
-#        near-cache-max-entries: -1
-      "rex-tasks":
-        configuration-resource: "task-configuration.xml"
-        near-cache-mode: invalidated
-#        near-cache-max-entries: 100
-      "rex-constraints":
-        configuration-resource: "constraints-configuration.xml"
-        near-cache-mode: invalidated
-#        near-cache-max-entries: 100
-      "rex-signals":
-        configuration-resource: "signals-configuration.xml"
-        near-cache-mode: disabled
-      "rex-cluster-jobs":
-        configuration-resource: "cluster-jobs-configuration.xml"
-        near-cache-mode: disabled
     devservices:
       image-name: "quay.io/infinispan/server:15.0.15.Final"
+      config-files: infinispan-devservice-config.xml
+    tracing:
+      propagation:
+        enabled: false
+  devservices:
+    launch-on-shared-network: true
   log:
     category:
       "org.jboss.pnc":
