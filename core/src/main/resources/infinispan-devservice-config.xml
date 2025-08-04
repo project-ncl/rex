@@ -6,12 +6,18 @@
         xmlns:server="urn:infinispan:server:15.0">
 
   <cache-container>
+<!--    <tracing collector-endpoint="http://lgtm:4318"-->
+<!--             enabled="true"-->
+<!--             exporter-protocol="OTLP"-->
+<!--             service-name="infinispan-server"-->
+<!--             security="false"/>-->
     <!--  CACHE TEMPLATE  -->
     <distributed-cache-configuration name="minimal-config" mode="SYNC" statistics="true">
       <locking isolation="REPEATABLE_READ"/>
-      <transaction locking="PESSIMISTIC" mode="NON_DURABLE_XA"/>
+      <transaction locking="OPTIMISTIC" mode="NON_DURABLE_XA"/>
       <encoding media-type="application/x-protostream"/>
       <expiration lifespan="-1" max-idle="-1"/>
+      <query default-max-results="1000000"/>
     </distributed-cache-configuration>
 
     <!--  REX TASKS CACHE  -->

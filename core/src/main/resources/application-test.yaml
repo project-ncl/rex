@@ -71,7 +71,8 @@ quarkus:
     traces:
       exporter: cdi
       enabled: true
-
+  observability:
+    enabled: false
   infinispan-client:
     use-schema-registration: true
     use-auth: true
@@ -80,27 +81,8 @@ quarkus:
     tracing:
       propagation:
         enabled: true
-    cache:
-      "rex-counter":
-        configuration-resource: "counter-configuration.xml"
-        near-cache-mode: disabled
-#        near-cache-max-entries: -1
-      "rex-tasks":
-        configuration-resource: "task-configuration.xml"
-        near-cache-mode: invalidated
-        near-cache-max-entries: 100
-      "rex-constraints":
-        configuration-resource: "constraints-configuration.xml"
-        near-cache-mode: invalidated
-        near-cache-max-entries: 100
-      "rex-signals":
-        configuration-resource: "signals-configuration.xml"
-        near-cache-mode: disabled
-      "rex-cluster-jobs":
-        configuration-resource: "cluster-jobs-configuration.xml"
-        near-cache-mode: disabled
     devservices:
 #      tracing:
 #        enabled: true
-#      image-name: "quay.io/infinispan/server:14.0.28.Final"
       image-name: "quay.io/infinispan/server:15.0.15.Final"
+      config-files: infinispan-devservice-config.xml
