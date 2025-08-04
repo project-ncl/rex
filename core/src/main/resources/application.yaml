@@ -43,12 +43,12 @@ quarkus:
   otel:
     enabled: true
     traces:
-      enabled: true
       exporter: cdi
       # reflect sampling on collector
-      resource-attributes: "sampler_ratio=0.05,service.name=rex"
       sampler:
         ratio: 0.05
+#    resource:
+#      attributes: "sampler_ratio=0.05,service.name=rex"
   # Avoid blocking eventloop if Keycloak is slow to respond
   smallrye-jwt:
     blocking-authentication: true
@@ -87,7 +87,6 @@ quarkus:
     use-auth: true
     username: ${ISPN_USER}
     password: ${ISPN_PASS}
-
   swagger-ui:
     always-include: true
   smallrye-openapi:
