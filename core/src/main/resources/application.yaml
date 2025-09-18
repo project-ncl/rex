@@ -57,6 +57,8 @@ quarkus:
       type: fast-jar
 
   http:
+    enable-compression: true
+    enable-decompression: true
     cors:
       ~: true
       origins: "/.*/"
