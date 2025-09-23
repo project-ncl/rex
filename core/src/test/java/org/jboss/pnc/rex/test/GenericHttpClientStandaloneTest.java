@@ -25,6 +25,7 @@ import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import jakarta.inject.Inject;
@@ -49,6 +50,7 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -124,7 +126,7 @@ public class GenericHttpClientStandaloneTest {
             Collections.emptyList(),
             "",
             onResponse,
-            (r) -> {})
+            (r) -> Uni.createFrom().voidItem())
             .await().atMost(Duration.of(5, ChronoUnit.SECONDS));
 
         // expect
@@ -142,8 +144,9 @@ public class GenericHttpClientStandaloneTest {
         );
 
         ArrayBlockingQueue<Throwable> failures = new ArrayBlockingQueue<>(10);
-        Consumer<Throwable> onFailure = throwable -> {
+        Function<Throwable, Uni<Void>> onFailure = throwable -> {
             failures.add(throwable);
+            return Uni.createFrom().voidItem();
         };
 
         // when
@@ -200,7 +203,7 @@ public class GenericHttpClientStandaloneTest {
                       Collections.emptyList(),
                       "",
                       onResponse,
-                      (r) -> {})
+                      (r) -> Uni.createFrom().voidItem())
                   .await().atMost(Duration.of(5, ChronoUnit.SECONDS));
 
         // expect
@@ -222,7 +225,7 @@ public class GenericHttpClientStandaloneTest {
                       Collections.emptyList(),
                       "",
                       (r) -> {},
-                      (r) -> {}
+                      (r) -> Uni.createFrom().voidItem()
                   )
                   .await().atMost(Duration.of(5, ChronoUnit.SECONDS));
 
@@ -244,7 +247,7 @@ public class GenericHttpClientStandaloneTest {
                       Collections.emptyList(),
                       "",
                       (r) -> {},
-                      (r) -> {}
+                      (r) -> Uni.createFrom().voidItem()
                   )
                   .await().atMost(Duration.of(10, ChronoUnit.SECONDS));
 

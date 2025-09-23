@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.arc.Unremovable;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -269,9 +270,9 @@ public class RemoteEntityClient {
         }
     }
 
-    private void handleConnectionFailure(Throwable exception, Task task, boolean rollback) {
+    private Uni<Void> handleConnectionFailure(Throwable exception, Task task, boolean rollback) {
         log.error("ERROR {}: Couldn't reach the remote entity.", task.getName(), exception);
-        Uni.createFrom().voidItem()
+        return Uni.createFrom().voidItem().emitOn(Infrastructure.getDefaultExecutor())
             .onItem().invoke(
                 () -> controller.fail(
                     task.getName(),
@@ -281,8 +282,7 @@ public class RemoteEntityClient {
                     Set.of()))
             .onFailure().retry().atMost(5)
             .onFailure().invoke((throwable) -> log.error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
-            .onFailure().recoverWithNull()
-            .await().indefinitely();
+            .onFailure().recoverWithNull();
     }
 
     /**

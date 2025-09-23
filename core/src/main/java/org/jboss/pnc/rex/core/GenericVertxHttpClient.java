@@ -49,6 +49,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static java.time.Duration.of;
 
@@ -93,7 +94,7 @@ public class GenericVertxHttpClient {
                              List<Header> headers,
                              Object requestBody,
                              Consumer<HttpResponse<Buffer>> onResponse,
-                             Consumer<Throwable> onConnectionUnreachable) {
+                             Function<Throwable, Uni<Void>> onConnectionUnreachable) {
         makeReactiveRequest(remoteEndpoint,
                 method,
                 headers,
@@ -124,7 +125,7 @@ public class GenericVertxHttpClient {
         return remoteEndpoint.getPort();
     }
 
-    private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Consumer<Throwable> onConnectionUnreachable) {
+    private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Function<Throwable, Uni<Void>> onConnectionUnreachable) {
         // apply retry if http response error is received
         Uni<HttpResponse<Buffer>> uniWithCtx = uni.withContext((u, ctx) -> u.invoke(Unchecked.consumer(resp -> {
             if (resp != null && statusCodeRetryPolicy.shouldRetry(resp.statusCode())) {
@@ -148,7 +149,7 @@ public class GenericVertxHttpClient {
                             .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
                             .withJitter(0.5)
                             .atMost(20)
-                    .onFailure(throwable -> !(throwable instanceof RequestRetryException)) // propagate to exception to outer loop
+                    .onFailure(throwable -> !(throwable instanceof RequestRetryException || throwable instanceof HttpResponseException)) // propagate to exception to outer loop
                         // recover with null so that Uni doesn't trigger outer onFailure() handlers
                         .recoverWithNull()
                 );
@@ -157,15 +158,13 @@ public class GenericVertxHttpClient {
         uniWithCtx = uniWithCtx.onFailure(this::skipOnResponse)
                 .invoke(t ->  {
                     if (t instanceof RequestRetryException) {
-                        log.warn("HTTP-CLIENT : Http call failed. RETRYING.");
-                    } else if (t instanceof HttpResponseException hre) {
-                        log.warn("HTTP-CLIENT : Http call failed ({}). RETRYING.", hre.getStatusCode());
+                        log.warn("HTTP-CLIENT : Http client call failed. RETRYING.");
                     }
                 });
         uniWithCtx = requestRetryPolicy.applyToleranceOn(this::skipOnResponse, uniWithCtx);
 
         // fallback to connection unreachable after an exception
-        BiFunction<Throwable, Context, Void> onError = (t, ctx) -> {
+        BiFunction<Throwable, Context, Uni<HttpResponse<Buffer>>> onError = (t, ctx) -> {
             if (ctx.contains(CTX_RESPONSE_KEY)) {
                 HttpResponse<Buffer> response = ctx.get(CTX_RESPONSE_KEY);
                 log.warn("Request failed with code: {}, body: {}.", response.statusCode(), response.bodyAsString());
@@ -173,19 +172,18 @@ public class GenericVertxHttpClient {
                 // There is no response, most likely because of connection error.
                 log.warn("Request failed.", t);
             }
+            Uni<Void> toReturn;
             if (!(t instanceof HttpResponseException) && t.getCause() instanceof HttpResponseException) {
                 // prevent java.lang.IllegalStateException in case of exhausted retries due to expire-in limit
-                onConnectionUnreachable.accept(t.getCause());
+                toReturn = onConnectionUnreachable.apply(t.getCause());
             } else {
-                onConnectionUnreachable.accept(t);
+                toReturn = onConnectionUnreachable.apply(t);
             }
-            return null;
+            return toReturn.onItem().transform(ign -> null);
         };
 
         uniWithCtx = uniWithCtx.withContext((u, ctx) ->
-                u.onFailure().invoke(t -> {
-                    onError.apply(t, ctx);
-                }))
+                u.onFailure().recoverWithUni(t -> onError.apply(t, ctx)))
                 // recover with null so that Uni doesn't propagate the exception
                 .onFailure().recoverWithNull();
 
@@ -211,7 +209,7 @@ public class GenericVertxHttpClient {
                              List<Header> headers,
                              Object requestBody,
                              Consumer<HttpResponse<Buffer>> onResponse,
-                             Consumer<Throwable> onConnectionUnreachable) {
+                             Function<Throwable, Uni<Void>> onConnectionUnreachable) {
         HttpRequest<Buffer> request = client.request(toVertxMethod(method),
                 getPort(remoteEndpoint),
                 remoteEndpoint.getHost(),
@@ -228,7 +226,7 @@ public class GenericVertxHttpClient {
                 requestBody.toString());
 
         return handleRequest(
-                request.sendJson(requestBody).emitOn(Infrastructure.getDefaultWorkerPool()),
+                request.sendJson(requestBody),
                 onResponse,
                 onConnectionUnreachable);
     }
