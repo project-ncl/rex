@@ -82,7 +82,7 @@ quarkus:
       propagation:
         enabled: true
     devservices:
-#      tracing:
-#        enabled: true
-      image-name: "quay.io/infinispan/server:15.0.15.Final"
       config-files: infinispan-devservice-config.xml
+      image-name: "quay.io/infinispan/server:15.0.15.Final"
+      tracing:
+        enabled: false
