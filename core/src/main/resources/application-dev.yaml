@@ -27,6 +27,22 @@ quarkus:
     use-auth: true
     username: admin
     password: password
+    cache:
+      "rex-counter":
+        configuration-resource: "counter-configuration.xml"
+        near-cache-mode: disabled
+      "rex-tasks":
+        configuration-resource: "task-configuration.xml"
+        near-cache-mode: invalidated
+      "rex-constraints":
+        configuration-resource: "constraints-configuration.xml"
+        near-cache-mode: invalidated
+      "rex-signals":
+        configuration-resource: "signals-configuration.xml"
+        near-cache-mode: disabled
+      "rex-cluster-jobs":
+        configuration-resource: "cluster-jobs-configuration.xml"
+        near-cache-mode: disabled
     devservices:
       image-name: "quay.io/infinispan/server:15.0.15.Final"
       config-files: infinispan-devservice-config.xml
