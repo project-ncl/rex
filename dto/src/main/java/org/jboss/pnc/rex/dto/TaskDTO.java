@@ -36,7 +36,7 @@ import java.util.TreeSet;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@ToString(exclude = "serverResponses")
 public class TaskDTO {
 
     public String name;

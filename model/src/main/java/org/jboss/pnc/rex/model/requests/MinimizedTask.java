@@ -38,7 +38,7 @@ import java.util.Set;
 @Jacksonized
 @Builder(toBuilder = true)
 @Getter
-@ToString
+@ToString(exclude = "serverResponses")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MinimizedTask {
 

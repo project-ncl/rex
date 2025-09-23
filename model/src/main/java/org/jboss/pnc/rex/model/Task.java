@@ -47,7 +47,7 @@ import java.util.*;
  * @author Jan Michalov {@literal <jmichalo@redhat.com>}
  */
 @Setter
-@ToString
+@ToString(exclude = "serverResponses")
 @Builder(toBuilder = true)
 @Indexed
 @AllArgsConstructor(onConstructor_ = {@ProtoFactory})
