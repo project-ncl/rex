@@ -18,6 +18,7 @@
 package org.jboss.pnc.rex.core;
 
 import io.quarkus.arc.Unremovable;
+import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -123,10 +124,12 @@ public class CallerNotificationClient {
         }
     }
 
-    private void onConnectionFailure(Throwable exception, Task task, AtomicBoolean result) {
+    private Uni<Void> onConnectionFailure(Throwable exception, Task task, AtomicBoolean result) {
         log.error("NOTIFICATION {}: HTTP call to the Caller failed multiple times.", task, exception);
         // IS THIS A FAIL STATE? SHOULD I THROW EXCEPTION? SHOULD FAILING BE CONFIGURABLE?
         result.set(false);
+
+        return Uni.createFrom().voidItem();
     }
 
 }

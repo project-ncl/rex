@@ -17,6 +17,7 @@
  */
 package org.jboss.pnc.rex.test.endpoints;
 
+import io.smallrye.mutiny.Uni;
 import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
@@ -219,7 +220,9 @@ public class HttpEndpoint {
                 callbackHeaders,
                 body,
                 this::onResponse,
-                throwable -> log.error("Couldn't reach local scheduler.", throwable));
+                throwable -> Uni.createFrom()
+                        .voidItem()
+                        .invoke(() -> log.error("Couldn't reach local scheduler.", throwable)));
     }
 
     private void onResponse(HttpResponse<Buffer> response) {
