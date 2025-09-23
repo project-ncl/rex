@@ -111,6 +111,11 @@ quarkus:
   vertx:
     max-event-loop-execute-time: 10s
 
+  jib:
+    environment-variables:
+      JAVA_MAX_MEM_RATIO: "70"
+      GC_CONTAINER_OPTIONS: "-XX:+UseG1GC -XX:G1PeriodicGCInterval=5000 -XX:TrimNativeHeapInterval=60"
+
 mp:
   openapi:
     scan:
