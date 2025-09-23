@@ -21,3 +21,4 @@ env.prop
 
 # ignore subfordel
 **/ignore/**/*
+core/src/main/resources/application-local.yaml

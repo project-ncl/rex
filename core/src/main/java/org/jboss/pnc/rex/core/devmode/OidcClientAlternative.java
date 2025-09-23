@@ -32,7 +32,7 @@ import java.util.Map;
 
 @ApplicationScoped
 @LookupIfProperty(name = "quarkus.oidc-client.enabled", stringValue = "false")
-@IfBuildProfile(anyOf = {"dev", "test"})
+@IfBuildProfile(anyOf = {"dev", "test", "local"})
 /*
  * To be able to start in development/test mode without authorization
  */

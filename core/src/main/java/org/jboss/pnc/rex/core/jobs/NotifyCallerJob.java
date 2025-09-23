@@ -50,8 +50,8 @@ public class NotifyCallerJob extends ControllerJob {
         return task.toBuilder()
                 .timestamps(new TreeSet<>(task.getTimestamps()))
                 .serverResponses(new ArrayList<>(task.getServerResponses()))
-                .rollbackMeta(task.getRollbackMeta().toBuilder().build())
-                .configuration(task.getConfiguration().toBuilder().build())
+                .rollbackMeta(task.getRollbackMeta() != null ? task.getRollbackMeta().toBuilder().build() : null)
+                .configuration(task.getConfiguration() != null ? task.getConfiguration().toBuilder().build() : null)
                 .build();
     }
 
