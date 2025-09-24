@@ -49,7 +49,7 @@ public class NotifyCallerJob extends ControllerJob {
     private static Task bestEffortCopy(Task task) {
         return task.toBuilder()
                 .timestamps(new TreeSet<>(task.getTimestamps()))
-                .serverResponses(new ArrayList<>(task.getServerResponses()))
+//                .serverResponses(new ArrayList<>(task.getServerResponses()))
                 .rollbackMeta(task.getRollbackMeta() != null ? task.getRollbackMeta().toBuilder().build() : null)
                 .configuration(task.getConfiguration() != null ? task.getConfiguration().toBuilder().build() : null)
                 .build();
