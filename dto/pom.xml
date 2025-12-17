@@ -30,7 +30,7 @@
     <name>rex-dto</name>
 
     <properties>
-        <maven.compiler.release>11</maven.compiler.release>
+        <maven.compiler.release>8</maven.compiler.release>
     </properties>
 
     <dependencies>

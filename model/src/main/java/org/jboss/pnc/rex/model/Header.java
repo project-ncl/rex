@@ -37,7 +37,7 @@ public class Header {
 
     @Override
     public String toString() {
-        var headerValue = value;
+        String headerValue = value;
         if (name.equals("Authorization")) {
             String method = value.split(" ", 2)[0];
             switch (method.toUpperCase()) {
