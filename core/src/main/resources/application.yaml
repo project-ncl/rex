@@ -60,7 +60,7 @@ quarkus:
     enable-compression: true
     enable-decompression: true
     cors:
-      ~: true
+      enabled: true
       origins: "/.*/"
 
     port: 80
