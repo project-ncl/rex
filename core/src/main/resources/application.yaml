@@ -46,7 +46,7 @@ quarkus:
       exporter: cdi
       # reflect sampling on collector
       sampler:
-        ratio: 0.05
+        arg: 0.05
 #    resource:
 #      attributes: "sampler_ratio=0.05,service.name=rex"
   # Avoid blocking eventloop if Keycloak is slow to respond
