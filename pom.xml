@@ -204,6 +204,7 @@
               <exclude>**/images/**</exclude>
               <exclude>**/.dockerignore</exclude>
               <exclude>**/.mvn/**</exclude>
+              <exclude>**/.github/**</exclude>
               <exclude>**/mvnw*</exclude>
               <exclude>**/**.properties</exclude>
               <exclude>**/infinispan-devservice-config.xml</exclude>
