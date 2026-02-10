@@ -71,7 +71,7 @@
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <central-publishing-maven-plugin.version>0.8.0</central-publishing-maven-plugin.version>
-    <surefire-plugin.version>3.2.3</surefire-plugin.version>
+    <surefire-plugin.version>3.5.4</surefire-plugin.version>
     <lombok.version>1.18.42</lombok.version>
     <delombok-plugin.version>1.18.20.0</delombok-plugin.version>
     <slf4j.version>1.7.28</slf4j.version>
