@@ -20,6 +20,8 @@ quarkus:
       attributes: deployment.environment=dev,service.name=REX
   http:
     port: 8082
+    auth:
+      basic: false
   smallrye-openapi:
     store-schema-directory: ""
   infinispan-client:
@@ -60,3 +62,9 @@ quarkus:
       "io.opentelemetry":
         level: INFO
     min-level: FINEST
+  security:
+    ldap:
+      enabled: false
+  arc:
+    # to use the Mocked one
+    exclude-types: org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuthImpl

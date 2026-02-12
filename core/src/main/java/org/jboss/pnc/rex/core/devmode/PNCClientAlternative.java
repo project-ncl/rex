@@ -19,16 +19,11 @@ package org.jboss.pnc.rex.core.devmode;
 
 import io.quarkus.arc.lookup.LookupIfProperty;
 import io.quarkus.arc.profile.IfBuildProfile;
-import io.quarkus.oidc.client.OidcClient;
-import io.quarkus.oidc.client.Tokens;
-import io.smallrye.mutiny.Uni;
-import io.vertx.core.json.JsonObject;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
+import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 
-import java.time.Duration;
-import java.util.Map;
+import java.io.IOException;
 
 @ApplicationScoped
 @LookupIfProperty(name = "quarkus.oidc-client.enabled", stringValue = "false")
@@ -36,35 +31,32 @@ import java.util.Map;
 /*
  * To be able to start in development/test mode without authorization
  */
-public class OidcClientAlternative {
+public class PNCClientAlternative {
     @Produces
-    public OidcClient produceToken() {
-        return new OidcAlt();
+    public PNCClientAuth produceToken() {
+        return new PNCClientAuthAlt();
     }
 
-    private static class OidcAlt implements OidcClient {
+    private static class PNCClientAuthAlt implements PNCClientAuth {
+
         @Override
-        public Uni<Tokens> getTokens(Map<String, String> additionalGrantParameters) {
-            return Uni.createFrom().item(new Tokens("access-token",
-                Long.MAX_VALUE,
-                Duration.ofNanos(Long.MAX_VALUE),
-                "refresh-token",
-                Long.MAX_VALUE,
-                JsonObject.of(),
-                ""));
+        public String getAuthToken() {
+            return "1234";
         }
 
         @Override
-        public Uni<Tokens> refreshTokens(String refreshToken, Map<String, String> additionalGrantParameters) {
-            return getTokens();
+        public String getHttpAuthorizationHeaderValue() {
+            return "Bearer 1234";
         }
 
         @Override
-        public Uni<Boolean> revokeAccessToken(String accessToken, Map<String, String> additionalParameters) {
-            return Uni.createFrom().item(true);
+        public String getHttpAuthorizationHeaderValueWithCachedToken() {
+            return getHttpAuthorizationHeaderValue();
         }
 
         @Override
-        public void close() {}
+        public LDAPCredentials getLDAPCredentials() throws IOException {
+            return new LDAPCredentials("user", "password");
+        }
     }
 }
