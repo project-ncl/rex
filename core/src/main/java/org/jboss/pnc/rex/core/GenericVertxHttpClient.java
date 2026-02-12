@@ -18,12 +18,11 @@
 package org.jboss.pnc.rex.core;
 
 
-import io.quarkus.oidc.client.OidcClient;
 import io.smallrye.mutiny.Context;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.unchecked.Unchecked;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.web.client.impl.ClientPhase;
 import io.vertx.ext.web.client.impl.HttpContext;
 import io.vertx.ext.web.client.impl.WebClientInternal;
@@ -34,6 +33,7 @@ import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import jakarta.enterprise.context.control.ActivateRequestContext;
 import lombok.extern.slf4j.Slf4j;
+import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
 import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
@@ -64,18 +64,18 @@ public class GenericVertxHttpClient {
     private final HttpConfiguration configuration;
     private final RequestRetryPolicy requestRetryPolicy;
     private final StatusCodeRetryPolicy statusCodeRetryPolicy;
-    private final OidcClient oidcClient;
+    private final PNCClientAuth pncClientAuth;
 
     public GenericVertxHttpClient(Vertx vertx,
                                   InternalRetryPolicy internalPolicy,
                                   HttpConfiguration configuration,
-                                  OidcClient oidcClient) {
+            PNCClientAuth pncClientAuth) {
         this.client = WebClient.create(vertx);
         this.internalPolicy = internalPolicy;
         this.configuration = configuration;
         this.requestRetryPolicy = configuration.requestRetryPolicy();
         this.statusCodeRetryPolicy = configuration.statusCodeRetryPolicy();
-        this.oidcClient = oidcClient;
+        this.pncClientAuth = pncClientAuth;
         WebClientInternal delegate = (WebClientInternal) client.getDelegate();
         delegate.addInterceptor(this::putOrRefreshToken);
     }
@@ -268,9 +268,8 @@ public class GenericVertxHttpClient {
             if (context.phase() == ClientPhase.PREPARE_REQUEST) {
                 io.vertx.ext.web.client.HttpRequest<?> request = context.request();
 
-                String accessToken = oidcClient.getTokens().await().indefinitely().getAccessToken();
-
-                request.bearerTokenAuthentication(accessToken);
+                TokenCredentials token = new TokenCredentials(pncClientAuth.getHttpAuthorizationHeaderValue());
+                request.authentication(token);
             }
         } finally {
             // go to next interceptor

@@ -62,6 +62,8 @@ quarkus:
     default-transaction-timeout: 10m
   http:
     port: 8081
+    auth:
+      basic: false
   otel:
     enabled: true
     exporter:
@@ -86,3 +88,9 @@ quarkus:
       image-name: "quay.io/infinispan/server:15.0.15.Final"
       tracing:
         enabled: false
+  security:
+    ldap:
+      enabled: false
+  arc:
+    # to use the Mocked one
+    exclude-types: org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuthImpl

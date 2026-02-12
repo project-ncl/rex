@@ -37,6 +37,11 @@ scheduler:
           max-retries: 0
           expire-in: 10m # 10minutes
 
+pnc_client_auth:
+  type: OIDC # or LDAP
+  # ldap_credentials:
+  #    path: /mnt/secrets/ldap_credentials # file must be in format: <username>:<password>
+
 quarkus:
   application:
     name: rex
@@ -66,6 +71,8 @@ quarkus:
     port: 80
     limits:
       max-body-size: 1G
+    auth:
+      basic: true
 
   oidc:
     enabled: true
@@ -107,6 +114,18 @@ quarkus:
         # Set to WARN if you want to see all the exceptions
         level: ERROR
     min-level: TRACE
+
+  security:
+    ldap:
+        # enable LDAP: build-time property
+      enabled: true
+      cache:
+        enabled: true
+        max-age: 5m
+      dir-context:
+        url: ldaps://ldap-server.com
+      identity-mapping:
+        search-base-dn: ou=company.com
 
   vertx:
     max-event-loop-execute-time: 10s
