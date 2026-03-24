@@ -29,6 +29,12 @@ scheduler:
         max-retries: 0
         expire-in: 0
       status-code-retry-policy:
+        4xx:
+          backoff:
+            min-delay: 200ms
+            max-delay: 1m
+            jitter-factor: 0.5
+          max-retries: 3
         425:
           backoff:
             min-delay: 200ms
