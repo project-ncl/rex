@@ -16,6 +16,6 @@ on:
 
 jobs:
     call-maven-ci:
-      uses: project-ncl/shared-github-actions/.github/workflows/maven-ci.yml@504efc82df7d4f73e3bd2b67bec31bcd532ed9e4 # v0.0.14
+      uses: project-ncl/shared-github-actions/.github/workflows/maven-ci.yml@ef31e53140344cac0421b7211cc0940182409106 # v0.0.16
       with:
         fetch_all_commits: true
