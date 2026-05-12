@@ -8,7 +8,8 @@
 
 name: Java CI with Maven
 
-permissions: {}
+permissions:
+  contents: read
 
 on:
   pull_request:
@@ -16,6 +17,7 @@ on:
 
 jobs:
     call-maven-ci:
-      uses: project-ncl/shared-github-actions/.github/workflows/maven-ci.yml@504efc82df7d4f73e3bd2b67bec31bcd532ed9e4 # v0.0.14
+      uses: project-ncl/shared-github-actions/.github/workflows/maven-ci.yml@dc16c38747e72ec04165d5e5e0177e85d21bc5c8 # main
       with:
         fetch_all_commits: true
+        upload_artifacts: true
