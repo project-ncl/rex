@@ -116,18 +116,13 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-opentelemetry</artifactId>
+            <artifactId>quarkus-micrometer-opentelemetry</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-observability-devservices-lgtm</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- UNCOMMENT FOR METRICS IN LGTM  -->
-        <!--<dependency>-->
-        <!--    <groupId>io.quarkus</groupId>-->
-        <!--    <artifactId>quarkus-micrometer-opentelemetry</artifactId>-->
-        <!--</dependency>-->
 
         <!-- Regular dependencies -->
         <dependency>

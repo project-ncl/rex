@@ -45,15 +45,7 @@ pnc_client_auth:
 quarkus:
   application:
     name: rex
-  otel:
-    enabled: true
-    traces:
-      exporter: cdi
-      # reflect sampling on collector
-      sampler:
-        arg: 0.05
-#    resource:
-#      attributes: "sampler_ratio=0.05,service.name=rex"
+
   # Avoid blocking eventloop if Keycloak is slow to respond
   smallrye-jwt:
     blocking-authentication: true
