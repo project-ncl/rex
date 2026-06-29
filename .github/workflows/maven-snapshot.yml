@@ -8,7 +8,7 @@ on:
 
 jobs:
     call-snapshot-job:
-      uses: project-ncl/shared-github-actions/.github/workflows/maven-snapshot.yml@153b97777335953545bc8a907eb5f062af66b7f2 # v0.0.18
+      uses: project-ncl/shared-github-actions/.github/workflows/maven-snapshot.yml@c32f5377788ce8ee9dd823babd583c2dd18604da # v0.0.20
       with:
         project_name: 'project-ncl/rex'
         fetch_all_commits: true
