@@ -62,7 +62,7 @@
   </modules>
 
   <properties>
-    <quarkus.version>3.21.4</quarkus.version>
+    <quarkus.version>3.36.3</quarkus.version>
     <quarkus-openapi-generator.version>2.15.0-lts</quarkus-openapi-generator.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
