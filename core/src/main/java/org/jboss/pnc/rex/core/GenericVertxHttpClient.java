@@ -20,9 +20,9 @@ package org.jboss.pnc.rex.core;
 
 import io.smallrye.mutiny.Context;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.unchecked.Unchecked;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.web.client.impl.ClientPhase;
 import io.vertx.ext.web.client.impl.HttpContext;
 import io.vertx.ext.web.client.impl.WebClientInternal;
@@ -144,6 +144,9 @@ public class GenericVertxHttpClient {
                 // create a separate uni to decouple internal failure tolerance
                 .transformToUni(i -> Uni.createFrom()
                     .item(i)
+                    // onResponse is transactional, so it needs a worker thread
+                    // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.35#methods-annotated-with-transactional-are-no-longer-automatically-considered-blocking-by-quarkus
+                    .emitOn(Infrastructure.getDefaultExecutor())
                     .invoke(onResponse)
                     .onFailure(this::abortOnNonRecoverable)
                         .retry()
