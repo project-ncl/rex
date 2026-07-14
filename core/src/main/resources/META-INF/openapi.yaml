@@ -1057,6 +1057,6 @@ components:
       type: string
   securitySchemes:
     SecurityScheme:
-      type: openIdConnect
       description: Authentication
+      type: openIdConnect
       openIdConnectUrl: https://keycloak.com/auth/realms/quarkus/.well-known/openid-configuration

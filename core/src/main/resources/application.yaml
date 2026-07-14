@@ -92,6 +92,8 @@ quarkus:
     always-include: true
   smallrye-openapi:
     store-schema-directory: src/main/resources/META-INF
+    security-scheme: oidc
+    oidc-open-id-connect-url: https://keycloak.com/auth/realms/quarkus/.well-known/openid-configuration
 
   log:
     console:

@@ -20,6 +20,7 @@ package org.jboss.pnc.rex.core.jobs;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.smallrye.mutiny.Context;
 import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.subscription.Cancellable;
 import jakarta.enterprise.inject.spi.CDI;
@@ -174,6 +175,9 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
                             return delay.by(calculateNextTick(initialDelay, interval, ictx.context().getOrElse(START_TIME, () -> null)));
                         })
                         .invoke(ictx -> ictx.context().put(START_TIME, Instant.now())) // capture startTime of the action
+                        // workAction is transactional, so it needs a worker thread
+                        // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.35#methods-annotated-with-transactional-are-no-longer-automatically-considered-blocking-by-quarkus
+                        .emitOn(Infrastructure.getDefaultExecutor())
                         .invoke(ictx -> workAction.accept(ictx.context(), future))
                         .onFailure().invoke(() -> future.complete(null)))
                 .until(item -> future.isDone())
