@@ -68,7 +68,7 @@
     <pnc-api.version>3.5.2</pnc-api.version>
     <nexus-staging-plugin.version>1.7.0</nexus-staging-plugin.version>
     <maven-gpg-plugin.version>3.2.4</maven-gpg-plugin.version>
-    <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+    <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
   </properties>
 
   <dependencyManagement>
