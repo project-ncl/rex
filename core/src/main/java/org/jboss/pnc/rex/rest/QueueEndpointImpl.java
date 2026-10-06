@@ -43,21 +43,25 @@ public class QueueEndpointImpl implements QueueEndpoint {
     }
 
     @Override
+    @RolesAllowed({ "pnc-app-rex-user", "pnc-users-admin" })
     public LongResponse getConcurrent() {
         return getConcurrentNamed(null);
     }
 
     @Override
+    @RolesAllowed({ "pnc-app-rex-user", "pnc-users-admin" })
     public LongResponse getConcurrentNamed(String name) {
         return optionsProvider.getConcurrency(name);
     }
 
     @Override
+    @RolesAllowed({ "pnc-app-rex-user", "pnc-users-admin" })
     public LongResponse getRunning() {
         return getRunningNamed(null);
     }
 
     @Override
+    @RolesAllowed({ "pnc-app-rex-user", "pnc-users-admin" })
     public LongResponse getRunningNamed(String name) {
         Long runningCounter = getRunningCounter(name);
         if (runningCounter == null) {
