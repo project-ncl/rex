@@ -477,7 +477,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ComponentVersion"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
       summary: Get Version
+      security:
+      - SecurityScheme:
+        - pnc-app-rex-user
+        - pnc-users-admin
+      - SecurityScheme:
+        - pnc-app-rex-user
+        - pnc-users-admin
+      - SecurityScheme:
+        - pnc-app-rex-user
+        - pnc-users-admin
+      - SecurityScheme:
+        - pnc-app-rex-user
+        - pnc-users-admin
   /rest/queue/{name}/concurrency:
     get:
       tags:

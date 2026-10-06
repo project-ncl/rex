@@ -38,6 +38,7 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
+    @RolesAllowed({ "pnc-app-rex-user", "pnc-users-admin" })
     public Set<TaskDTO> getAll(TaskFilterParameters filterParameters, List<String> queueFilter) {
         // a small hack to be able to request only 'default' queue which is indexed by null
         if (queueFilter != null && queueFilter.contains("null")) {
@@ -61,11 +62,13 @@ public class TaskEndpointImpl implements TaskEndpoint {
     }
 
     @Override
+    @RolesAllowed({ "pnc-app-rex-user", "pnc-users-admin" })
     public TaskDTO getSpecific(String taskID) {
         return taskProvider.get(taskID);
     }
 
     @Override
+    @RolesAllowed({ "pnc-app-rex-user", "pnc-users-admin" })
     public Set<TaskDTO> byCorrelation(String correlationID) {
         return taskProvider.getByCorrelationID(correlationID);
     }

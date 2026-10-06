@@ -10,6 +10,7 @@ import org.jboss.pnc.api.dto.ComponentVersion;
 import org.jboss.pnc.rex.api.VersionEndpoint;
 import org.jboss.pnc.rex.common.Constants;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -27,6 +28,7 @@ public class VersionEndpointImpl implements VersionEndpoint {
     String name;
 
     @Override
+    @RolesAllowed({ "pnc-app-rex-user", "pnc-users-admin" })
     public ComponentVersion getVersion() {
         return ComponentVersion.builder()
                 .name(name)
