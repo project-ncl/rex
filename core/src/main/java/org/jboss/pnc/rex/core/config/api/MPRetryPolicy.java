@@ -4,13 +4,14 @@
  */
 package org.jboss.pnc.rex.core.config.api;
 
-import io.smallrye.config.WithDefault;
-
-import io.smallrye.faulttolerance.api.Guard;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.PositiveOrZero;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
+
+import io.smallrye.config.WithDefault;
+import io.smallrye.faulttolerance.api.Guard;
 
 public interface MPRetryPolicy {
 
@@ -25,7 +26,7 @@ public interface MPRetryPolicy {
 
     /**
      * Jitter of duration in millis that is applied on each retry. The result will give a delay in range of
-     *     [delay - jitter, delay + jitter]
+     * [delay - jitter, delay + jitter]
      *
      * The jitter can't cause the retry delay to fall below 0.
      *
@@ -47,7 +48,8 @@ public interface MPRetryPolicy {
     int maxRetries();
 
     /**
-     * List of Exceptions which are deemed non-recoverable. In case the method in context throws any of these exceptions,
+     * List of Exceptions which are deemed non-recoverable. In case the method in context throws any of these
+     * exceptions,
      * the method is NOT retried and the failure is propagated immediately.
      *
      * @return list of non-recoverable exceptions
@@ -55,14 +57,14 @@ public interface MPRetryPolicy {
     List<Class<? extends Throwable>> abortOn();
 
     default <T> Guard.Builder toleranceBuilder(Class<T> clazz, Runnable onRetry, String description) {
-        return Guard.<T>create()
+        return Guard.<T> create()
                 .withDescription(description)
                 .withRetry()
-                    .maxRetries(maxRetries())
-                    .abortOn(abortOn())
-                    .delay(delay(), ChronoUnit.MILLIS)
-                    .jitter(jitter(), ChronoUnit.MILLIS)
-                    .onRetry(onRetry)
+                .maxRetries(maxRetries())
+                .abortOn(abortOn())
+                .delay(delay(), ChronoUnit.MILLIS)
+                .jitter(jitter(), ChronoUnit.MILLIS)
+                .onRetry(onRetry)
                 .done();
     }
 }

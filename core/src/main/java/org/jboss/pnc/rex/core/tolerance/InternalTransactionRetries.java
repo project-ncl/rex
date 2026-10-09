@@ -4,14 +4,15 @@
  */
 package org.jboss.pnc.rex.core.tolerance;
 
-import io.smallrye.common.annotation.Identifier;
-import io.smallrye.faulttolerance.api.Guard;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
 
+import io.smallrye.common.annotation.Identifier;
+import io.smallrye.faulttolerance.api.Guard;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped

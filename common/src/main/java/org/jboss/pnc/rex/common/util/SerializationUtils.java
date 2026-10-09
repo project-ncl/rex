@@ -9,7 +9,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -31,7 +30,8 @@ public class SerializationUtils {
         if (attachment == null || attachment.length == 0) {
             return null;
         }
-        try (ObjectInputStream stream = new ObjectInputStream(new GZIPInputStream(new ByteArrayInputStream(attachment)))) {
+        try (ObjectInputStream stream = new ObjectInputStream(
+                new GZIPInputStream(new ByteArrayInputStream(attachment)))) {
             return stream.readObject();
         }
     }

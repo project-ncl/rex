@@ -4,9 +4,9 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import org.jboss.pnc.rex.model.Task;
-
 import jakarta.enterprise.event.TransactionPhase;
+
+import org.jboss.pnc.rex.model.Task;
 
 public class DependencyCancelledJob extends DependantMessageJob {
 

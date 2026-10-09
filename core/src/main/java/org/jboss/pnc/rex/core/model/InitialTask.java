@@ -4,13 +4,14 @@
  */
 package org.jboss.pnc.rex.core.model;
 
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.model.Configuration;
+import org.jboss.pnc.rex.model.Request;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.model.Configuration;
-import org.jboss.pnc.rex.model.Request;
 
 @Builder(toBuilder = true)
 @AllArgsConstructor

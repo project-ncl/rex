@@ -4,7 +4,7 @@
  */
 package org.jboss.pnc.rex.common.exceptions;
 
-public class RequestRetryException extends RuntimeException{
+public class RequestRetryException extends RuntimeException {
 
     public RequestRetryException(String message) {
         super(message);

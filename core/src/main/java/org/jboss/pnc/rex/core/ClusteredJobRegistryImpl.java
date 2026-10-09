@@ -4,19 +4,21 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.infinispan.client.Remote;
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
+
+import java.util.List;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
+
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.rex.core.api.ClusteredJobRegistry;
 import org.jboss.pnc.rex.core.config.ApplicationConfig;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 
-import java.util.List;
-
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import io.quarkus.infinispan.client.Remote;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped
@@ -35,15 +37,15 @@ public class ClusteredJobRegistryImpl implements ClusteredJobRegistry {
 
     @Override
     public List<ClusteredJobReference> getAll() {
-        return jobs.<ClusteredJobReference>query("FROM rex_model.ClusteredJobReference")
-            .list();
+        return jobs.<ClusteredJobReference> query("FROM rex_model.ClusteredJobReference")
+                .list();
     }
 
     @Override
     public List<ClusteredJobReference> getByTask(String taskId) {
-        return jobs.<ClusteredJobReference>query("FROM rex_model.ClusteredJobReference WHERE taskName = :taskName")
-            .setParameter("taskName", taskId)
-            .list();
+        return jobs.<ClusteredJobReference> query("FROM rex_model.ClusteredJobReference WHERE taskName = :taskName")
+                .setParameter("taskName", taskId)
+                .list();
     }
 
     @Override
@@ -57,9 +59,9 @@ public class ClusteredJobRegistryImpl implements ClusteredJobRegistry {
             throw new IllegalArgumentException("Instance name cannot be null");
         }
 
-        return jobs.<ClusteredJobReference>query("FROM rex_model.ClusteredJobReference WHERE owner = :instanceName")
-            .setParameter("instanceName", instanceName)
-            .list();
+        return jobs.<ClusteredJobReference> query("FROM rex_model.ClusteredJobReference WHERE owner = :instanceName")
+                .setParameter("instanceName", instanceName)
+                .list();
     }
 
     @Override
@@ -75,13 +77,14 @@ public class ClusteredJobRegistryImpl implements ClusteredJobRegistry {
         }
 
         ClusteredJobReference put = jobs.withFlags(Flag.FORCE_RETURN_VALUE)
-            .put(jobReference.getId(), jobReference);
+                .put(jobReference.getId(), jobReference);
 
         if (put != null && put.equals(jobReference)) {
-            log.info("Re-registering owner for CJob {}\n\t Prev CJob: {} \n\t New CJob {}",
-                jobReference.getId(),
-                put,
-                jobReference);
+            log.info(
+                    "Re-registering owner for CJob {}\n\t Prev CJob: {} \n\t New CJob {}",
+                    jobReference.getId(),
+                    put,
+                    jobReference);
         }
 
         return jobReference.getId();
@@ -89,9 +92,8 @@ public class ClusteredJobRegistryImpl implements ClusteredJobRegistry {
 
     public String forceCreate(ClusteredJobReference jobReference) {
         ClusteredJobReference put = jobs
-            .withFlags(Flag.FORCE_RETURN_VALUE)
-            .put(jobReference.getId(), jobReference);
-
+                .withFlags(Flag.FORCE_RETURN_VALUE)
+                .put(jobReference.getId(), jobReference);
 
         return jobReference.getId();
     }

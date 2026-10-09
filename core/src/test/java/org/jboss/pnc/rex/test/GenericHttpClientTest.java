@@ -4,36 +4,36 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
-import io.restassured.http.ContentType;
-import io.restassured.http.Header;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.rex.api.TaskEndpoint;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.test.common.AbstractTest;
-import org.jboss.pnc.rex.test.common.TestData;
-import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
-import org.jboss.pnc.rex.dto.ConfigurationDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.jboss.pnc.rex.model.requests.StartRequest;
-import org.junit.jupiter.api.Test;
-
-import jakarta.inject.Inject;
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.TestData.createMockTask;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestFromSingleTask;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.test.common.TestData.createMockTask;
-import static org.jboss.pnc.rex.test.common.TestData.getRequestFromSingleTask;
-import static io.restassured.RestAssured.given;
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.rex.model.requests.StartRequest;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.common.TestData;
+import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
+import org.junit.jupiter.api.Test;
+
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
+import io.restassured.http.Header;
 
 @QuarkusTest
 public class GenericHttpClientTest extends AbstractTest {
@@ -50,12 +50,13 @@ public class GenericHttpClientTest extends AbstractTest {
     @Test
     void shouldRetryBackpressureOn425AndSucceed() {
         int amountOf425UntilSuccessful = 5;
-        CreateGraphRequest request = getRequestFromSingleTask(createMockTask(
-                "backoff-test",
-                Mode.ACTIVE,
-                TestData.getRequestWithBackoff(null, amountOf425UntilSuccessful),
-                TestData.getStopRequest(null),
-                null));
+        CreateGraphRequest request = getRequestFromSingleTask(
+                createMockTask(
+                        "backoff-test",
+                        Mode.ACTIVE,
+                        TestData.getRequestWithBackoff(null, amountOf425UntilSuccessful),
+                        TestData.getStopRequest(null),
+                        null));
 
         taskEndpoint.start(request);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, "backoff-test");
@@ -66,12 +67,13 @@ public class GenericHttpClientTest extends AbstractTest {
     @Test
     void shouldRetryOn425AndFailToStart() {
         int amountOf425UntilSuccessful = Integer.MAX_VALUE; // from application-test.yaml expiry for fallback is set to 5sec
-        CreateGraphRequest request = getRequestFromSingleTask(createMockTask(
-                "backoff-test",
-                Mode.ACTIVE,
-                TestData.getRequestWithBackoff(null, amountOf425UntilSuccessful),
-                TestData.getStopRequest(null),
-                null));
+        CreateGraphRequest request = getRequestFromSingleTask(
+                createMockTask(
+                        "backoff-test",
+                        Mode.ACTIVE,
+                        TestData.getRequestWithBackoff(null, amountOf425UntilSuccessful),
+                        TestData.getStopRequest(null),
+                        null));
 
         taskEndpoint.start(request);
         waitTillTasksAreFinishedWith(State.START_FAILED, "backoff-test");
@@ -86,13 +88,15 @@ public class GenericHttpClientTest extends AbstractTest {
                 .passMDCInRequestBody(true)
                 .mdcHeaderKeyMapping(Map.of("mdc-key", "mdc-logging-key"))
                 .build();
-        CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test",
-                Mode.ACTIVE,
-                TestData.getRequestWithStart(null, List.of(new Request.Header("mdc-key", "mdc-value"))),
-                TestData.getStopRequest(null),
-                null,
-                null,
-                config));
+        CreateGraphRequest request = getRequestFromSingleTask(
+                createMockTask(
+                        "mdc-test",
+                        Mode.ACTIVE,
+                        TestData.getRequestWithStart(null, List.of(new Request.Header("mdc-key", "mdc-value"))),
+                        TestData.getStopRequest(null),
+                        null,
+                        null,
+                        config));
 
         // when
         endpoint.startRecordingQueue();
@@ -106,7 +110,9 @@ public class GenericHttpClientTest extends AbstractTest {
                 .isInstanceOf(StartRequest.class)
                 .extracting("mdc")
                 .isInstanceOf(Map.class)
-                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-logging-key", "mdc-value"));
+                .satisfies(
+                        (mdcMap) -> assertThat((Map<String, String>) mdcMap)
+                                .containsEntry("mdc-logging-key", "mdc-value"));
     }
 
     @Test
@@ -116,11 +122,13 @@ public class GenericHttpClientTest extends AbstractTest {
                 .passMDCInRequestBody(true)
                 .mdcHeaderKeyMapping(Map.of("mdc-key", "mdc-logging-key"))
                 .build();
-        CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test-graph",
-                    Mode.ACTIVE,
-                    TestData.getRequestWithStart(null, List.of(new Request.Header("mdc-key", "mdc-value"))),
-                    TestData.getStopRequest(null),
-                    null))
+        CreateGraphRequest request = getRequestFromSingleTask(
+                createMockTask(
+                        "mdc-test-graph",
+                        Mode.ACTIVE,
+                        TestData.getRequestWithStart(null, List.of(new Request.Header("mdc-key", "mdc-value"))),
+                        TestData.getStopRequest(null),
+                        null))
                 .toBuilder()
                 .graphConfiguration(config)
                 .build();
@@ -130,7 +138,9 @@ public class GenericHttpClientTest extends AbstractTest {
         // using restassured because of weird MDC issue in main
         given().body(request)
                 .contentType(ContentType.JSON)
-                .when().post(taskEndpointURI).then()
+                .when()
+                .post(taskEndpointURI)
+                .then()
                 .statusCode(200);
 
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, "mdc-test-graph");
@@ -142,7 +152,9 @@ public class GenericHttpClientTest extends AbstractTest {
                 .isInstanceOf(StartRequest.class)
                 .extracting("mdc")
                 .isInstanceOf(Map.class)
-                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-logging-key", "mdc-value"));
+                .satisfies(
+                        (mdcMap) -> assertThat((Map<String, String>) mdcMap)
+                                .containsEntry("mdc-logging-key", "mdc-value"));
     }
 
     @Test
@@ -157,15 +169,19 @@ public class GenericHttpClientTest extends AbstractTest {
                 .passMDCInRequestBody(true)
                 .mdcHeaderKeyMapping(Map.of("mdc-key", "mdc-logging-key"))
                 .build();
-        CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test-graph",
-                    Mode.ACTIVE,
-                    TestData.getRequestWithStart(null,
-                            List.of(new Request.Header("mdc-key", "mdc-value"),
-                                    new Request.Header("mdc1-key", "mdc1-value"))),
-                    TestData.getStopRequest(null),
-                    null,
-                    null,
-                localConfig))
+        CreateGraphRequest request = getRequestFromSingleTask(
+                createMockTask(
+                        "mdc-test-graph",
+                        Mode.ACTIVE,
+                        TestData.getRequestWithStart(
+                                null,
+                                List.of(
+                                        new Request.Header("mdc-key", "mdc-value"),
+                                        new Request.Header("mdc1-key", "mdc1-value"))),
+                        TestData.getStopRequest(null),
+                        null,
+                        null,
+                        localConfig))
                 .toBuilder()
                 .graphConfiguration(graphConfig)
                 .build();
@@ -191,11 +207,12 @@ public class GenericHttpClientTest extends AbstractTest {
                 .isInstanceOf(StartRequest.class)
                 .extracting("mdc")
                 .isInstanceOf(Map.class)
-                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap)
-                        // from local-level config
-                        .containsEntry("mdc-logging-key", "mdc-value")
-                        // from graph-level config
-                        .doesNotContainEntry("mdc1-logging-key", "mdc1-value"));
+                .satisfies(
+                        (mdcMap) -> assertThat((Map<String, String>) mdcMap)
+                                // from local-level config
+                                .containsEntry("mdc-logging-key", "mdc-value")
+                                // from graph-level config
+                                .doesNotContainEntry("mdc1-logging-key", "mdc1-value"));
     }
 
     @Test
@@ -208,15 +225,19 @@ public class GenericHttpClientTest extends AbstractTest {
         ConfigurationDTO localConfig = ConfigurationDTO.builder()
                 .mdcHeaderKeyMapping(Map.of("mdc-key", "mdc-logging-key"))
                 .build();
-        CreateGraphRequest request = getRequestFromSingleTask(createMockTask("mdc-test-graph",
-                    Mode.ACTIVE,
-                    TestData.getRequestWithStart(null,
-                            List.of(new Request.Header("mdc-key", "mdc-value"),
-                                    new Request.Header("mdc1-key", "mdc1-value"))),
-                    TestData.getStopRequest(null),
-                    null,
-                    null,
-                localConfig))
+        CreateGraphRequest request = getRequestFromSingleTask(
+                createMockTask(
+                        "mdc-test-graph",
+                        Mode.ACTIVE,
+                        TestData.getRequestWithStart(
+                                null,
+                                List.of(
+                                        new Request.Header("mdc-key", "mdc-value"),
+                                        new Request.Header("mdc1-key", "mdc1-value"))),
+                        TestData.getStopRequest(null),
+                        null,
+                        null,
+                        localConfig))
                 .toBuilder()
                 .graphConfiguration(graphConfig)
                 .build();
@@ -241,6 +262,8 @@ public class GenericHttpClientTest extends AbstractTest {
                 .isInstanceOf(StartRequest.class)
                 .extracting("mdc")
                 .isInstanceOf(Map.class)
-                .satisfies((mdcMap) -> assertThat((Map<String, String>) mdcMap).containsEntry("mdc-logging-key", "mdc-value"));
+                .satisfies(
+                        (mdcMap) -> assertThat((Map<String, String>) mdcMap)
+                                .containsEntry("mdc-logging-key", "mdc-value"));
     }
 }

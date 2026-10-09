@@ -4,12 +4,8 @@
  */
 package org.jboss.pnc.rex.test.common;
 
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.core.api.TaskContainer;
-import org.jboss.pnc.rex.test.common.TransitionRecorder.Tuple;
-import org.jboss.pnc.rex.model.Task;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import jakarta.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -18,13 +14,19 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import jakarta.enterprise.inject.spi.CDI;
+
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.core.api.TaskContainer;
+import org.jboss.pnc.rex.model.Task;
+import org.jboss.pnc.rex.test.common.TransitionRecorder.Tuple;
 
 public class Assertions {
-    public static void assertCorrectTaskRelations(Task testing,
-                                                  int unfinishedDeps,
-                                                  String[] dependants,
-                                                  String[] dependencies) {
+    public static void assertCorrectTaskRelations(
+            Task testing,
+            int unfinishedDeps,
+            String[] dependants,
+            String[] dependencies) {
         assertThat(testing)
                 .isNotNull();
         assertThat(testing.getUnfinishedDependencies())
@@ -42,9 +44,11 @@ public class Assertions {
     public static void waitTillTasksAre(State state, TaskContainer container, Task... tasks) {
         waitTillTasksAre(state, container, 5, Arrays.stream(tasks).map(Task::getName).toArray(String[]::new));
     }
+
     public static void waitTillTasksAre(State state, TaskContainer container, int timeout, Task... tasks) {
         waitTillTasksAre(state, container, timeout, Arrays.stream(tasks).map(Task::getName).toArray(String[]::new));
     }
+
     public static void waitTillTasksAre(State state, TaskContainer container, String... tasks) {
         waitTillTasksAre(state, container, 10, tasks);
     }
@@ -53,11 +57,12 @@ public class Assertions {
         waitTillTasksAre(state, container, timeout, TimeUnit.SECONDS, strings);
     }
 
-    public static void waitTillTasksAre(State state,
-                                        TaskContainer container,
-                                        int timeout,
-                                        TimeUnit timeUnit,
-                                        String... strings) {
+    public static void waitTillTasksAre(
+            State state,
+            TaskContainer container,
+            int timeout,
+            TimeUnit timeUnit,
+            String... strings) {
         List<String> fine = new ArrayList<>(Arrays.asList(strings));
         waitSynchronouslyFor(() -> {
             Iterator<String> iterator = fine.iterator();
@@ -79,7 +84,8 @@ public class Assertions {
                 throw new AssertionError("Unexpected interruption", e);
             }
             if (System.currentTimeMillis() > stopTime) {
-                throw new AssertionError("Timeout " + timeout + " " + timeUnit + " reached while waiting for condition");
+                throw new AssertionError(
+                        "Timeout " + timeout + " " + timeUnit + " reached while waiting for condition");
             }
         } while (!condition.get());
     }
@@ -91,10 +97,14 @@ public class Assertions {
             for (int i = 0; i < tasks.length; i++) {
                 var tuple = queue.poll(10, TimeUnit.SECONDS);
                 if (tuple == null) {
-                    throw new AssertionError("Timeout " + 10 + " " + TimeUnit.SECONDS + " reached while waiting for some task to finish");
+                    throw new AssertionError(
+                            "Timeout " + 10 + " " + TimeUnit.SECONDS
+                                    + " reached while waiting for some task to finish");
                 }
                 if (tuple.second() != state) {
-                    throw new AssertionError("Task " + tuple.first() + " didn't have correct state. (" + state + " vs. " + tuple.second() + ")");
+                    throw new AssertionError(
+                            "Task " + tuple.first() + " didn't have correct state. (" + state + " vs. " + tuple.second()
+                                    + ")");
                 }
             }
         } catch (InterruptedException e) {
@@ -117,7 +127,9 @@ public class Assertions {
             for (int i = 0; i < occurrences; i++) {
                 var task = queue.poll(15, TimeUnit.SECONDS);
                 if (task == null) {
-                    throw new AssertionError("Timeout " + 10 + " " + TimeUnit.SECONDS + " reached while waiting for some task " + taskName + " to transition to " + state);
+                    throw new AssertionError(
+                            "Timeout " + 10 + " " + TimeUnit.SECONDS + " reached while waiting for some task "
+                                    + taskName + " to transition to " + state);
                 }
                 toReturn.add(task);
             }

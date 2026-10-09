@@ -4,13 +4,12 @@
  */
 package org.jboss.pnc.rex.test.common;
 
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.*;
+
+import java.net.URI;
+
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jboss.pnc.rex.api.MaintenanceEndpoint;
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
@@ -18,13 +17,16 @@ import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-import java.net.URI;
-
-import static io.restassured.RestAssured.*;
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
+import io.restassured.http.ContentType;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @QuarkusTest
-@TestSecurity(user = "admin", roles = {"pnc-users-admin"})
+@TestSecurity(user = "admin", roles = { "pnc-users-admin" })
 public abstract class AbstractTest {
 
     @TestHTTPEndpoint(QueueEndpoint.class)
@@ -62,9 +64,9 @@ public abstract class AbstractTest {
     public void resetEverythingWithMax(long max) {
         // clear caches
         given()
-            .contentType(ContentType.JSON)
-            .post(maintenanceEndpoint.getPath() + MaintenanceEndpoint.CLEAR_ALL)
-            .then()
+                .contentType(ContentType.JSON)
+                .post(maintenanceEndpoint.getPath() + MaintenanceEndpoint.CLEAR_ALL)
+                .then()
                 .statusCode(204);
 
         // reset Maximum setting

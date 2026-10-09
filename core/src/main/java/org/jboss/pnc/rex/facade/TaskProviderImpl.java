@@ -4,6 +4,18 @@
  */
 package org.jboss.pnc.rex.facade;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
+
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.ResponseFlag;
@@ -22,18 +34,6 @@ import org.jboss.pnc.rex.facade.mapper.TaskMapper;
 import org.jboss.pnc.rex.model.Task;
 import org.slf4j.MDC;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.Response;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @ApplicationScoped
 public class TaskProviderImpl implements TaskProvider {
 
@@ -50,11 +50,12 @@ public class TaskProviderImpl implements TaskProvider {
     private final HttpHeaders httpHeaders;
 
     @Inject
-    public TaskProviderImpl(TaskContainer container,
-                            TaskController controller,
-                            TaskMapper mapper,
-                            GraphsMapper graphMapper,
-                            HttpHeaders httpHeaders) {
+    public TaskProviderImpl(
+            TaskContainer container,
+            TaskController controller,
+            TaskMapper mapper,
+            GraphsMapper graphMapper,
+            HttpHeaders httpHeaders) {
         this.target = container;
         this.registry = container;
         this.controller = controller;
@@ -68,7 +69,9 @@ public class TaskProviderImpl implements TaskProvider {
     public Set<TaskDTO> create(CreateGraphRequest request) {
         try {
             if (request.graphConfiguration != null && request.graphConfiguration.mdcHeaderKeyMapping != null) {
-                MDCUtils.applyMDCsFromHeadersMM(request.graphConfiguration.mdcHeaderKeyMapping, httpHeaders.getRequestHeaders());
+                MDCUtils.applyMDCsFromHeadersMM(
+                        request.graphConfiguration.mdcHeaderKeyMapping,
+                        httpHeaders.getRequestHeaders());
             }
 
             return target.install(graphMapper.toDB(request))
@@ -81,8 +84,14 @@ public class TaskProviderImpl implements TaskProvider {
     }
 
     @Override
-    public Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished, boolean rollingback, List<String> queueFilter) {
-        return registry.getTasks(waiting, waiting, running, finished, rollingback, queueFilter).stream()
+    public Set<TaskDTO> getAll(
+            boolean waiting,
+            boolean running,
+            boolean finished,
+            boolean rollingback,
+            List<String> queueFilter) {
+        return registry.getTasks(waiting, waiting, running, finished, rollingback, queueFilter)
+                .stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toSet());
     }
@@ -100,15 +109,17 @@ public class TaskProviderImpl implements TaskProvider {
             task = registry.getRequiredTask(taskName);
             return mapper.toDTO(task);
         } catch (TaskMissingException e) {
-            throw new NotFoundException(Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse(e, e.getTaskName()))
-                    .build());
+            throw new NotFoundException(
+                    Response.status(Response.Status.NOT_FOUND)
+                            .entity(new ErrorResponse(e, e.getTaskName()))
+                            .build());
         }
     }
 
     @Override
     public Set<TaskDTO> getByCorrelationID(String correlationID) {
-        return registry.getTasksByCorrelationID(correlationID).stream()
+        return registry.getTasksByCorrelationID(correlationID)
+                .stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toSet());
     }

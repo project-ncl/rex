@@ -4,30 +4,15 @@
  */
 package org.jboss.pnc.rex.test;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.http.Fault;
-import com.github.tomakehurst.wiremock.stubbing.Scenario;
-import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
-import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.core.buffer.Buffer;
-import io.vertx.mutiny.ext.web.client.HttpResponse;
-import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.rex.common.enums.Method;
-import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
-import org.jboss.pnc.rex.core.GenericVertxHttpClient;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getAllServeEvents;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.time.Duration;
@@ -39,15 +24,31 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.getAllServeEvents;
-import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static org.assertj.core.api.Assertions.assertThat;
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.rex.common.enums.Method;
+import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
+import org.jboss.pnc.rex.core.GenericVertxHttpClient;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.http.Fault;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
+
+import io.quarkus.test.junit.QuarkusTest;
+import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @QuarkusTest
@@ -79,27 +80,30 @@ public class GenericHttpClientStandaloneTest {
     GenericVertxHttpClient httpClient;
 
     @ParameterizedTest
-    @ValueSource(ints = {425, 429, 500, 503, 599})
+    @ValueSource(ints = { 425, 429, 500, 503, 599 })
     void shouldRetryOnErrorCodeAndSucceed(int code) throws InterruptedException {
         // given
         // 1st request: respond with error
-        stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withStatus(code))
-                    .inScenario("retry-" + code)
-                    .whenScenarioStateIs(Scenario.STARTED)
-                    .willSetStateTo("attempt1"));
+        stubFor(
+                get(urlPathMatching("/.*"))
+                        .willReturn(aResponse().withStatus(code))
+                        .inScenario("retry-" + code)
+                        .whenScenarioStateIs(Scenario.STARTED)
+                        .willSetStateTo("attempt1"));
         // 2nd request: respond with error
-        stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withStatus(code))
-                    .inScenario("retry-" + code)
-                    .whenScenarioStateIs("attempt1")
-                    .willSetStateTo("attempt2"));
+        stubFor(
+                get(urlPathMatching("/.*"))
+                        .willReturn(aResponse().withStatus(code))
+                        .inScenario("retry-" + code)
+                        .whenScenarioStateIs("attempt1")
+                        .willSetStateTo("attempt2"));
         // 3rd request: respond with success
-        stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withStatus(200))
-                    .inScenario("retry-" + code)
-                    .whenScenarioStateIs("attempt2")
-                    .willSetStateTo("attempt3"));
+        stubFor(
+                get(urlPathMatching("/.*"))
+                        .willReturn(aResponse().withStatus(200))
+                        .inScenario("retry-" + code)
+                        .whenScenarioStateIs("attempt2")
+                        .willSetStateTo("attempt3"));
 
         ArrayBlockingQueue<HttpResponse<Buffer>> responses = new ArrayBlockingQueue<>(10);
         Consumer<HttpResponse<Buffer>> onResponse = r -> {
@@ -108,13 +112,14 @@ public class GenericHttpClientStandaloneTest {
 
         // when
         httpClient.makeReactiveRequest(
-            URI.create("http://localhost:" + MOCK_SERVER_PORT),
-            Method.GET,
-            Collections.emptyList(),
-            "",
-            onResponse,
-            (r) -> Uni.createFrom().voidItem())
-            .await().atMost(Duration.of(5, ChronoUnit.SECONDS));
+                URI.create("http://localhost:" + MOCK_SERVER_PORT),
+                Method.GET,
+                Collections.emptyList(),
+                "",
+                onResponse,
+                (r) -> Uni.createFrom().voidItem())
+                .await()
+                .atMost(Duration.of(5, ChronoUnit.SECONDS));
 
         // expect
         HttpResponse<Buffer> response = responses.poll(5, TimeUnit.SECONDS);
@@ -122,13 +127,13 @@ public class GenericHttpClientStandaloneTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {425, 429, 500, 503, 599})
+    @ValueSource(ints = { 425, 429, 500, 503, 599 })
     void shouldFailIfNoSuccessCodeReceived(int code) throws InterruptedException {
         // given
         // always respond with error
-        stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withStatus(code).withBody("Error response body."))
-        );
+        stubFor(
+                get(urlPathMatching("/.*"))
+                        .willReturn(aResponse().withStatus(code).withBody("Error response body.")));
 
         ArrayBlockingQueue<Throwable> failures = new ArrayBlockingQueue<>(10);
         Function<Throwable, Uni<Void>> onFailure = throwable -> {
@@ -138,13 +143,14 @@ public class GenericHttpClientStandaloneTest {
 
         // when
         httpClient.makeReactiveRequest(
-                      URI.create("http://localhost:" + MOCK_SERVER_PORT),
-                      Method.GET,
-                      Collections.emptyList(),
-                      "",
-                      (r) -> {},
-                      onFailure)
-                  .await().atMost(Duration.of(5, ChronoUnit.SECONDS));
+                URI.create("http://localhost:" + MOCK_SERVER_PORT),
+                Method.GET,
+                Collections.emptyList(),
+                "",
+                (r) -> {},
+                onFailure)
+                .await()
+                .atMost(Duration.of(5, ChronoUnit.SECONDS));
 
         // expect
         Throwable throwable = failures.poll(5, TimeUnit.SECONDS);
@@ -160,23 +166,26 @@ public class GenericHttpClientStandaloneTest {
     void shouldRetryOnFaultAndSucceed() throws InterruptedException {
         // given
         // 1st request: respond with error
-        stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
-                    .inScenario("retry-fault")
-                    .whenScenarioStateIs(Scenario.STARTED)
-                    .willSetStateTo("attempt1"));
+        stubFor(
+                get(urlPathMatching("/.*"))
+                        .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
+                        .inScenario("retry-fault")
+                        .whenScenarioStateIs(Scenario.STARTED)
+                        .willSetStateTo("attempt1"));
         // 2nd request: respond with error
-        stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
-                    .inScenario("retry-fault")
-                    .whenScenarioStateIs("attempt1")
-                    .willSetStateTo("attempt2"));
+        stubFor(
+                get(urlPathMatching("/.*"))
+                        .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
+                        .inScenario("retry-fault")
+                        .whenScenarioStateIs("attempt1")
+                        .willSetStateTo("attempt2"));
         // 3rd request: respond with success
-        stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withStatus(200))
-                    .inScenario("retry-fault")
-                    .whenScenarioStateIs("attempt2")
-                    .willSetStateTo("attempt3"));
+        stubFor(
+                get(urlPathMatching("/.*"))
+                        .willReturn(aResponse().withStatus(200))
+                        .inScenario("retry-fault")
+                        .whenScenarioStateIs("attempt2")
+                        .willSetStateTo("attempt3"));
 
         ArrayBlockingQueue<HttpResponse<Buffer>> responses = new ArrayBlockingQueue<>(10);
         Consumer<HttpResponse<Buffer>> onResponse = r -> {
@@ -185,13 +194,14 @@ public class GenericHttpClientStandaloneTest {
 
         // when
         httpClient.makeReactiveRequest(
-                      URI.create("http://localhost:" + MOCK_SERVER_PORT),
-                      Method.GET,
-                      Collections.emptyList(),
-                      "",
-                      onResponse,
-                      (r) -> Uni.createFrom().voidItem())
-                  .await().atMost(Duration.of(5, ChronoUnit.SECONDS));
+                URI.create("http://localhost:" + MOCK_SERVER_PORT),
+                Method.GET,
+                Collections.emptyList(),
+                "",
+                onResponse,
+                (r) -> Uni.createFrom().voidItem())
+                .await()
+                .atMost(Duration.of(5, ChronoUnit.SECONDS));
 
         // expect
         HttpResponse<Buffer> response = responses.poll(5, TimeUnit.SECONDS);
@@ -201,20 +211,20 @@ public class GenericHttpClientStandaloneTest {
     @Test
     void shouldNotRetryOn404() throws InterruptedException {
         // given
-        stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withStatus(404))
-        );
+        stubFor(
+                get(urlPathMatching("/.*"))
+                        .willReturn(aResponse().withStatus(404)));
 
         // when
         httpClient.makeReactiveRequest(
-                      URI.create("http://localhost:" + MOCK_SERVER_PORT + "/not-found"),
-                      Method.GET,
-                      Collections.emptyList(),
-                      "",
-                      (r) -> {},
-                      (r) -> Uni.createFrom().voidItem()
-                  )
-                  .await().atMost(Duration.of(5, ChronoUnit.SECONDS));
+                URI.create("http://localhost:" + MOCK_SERVER_PORT + "/not-found"),
+                Method.GET,
+                Collections.emptyList(),
+                "",
+                (r) -> {},
+                (r) -> Uni.createFrom().voidItem())
+                .await()
+                .atMost(Duration.of(5, ChronoUnit.SECONDS));
 
         // expect
         verify(1, getRequestedFor(urlEqualTo("/not-found")));
@@ -223,20 +233,20 @@ public class GenericHttpClientStandaloneTest {
     @Test
     void shouldExpireOn425() throws InterruptedException {
         // given
-        stubFor(get(urlPathMatching("/.*"))
-                    .willReturn(aResponse().withStatus(425))
-        );
+        stubFor(
+                get(urlPathMatching("/.*"))
+                        .willReturn(aResponse().withStatus(425)));
 
         // when
         httpClient.makeReactiveRequest(
-                      URI.create("http://localhost:" + MOCK_SERVER_PORT + "/back-off"),
-                      Method.GET,
-                      Collections.emptyList(),
-                      "",
-                      (r) -> {},
-                      (r) -> Uni.createFrom().voidItem()
-                  )
-                  .await().atMost(Duration.of(10, ChronoUnit.SECONDS));
+                URI.create("http://localhost:" + MOCK_SERVER_PORT + "/back-off"),
+                Method.GET,
+                Collections.emptyList(),
+                "",
+                (r) -> {},
+                (r) -> Uni.createFrom().voidItem())
+                .await()
+                .atMost(Duration.of(10, ChronoUnit.SECONDS));
 
         // expect
         List<ServeEvent> allServeEvents = getAllServeEvents();
@@ -246,8 +256,13 @@ public class GenericHttpClientStandaloneTest {
 
         ServeEvent lastRequest = allServeEvents.get(0);
         ServeEvent firstRequest = allServeEvents.get(allServeEvents.size() - 1);
-        log.info("First request {}, last request: {}", firstRequest.getRequest().getLoggedDate(), lastRequest.getRequest().getLoggedDate());
-        Duration duration = Duration.between(firstRequest.getRequest().getLoggedDate().toInstant(), lastRequest.getRequest().getLoggedDate().toInstant());
+        log.info(
+                "First request {}, last request: {}",
+                firstRequest.getRequest().getLoggedDate(),
+                lastRequest.getRequest().getLoggedDate());
+        Duration duration = Duration.between(
+                firstRequest.getRequest().getLoggedDate().toInstant(),
+                lastRequest.getRequest().getLoggedDate().toInstant());
         Assertions.assertTrue(duration.abs().toMillis() < 5000, "Should not retry for more than 5 sec.");
     }
 }

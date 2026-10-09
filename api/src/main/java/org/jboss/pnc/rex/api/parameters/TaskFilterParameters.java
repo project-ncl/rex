@@ -4,11 +4,12 @@
  */
 package org.jboss.pnc.rex.api.parameters;
 
-import lombok.Data;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.QueryParam;
+
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+
+import lombok.Data;
 
 @Data
 public class TaskFilterParameters {

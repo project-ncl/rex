@@ -4,11 +4,12 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
+import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithoutStart;
+
+import java.net.URI;
+
 import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.api.parameters.ErrorOption;
@@ -18,14 +19,14 @@ import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.junit.jupiter.api.Test;
 
-import java.net.URI;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.containsString;
-import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithoutStart;
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
+import io.restassured.http.ContentType;
 
 @QuarkusTest
-@TestSecurity(user = "user", roles = {"pnc-app-rex-user"})
+@TestSecurity(user = "user", roles = { "pnc-app-rex-user" })
 public class ValidationTest {
 
     @TestHTTPEndpoint(TaskEndpoint.class)
@@ -40,24 +41,26 @@ public class ValidationTest {
     void testCreateNoBody() {
         given()
                 .when()
-                    .contentType(ContentType.JSON)
-                    .post(taskEndpointURI.getPath())
+                .contentType(ContentType.JSON)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
     void testCreateWithBlankEdge() {
-        CreateGraphRequest body = CreateGraphRequest.builder().edge(EdgeDTO.builder().source("hello").target("").build()).build();
+        CreateGraphRequest body = CreateGraphRequest.builder()
+                .edge(EdgeDTO.builder().source("hello").target("").build())
+                .build();
         given()
                 .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
@@ -67,12 +70,12 @@ public class ValidationTest {
                 .build();
         given()
                 .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
@@ -82,83 +85,87 @@ public class ValidationTest {
                 .build();
         given()
                 .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
     void testCreateWithNullEndpoints() {
         CreateGraphRequest body = CreateGraphRequest.builder()
-                .vertex("task", getMockTaskWithoutStart("task", Mode.IDLE)
-                        .toBuilder()
-                        .remoteStart(null)
-                        .build())
+                .vertex(
+                        "task",
+                        getMockTaskWithoutStart("task", Mode.IDLE)
+                                .toBuilder()
+                                .remoteStart(null)
+                                .build())
                 .build();
 
         given()
                 .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
 
         body = CreateGraphRequest.builder()
-                .vertex("task", getMockTaskWithoutStart("task", Mode.IDLE)
-                        .toBuilder()
-                        .remoteCancel(null)
-                        .build())
+                .vertex(
+                        "task",
+                        getMockTaskWithoutStart("task", Mode.IDLE)
+                                .toBuilder()
+                                .remoteCancel(null)
+                                .build())
                 .build();
 
         given()
                 .when()
-                    .contentType(ContentType.JSON)
-                    .body(body)
-                    .post(taskEndpointURI.getPath())
+                .contentType(ContentType.JSON)
+                .body(body)
+                .post(taskEndpointURI.getPath())
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
     void testFinishWithNoBody() {
         given()
                 .when()
-                    .contentType(ContentType.JSON)
-                    .post(callbackEndpointURI.getPath() + CallbackEndpoint.FINISH_TASK_FMT.formatted( "1"))
+                .contentType(ContentType.JSON)
+                .post(callbackEndpointURI.getPath() + CallbackEndpoint.FINISH_TASK_FMT.formatted("1"))
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
     void testFinishWithNoStatus() {
-        FinishRequest request = new FinishRequest(null,"HELLO");
+        FinishRequest request = new FinishRequest(null, "HELLO");
         given()
                 .when()
-                    .contentType(ContentType.JSON)
-                    .body(request)
-                    .post(callbackEndpointURI.getPath() + CallbackEndpoint.FINISH_TASK_FMT.formatted( "1"))
+                .contentType(ContentType.JSON)
+                .body(request)
+                .post(callbackEndpointURI.getPath() + CallbackEndpoint.FINISH_TASK_FMT.formatted("1"))
                 .then()
-                    .statusCode(400)
-                    .body("errorType", containsString("ViolationException"));
+                .statusCode(400)
+                .body("errorType", containsString("ViolationException"));
     }
 
     @Test
     void shouldNotFailOnMissingTaskIfIgnoreSpecified() {
-        FinishRequest request = new FinishRequest(true,"HELLO");
+        FinishRequest request = new FinishRequest(true, "HELLO");
         given()
-            .when()
+                .when()
                 .contentType(ContentType.JSON)
                 .body(request)
                 .queryParam("err", ErrorOption.IGNORE) // IGNORE should make the response 204
-                .post(callbackEndpointURI.getPath() + CallbackEndpoint.FINISH_TASK_FMT.formatted( "doesn't-exist"))
-            .then()
+                .post(callbackEndpointURI.getPath() + CallbackEndpoint.FINISH_TASK_FMT.formatted("doesn't-exist"))
+                .then()
                 .statusCode(204);
     }
 }

@@ -4,35 +4,6 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.junit.QuarkusTest;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.context.ManagedExecutor;
-import org.jboss.pnc.rex.api.CallbackEndpoint;
-import org.jboss.pnc.rex.api.TaskEndpoint;
-import org.jboss.pnc.rex.api.parameters.ErrorOption;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.common.enums.Transition;
-import org.jboss.pnc.rex.core.GenericVertxHttpClient;
-import org.jboss.pnc.rex.core.TaskContainerImpl;
-import org.jboss.pnc.rex.dto.CreateTaskDTO;
-import org.jboss.pnc.rex.dto.EdgeDTO;
-import org.jboss.pnc.rex.test.common.AbstractTest;
-import org.jboss.pnc.rex.test.common.TestData;
-import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
-import org.jboss.pnc.rex.dto.TaskDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.junit.jupiter.api.Test;
-
-import jakarta.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.jboss.pnc.rex.common.enums.Transition.ENQUEUED_to_STARTING;
@@ -56,6 +27,36 @@ import static org.jboss.pnc.rex.test.common.TestData.getNotificationsRequest;
 import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
 import static org.jboss.pnc.rex.test.common.TestData.getStopRequest;
 import static org.jboss.pnc.rex.test.common.TestData.getStopRequestWithCallback;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import jakarta.inject.Inject;
+
+import org.eclipse.microprofile.context.ManagedExecutor;
+import org.jboss.pnc.rex.api.CallbackEndpoint;
+import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.api.parameters.ErrorOption;
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.common.enums.Transition;
+import org.jboss.pnc.rex.core.GenericVertxHttpClient;
+import org.jboss.pnc.rex.core.TaskContainerImpl;
+import org.jboss.pnc.rex.dto.CreateTaskDTO;
+import org.jboss.pnc.rex.dto.EdgeDTO;
+import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.common.TestData;
+import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
+import org.junit.jupiter.api.Test;
+
+import io.quarkus.test.junit.QuarkusTest;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @QuarkusTest
@@ -84,20 +85,30 @@ public class NotificationTest extends AbstractTest {
         CreateGraphRequest request = getComplexGraph(true, true);
         endpoint.start(request);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, request.getVertices().keySet().toArray(new String[0]));
-        
+
         Thread.sleep(100);
         Map<String, Set<Transition>> records = recorderEndpoint.getRecords();
         assertThat(records.keySet()).containsExactlyInAnyOrderElementsOf(request.getVertices().keySet());
-        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("c")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("d")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("e")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("f")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("g")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("h")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("i")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
-        assertThat(records.get("j")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("c")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("d")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("e")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("f")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("g")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("h")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("i")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
+        assertThat(records.get("j")).containsExactlyInAnyOrderElementsOf(
+                Set.of(NEW_to_WAITING, WAITING_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_SUCCESSFUL));
     }
 
     @Test
@@ -115,8 +126,22 @@ public class NotificationTest extends AbstractTest {
         Thread.sleep(100);
         Map<String, Set<Transition>> records = recorderEndpoint.getRecords();
         assertThat(records.keySet()).containsExactlyInAnyOrderElementsOf(request.getVertices().keySet());
-        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_STOP_REQUESTED, STOP_REQUESTED_to_STOPPING, STOPPING_TO_STOPPED));
-        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_ENQUEUED, ENQUEUED_to_STARTING, STARTING_to_UP, UP_to_STOP_REQUESTED, STOP_REQUESTED_to_STOPPING, STOPPING_TO_STOPPED));
+        assertThat(records.get("a")).containsExactlyInAnyOrderElementsOf(
+                Set.of(
+                        NEW_to_ENQUEUED,
+                        ENQUEUED_to_STARTING,
+                        STARTING_to_UP,
+                        UP_to_STOP_REQUESTED,
+                        STOP_REQUESTED_to_STOPPING,
+                        STOPPING_TO_STOPPED));
+        assertThat(records.get("b")).containsExactlyInAnyOrderElementsOf(
+                Set.of(
+                        NEW_to_ENQUEUED,
+                        ENQUEUED_to_STARTING,
+                        STARTING_to_UP,
+                        UP_to_STOP_REQUESTED,
+                        STOP_REQUESTED_to_STOPPING,
+                        STOPPING_TO_STOPPED));
         assertThat(records.get("c")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("d")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
         assertThat(records.get("e")).containsExactlyInAnyOrderElementsOf(Set.of(NEW_to_WAITING, WAITING_to_STOPPED));
@@ -140,37 +165,41 @@ public class NotificationTest extends AbstractTest {
         CreateGraphRequest.CreateGraphRequestBuilder builder = CreateGraphRequest.builder();
         for (int i = 1; i <= 3; i++) {
             String name = String.valueOf(i);
-            builder.vertex(name, CreateTaskDTO.builder()
-                                                .name(name)
-                                                .controllerMode(Mode.ACTIVE)
-                                                .remoteStart(getRequestWithStart(name))
-                                                .remoteCancel(getStopRequest(name))
-                                                .callerNotifications(getNotificationsRequest())
-                                                .build());
+            builder.vertex(
+                    name,
+                    CreateTaskDTO.builder()
+                            .name(name)
+                            .controllerMode(Mode.ACTIVE)
+                            .remoteStart(getRequestWithStart(name))
+                            .remoteCancel(getStopRequest(name))
+                            .callerNotifications(getNotificationsRequest())
+                            .build());
         }
         // don't complete 4 and 5
         for (int i = 4; i <= 5; i++) {
             String name = String.valueOf(i);
-            builder.vertex(name, CreateTaskDTO.builder()
-                                                .name(name)
-                                                .controllerMode(Mode.ACTIVE)
-                                                .remoteStart(TestData.getRequestWithoutStart(name))
-                                                .remoteCancel(getStopRequest(name))
-                                                .callerNotifications(getNotificationsRequest())
-                                                .build());
+            builder.vertex(
+                    name,
+                    CreateTaskDTO.builder()
+                            .name(name)
+                            .controllerMode(Mode.ACTIVE)
+                            .remoteStart(TestData.getRequestWithoutStart(name))
+                            .remoteCancel(getStopRequest(name))
+                            .callerNotifications(getNotificationsRequest())
+                            .build());
         }
 
-        egdes.add(new EdgeDTO("5","4"));
-        egdes.add(new EdgeDTO("4","2"));
-        egdes.add(new EdgeDTO("3","2"));
-        egdes.add(new EdgeDTO("2","1"));
+        egdes.add(new EdgeDTO("5", "4"));
+        egdes.add(new EdgeDTO("4", "2"));
+        egdes.add(new EdgeDTO("3", "2"));
+        egdes.add(new EdgeDTO("2", "1"));
         builder.edges(egdes);
         CreateGraphRequest graph = builder.build();
 
         // when
         endpoint.start(graph);
 
-        String[] taskNames = {"1", "2", "3"};
+        String[] taskNames = { "1", "2", "3" };
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskNames);
         Thread.sleep(100);
 
@@ -179,48 +208,51 @@ public class NotificationTest extends AbstractTest {
         // then
         // 1st task
         assertThat(records)
-            .extractingByKeys("1")
-            .allSatisfy((firstTransitions) -> {
-                assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
-                    Set.of(NEW_to_ENQUEUED,
-                           ENQUEUED_to_STARTING,
-                           STARTING_to_UP,
-                           UP_to_SUCCESSFUL));
-            });
+                .extractingByKeys("1")
+                .allSatisfy((firstTransitions) -> {
+                    assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                            Set.of(
+                                    NEW_to_ENQUEUED,
+                                    ENQUEUED_to_STARTING,
+                                    STARTING_to_UP,
+                                    UP_to_SUCCESSFUL));
+                });
         // 2nd and 3rd task
         assertThat(records)
-            .extractingByKeys("2", "3")
-            .allSatisfy((firstTransitions) -> {
-                assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
-                    Set.of(NEW_to_WAITING,
-                           WAITING_to_ENQUEUED,
-                           ENQUEUED_to_STARTING,
-                           STARTING_to_UP,
-                           UP_to_SUCCESSFUL));
-            });
+                .extractingByKeys("2", "3")
+                .allSatisfy((firstTransitions) -> {
+                    assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                            Set.of(
+                                    NEW_to_WAITING,
+                                    WAITING_to_ENQUEUED,
+                                    ENQUEUED_to_STARTING,
+                                    STARTING_to_UP,
+                                    UP_to_SUCCESSFUL));
+                });
         // 4th task
         assertThat(records)
-            .extractingByKeys("4")
-            .allSatisfy((firstTransitions) -> {
-                assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
-                    Set.of(NEW_to_WAITING,
-                           WAITING_to_ENQUEUED,
-                           ENQUEUED_to_STARTING,
-                           STARTING_to_UP));
-            });
+                .extractingByKeys("4")
+                .allSatisfy((firstTransitions) -> {
+                    assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                            Set.of(
+                                    NEW_to_WAITING,
+                                    WAITING_to_ENQUEUED,
+                                    ENQUEUED_to_STARTING,
+                                    STARTING_to_UP));
+                });
         // 5th task
         assertThat(records)
-            .extractingByKeys("5")
-            .allSatisfy((firstTransitions) -> {
-                assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
-                    Set.of(NEW_to_WAITING));
-            });
+                .extractingByKeys("5")
+                .allSatisfy((firstTransitions) -> {
+                    assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
+                            Set.of(NEW_to_WAITING));
+                });
 
         Thread.sleep(100);
         // only 3rd task has been deleted
         Set<TaskDTO> all = endpoint.getAll(getAllParameters(), null);
         assertThat(all)
-            .extracting("name")
+                .extracting("name")
                 .containsExactlyInAnyOrder("1", "2", "4", "5");
 
         // then complete 4
@@ -229,8 +261,8 @@ public class NotificationTest extends AbstractTest {
         // the tasks shouldn't be deleted yet
         Set<TaskDTO> allWhenCompleted4 = endpoint.getAll(getAllParameters(), null);
         assertThat(allWhenCompleted4)
-            .extracting("name")
-            .containsExactlyInAnyOrder("1", "2", "4", "5");
+                .extracting("name")
+                .containsExactlyInAnyOrder("1", "2", "4", "5");
 
         // then complete 5
         executor.runAsync(() -> callbackEndpoint.succeed("5", "the-result", ErrorOption.IGNORE, Set.of()));
@@ -259,12 +291,13 @@ public class NotificationTest extends AbstractTest {
         Map<String, Set<Transition>> records = new HashMap<>(recorderEndpoint.getRecords());
 
         // then
-        var firstTasks = new String[]{"15","52","75","76","77","78","79","80"};
+        var firstTasks = new String[] { "15", "52", "75", "76", "77", "78", "79", "80" };
         assertThat(records)
                 .extractingByKeys(firstTasks)
                 .allSatisfy((firstTransitions) -> {
                     assertThat(firstTransitions).containsExactlyInAnyOrderElementsOf(
-                            Set.of(NEW_to_ENQUEUED,
+                            Set.of(
+                                    NEW_to_ENQUEUED,
                                     ENQUEUED_to_STARTING,
                                     STARTING_to_UP,
                                     UP_to_SUCCESSFUL));
@@ -275,7 +308,8 @@ public class NotificationTest extends AbstractTest {
         assertThat(records)
                 .allSatisfy((remainingTasks, transitions) -> {
                     assertThat(transitions).containsExactlyInAnyOrderElementsOf(
-                            Set.of(NEW_to_WAITING,
+                            Set.of(
+                                    NEW_to_WAITING,
                                     WAITING_to_ENQUEUED,
                                     ENQUEUED_to_STARTING,
                                     STARTING_to_UP,
@@ -326,21 +360,21 @@ public class NotificationTest extends AbstractTest {
         String sharedConstraint = "constraint";
 
         var failingNotificationTask = createMockTask(
-            taskName,
-            Mode.ACTIVE,
-            getRequestWithStart(taskName),
-            getStopRequestWithCallback(taskName),
-            getNaughtyNotificationsRequest()).toBuilder()
-            .constraint(sharedConstraint)
-            .build();
+                taskName,
+                Mode.ACTIVE,
+                getRequestWithStart(taskName),
+                getStopRequestWithCallback(taskName),
+                getNaughtyNotificationsRequest()).toBuilder()
+                .constraint(sharedConstraint)
+                .build();
         var runAfterTask = createMockTask(
-            otherTaskName,
-            Mode.ACTIVE,
-            getRequestWithStart(taskName),
-            getStopRequestWithCallback(taskName),
-            getNotificationsRequest()).toBuilder()
-            .constraint(sharedConstraint)
-            .build();
+                otherTaskName,
+                Mode.ACTIVE,
+                getRequestWithStart(taskName),
+                getStopRequestWithCallback(taskName),
+                getNotificationsRequest()).toBuilder()
+                .constraint(sharedConstraint)
+                .build();
 
         var reqFailNot = CreateGraphRequest.builder().vertex(taskName, failingNotificationTask).build();
         var reqAfter = CreateGraphRequest.builder().vertex(otherTaskName, runAfterTask).build();
@@ -357,7 +391,8 @@ public class NotificationTest extends AbstractTest {
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, otherTaskName);
         Thread.sleep(100);
 
-        assertThat(endpoint.getAll(getAllParameters(), null)).extracting(TaskDTO::getName).doesNotContain(otherTaskName);
+        assertThat(endpoint.getAll(getAllParameters(), null)).extracting(TaskDTO::getName)
+                .doesNotContain(otherTaskName);
 
     }
 }

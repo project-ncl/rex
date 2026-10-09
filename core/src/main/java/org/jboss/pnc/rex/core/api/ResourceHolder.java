@@ -4,11 +4,11 @@
  */
 package org.jboss.pnc.rex.core.api;
 
+import java.util.List;
+
 import org.jboss.pnc.rex.common.enums.ResourceType;
 import org.jboss.pnc.rex.core.FailoverInitiator;
 import org.jboss.pnc.rex.model.NodeResource;
-
-import java.util.List;
 
 /**
  * The implementor contains a critical local resource that needs to be failed over in case the Rex instance gets

@@ -4,11 +4,11 @@
  */
 package org.jboss.pnc.rex.dto.responses;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -31,6 +31,7 @@ public class ErrorResponse {
         pw.flush();
         this.stackTrace = w.toString();
     }
+
     public ErrorResponse(Exception e, Object object) {
         this(e);
         this.object = object;

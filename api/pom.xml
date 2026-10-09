@@ -6,62 +6,62 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>parent</artifactId>
-        <groupId>org.jboss.pnc.rex</groupId>
-        <version>1.2.4-SNAPSHOT</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jboss.pnc.rex</groupId>
+    <artifactId>parent</artifactId>
+    <version>1.2.4-SNAPSHOT</version>
+  </parent>
 
-    <artifactId>rex-api</artifactId>
-    <name>rex-api</name>
-    <packaging>jar</packaging>
+  <artifactId>rex-api</artifactId>
+  <packaging>jar</packaging>
+  <name>rex-api</name>
 
-    <properties>
-        <maven.compiler.release>11</maven.compiler.release>
-    </properties>
+  <properties>
+    <maven.compiler.release>11</maven.compiler.release>
+  </properties>
 
-    <dependencies>
-        <!-- Module inter-dependencies -->
-        <dependency>
-            <groupId>org.jboss.pnc.rex</groupId>
-            <artifactId>rex-dto</artifactId>
-        </dependency>
+  <dependencies>
+    <!-- Module inter-dependencies -->
+    <dependency>
+      <groupId>org.jboss.pnc.rex</groupId>
+      <artifactId>rex-dto</artifactId>
+    </dependency>
 
-        <!-- Quarkus extensions -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-openapi</artifactId>
-            <optional>true</optional>
-        </dependency>
+    <!-- Quarkus extensions -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-openapi</artifactId>
+      <optional>true</optional>
+    </dependency>
 
-        <!-- Standards dependencies -->
-        <dependency>
-            <groupId>jakarta.ws.rs</groupId>
-            <artifactId>jakarta.ws.rs-api</artifactId>
-        </dependency>
-    </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.eclipse.transformer</groupId>
-                <artifactId>transformer-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>default-jar</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <artifact>
-                                <groupId>${project.groupId}</groupId>
-                                <artifactId>${project.artifactId}</artifactId>
-                                <version>${project.version}</version>
-                            </artifact>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+    <!-- Standards dependencies -->
+    <dependency>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.eclipse.transformer</groupId>
+        <artifactId>transformer-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-jar</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <artifact>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>${project.artifactId}</artifactId>
+                <version>${project.version}</version>
+              </artifact>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
