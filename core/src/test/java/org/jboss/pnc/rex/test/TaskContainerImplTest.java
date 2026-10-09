@@ -11,16 +11,16 @@ import static org.jboss.pnc.rex.test.common.Assertions.*;
 import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.*;
 
-import com.google.common.graph.Graph;
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.restassured.common.mapper.TypeRef;
-import io.restassured.http.ContentType;
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import jakarta.inject.Inject;
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.TransactionManager;
 
-import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
@@ -33,10 +33,8 @@ import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
 import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
 import org.jboss.pnc.rex.core.TaskContainerImpl;
 import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
-import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;
@@ -44,19 +42,22 @@ import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
-
-import io.quarkus.test.junit.QuarkusTest;
 import org.jboss.pnc.rex.model.requests.StartRequest;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
-import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.graph.Graph;
+
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.common.mapper.TypeRef;
+import io.restassured.http.ContentType;
+import lombok.extern.slf4j.Slf4j;
 
 @QuarkusTest
 @Slf4j
@@ -119,21 +120,26 @@ class TaskContainerImplTest extends AbstractTest {
 
     @Test
     public void testInstall() throws Exception {
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .edge(new EdgeDTO("service2", "service1"))
-                .vertex("service1", CreateTaskDTO.builder()
-                        .name("service1")
-                        .controllerMode(Mode.IDLE)
-                        .remoteStart(getRequestWithoutStart("I am service1!"))
-                        .remoteCancel(getStopRequest("I am service1!"))
-                        .build())
-                .vertex("service2", CreateTaskDTO.builder()
-                        .name("service2")
-                        .controllerMode(Mode.IDLE)
-                        .remoteStart(getRequestWithoutStart("I am service2!"))
-                        .remoteCancel(getStopRequest("I am service2!"))
-                        .build())
-                .build());
+        taskEndpoint.start(
+                CreateGraphRequest.builder()
+                        .edge(new EdgeDTO("service2", "service1"))
+                        .vertex(
+                                "service1",
+                                CreateTaskDTO.builder()
+                                        .name("service1")
+                                        .controllerMode(Mode.IDLE)
+                                        .remoteStart(getRequestWithoutStart("I am service1!"))
+                                        .remoteCancel(getStopRequest("I am service1!"))
+                                        .build())
+                        .vertex(
+                                "service2",
+                                CreateTaskDTO.builder()
+                                        .name("service2")
+                                        .controllerMode(Mode.IDLE)
+                                        .remoteStart(getRequestWithoutStart("I am service2!"))
+                                        .remoteCancel(getStopRequest("I am service2!"))
+                                        .build())
+                        .build());
 
         Task task1 = container.getTask("service1");
         assertThat(task1)
@@ -165,15 +171,18 @@ class TaskContainerImplTest extends AbstractTest {
     @Test
     public void testDependantWaiting() throws Exception {
         String dependant = "dependant.service";
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .edge(new EdgeDTO(dependant, EXISTING_KEY))
-                .vertex(dependant, CreateTaskDTO.builder()
-                        .name(dependant)
-                        .remoteStart(getRequestWithoutStart("A payload"))
-                        .remoteCancel(getStopRequest("A payload"))
-                        .controllerMode(Mode.ACTIVE)
-                        .build())
-                .build());
+        taskEndpoint.start(
+                CreateGraphRequest.builder()
+                        .edge(new EdgeDTO(dependant, EXISTING_KEY))
+                        .vertex(
+                                dependant,
+                                CreateTaskDTO.builder()
+                                        .name(dependant)
+                                        .remoteStart(getRequestWithoutStart("A payload"))
+                                        .remoteCancel(getStopRequest("A payload"))
+                                        .controllerMode(Mode.ACTIVE)
+                                        .build())
+                        .build());
 
         Task task = container.getTask(dependant);
         assertThat(task)
@@ -185,15 +194,18 @@ class TaskContainerImplTest extends AbstractTest {
     @Test
     public void testDependantStartsThroughDependency() throws Exception {
         String dependant = "dependant.service";
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .edge(new EdgeDTO(dependant, EXISTING_KEY))
-                .vertex(dependant, CreateTaskDTO.builder()
-                        .name(dependant)
-                        .remoteStart(getRequestWithoutStart("A payload"))
-                        .remoteCancel(getStopRequest("A payload"))
-                        .controllerMode(Mode.ACTIVE)
-                        .build())
-                .build());
+        taskEndpoint.start(
+                CreateGraphRequest.builder()
+                        .edge(new EdgeDTO(dependant, EXISTING_KEY))
+                        .vertex(
+                                dependant,
+                                CreateTaskDTO.builder()
+                                        .name(dependant)
+                                        .remoteStart(getRequestWithoutStart("A payload"))
+                                        .remoteCancel(getStopRequest("A payload"))
+                                        .controllerMode(Mode.ACTIVE)
+                                        .build())
+                        .build());
 
         container.getTransactionManager().begin();
         controller.setMode(EXISTING_KEY, Mode.ACTIVE, true);
@@ -223,16 +235,16 @@ class TaskContainerImplTest extends AbstractTest {
 
         taskEndpoint.start(getComplexGraph(false));
 
-        assertCorrectTaskRelations(container.getTask(a), 0, new String[]{c, d}, null);
-        assertCorrectTaskRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
-        assertCorrectTaskRelations(container.getTask(c), 1, new String[]{f}, new String[]{a});
-        assertCorrectTaskRelations(container.getTask(d), 2, new String[]{e}, new String[]{a, b});
-        assertCorrectTaskRelations(container.getTask(e), 2, new String[]{g, h}, new String[]{d, b});
-        assertCorrectTaskRelations(container.getTask(f), 1, new String[]{i}, new String[]{c});
-        assertCorrectTaskRelations(container.getTask(g), 1, new String[]{i, j}, new String[]{e});
-        assertCorrectTaskRelations(container.getTask(h), 2, new String[]{j}, new String[]{e, b});
-        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[]{f, g});
-        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[]{g, h});
+        assertCorrectTaskRelations(container.getTask(a), 0, new String[] { c, d }, null);
+        assertCorrectTaskRelations(container.getTask(b), 0, new String[] { d, e, h }, null);
+        assertCorrectTaskRelations(container.getTask(c), 1, new String[] { f }, new String[] { a });
+        assertCorrectTaskRelations(container.getTask(d), 2, new String[] { e }, new String[] { a, b });
+        assertCorrectTaskRelations(container.getTask(e), 2, new String[] { g, h }, new String[] { d, b });
+        assertCorrectTaskRelations(container.getTask(f), 1, new String[] { i }, new String[] { c });
+        assertCorrectTaskRelations(container.getTask(g), 1, new String[] { i, j }, new String[] { e });
+        assertCorrectTaskRelations(container.getTask(h), 2, new String[] { j }, new String[] { e, b });
+        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[] { f, g });
+        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[] { g, h });
     }
 
     @Test
@@ -256,17 +268,17 @@ class TaskContainerImplTest extends AbstractTest {
 
         taskEndpoint.start(graph);
 
-        assertCorrectTaskRelations(container.getTask(a), 0, new String[]{c, d}, null);
-        assertCorrectTaskRelations(container.getTask(b), 0, new String[]{d, e, h}, null);
-        assertCorrectTaskRelations(container.getTask(c), 1, new String[]{f, EXISTING_KEY}, new String[]{a});
-        assertCorrectTaskRelations(container.getTask(d), 2, new String[]{e, EXISTING_KEY}, new String[]{a, b});
-        assertCorrectTaskRelations(container.getTask(e), 2, new String[]{g, h}, new String[]{d, b});
-        assertCorrectTaskRelations(container.getTask(f), 2, new String[]{i}, new String[]{c, EXISTING_KEY});
-        assertCorrectTaskRelations(container.getTask(g), 1, new String[]{i, j}, new String[]{e});
-        assertCorrectTaskRelations(container.getTask(h), 2, new String[]{j}, new String[]{e, b});
-        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[]{f, g});
-        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[]{g, h});
-        assertCorrectTaskRelations(container.getTask(EXISTING_KEY), 2, new String[]{f}, new String[]{c, d});
+        assertCorrectTaskRelations(container.getTask(a), 0, new String[] { c, d }, null);
+        assertCorrectTaskRelations(container.getTask(b), 0, new String[] { d, e, h }, null);
+        assertCorrectTaskRelations(container.getTask(c), 1, new String[] { f, EXISTING_KEY }, new String[] { a });
+        assertCorrectTaskRelations(container.getTask(d), 2, new String[] { e, EXISTING_KEY }, new String[] { a, b });
+        assertCorrectTaskRelations(container.getTask(e), 2, new String[] { g, h }, new String[] { d, b });
+        assertCorrectTaskRelations(container.getTask(f), 2, new String[] { i }, new String[] { c, EXISTING_KEY });
+        assertCorrectTaskRelations(container.getTask(g), 1, new String[] { i, j }, new String[] { e });
+        assertCorrectTaskRelations(container.getTask(h), 2, new String[] { j }, new String[] { e, b });
+        assertCorrectTaskRelations(container.getTask(i), 2, null, new String[] { f, g });
+        assertCorrectTaskRelations(container.getTask(j), 2, null, new String[] { g, h });
+        assertCorrectTaskRelations(container.getTask(EXISTING_KEY), 2, new String[] { f }, new String[] { c, d });
     }
 
     @Test
@@ -281,7 +293,7 @@ class TaskContainerImplTest extends AbstractTest {
         String h = "h";
         String i = "i";
         String j = "j";
-        String[] services = new String[]{a, b, c, d, e, f, g, h, i, j, EXISTING_KEY};
+        String[] services = new String[] { a, b, c, d, e, f, g, h, i, j, EXISTING_KEY };
 
         Task existingTask = container.getTask(EXISTING_KEY);
         Task updatedTask = existingTask.toBuilder().remoteStart(getEndpointWithStart(EXISTING_KEY)).build();
@@ -320,7 +332,7 @@ class TaskContainerImplTest extends AbstractTest {
         String i = "i";
         String j = "j";
         String k = "k";
-        String[] services = new String[]{a, b, c, d, e, f, g, h, i, j, k};
+        String[] services = new String[] { a, b, c, d, e, f, g, h, i, j, k };
 
         CreateGraphRequest request = CreateGraphRequest.builder()
                 .edge(new EdgeDTO(b, a))
@@ -389,11 +401,14 @@ class TaskContainerImplTest extends AbstractTest {
     @Test
     public void testValidConfigWithNoNotificationAndWaiting() {
         CreateGraphRequest request = CreateGraphRequest.builder()
-                .vertex("ignore", getMockTaskWithoutStart("ignore", Mode.IDLE)
-                        .toBuilder()
-                        .callerNotifications(null)
-                        .configuration(ConfigurationDTO.builder().delayDependantsForFinalNotification(true).build())
-                        .build())
+                .vertex(
+                        "ignore",
+                        getMockTaskWithoutStart("ignore", Mode.IDLE)
+                                .toBuilder()
+                                .callerNotifications(null)
+                                .configuration(
+                                        ConfigurationDTO.builder().delayDependantsForFinalNotification(true).build())
+                                .build())
                 .build();
 
         assertThatThrownBy(() -> taskEndpoint.start(request))
@@ -408,7 +423,7 @@ class TaskContainerImplTest extends AbstractTest {
         manager.commit();
 
         CreateGraphRequest request = getSingleWithoutStart("newDependency").toBuilder()
-                .edge(new EdgeDTO(EXISTING_KEY,"newDependency"))
+                .edge(new EdgeDTO(EXISTING_KEY, "newDependency"))
                 .build();
 
         assertThatThrownBy(() -> taskEndpoint.start(request))
@@ -445,7 +460,6 @@ class TaskContainerImplTest extends AbstractTest {
                 .isInstanceOf(BadRequestException.class);
     }
 
-
     @Test
     void shouldFailOnStartingTasksWithSameConstraint() {
         CreateTaskDTO withConstraint1 = getMockTaskWithoutStart("with-constraint1", Mode.IDLE).toBuilder()
@@ -455,10 +469,10 @@ class TaskContainerImplTest extends AbstractTest {
                 .constraint("common")
                 .build();
 
-        CreateGraphRequest firstRequest =  CreateGraphRequest.builder()
+        CreateGraphRequest firstRequest = CreateGraphRequest.builder()
                 .vertex("with-constraint1", withConstraint1)
                 .build();
-        CreateGraphRequest secondRequest =  CreateGraphRequest.builder()
+        CreateGraphRequest secondRequest = CreateGraphRequest.builder()
                 .vertex("with-constraint2", withConstraint2)
                 .build();
 
@@ -478,18 +492,17 @@ class TaskContainerImplTest extends AbstractTest {
                 .constraint("common")
                 .build();
 
-        CreateGraphRequest firstRequest =  CreateGraphRequest.builder()
+        CreateGraphRequest firstRequest = CreateGraphRequest.builder()
                 .vertex(taskUno, withConstraint1)
                 .build();
         taskEndpoint.start(firstRequest);
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, taskUno);
 
-
         // DO SECOND REQUEST WITH THE SAME CONSTRAINT
         CreateTaskDTO withConstraint2 = getMockTaskWithStart(taskDos, Mode.ACTIVE).toBuilder()
                 .constraint("common")
                 .build();
-        CreateGraphRequest secondRequest =  CreateGraphRequest.builder()
+        CreateGraphRequest secondRequest = CreateGraphRequest.builder()
                 .vertex(taskDos, withConstraint2)
                 .build();
         taskEndpoint.start(secondRequest);
@@ -538,20 +551,37 @@ class TaskContainerImplTest extends AbstractTest {
 
         httpEndpoint.startRecordingQueue();
 
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .edge(new EdgeDTO("service2", "service1"))
-                .vertex("service1", CreateTaskDTO.builder()
-                        .name("service1")
-                        .remoteStart(getRequestWithStart("I am service1!"))
-                        .remoteCancel(getStopRequestWithCallback("I am service1!"))
-                        .build())
-                .vertex("service2", CreateTaskDTO.builder()
-                        .name("service2")
-                        .remoteStart(getRequestWithStart("I am service2!"))
-                        .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(true, false, false, null, null, false, 3, false, null, null, null))
-                        .build())
-                .build());
+        taskEndpoint.start(
+                CreateGraphRequest.builder()
+                        .edge(new EdgeDTO("service2", "service1"))
+                        .vertex(
+                                "service1",
+                                CreateTaskDTO.builder()
+                                        .name("service1")
+                                        .remoteStart(getRequestWithStart("I am service1!"))
+                                        .remoteCancel(getStopRequestWithCallback("I am service1!"))
+                                        .build())
+                        .vertex(
+                                "service2",
+                                CreateTaskDTO.builder()
+                                        .name("service2")
+                                        .remoteStart(getRequestWithStart("I am service2!"))
+                                        .remoteCancel(getStopRequestWithCallback("I am service2!"))
+                                        .configuration(
+                                                new ConfigurationDTO(
+                                                        true,
+                                                        false,
+                                                        false,
+                                                        null,
+                                                        null,
+                                                        false,
+                                                        3,
+                                                        false,
+                                                        null,
+                                                        null,
+                                                        null))
+                                        .build())
+                        .build());
 
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, "service1", "service2");
 
@@ -574,20 +604,37 @@ class TaskContainerImplTest extends AbstractTest {
 
         httpEndpoint.startRecordingQueue();
 
-        taskEndpoint.start(CreateGraphRequest.builder()
-                .edge(new EdgeDTO("service2", "service1"))
-                .vertex("service1", CreateTaskDTO.builder()
-                        .name("service1")
-                        .remoteStart(getRequestWithStart("I am service1!"))
-                        .remoteCancel(getStopRequestWithCallback("I am service1!"))
-                        .build())
-                .vertex("service2", CreateTaskDTO.builder()
-                        .name("service2")
-                        .remoteStart(getRequestWithStart("I am service2!"))
-                        .remoteCancel(getStopRequestWithCallback("I am service2!"))
-                        .configuration(new ConfigurationDTO(false, false, false, null, null, false, 3, false, null, null, null))
-                        .build())
-                .build());
+        taskEndpoint.start(
+                CreateGraphRequest.builder()
+                        .edge(new EdgeDTO("service2", "service1"))
+                        .vertex(
+                                "service1",
+                                CreateTaskDTO.builder()
+                                        .name("service1")
+                                        .remoteStart(getRequestWithStart("I am service1!"))
+                                        .remoteCancel(getStopRequestWithCallback("I am service1!"))
+                                        .build())
+                        .vertex(
+                                "service2",
+                                CreateTaskDTO.builder()
+                                        .name("service2")
+                                        .remoteStart(getRequestWithStart("I am service2!"))
+                                        .remoteCancel(getStopRequestWithCallback("I am service2!"))
+                                        .configuration(
+                                                new ConfigurationDTO(
+                                                        false,
+                                                        false,
+                                                        false,
+                                                        null,
+                                                        null,
+                                                        false,
+                                                        3,
+                                                        false,
+                                                        null,
+                                                        null,
+                                                        null))
+                                        .build())
+                        .build());
 
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, "service1", "service2");
 
@@ -656,25 +703,29 @@ class TaskContainerImplTest extends AbstractTest {
 
     private void putDummyTask() {
         CreateGraphRequest dummyTask = CreateGraphRequest.builder()
-            .vertex(EXISTING_KEY, CreateTaskDTO.builder()
-                .name(EXISTING_KEY)
-                .controllerMode(Mode.IDLE)
-                .remoteStart(getRequestWithoutStart("{id: 100}"))
-                .remoteCancel(getStopRequest("{id: 100}"))
-                .build())
-            .build();
+                .vertex(
+                        EXISTING_KEY,
+                        CreateTaskDTO.builder()
+                                .name(EXISTING_KEY)
+                                .controllerMode(Mode.IDLE)
+                                .remoteStart(getRequestWithoutStart("{id: 100}"))
+                                .remoteCancel(getStopRequest("{id: 100}"))
+                                .build())
+                .build();
 
         Set<TaskDTO> response = with()
-            .body(dummyTask)
+                .body(dummyTask)
                 .contentType(ContentType.JSON)
-            .post(taskEndpointURI.getPath())
-            .then()
+                .post(taskEndpointURI.getPath())
+                .then()
                 .statusCode(200)
-            .extract().as(new TypeRef<>(){});
+                .extract()
+                .as(new TypeRef<>() {
+                });
 
         assertThat(response)
-            .isNotNull()
-            .extracting("name")
-            .contains(EXISTING_KEY);
+                .isNotNull()
+                .extracting("name")
+                .contains(EXISTING_KEY);
     }
 }

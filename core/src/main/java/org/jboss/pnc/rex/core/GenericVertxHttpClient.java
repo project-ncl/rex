@@ -4,6 +4,28 @@
  */
 package org.jboss.pnc.rex.core;
 
+import static java.time.Duration.of;
+
+import java.net.URI;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.control.ActivateRequestContext;
+import jakarta.ws.rs.core.HttpHeaders;
+
+import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
+import org.jboss.pnc.rex.common.enums.Method;
+import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
+import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
+import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
+import org.jboss.pnc.rex.core.config.RequestRetryPolicy;
+import org.jboss.pnc.rex.core.config.StatusCodeRetryPolicy;
+import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
+import org.jboss.pnc.rex.model.Header;
 
 import io.smallrye.mutiny.Context;
 import io.smallrye.mutiny.Uni;
@@ -18,28 +40,7 @@ import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
-import jakarta.enterprise.context.control.ActivateRequestContext;
-import jakarta.ws.rs.core.HttpHeaders;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
-import org.jboss.pnc.rex.common.enums.Method;
-import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
-import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
-import org.jboss.pnc.rex.core.config.RequestRetryPolicy;
-import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
-import org.jboss.pnc.rex.core.config.StatusCodeRetryPolicy;
-import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
-import org.jboss.pnc.rex.model.Header;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import java.net.URI;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import static java.time.Duration.of;
 
 @Slf4j
 @ApplicationScoped
@@ -54,9 +55,10 @@ public class GenericVertxHttpClient {
     private final StatusCodeRetryPolicy statusCodeRetryPolicy;
     private final PNCClientAuth pncClientAuth;
 
-    public GenericVertxHttpClient(Vertx vertx,
-                                  InternalRetryPolicy internalPolicy,
-                                  HttpConfiguration configuration,
+    public GenericVertxHttpClient(
+            Vertx vertx,
+            InternalRetryPolicy internalPolicy,
+            HttpConfiguration configuration,
             PNCClientAuth pncClientAuth) {
         this.client = WebClient.create(vertx);
         this.internalPolicy = internalPolicy;
@@ -70,6 +72,7 @@ public class GenericVertxHttpClient {
 
     /**
      * Must be ran on a thread that can block
+     * 
      * @param remoteEndpoint
      * @param method
      * @param headers
@@ -77,20 +80,22 @@ public class GenericVertxHttpClient {
      * @param onResponse
      */
     @ActivateRequestContext
-    public void makeRequest(URI remoteEndpoint,
-                             Method method,
-                             List<Header> headers,
-                             Object requestBody,
-                             Consumer<HttpResponse<Buffer>> onResponse,
-                             Function<Throwable, Uni<Void>> onConnectionUnreachable) {
-        makeReactiveRequest(remoteEndpoint,
+    public void makeRequest(
+            URI remoteEndpoint,
+            Method method,
+            List<Header> headers,
+            Object requestBody,
+            Consumer<HttpResponse<Buffer>> onResponse,
+            Function<Throwable, Uni<Void>> onConnectionUnreachable) {
+        makeReactiveRequest(
+                remoteEndpoint,
                 method,
                 headers,
                 requestBody,
                 onResponse,
                 onConnectionUnreachable)
-            .await() // TODO make configurable?
-            .indefinitely();
+                .await() // TODO make configurable?
+                .indefinitely();
     }
 
     private boolean isSSL(URI remoteEndpoint) {
@@ -113,7 +118,10 @@ public class GenericVertxHttpClient {
         return remoteEndpoint.getPort();
     }
 
-    private Uni<HttpResponse<Buffer>> handleRequest(Uni<HttpResponse<Buffer>> uni, Consumer<HttpResponse<Buffer>> onResponse, Function<Throwable, Uni<Void>> onConnectionUnreachable) {
+    private Uni<HttpResponse<Buffer>> handleRequest(
+            Uni<HttpResponse<Buffer>> uni,
+            Consumer<HttpResponse<Buffer>> onResponse,
+            Function<Throwable, Uni<Void>> onConnectionUnreachable) {
         // apply retry if http response error is received
         Uni<HttpResponse<Buffer>> uniWithCtx = uni.withContext((u, ctx) -> u.invoke(Unchecked.consumer(resp -> {
             if (resp != null && statusCodeRetryPolicy.shouldRetry(resp.statusCode())) {
@@ -129,25 +137,27 @@ public class GenericVertxHttpClient {
         // case when http request succeeds and a body is received
         uniWithCtx = uniWithCtx.onItem()
                 // create a separate uni to decouple internal failure tolerance
-                .transformToUni(i -> Uni.createFrom()
-                    .item(i)
-                    // onResponse is transactional, so it needs a worker thread
-                    // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.35#methods-annotated-with-transactional-are-no-longer-automatically-considered-blocking-by-quarkus
-                    .emitOn(Infrastructure.getDefaultExecutor())
-                    .invoke(onResponse)
-                    .onFailure(this::abortOnNonRecoverable)
-                        .retry()
-                            .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
-                            .withJitter(0.5)
-                            .atMost(20)
-                    .onFailure(throwable -> !(throwable instanceof RequestRetryException || throwable instanceof HttpResponseException)) // propagate to exception to outer loop
-                        // recover with null so that Uni doesn't trigger outer onFailure() handlers
-                        .recoverWithNull()
-                );
+                .transformToUni(
+                        i -> Uni.createFrom()
+                                .item(i)
+                                // onResponse is transactional, so it needs a worker thread
+                                // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.35#methods-annotated-with-transactional-are-no-longer-automatically-considered-blocking-by-quarkus
+                                .emitOn(Infrastructure.getDefaultExecutor())
+                                .invoke(onResponse)
+                                .onFailure(this::abortOnNonRecoverable)
+                                .retry()
+                                .withBackOff(of(10, ChronoUnit.MILLIS), of(100, ChronoUnit.MILLIS))
+                                .withJitter(0.5)
+                                .atMost(20)
+                                .onFailure(
+                                        throwable -> !(throwable instanceof RequestRetryException
+                                                || throwable instanceof HttpResponseException)) // propagate to exception to outer loop
+                                // recover with null so that Uni doesn't trigger outer onFailure() handlers
+                                .recoverWithNull());
 
         // cases when http request method itself fails (unreachable host)
         uniWithCtx = uniWithCtx.onFailure(this::skipOnResponse)
-                .invoke(t ->  {
+                .invoke(t -> {
                     if (t instanceof RequestRetryException) {
                         log.warn("HTTP-CLIENT : Http client call failed. RETRYING.");
                     }
@@ -173,18 +183,18 @@ public class GenericVertxHttpClient {
             return toReturn.onItem().transform(ign -> null);
         };
 
-        uniWithCtx = uniWithCtx.withContext((u, ctx) ->
-                u.onFailure().recoverWithUni(t -> onError.apply(t, ctx)))
+        uniWithCtx = uniWithCtx.withContext((u, ctx) -> u.onFailure().recoverWithUni(t -> onError.apply(t, ctx)))
                 // recover with null so that Uni doesn't propagate the exception
-                .onFailure().recoverWithNull();
+                .onFailure()
+                .recoverWithNull();
 
         return uniWithCtx;
     }
 
     private boolean abortOnNonRecoverable(Throwable failure) {
         return !internalPolicy.abortOn().contains(failure.getClass())
-            // This is internal retry loop, RequestRetryException to go into outer Retry loop where the request is retried
-            && !(failure instanceof RequestRetryException);
+                // This is internal retry loop, RequestRetryException to go into outer Retry loop where the request is retried
+                && !(failure instanceof RequestRetryException);
     }
 
     /**
@@ -195,13 +205,15 @@ public class GenericVertxHttpClient {
     }
 
     @ActivateRequestContext
-    public Uni<HttpResponse<Buffer>> makeReactiveRequest(URI remoteEndpoint,
-                             Method method,
-                             List<Header> headers,
-                             Object requestBody,
-                             Consumer<HttpResponse<Buffer>> onResponse,
-                             Function<Throwable, Uni<Void>> onConnectionUnreachable) {
-        HttpRequest<Buffer> request = client.request(toVertxMethod(method),
+    public Uni<HttpResponse<Buffer>> makeReactiveRequest(
+            URI remoteEndpoint,
+            Method method,
+            List<Header> headers,
+            Object requestBody,
+            Consumer<HttpResponse<Buffer>> onResponse,
+            Function<Throwable, Uni<Void>> onConnectionUnreachable) {
+        HttpRequest<Buffer> request = client.request(
+                toVertxMethod(method),
                 getPort(remoteEndpoint),
                 remoteEndpoint.getHost(),
                 getPath(remoteEndpoint));
@@ -210,7 +222,8 @@ public class GenericVertxHttpClient {
         request.followRedirects(configuration.followRedirects());
         request.timeout(configuration.idleTimeout().toMillis());
 
-        log.trace("HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
+        log.trace(
+                "HTTP-CLIENT : Making request \n URL: {}\n METHOD: {}\n HEADERS: {}\n BODY: {}",
                 remoteEndpoint,
                 method,
                 headers.toString(),
@@ -251,7 +264,9 @@ public class GenericVertxHttpClient {
     /**
      * Interceptor that is called every request. Ensures that the accessToken is refreshed during retries.
      *
-     * @link <a href="https://stackoverflow.com/questions/76985918/custom-interceptor-in-quarkus-mutiny-web-client">Stack Overflow</a>
+     * @link <a href=
+     *       "https://stackoverflow.com/questions/76985918/custom-interceptor-in-quarkus-mutiny-web-client">Stack
+     *       Overflow</a>
      * @param context httpContext
      */
     private void putOrRefreshToken(HttpContext<?> context) {

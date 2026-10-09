@@ -4,35 +4,35 @@
  */
 package org.jboss.pnc.rex.model;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.extern.jackson.Jacksonized;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.jboss.pnc.rex.common.enums.Transition;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.Comparator;
+
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.jboss.pnc.rex.common.enums.Transition;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.extern.jackson.Jacksonized;
 
 @Builder
 @Jacksonized
 @EqualsAndHashCode
-@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@AllArgsConstructor(onConstructor_ = { @ProtoFactory })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TransitionTime implements Comparable<TransitionTime> {
 
-    @Getter(onMethod_ = {@ProtoField(number = 1)})
+    @Getter(onMethod_ = { @ProtoField(number = 1) })
     private final Transition transition;
 
-    @Getter(onMethod_ = {@ProtoField(number = 2)})
+    @Getter(onMethod_ = { @ProtoField(number = 2) })
     private final Instant time;
 
     @Override
@@ -51,6 +51,7 @@ public class TransitionTime implements Comparable<TransitionTime> {
 
     /**
      * f.e. 9/12/23, 5:56:49 PM CEST
+     * 
      * @return formatted time
      */
     private String formatTime(Instant time) {

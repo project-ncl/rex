@@ -9,7 +9,9 @@ import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.model.Configuration;
 import org.mapstruct.*;
 
-@Mapper(config = MapperCentralConfig.class, imports = {ConfigurationDefaults.class},
+@Mapper(
+        config = MapperCentralConfig.class,
+        imports = { ConfigurationDefaults.class },
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_DEFAULT,
         nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
 public interface ConfigurationMapper extends EntityMapper<ConfigurationDTO, Configuration> {
@@ -21,14 +23,16 @@ public interface ConfigurationMapper extends EntityMapper<ConfigurationDTO, Conf
     @Mapping(target = "passMDCInRequestBody", defaultValue = "" + ConfigurationDefaults.passMDCInRequestBody)
     @Mapping(target = "passOTELInRequestBody", defaultValue = "" + ConfigurationDefaults.passOTELInRequestBody)
     @Mapping(target = "cancelTimeout", defaultExpression = "java( ConfigurationDefaults.cancelTimeout )")
-    @Mapping(target = "delayDependantsForFinalNotification",
+    @Mapping(
+            target = "delayDependantsForFinalNotification",
             defaultValue = "" + ConfigurationDefaults.delayDependantsForFinalNotification)
     @Mapping(target = "rollbackLimit", defaultValue = "" + ConfigurationDefaults.rollbackLimit)
     @Mapping(target = "heartbeatInterval", defaultExpression = "java( ConfigurationDefaults.heartbeatInterval )")
-    @Mapping(target = "heartbeatInitialDelay", defaultExpression = "java( ConfigurationDefaults.heartbeatInitialDelay )")
+    @Mapping(
+            target = "heartbeatInitialDelay",
+            defaultExpression = "java( ConfigurationDefaults.heartbeatInitialDelay )")
     @Named("std") //avoid ambiguity
     Configuration _toDB(ConfigurationDTO dtoEntity);
-
 
     /**
      * Creating empty ConfigurationDTO will cause Mapstruct to fill default ConfigurationDTO.* properties if null.

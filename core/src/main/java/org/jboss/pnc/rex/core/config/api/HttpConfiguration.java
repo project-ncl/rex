@@ -4,12 +4,13 @@
  */
 package org.jboss.pnc.rex.core.config.api;
 
+import java.time.Duration;
+
+import org.jboss.pnc.rex.core.config.RequestRetryPolicy;
+import org.jboss.pnc.rex.core.config.StatusCodeRetryPolicy;
+
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
-import org.jboss.pnc.rex.core.config.StatusCodeRetryPolicy;
-import org.jboss.pnc.rex.core.config.RequestRetryPolicy;
-
-import java.time.Duration;
 
 /**
  * Configuration for internal HTTP client requests from Rex.

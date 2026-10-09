@@ -4,11 +4,15 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.arc.Unremovable;
-import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.core.buffer.Buffer;
-import io.vertx.mutiny.ext.web.client.HttpResponse;
-import lombok.extern.slf4j.Slf4j;
+import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
 import org.jboss.pnc.rex.core.mapper.MiniTaskMapper;
@@ -17,13 +21,11 @@ import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.requests.NotificationRequest;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
-import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
+import io.quarkus.arc.Unremovable;
+import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Unremovable
 @ApplicationScoped
@@ -48,7 +50,10 @@ public class CallerNotificationClient {
 
         if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeyMapping() != null) {
             var keys = task.getConfiguration().getMdcHeaderKeyMapping();
-            var headers = task.getCallerNotifications().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
+            var headers = task.getCallerNotifications()
+                    .getHeaders()
+                    .stream()
+                    .collect(Collectors.toMap(Header::getName, Header::getValue));
 
             return wrapWithMDC(keys, headers, () -> notifyCallerInternal(transition, task));
         } else {
@@ -63,8 +68,10 @@ public class CallerNotificationClient {
         try {
             uri = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Url for notifications is not a valid URL for task with name "
-                    + task.getName(), e);
+            throw new IllegalArgumentException(
+                    "Url for notifications is not a valid URL for task with name "
+                            + task.getName(),
+                    e);
         }
 
         NotificationRequest request = NotificationRequest.builder()
@@ -74,13 +81,15 @@ public class CallerNotificationClient {
                 .task(miniMapper.minimize(task))
                 .build();
 
-        log.info("NOTIFICATION {}: {} transition. Sending notification. REQUEST: {}.",
+        log.info(
+                "NOTIFICATION {}: {} transition. Sending notification. REQUEST: {}.",
                 task.getName(),
                 transition,
                 request.toString());
 
         AtomicBoolean result = new AtomicBoolean(false);
-        client.makeRequest(uri,
+        client.makeRequest(
+                uri,
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
@@ -95,7 +104,8 @@ public class CallerNotificationClient {
 
             result.set(true);
         } else if (300 <= response.statusCode() && response.statusCode() <= 499) {
-            log.warn("NOTIFICATION {}: Failure while sending notification for transition {}. RESPONSE: {}",
+            log.warn(
+                    "NOTIFICATION {}: Failure while sending notification for transition {}. RESPONSE: {}",
                     task.getName(),
                     transition,
                     response.bodyAsString());
@@ -103,7 +113,8 @@ public class CallerNotificationClient {
             result.set(false);
         } else {
             // trigger retry
-            log.warn("NOTIFICATION {}: System Failure while sending notification for transition {}. RESPONSE: {}",
+            log.warn(
+                    "NOTIFICATION {}: System Failure while sending notification for transition {}. RESPONSE: {}",
                     task.getName(),
                     transition,
                     response.bodyAsString());

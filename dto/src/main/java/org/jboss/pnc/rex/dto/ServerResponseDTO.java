@@ -4,17 +4,17 @@
  */
 package org.jboss.pnc.rex.dto;
 
+import java.util.Set;
+
+import org.jboss.pnc.rex.common.enums.Origin;
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
+import org.jboss.pnc.rex.common.enums.State;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.jboss.pnc.rex.common.enums.Origin;
-import org.jboss.pnc.rex.common.enums.ResponseFlag;
-import org.jboss.pnc.rex.common.enums.State;
-
-import java.util.Map;
-import java.util.Set;
 
 @Getter
 @Builder

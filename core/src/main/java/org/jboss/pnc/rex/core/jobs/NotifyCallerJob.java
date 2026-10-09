@@ -4,18 +4,16 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
+import java.util.TreeSet;
+
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.core.CallerNotificationClient;
 import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
-import jakarta.enterprise.event.TransactionPhase;
-import jakarta.enterprise.inject.spi.CDI;
-
-import java.util.ArrayList;
-import java.util.TreeSet;
 
 public class NotifyCallerJob extends ControllerJob {
 
@@ -36,17 +34,19 @@ public class NotifyCallerJob extends ControllerJob {
     private static Task bestEffortCopy(Task task) {
         return task.toBuilder()
                 .timestamps(new TreeSet<>(task.getTimestamps()))
-//                .serverResponses(new ArrayList<>(task.getServerResponses()))
+                //                .serverResponses(new ArrayList<>(task.getServerResponses()))
                 .rollbackMeta(task.getRollbackMeta() != null ? task.getRollbackMeta().toBuilder().build() : null)
                 .configuration(task.getConfiguration() != null ? task.getConfiguration().toBuilder().build() : null)
                 .build();
     }
 
     @Override
-    protected void beforeExecute() {}
+    protected void beforeExecute() {
+    }
 
     @Override
-    protected void afterExecute() {}
+    protected void afterExecute() {
+    }
 
     @Override
     public boolean execute() {
@@ -54,7 +54,8 @@ public class NotifyCallerJob extends ControllerJob {
     }
 
     @Override
-    protected void onFailure() {}
+    protected void onFailure() {
+    }
 
     @Override
     protected void onException(Throwable e) {

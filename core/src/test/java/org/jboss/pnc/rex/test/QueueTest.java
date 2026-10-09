@@ -4,30 +4,6 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.QueueEndpoint;
-import org.jboss.pnc.rex.api.TaskEndpoint;
-import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.core.TaskContainerImpl;
-import org.jboss.pnc.rex.dto.EdgeDTO;
-import org.jboss.pnc.rex.dto.responses.LongResponse;
-import org.jboss.pnc.rex.test.common.AbstractTest;
-import org.jboss.pnc.rex.test.common.TestData;
-import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
-import org.jboss.pnc.rex.dto.TaskDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.junit.jupiter.api.Test;
-
-import jakarta.inject.Inject;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-
 import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,6 +14,30 @@ import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.getAllParameters;
 import static org.jboss.pnc.rex.test.common.TestData.getComplexGraph;
 import static org.jboss.pnc.rex.test.common.TestData.getSingleWithoutStart;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.rex.api.QueueEndpoint;
+import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.core.TaskContainerImpl;
+import org.jboss.pnc.rex.dto.EdgeDTO;
+import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.rex.dto.responses.LongResponse;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.common.TestData;
+import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
+import org.junit.jupiter.api.Test;
+
+import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
 public class QueueTest extends AbstractTest {
@@ -62,12 +62,13 @@ public class QueueTest extends AbstractTest {
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.start(graph);
 
-        assertThatThrownBy(() -> waitTillTasksAre(
-                State.SUCCESSFUL,
-                container,
-                1,
-                graph.getVertices().keySet().toArray(new String[0]))
-        ).isInstanceOf(AssertionError.class);
+        assertThatThrownBy(
+                () -> waitTillTasksAre(
+                        State.SUCCESSFUL,
+                        container,
+                        1,
+                        graph.getVertices().keySet().toArray(new String[0])))
+                .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -80,7 +81,7 @@ public class QueueTest extends AbstractTest {
     }
 
     @Test
-    void testComplexGraphSucceedsAfterChangingMaxToNonZero() throws Exception{
+    void testComplexGraphSucceedsAfterChangingMaxToNonZero() throws Exception {
         queue.setConcurrent(0L);
         CreateGraphRequest graph = getComplexGraph(true);
         taskEndpoint.start(graph);
@@ -111,7 +112,7 @@ public class QueueTest extends AbstractTest {
         assertThat(task.getState()).isEqualTo(ENQUEUED);
 
         queue.setConcurrent(1L);
-        waitTillTaskTransitionsInto(State.UP,EXISTING_KEY);
+        waitTillTaskTransitionsInto(State.UP, EXISTING_KEY);
     }
 
     @Test
@@ -214,7 +215,6 @@ public class QueueTest extends AbstractTest {
         taskEndpoint.start(graph);
         Thread.sleep(100);
         var tasks = taskEndpoint.getAll(getAllParameters(), null);
-
 
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
         Thread.sleep(100);

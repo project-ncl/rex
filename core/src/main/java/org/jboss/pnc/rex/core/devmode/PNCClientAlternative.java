@@ -4,17 +4,19 @@
  */
 package org.jboss.pnc.rex.core.devmode;
 
-import io.quarkus.arc.lookup.LookupIfProperty;
-import io.quarkus.arc.profile.IfBuildProfile;
+import java.io.IOException;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
+
 import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 
-import java.io.IOException;
+import io.quarkus.arc.lookup.LookupIfProperty;
+import io.quarkus.arc.profile.IfBuildProfile;
 
 @ApplicationScoped
 @LookupIfProperty(name = "quarkus.oidc-client.enabled", stringValue = "false")
-@IfBuildProfile(anyOf = {"dev", "test", "local"})
+@IfBuildProfile(anyOf = { "dev", "test", "local" })
 /*
  * To be able to start in development/test mode without authorization
  */

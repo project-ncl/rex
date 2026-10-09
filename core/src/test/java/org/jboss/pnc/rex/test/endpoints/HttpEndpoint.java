@@ -4,34 +4,6 @@
  */
 package org.jboss.pnc.rex.test.endpoints;
 
-import io.smallrye.mutiny.Uni;
-import io.vertx.core.impl.ConcurrentHashSet;
-import io.vertx.mutiny.core.buffer.Buffer;
-import io.vertx.mutiny.ext.web.client.HttpResponse;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.context.ManagedExecutor;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.rex.common.enums.Method;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.core.GenericVertxHttpClient;
-import org.jboss.pnc.rex.core.counter.Counter;
-import org.jboss.pnc.rex.core.counter.Running;
-import org.jboss.pnc.rex.model.Header;
-import org.jboss.pnc.rex.model.requests.RollbackRequest;
-import org.jboss.pnc.rex.model.requests.StartRequest;
-import org.jboss.pnc.rex.model.requests.StopRequest;
-
-import jakarta.inject.Inject;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import org.jboss.pnc.rex.test.common.Assertions;
-import org.jboss.pnc.rex.test.common.TransitionRecorder;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -44,6 +16,35 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import org.eclipse.microprofile.context.ManagedExecutor;
+import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.rex.common.enums.Method;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.core.GenericVertxHttpClient;
+import org.jboss.pnc.rex.core.counter.Counter;
+import org.jboss.pnc.rex.core.counter.Running;
+import org.jboss.pnc.rex.model.Header;
+import org.jboss.pnc.rex.model.requests.RollbackRequest;
+import org.jboss.pnc.rex.model.requests.StartRequest;
+import org.jboss.pnc.rex.model.requests.StopRequest;
+import org.jboss.pnc.rex.test.common.Assertions;
+import org.jboss.pnc.rex.test.common.TransitionRecorder;
+
+import io.smallrye.mutiny.Uni;
+import io.vertx.core.impl.ConcurrentHashSet;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Path("/test")
@@ -141,7 +142,6 @@ public class HttpEndpoint {
         return Response.ok("{\"task\": \"" + request.getPayload() + "\"}").build();
     }
 
-
     @POST
     @Path("/425eventuallyOK")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -186,7 +186,7 @@ public class HttpEndpoint {
             Assertions.waitTillTaskTransitionsInto(waitFor, taskName, occurrences);
         } else {
             try {
-                Thread.sleep(Duration.between(Instant.now(), Instant.now().plusMillis(20)).toMillis()+10);
+                Thread.sleep(Duration.between(Instant.now(), Instant.now().plusMillis(20)).toMillis() + 10);
             } catch (InterruptedException e) {
                 //ignore
             }
@@ -197,12 +197,13 @@ public class HttpEndpoint {
         callbackHeaders.add(Header.builder().name("Content-Type").value("application/json").build());
 
         if (callback.getHeaders() != null) {
-            for (Request.Header header: callback.getHeaders()) {
+            for (Request.Header header : callback.getHeaders()) {
                 callbackHeaders.add(Header.builder().name(header.getName()).value(header.getValue()).build());
             }
         }
 
-        client.makeRequest(callback.getUri(),
+        client.makeRequest(
+                callback.getUri(),
                 Method.valueOf(callback.getMethod().toString()),
                 callbackHeaders,
                 body,

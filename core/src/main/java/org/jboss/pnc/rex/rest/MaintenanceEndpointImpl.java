@@ -4,11 +4,13 @@
  */
 package org.jboss.pnc.rex.rest;
 
-import io.smallrye.faulttolerance.api.ApplyGuard;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
+
 import org.jboss.pnc.rex.api.MaintenanceEndpoint;
 import org.jboss.pnc.rex.facade.api.MaintenanceProvider;
+
+import io.smallrye.faulttolerance.api.ApplyGuard;
 
 @ApplicationScoped
 public class MaintenanceEndpointImpl implements MaintenanceEndpoint {

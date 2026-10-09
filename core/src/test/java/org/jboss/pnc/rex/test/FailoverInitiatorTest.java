@@ -4,18 +4,18 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.Mock;
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.mockito.InjectSpy;
-import io.quarkus.test.security.TestSecurity;
-import io.restassured.http.ContentType;
-import io.smallrye.config.SmallRyeConfig;
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.pnc.rex.test.ClusteredJobsTest.taskID;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTaskTransitionsInto;
+
+import java.net.URI;
+import java.time.Duration;
+
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.microprofile.config.Config;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.common.enums.CJobOperation;
@@ -34,14 +34,14 @@ import org.jboss.pnc.rex.test.common.TestData;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.net.URI;
-import java.time.Duration;
-
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.test.ClusteredJobsTest.taskID;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTaskTransitionsInto;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAre;
+import io.quarkus.test.Mock;
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectSpy;
+import io.restassured.http.ContentType;
+import io.smallrye.config.SmallRyeConfig;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @QuarkusTest
@@ -89,12 +89,12 @@ public class FailoverInitiatorTest extends AbstractTest {
         graph.graphConfiguration.cancelTimeout = timeoutValue;
 
         given()
-            .contentType(ContentType.JSON)
-            .body(graph)
-            .when()
-            .post(taskURI.getPath())
-            .then()
-            .statusCode(200);
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
         waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
@@ -126,12 +126,12 @@ public class FailoverInitiatorTest extends AbstractTest {
         graph.graphConfiguration.cancelTimeout = timeoutValue;
 
         given()
-            .contentType(ContentType.JSON)
-            .body(graph)
-            .when()
-            .post(taskURI.getPath())
-            .then()
-            .statusCode(200);
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
         waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);

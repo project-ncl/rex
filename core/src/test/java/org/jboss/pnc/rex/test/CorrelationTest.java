@@ -4,22 +4,22 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.TaskEndpoint;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.test.common.AbstractTest;
-import org.jboss.pnc.rex.dto.TaskDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.junit.jupiter.api.Test;
-
-import jakarta.inject.Inject;
-
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.getAllParameters;
+
+import java.util.Set;
+
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.junit.jupiter.api.Test;
+
+import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
 public class CorrelationTest extends AbstractTest {
@@ -31,7 +31,7 @@ public class CorrelationTest extends AbstractTest {
     void testAllTasksGetCorrelated() {
         String correlationID = "heavy-metal";
 
-        CreateGraphRequest request = generateDAG(1000,2, 10, 5, 10, 0.7F)
+        CreateGraphRequest request = generateDAG(1000, 2, 10, 5, 10, 0.7F)
                 .toBuilder()
                 .correlationID(correlationID)
                 .build();
@@ -52,7 +52,7 @@ public class CorrelationTest extends AbstractTest {
     void testCorrelationGetAllEndpoint() throws InterruptedException {
         String correlationID = "nu-metal";
 
-        CreateGraphRequest request = generateDAG(1000,2, 10, 5, 10, 0.7F)
+        CreateGraphRequest request = generateDAG(1000, 2, 10, 5, 10, 0.7F)
                 .toBuilder()
                 .correlationID(correlationID)
                 .build();
@@ -71,7 +71,7 @@ public class CorrelationTest extends AbstractTest {
 
     @Test
     void testCorrelationIsNullWhenNotSpecified() {
-        CreateGraphRequest request = generateDAG(1000,2, 10, 5, 10, 0.7F);
+        CreateGraphRequest request = generateDAG(1000, 2, 10, 5, 10, 0.7F);
 
         taskEndpoint.start(request);
 
@@ -86,7 +86,7 @@ public class CorrelationTest extends AbstractTest {
     @Test
     void testQueryByNonExistingCorrelationID() {
         String correlationID = "trash-metal";
-        CreateGraphRequest request = generateDAG(1000,2, 10, 5, 10, 0.7F)
+        CreateGraphRequest request = generateDAG(1000, 2, 10, 5, 10, 0.7F)
                 .toBuilder()
                 .correlationID(correlationID)
                 .build();

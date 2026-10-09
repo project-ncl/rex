@@ -4,16 +4,16 @@
  */
 package org.jboss.pnc.rex.facade.mapper;
 
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jboss.pnc.rex.core.model.TaskGraph;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.mapstruct.*;
 
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-
-@Mapper(config = MapperCentralConfig.class, uses = {EdgeMapper.class, CreateTaskMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = { EdgeMapper.class, CreateTaskMapper.class })
 public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph> {
 
     @Override
@@ -28,7 +28,7 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
     //correlationID is used in applyCorrelationID method
     //graphConfiguration is used in mergeWithGraphConfig method
     //queue is used in mergeWithGraphQueue method
-    @BeanMapping(ignoreUnmappedSourceProperties = {"correlationID", "graphConfiguration", "queue"})
+    @BeanMapping(ignoreUnmappedSourceProperties = { "correlationID", "graphConfiguration", "queue" })
     TaskGraph toDB(CreateGraphRequest dtoEntity);
 
     @AfterMapping
@@ -36,10 +36,11 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
         if (source.correlationID != null && !source.correlationID.isBlank()) {
             var vertices = new HashMap<>(target.build().getVertices());
             for (var entry : vertices.entrySet()) {
-                entry.setValue(entry.getValue()
-                        .toBuilder()
-                        .correlationID(source.correlationID)
-                        .build());
+                entry.setValue(
+                        entry.getValue()
+                                .toBuilder()
+                                .correlationID(source.correlationID)
+                                .build());
             }
 
             //apply changes
@@ -124,7 +125,8 @@ public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph
             cancelTimeout = graphConfig.cancelTimeout;
         }
         Boolean delayDependantsForFinalNotification = taskConfig.delayDependantsForFinalNotification;
-        if (taskConfig.delayDependantsForFinalNotification == null && graphConfig.delayDependantsForFinalNotification != null) {
+        if (taskConfig.delayDependantsForFinalNotification == null
+                && graphConfig.delayDependantsForFinalNotification != null) {
             delayDependantsForFinalNotification = graphConfig.delayDependantsForFinalNotification;
         }
         Integer rollbackLimit = taskConfig.rollbackLimit;

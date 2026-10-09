@@ -15,6 +15,5 @@ public enum ResponseFlag {
      *
      * APPLICABLE only to negative callbacks. The flag doesn't do anything for positive callback.
      */
-    @ProtoEnumValue(0)
-    SKIP_ROLLBACK
+    @ProtoEnumValue(0) SKIP_ROLLBACK
 }

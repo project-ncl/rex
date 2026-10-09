@@ -4,11 +4,17 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import io.opentelemetry.context.Context;
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.smallrye.mutiny.Uni;
-import io.vertx.core.Vertx;
+import static java.time.Duration.between;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Set;
+
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.common.enums.CJobOperation;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
@@ -23,14 +29,10 @@ import org.jboss.pnc.rex.model.TransitionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Set;
-
-import static java.time.Duration.between;
-import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+import io.opentelemetry.context.Context;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.smallrye.mutiny.Uni;
+import io.vertx.core.Vertx;
 
 public class TimeoutCancelClusterJob extends ClusteredJob {
 
@@ -79,19 +81,26 @@ public class TimeoutCancelClusterJob extends ClusteredJob {
         }
 
         Instant instant = refreshedTask.getTimestamps()
-            .stream()
-            .filter(transitionTime -> transitionTime.getTransition().getAfter() == State.STOPPING)
-            .map(TransitionTime::getTime)
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("Task in state STOPPING without timed Transition."));
+                .stream()
+                .filter(transitionTime -> transitionTime.getTransition().getAfter() == State.STOPPING)
+                .map(TransitionTime::getTime)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Task in state STOPPING without timed Transition."));
         Instant supposedStart = instant.plus(timeoutDelta);
         if (supposedStart.isBefore(Instant.now())) {
             log.info("Running cancel timeout for task {} immediately.", context.getName());
         } else {
-            log.info("Setting cancel timer to {}",
-                ZonedDateTime.ofInstant(supposedStart, ZoneId.systemDefault()).format(ISO_OFFSET_DATE_TIME));
+            log.info(
+                    "Setting cancel timer to {}",
+                    ZonedDateTime.ofInstant(supposedStart, ZoneId.systemDefault()).format(ISO_OFFSET_DATE_TIME));
 
-            Uni.createFrom().nullItem().onItem().delayIt().by(between(Instant.now(), supposedStart)).await().indefinitely();
+            Uni.createFrom()
+                    .nullItem()
+                    .onItem()
+                    .delayIt()
+                    .by(between(Instant.now(), supposedStart))
+                    .await()
+                    .indefinitely();
         }
 
         // verify owner didn't change
@@ -104,8 +113,9 @@ public class TimeoutCancelClusterJob extends ClusteredJob {
         // wrap with OTEL + Fault tolerance + transaction
         return otelContext.wrapSupplier( // OTEL
                 () -> decorator.withTolerance( // FT
-                    () -> QuarkusTransaction.requiringNew() // Transaction
-                        .call(this::executeTimeout))).get(); // Run
+                        () -> QuarkusTransaction.requiringNew() // Transaction
+                                .call(this::executeTimeout)))
+                .get(); // Run
     }
 
     private boolean executeTimeout() {
@@ -113,7 +123,8 @@ public class TimeoutCancelClusterJob extends ClusteredJob {
 
         // Verify that the task is in correct state because the callback may have arrived, task was forcefully cancelled
         // by other means or some mistake happened. It also could've been processed and is deleted.
-        if (refreshedTask == null || refreshedTask.getState() != State.STOPPING || !manager.isOwned(reference.getId())) {
+        if (refreshedTask == null || refreshedTask.getState() != State.STOPPING
+                || !manager.isOwned(reference.getId())) {
             return true;
         }
         log.info("TIMEOUT: Timing out task {}.", refreshedTask.getName());

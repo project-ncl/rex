@@ -4,11 +4,11 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import org.jboss.pnc.rex.core.api.QueueManager;
-import org.jboss.pnc.rex.model.Task;
-
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
+import org.jboss.pnc.rex.core.api.QueueManager;
+import org.jboss.pnc.rex.model.Task;
 
 public class DecreaseCounterJob extends ControllerJob {
 
@@ -22,10 +22,12 @@ public class DecreaseCounterJob extends ControllerJob {
     }
 
     @Override
-    protected void beforeExecute() {}
+    protected void beforeExecute() {
+    }
 
     @Override
-    protected void afterExecute() {}
+    protected void afterExecute() {
+    }
 
     @Override
     public boolean execute() {
@@ -34,8 +36,10 @@ public class DecreaseCounterJob extends ControllerJob {
     }
 
     @Override
-    protected void onFailure() {}
+    protected void onFailure() {
+    }
 
     @Override
-    protected void onException(Throwable e) {}
+    protected void onException(Throwable e) {
+    }
 }

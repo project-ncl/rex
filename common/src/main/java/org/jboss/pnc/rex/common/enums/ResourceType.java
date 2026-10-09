@@ -7,6 +7,5 @@ package org.jboss.pnc.rex.common.enums;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 
 public enum ResourceType {
-    @ProtoEnumValue(0)
-    CLUSTERED_JOB
+    @ProtoEnumValue(0) CLUSTERED_JOB
 }

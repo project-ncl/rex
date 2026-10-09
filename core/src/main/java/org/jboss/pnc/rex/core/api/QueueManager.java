@@ -5,6 +5,7 @@
 package org.jboss.pnc.rex.core.api;
 
 import jakarta.annotation.Nullable;
+
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StateGroup;
 

@@ -25,18 +25,11 @@
   <url>https://github.com/project-ncl/rex</url>
   <inceptionYear>2021</inceptionYear>
 
-  <scm>
-    <connection>scm:git:https://github.com/project-ncl/rex.git</connection>
-    <developerConnection>scm:git:git@github.com:project-ncl/rex.git</developerConnection>
-    <url>https://github.com/project-ncl/rex/</url>
-    <tag>HEAD</tag>
-  </scm>
-
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
-      <distribution>repo</distribution>
       <url>https://www.apache.org/licenses/LICENSE-2.0.html</url>
+      <distribution>repo</distribution>
     </license>
   </licenses>
 
@@ -55,6 +48,13 @@
     <module>api</module>
     <module>rest-client</module>
   </modules>
+
+  <scm>
+    <connection>scm:git:https://github.com/project-ncl/rex.git</connection>
+    <developerConnection>scm:git:git@github.com:project-ncl/rex.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://github.com/project-ncl/rex/</url>
+  </scm>
 
   <properties>
     <quarkus.version>3.39.3</quarkus.version>
@@ -177,6 +177,20 @@
     </dependencies>
   </dependencyManagement>
 
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>central-portal-snapshots</id>
+      <name>Central Portal Snapshots</name>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+    </repository>
+  </repositories>
+
   <build>
     <pluginManagement>
       <plugins>
@@ -193,7 +207,6 @@ SPDX-License-Identifier: Apache-2.0
                 <excludes>
                   <exclude>**/README.md</exclude>
                   <exclude>**/LICENSE</exclude>
-                  <exclude>**/eclipse-codeStyle.xml</exclude>
                   <exclude>**/Dockerfile</exclude>
                   <exclude>**/scripts/**</exclude>
                   <exclude>**/images/**</exclude>
@@ -219,17 +232,17 @@ SPDX-License-Identifier: Apache-2.0
           </configuration>
         </plugin>
         <plugin>
-            <groupId>org.eclipse.transformer</groupId>
-            <artifactId>transformer-maven-plugin</artifactId>
-            <version>0.5.0</version>
-            <extensions>true</extensions>
-            <configuration>
-                <rules>
-                    <jakartaDefaults>true</jakartaDefaults>
-                    <invert>true</invert>
-                </rules>
-                <classifier>javax</classifier>
-            </configuration>
+          <groupId>org.eclipse.transformer</groupId>
+          <artifactId>transformer-maven-plugin</artifactId>
+          <version>0.5.0</version>
+          <extensions>true</extensions>
+          <configuration>
+            <rules>
+              <jakartaDefaults>true</jakartaDefaults>
+              <invert>true</invert>
+            </rules>
+            <classifier>javax</classifier>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.projectlombok</groupId>
@@ -240,14 +253,6 @@ SPDX-License-Identifier: Apache-2.0
             <outputDirectory>${delombok.output}</outputDirectory>
             <addOutputDirectory>false</addOutputDirectory>
           </configuration>
-          <executions>
-            <execution>
-              <phase>prepare-package</phase>
-              <goals>
-                <goal>delombok</goal>
-              </goals>
-            </execution>
-          </executions>
           <dependencies>
             <dependency>
               <groupId>org.projectlombok</groupId>
@@ -255,6 +260,14 @@ SPDX-License-Identifier: Apache-2.0
               <version>${lombok.version}</version>
             </dependency>
           </dependencies>
+          <executions>
+            <execution>
+              <goals>
+                <goal>delombok</goal>
+              </goals>
+              <phase>prepare-package</phase>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -265,11 +278,11 @@ SPDX-License-Identifier: Apache-2.0
           </configuration>
           <executions>
             <execution>
-              <phase>package</phase>
               <id>attach-javadocs</id>
               <goals>
                 <goal>jar</goal>
               </goals>
+              <phase>package</phase>
             </execution>
           </executions>
         </plugin>
@@ -294,9 +307,7 @@ SPDX-License-Identifier: Apache-2.0
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <compilerArgs>
-            <arg>
-              -parameters
-            </arg>
+            <arg>-parameters</arg>
           </compilerArgs>
           <forceJavacCompilerUse>true</forceJavacCompilerUse>
         </configuration>
@@ -320,10 +331,10 @@ SPDX-License-Identifier: Apache-2.0
         <executions>
           <execution>
             <id>check</id>
-            <phase>verify</phase>
             <goals>
               <goal>check</goal>
             </goals>
+            <phase>verify</phase>
           </execution>
         </executions>
       </plugin>
@@ -338,22 +349,45 @@ SPDX-License-Identifier: Apache-2.0
           <goals>deploy</goals>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>3.10.3</version>
+        <configuration>
+          <pom>
+            <sortPom>
+              <expandEmptyElements>false</expandEmptyElements>
+            </sortPom>
+          </pom>
+          <java>
+            <removeUnusedImports/>
+            <importOrder>
+              <file>java-import-order.txt</file>
+            </importOrder>
+            <eclipse>
+              <file>java-formatter.xml</file>
+            </eclipse>
+            <lineEndings>UNIX</lineEndings>
+          </java>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.jboss.pnc</groupId>
+            <artifactId>ide-config</artifactId>
+            <version>1.1.0</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <goals>
+              <goal>apply</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
-
-  <repositories>
-    <repository>
-      <name>Central Portal Snapshots</name>
-      <id>central-portal-snapshots</id>
-      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
 
   <profiles>
     <profile>
@@ -396,10 +430,10 @@ SPDX-License-Identifier: Apache-2.0
             <executions>
               <execution>
                 <id>format</id>
-                <phase>process-sources</phase>
                 <goals>
                   <goal>format</goal>
                 </goals>
+                <phase>process-sources</phase>
               </execution>
             </executions>
           </plugin>

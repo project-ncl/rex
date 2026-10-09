@@ -4,12 +4,8 @@
  */
 package org.jboss.pnc.rex.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.Singular;
-import lombok.ToString;
+import java.util.*;
+
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
@@ -21,7 +17,12 @@ import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 
-import java.util.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.Singular;
+import lombok.ToString;
 
 /**
  * Task is an entity that holds data of remotely executed process.
@@ -37,24 +38,24 @@ import java.util.*;
 @ToString
 @Builder(toBuilder = true)
 @Indexed
-@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@AllArgsConstructor(onConstructor_ = { @ProtoFactory })
 public class Task {
     /**
      * Uniquely identifies a Task and serves as a key in Infinispan cache.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 1)})
+    @Getter(onMethod_ = { @ProtoField(number = 1) })
     private final String name;
 
     /**
      * Second unique constraint alongside Task.name
      */
-    @Getter(onMethod_ = {@ProtoField(number = 2)})
+    @Getter(onMethod_ = { @ProtoField(number = 2) })
     private final String constraint;
 
     /*
      * Correlation ID between tasks that were triggered at the same time.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 3), @Keyword})
+    @Getter(onMethod_ = { @ProtoField(number = 3), @Keyword })
     private final String correlationID;
 
     /**
@@ -78,13 +79,13 @@ public class Task {
     /**
      * TaskController mode.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 7), @Basic})
+    @Getter(onMethod_ = { @ProtoField(number = 7), @Basic })
     private Mode controllerMode;
 
     /**
      * Current state of a task. Default is State.IDLE.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 8), @Basic})
+    @Getter(onMethod_ = { @ProtoField(number = 8), @Basic })
     private State state;
 
     /**
@@ -93,13 +94,13 @@ public class Task {
      * Parents of this Task.
      */
     @Singular
-    @Getter(onMethod_ = {@ProtoField(number = 9), @Embedded(includeDepth = 1, structure = Structure.FLATTENED)})
+    @Getter(onMethod_ = { @ProtoField(number = 9), @Embedded(includeDepth = 1, structure = Structure.FLATTENED) })
     private Set<String> dependants;
 
     /**
      * Number of unfinishedDependencies. Task can't remotely start if the number is positive.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 10, defaultValue = "-1")})
+    @Getter(onMethod_ = { @ProtoField(number = 10, defaultValue = "-1") })
     private int unfinishedDependencies;
 
     /**
@@ -147,22 +148,22 @@ public class Task {
      *
      * Even though a Task can be flagged disposable, it won't be removed until all dependants are removed beforehand.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 17, defaultValue = "false"), @Basic})
+    @Getter(onMethod_ = { @ProtoField(number = 17, defaultValue = "false"), @Basic })
     private boolean disposable;
 
-    @Getter(onMethod_ = {@ProtoField(number = 18), @Keyword})
+    @Getter(onMethod_ = { @ProtoField(number = 18), @Keyword })
     private String queue;
 
     /**
      * If this Task is in STOPPED/FAILED state, this will be the name of the Task which was the initial cause.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 19)})
+    @Getter(onMethod_ = { @ProtoField(number = 19) })
     private String stoppedCause;
 
     /**
      * The Task used for rollback process. It has to be a transitive dependency.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 20)})
+    @Getter(onMethod_ = { @ProtoField(number = 20) })
     private String milestoneTask;
 
     /**
@@ -174,13 +175,13 @@ public class Task {
     /**
      * Metadata containing fields used during rollback process.
      */
-    @Getter(onMethod_ = {@ProtoField(number = 22)})
+    @Getter(onMethod_ = { @ProtoField(number = 22) })
     private RollbackMetadata rollbackMeta;
 
     /**
      * Metadata used for keeping in touch with heartbeats
      */
-    @Getter(onMethod_ = {@ProtoField(number = 23)})
+    @Getter(onMethod_ = { @ProtoField(number = 23) })
     private HeartbeatMetadata heartbeatMeta;
 
     public void incUnfinishedDependencies() {
@@ -191,11 +192,12 @@ public class Task {
         unfinishedDependencies--;
     }
 
-
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Task task = (Task) o;
         return name.equals(task.name);
     }

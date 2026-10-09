@@ -4,12 +4,12 @@
  */
 package org.jboss.pnc.rex.core.api;
 
+import java.time.Instant;
+import java.util.Set;
+
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.ResponseFlag;
-
-import java.time.Instant;
-import java.util.Set;
 
 /**
  * This is API for TaskController.
@@ -46,10 +46,10 @@ public interface TaskController {
      * <p>
      * f.e. to signalize that remote Task has started/cancelled/finished.
      *
-     * @param name     id of the Task
-     * @param origin   the origin of response
+     * @param name id of the Task
+     * @param origin the origin of response
      * @param isRollback callback is from rollback endpoint
-     * @param flags        remote entity flags for special cases
+     * @param flags remote entity flags for special cases
      */
     void accept(String name, Object response, Origin origin, boolean isRollback, Set<ResponseFlag> flags);
 
@@ -58,10 +58,10 @@ public interface TaskController {
      * <p>
      * f.e. to signalize that remote Task failed to start/cancel or failed during execution.
      *
-     * @param name         id of the Task
-     * @param origin       the origin of response
-     * @param isRollback   callback is from rollback endpoint
-     * @param flags        remote entity flags for special cases
+     * @param name id of the Task
+     * @param origin the origin of response
+     * @param isRollback callback is from rollback endpoint
+     * @param flags remote entity flags for special cases
      */
     void fail(String name, Object response, Origin origin, boolean isRollback, Set<ResponseFlag> flags);
 
@@ -88,7 +88,7 @@ public interface TaskController {
     /**
      * Marks the Task for disposal/cleaning.
      *
-     * @param name        id of the Task
+     * @param name id of the Task
      * @param pokeCleaner
      */
     void markForDisposal(String name, boolean pokeCleaner);
