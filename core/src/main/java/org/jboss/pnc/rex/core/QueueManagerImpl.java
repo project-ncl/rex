@@ -20,12 +20,15 @@ import org.jboss.pnc.rex.model.Task;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static jakarta.transaction.Transactional.TxType.MANDATORY;
-import static java.util.stream.Collectors.groupingBy;
 
 @Slf4j
 @ApplicationScoped
@@ -58,35 +61,98 @@ public class QueueManagerImpl implements QueueManager {
 
         for (var queue : maxEntries.keySet()) {
             Long maxValue = maxEntries.get(queue);
-            long runningValue = running.get(queue);
-
-            if (runningValue >= maxValue) {
-                log.debug("QUEUE '{}': Maximum number of parallel tasks reached.({} out of {})",
-                        queue == null ? DEFAULT_QUEUE_NAMING : queue,
-                        runningValue,
-                        maxValue);
-                continue;
+            if (running.requiresReservation()) {
+                pokeWithReservation(queue, maxValue);
+            } else {
+                pokeLegacy(queue, maxValue);
             }
+        }
+    }
 
-            long freeSpace = maxValue - runningValue;
-            List<Task> randomEnqueuedTasks = container.getEnqueuedTasksByQueueName(queue, freeSpace);
-            if (randomEnqueuedTasks.isEmpty()) {
-                continue;
-            }
-
-            log.info("QUEUE '{}': Free space of {} found. Scheduling {} task(s) of {}",
+    /**
+     * Historical order for optimistic compare-and-swap counters: dequeue first, then increment.
+     * The shared-key version check serializes admission across nodes (a stale increment fails and
+     * the whole transaction is retried), so no over-admission can happen.
+     */
+    private void pokeLegacy(String queue, Long maxValue) {
+        long runningValue = running.get(queue);
+        if (runningValue >= maxValue) {
+            log.debug("QUEUE '{}': Maximum number of parallel tasks reached.({} out of {})",
                     queue == null ? DEFAULT_QUEUE_NAMING : queue,
-                    freeSpace,
-                    randomEnqueuedTasks.size(),
-                    randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList())
-            );
+                    runningValue,
+                    maxValue);
+            return;
+        }
 
-            randomEnqueuedTasks.forEach(task -> controller.dequeue(task.getName()));
+        long freeSpace = maxValue - runningValue;
+        List<Task> randomEnqueuedTasks = container.getEnqueuedTasksByQueueName(queue, freeSpace);
+        if (randomEnqueuedTasks.isEmpty()) {
+            return;
+        }
 
-            long newRunning = running.reserve(queue, randomEnqueuedTasks.size());
-            log.info("QUEUE '{}': Increased running counter to {}.",
+        log.info("QUEUE '{}': Free space of {} found. Scheduling {} task(s) of {}",
+                queue == null ? DEFAULT_QUEUE_NAMING : queue,
+                freeSpace,
+                randomEnqueuedTasks.size(),
+                randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList())
+        );
+
+        randomEnqueuedTasks.forEach(task -> controller.dequeue(task.getName()));
+
+        long newRunning = running.reserve(queue, randomEnqueuedTasks.size());
+        log.info("QUEUE '{}': Increased running counter to {}.",
+                queue == null ? DEFAULT_QUEUE_NAMING : queue,
+                newRunning);
+    }
+
+    /**
+     * Order for atomic, non-transactional counters (e.g. StrongCounter): reserve capacity first,
+     * release any overshoot, then dequeue only the amount we are allowed to start. This prevents
+     * two nodes from both observing the same free space and over-admitting.
+     */
+    private void pokeWithReservation(String queue, Long maxValue) {
+        long runningValue = running.get(queue);
+        if (runningValue >= maxValue) {
+            log.debug("QUEUE '{}': Maximum number of parallel tasks reached.({} out of {})",
                     queue == null ? DEFAULT_QUEUE_NAMING : queue,
-                    newRunning);
+                    runningValue,
+                    maxValue);
+            return;
+        }
+
+        long freeSpace = maxValue - runningValue;
+        List<Task> candidates = container.getEnqueuedTasksByQueueName(queue, freeSpace);
+        if (candidates.isEmpty()) {
+            return;
+        }
+
+        int want = candidates.size();
+        long afterReserve = running.reserve(queue, want);
+        int allowed = want;
+        if (afterReserve > maxValue) {
+            long giveBack = Math.min(afterReserve - maxValue, want);
+            running.release(queue, giveBack);
+            allowed = (int) (want - giveBack);
+        }
+        if (allowed <= 0) {
+            return;
+        }
+
+        List<Task> toSchedule = candidates.subList(0, allowed);
+        log.info("QUEUE '{}': Reserved {} slot(s). Scheduling {} task(s) of {}",
+                queue == null ? DEFAULT_QUEUE_NAMING : queue,
+                allowed,
+                toSchedule.size(),
+                toSchedule.stream().map(Task::getName).collect(Collectors.toList())
+        );
+
+        try {
+            toSchedule.forEach(task -> controller.dequeue(task.getName()));
+        } catch (RuntimeException e) {
+            // The transaction rolls back every dequeue done in this invocation; release the whole
+            // reservation so the (non-transactional) counter does not drift.
+            running.release(queue, allowed);
+            throw e;
         }
     }
 
@@ -128,12 +194,19 @@ public class QueueManagerImpl implements QueueManager {
     @Override
     @Transactional(MANDATORY)
     public void synchronizeRunningCounter() {
-        Map<String, List<Task>> tasksByQueue = container.getTasks(false, false, true, false, false, null)
-                .stream()
-                .collect(groupingBy(Task::getQueue));
+        // null-safe grouping: DEFAULT queue tasks have a null queue, which Collectors.groupingBy rejects
+        Map<String, List<Task>> tasksByQueue = new HashMap<>();
+        for (Task task : container.getTasks(false, false, true, false, false, null)) {
+            tasksByQueue.computeIfAbsent(task.getQueue(), q -> new ArrayList<>()).add(task);
+        }
 
-        for (String queue : running.queues()) {
-            var tasksInQueue = tasksByQueue.get(queue);
+        // reconcile every known queue. Max counters survive a restart (persistent cache), while the
+        // running counters may not (e.g. volatile StrongCounters), so union both sources.
+        Set<String> queues = new HashSet<>(max.entries().keySet());
+        queues.addAll(running.queues());
+
+        for (String queue : queues) {
+            List<Task> tasksInQueue = tasksByQueue.get(queue);
             long actualValue = tasksInQueue == null ? 0L : tasksInQueue.size();
             running.reconcile(queue, actualValue);
         }

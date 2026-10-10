@@ -5,7 +5,6 @@
 package org.jboss.pnc.rex.core.counter;
 
 import jakarta.annotation.Nullable;
-import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
 
@@ -20,9 +19,11 @@ import java.util.Set;
  * back with {@code replaceWithVersion}; on a version conflict it throws
  * {@link ConcurrentModificationException} so the surrounding {@code internal-retry} guarded
  * transaction is replayed.
+ * <p>
+ * Instantiated by {@link RunningTrackerProducer} (not a CDI bean itself) so the active
+ * implementation can be selected by configuration.
  */
 @Slf4j
-@ApplicationScoped
 public class CasRunningTracker implements RunningTracker {
 
     private static final String DEFAULT_QUEUE_NAMING = "DEFAULT";
@@ -93,6 +94,13 @@ public class CasRunningTracker implements RunningTracker {
     @Override
     public Set<String> queues() {
         return counter.entries().keySet();
+    }
+
+    @Override
+    public boolean requiresReservation() {
+        // Optimistic CAS on the shared counter key already serializes admission across nodes;
+        // keep the historical dequeue-then-increment order.
+        return false;
     }
 
     private ConcurrentModificationException concurrentModification(String queue) {

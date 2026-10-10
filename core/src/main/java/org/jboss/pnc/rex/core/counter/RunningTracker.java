@@ -68,4 +68,16 @@ public interface RunningTracker {
      * {@code null}.
      */
     Set<String> queues();
+
+    /**
+     * Whether capacity must be reserved <em>before</em> dequeuing (reserve-then-compensate), as
+     * opposed to dequeuing first and then incrementing.
+     * <p>
+     * Non-transactional atomic implementations (e.g. Infinispan StrongCounter) return {@code true}:
+     * two nodes can otherwise both see the same free space and over-admit, so capacity is reserved
+     * atomically first and any overshoot is released. Optimistic compare-and-swap implementations
+     * return {@code false}: the shared-key version check already serializes admission across nodes,
+     * so the historical dequeue-then-increment order is kept.
+     */
+    boolean requiresReservation();
 }
