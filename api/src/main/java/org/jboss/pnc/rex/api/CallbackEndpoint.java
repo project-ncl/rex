@@ -4,8 +4,20 @@
  */
 package org.jboss.pnc.rex.api;
 
+import java.util.Set;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -17,18 +29,6 @@ import org.jboss.pnc.rex.api.parameters.ErrorOption;
 import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-
-import java.util.Set;
 
 @Tag(name = "Callback endpoint")
 @Path("/rest/callback")
@@ -44,94 +44,148 @@ public interface CallbackEndpoint {
     //endregion
 
     String FINISH_TASK = "/{taskName}/finish";
+
     @Path(FINISH_TASK)
     @Operation(summary = "[USER] Used by remote entity to report Task completion.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SUCCESS_CODE,
+                            description = OpenapiConstants.SUCCESS_DESCRIPTION),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.INVALID_CODE,
+                            description = OpenapiConstants.INVALID_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SERVER_ERROR_CODE,
+                            description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @POST
     @Deprecated
-    void finish(@PathParam("taskName") @NotEmpty String taskName,
-                @Valid @NotNull FinishRequest result,
-                @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
+    void finish(
+            @PathParam("taskName") @NotEmpty String taskName,
+            @Valid @NotNull FinishRequest result,
+            @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
 
     String OPERATION_SUCCESSFUL = "/{taskName}/succeed";
+
     @Path(OPERATION_SUCCESSFUL)
     @Operation(summary = "[USER] Used by remote entity to report successful Task completion.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SUCCESS_CODE,
+                            description = OpenapiConstants.SUCCESS_DESCRIPTION),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.INVALID_CODE,
+                            description = OpenapiConstants.INVALID_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SERVER_ERROR_CODE,
+                            description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @POST
-    void succeed(@PathParam("taskName") @NotEmpty String taskName,
-                 Object result,
-                 @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err,
-                 @QueryParam("flags") Set<ResponseFlag> flags);
+    void succeed(
+            @PathParam("taskName") @NotEmpty String taskName,
+            Object result,
+            @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err,
+            @QueryParam("flags") Set<ResponseFlag> flags);
 
     String OPERATION_FAILED = "/{taskName}/fail";
+
     @Path(OPERATION_FAILED)
     @Operation(summary = "[USER] Used by remote entity to report failed Task completion.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SUCCESS_CODE,
+                            description = OpenapiConstants.SUCCESS_DESCRIPTION),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.INVALID_CODE,
+                            description = OpenapiConstants.INVALID_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SERVER_ERROR_CODE,
+                            description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @POST
-    void fail(@PathParam("taskName") @NotEmpty String taskName,
-              Object result,
-              @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err,
-              @QueryParam("flags") Set<ResponseFlag> flags);
+    void fail(
+            @PathParam("taskName") @NotEmpty String taskName,
+            Object result,
+            @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err,
+            @QueryParam("flags") Set<ResponseFlag> flags);
 
     String ROLLBACK_SUCCESS = "/{taskName}/rollback/succeed";
+
     @Path(ROLLBACK_SUCCESS)
     @Operation(summary = "[USER] Used by remote entity to report successful Task rollback process.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SUCCESS_CODE,
+                            description = OpenapiConstants.SUCCESS_DESCRIPTION),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.INVALID_CODE,
+                            description = OpenapiConstants.INVALID_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SERVER_ERROR_CODE,
+                            description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @POST
-    void rollbackOK(@PathParam("taskName") @NotEmpty String taskName,
-                    Object result,
-                    @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
+    void rollbackOK(
+            @PathParam("taskName") @NotEmpty String taskName,
+            Object result,
+            @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
 
     String ROLLBACK_FAILED = "/{taskName}/rollback/fail";
+
     @Path(ROLLBACK_FAILED)
     @Operation(summary = "[USER] Used by remote entity to report failed Task rollback process.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SUCCESS_CODE,
+                            description = OpenapiConstants.SUCCESS_DESCRIPTION),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.INVALID_CODE,
+                            description = OpenapiConstants.INVALID_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SERVER_ERROR_CODE,
+                            description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @POST
-    void rollbackNOK(@PathParam("taskName") @NotEmpty String taskName,
-                    Object result,
-                    @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
+    void rollbackNOK(
+            @PathParam("taskName") @NotEmpty String taskName,
+            Object result,
+            @QueryParam("err") @DefaultValue("PASS_ERROR") @Schema(implementation = String.class) ErrorOption err);
 
     String HEARTBEAT = "/{taskName}/beat";
+
     @Path(HEARTBEAT)
     @Operation(summary = "[USER] Used by remote entity for liveness check (heartbeat).")
-    @APIResponses(value = {
-            @APIResponse(responseCode = OpenapiConstants.SUCCESS_CODE, description = OpenapiConstants.SUCCESS_DESCRIPTION),
-            @APIResponse(responseCode = OpenapiConstants.INVALID_CODE, description = OpenapiConstants.INVALID_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @APIResponse(responseCode = OpenapiConstants.SERVER_ERROR_CODE, description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SUCCESS_CODE,
+                            description = OpenapiConstants.SUCCESS_DESCRIPTION),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.INVALID_CODE,
+                            description = OpenapiConstants.INVALID_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @APIResponse(
+                            responseCode = OpenapiConstants.SERVER_ERROR_CODE,
+                            description = OpenapiConstants.SERVER_ERROR_DESCRIPTION,
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @POST
-    void beat(@PathParam("taskName") @NotEmpty String taskName,
-              Object body);
+    void beat(
+            @PathParam("taskName") @NotEmpty String taskName,
+            Object body);
 }

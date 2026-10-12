@@ -36,7 +36,7 @@ import org.jboss.pnc.rex.model.ispn.adapter.DurationAdapter;
         schemaPackageName = "rex_model",
         schemaFilePath = "META-INF/",
         schemaFileName = "RexModel.proto",
-        dependsOn = {CommonTypes.class},
+        dependsOn = { CommonTypes.class },
         includeClasses = {
                 ServerResponse.class,
                 Task.class,
@@ -58,9 +58,8 @@ import org.jboss.pnc.rex.model.ispn.adapter.DurationAdapter;
                 RollbackMetadata.class,
                 HeartbeatMetadata.class,
                 ResponseFlag.class,
-                },
+        },
         syntax = ProtoSyntax.PROTO3,
-        allowNullFields = true
-)
+        allowNullFields = true)
 interface ProtoSchemaGenerator extends GeneratedSchema {
 }

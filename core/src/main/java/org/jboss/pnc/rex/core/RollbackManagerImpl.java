@@ -4,19 +4,8 @@
  */
 package org.jboss.pnc.rex.core;
 
-import com.google.common.collect.Sets;
-import com.google.common.graph.Graph;
-import com.google.common.graph.Graphs;
-import com.google.common.graph.Traverser;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.common.enums.StopFlag;
-import org.jboss.pnc.rex.core.api.RollbackManager;
-import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.core.api.TaskRegistry;
-import org.jboss.pnc.rex.model.Task;
+import static com.google.common.collect.Iterables.filter;
+import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -28,16 +17,38 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Iterables.filter;
-import static java.util.stream.Collectors.toMap;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
+
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.common.enums.StopFlag;
+import org.jboss.pnc.rex.core.api.RollbackManager;
+import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.core.api.TaskRegistry;
+import org.jboss.pnc.rex.model.Task;
+
+import com.google.common.collect.Sets;
+import com.google.common.graph.Graph;
+import com.google.common.graph.Graphs;
+import com.google.common.graph.Traverser;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped
 public class RollbackManagerImpl implements RollbackManager {
 
-    private final static Set<State> ROLLBACK_DENIED = Set.of(State.STOP_REQUESTED, State.STOPPING, State.STOP_FAILED,
-            State.TO_ROLLBACK, State.ROLLBACK_REQUESTED, State.ROLLINGBACK, State.ROLLEDBACK, State.ROLLBACK_FAILED);
-    private final static Set<StopFlag> PROBLEMATIC_FLAGS = Set.of(StopFlag.DEPENDENCY_FAILED, StopFlag.DEPENDENCY_NOTIFY_FAILED);
+    private final static Set<State> ROLLBACK_DENIED = Set.of(
+            State.STOP_REQUESTED,
+            State.STOPPING,
+            State.STOP_FAILED,
+            State.TO_ROLLBACK,
+            State.ROLLBACK_REQUESTED,
+            State.ROLLINGBACK,
+            State.ROLLEDBACK,
+            State.ROLLBACK_FAILED);
+    private final static Set<StopFlag> PROBLEMATIC_FLAGS = Set
+            .of(StopFlag.DEPENDENCY_FAILED, StopFlag.DEPENDENCY_NOTIFY_FAILED);
 
     private final TaskController controller;
 
@@ -52,7 +63,8 @@ public class RollbackManagerImpl implements RollbackManager {
     @Transactional
     public void rollbackFromMilestone(String name) {
         Graph<Task> taskGraph = registry.getTaskGraph(Set.of(name));
-        Task milestone = taskGraph.nodes().stream()
+        Task milestone = taskGraph.nodes()
+                .stream()
                 .filter(task -> task.getName().equals(name))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Task " + name + " is missing in Task graph."));
@@ -66,7 +78,6 @@ public class RollbackManagerImpl implements RollbackManager {
                 .filter(task -> !ROLLBACK_DENIED.contains(task.getState()))
                 .filter(task -> task.getStopFlag() != StopFlag.CANCELLED)
                 .collect(Collectors.toSet());
-
 
         removeProblematicTasksFromCandidates(candidates, name, taskGraph);
 
@@ -102,17 +113,20 @@ public class RollbackManagerImpl implements RollbackManager {
 
                         // handle case when this rollback attaches to a different in-progress rollback branch
                         case ROLLBACK -> switch (candidate.getState()) {
-                                // parent task from different Rollback branch has not yet rolledback (increase count)
-                                case TO_ROLLBACK, ROLLBACK_REQUESTED, ROLLINGBACK -> {
-                                    int dependantUnfinishedDependencies = dependant.getUnfinishedDependencies();
-                                    int dependantRollbackDependants = dependant.getRollbackMeta().getUnrestoredDependants();
+                            // parent task from different Rollback branch has not yet rolledback (increase count)
+                            case TO_ROLLBACK, ROLLBACK_REQUESTED, ROLLINGBACK -> {
+                                int dependantUnfinishedDependencies = dependant.getUnfinishedDependencies();
+                                int dependantRollbackDependants = dependant.getRollbackMeta().getUnrestoredDependants();
 
-                                    // dependant will have a new rollingback dependency
-                                    controller.primeForRollback(dependant.getName(), dependantRollbackDependants, dependantUnfinishedDependencies + 1);
-                                    yield 1;
-                                }
-                                case ROLLBACK_FAILED, ROLLEDBACK -> 0;
-                                default -> 0;
+                                // dependant will have a new rollingback dependency
+                                controller.primeForRollback(
+                                        dependant.getName(),
+                                        dependantRollbackDependants,
+                                        dependantUnfinishedDependencies + 1);
+                                yield 1;
+                            }
+                            case ROLLBACK_FAILED, ROLLEDBACK -> 0;
+                            default -> 0;
                         };
                     };
                 }
@@ -136,7 +150,12 @@ public class RollbackManagerImpl implements RollbackManager {
                     };
                 }
             }
-            log.debug("ROLLBACK {}: TASK '{}' priming with dependants={} and dependencies={}", milestone.getName(), candidate.getName(), rollBackingDependants, futureRunningDependencies);
+            log.debug(
+                    "ROLLBACK {}: TASK '{}' priming with dependants={} and dependencies={}",
+                    milestone.getName(),
+                    candidate.getName(),
+                    rollBackingDependants,
+                    futureRunningDependencies);
             controller.primeForRollback(candidate.getName(), rollBackingDependants, futureRunningDependencies);
         }
 
@@ -146,7 +165,8 @@ public class RollbackManagerImpl implements RollbackManager {
     private void assertMilestoneState(Task milestone) {
         Set<State> allowedBeginningStates = Set.of(State.SUCCESSFUL, State.ROLLBACK_TRIGGERED);
         if (!allowedBeginningStates.contains(milestone.getState())) {
-            throw new IllegalStateException("Task " + milestone.getName() + " can't be milestone with state " + milestone.getState());
+            throw new IllegalStateException(
+                    "Task " + milestone.getName() + " can't be milestone with state " + milestone.getState());
         }
     }
 
@@ -178,16 +198,19 @@ public class RollbackManagerImpl implements RollbackManager {
 
     // todo javadoc
     //handle case when DEPENDENCY_FAILED/NOTIFY_FAILED case may have cause outside candidates (we cannot rollback these tasks)
-    private static void removeProblematicTasksFromCandidates(Set<Task> candidates, String milestone, Graph<Task> taskGraph) {
+    private static void removeProblematicTasksFromCandidates(
+            Set<Task> candidates,
+            String milestone,
+            Graph<Task> taskGraph) {
         Set<Task> problematicTasks = candidates.stream()
                 .filter(task -> PROBLEMATIC_FLAGS.contains(task.getStopFlag()))
                 .collect(Collectors.toSet());
 
-
         if (!problematicTasks.isEmpty()) {
             for (Task problematicTask : problematicTasks) {
                 var deps = Traverser.forGraph(taskGraph).breadthFirst(problematicTask);
-                var possibleFailOrigins = Sets.newHashSet(filter(deps, task -> Set.of(State.FAILED, State.START_FAILED).contains(task.getState())));
+                var possibleFailOrigins = Sets.newHashSet(
+                        filter(deps, task -> Set.of(State.FAILED, State.START_FAILED).contains(task.getState())));
 
                 if (problematicTask.getStopFlag() == StopFlag.DEPENDENCY_NOTIFY_FAILED) {
                     // for DEPENDENCY_NOTIFY_FAILED, stop cause can be a SUCCESS task that can be found only with stoppedCause
@@ -203,7 +226,8 @@ public class RollbackManagerImpl implements RollbackManager {
                 }
 
                 Set<Task> outerOrigins = Sets.difference(possibleFailOrigins, candidates);
-                log.debug("ROLLBACK {}: Can't rollback '{}' because failure origin is not dependant of milestone '{}'. Problematic origins: {}",
+                log.debug(
+                        "ROLLBACK {}: Can't rollback '{}' because failure origin is not dependant of milestone '{}'. Problematic origins: {}",
                         milestone,
                         problematicTask.getName(),
                         milestone,
@@ -223,7 +247,8 @@ public class RollbackManagerImpl implements RollbackManager {
                 .filter(node -> graph.inDegree(node) == 0)
                 .collect(Collectors.toCollection(ArrayDeque::new));
         // not roots with its dependants number as value
-        Map<X, Integer> toVisit = graph.nodes().stream()
+        Map<X, Integer> toVisit = graph.nodes()
+                .stream()
                 .filter(node -> graph.inDegree(node) > 0)
                 .collect(toMap(node -> node, graph::inDegree));
 

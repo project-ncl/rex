@@ -4,18 +4,18 @@
  */
 package org.jboss.pnc.rex.rest;
 
+import java.time.ZonedDateTime;
+
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.api.dto.ComponentVersion;
 import org.jboss.pnc.rex.api.VersionEndpoint;
 import org.jboss.pnc.rex.common.Constants;
-
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import java.time.ZonedDateTime;
 
 @Tag(name = "Version Endpoint")
 @Path("/rest/version")

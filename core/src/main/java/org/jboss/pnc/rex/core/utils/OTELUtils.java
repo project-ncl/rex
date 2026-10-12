@@ -4,16 +4,18 @@
  */
 package org.jboss.pnc.rex.core.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import jakarta.annotation.Nullable;
+
+import org.jboss.pnc.api.constants.MDCHeaderKeys;
+
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapGetter;
-import jakarta.annotation.Nullable;
-import org.jboss.pnc.api.constants.MDCHeaderKeys;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class OTELUtils {
     public static Map<String, String> getOTELContext() {
@@ -42,7 +44,8 @@ public class OTELUtils {
 
         public static MapMapGetter INSTANCE = new MapMapGetter();
 
-        private MapMapGetter() {}
+        private MapMapGetter() {
+        }
 
         @Override
         public Iterable<String> keys(Map<String, String> carrier) {
@@ -55,7 +58,5 @@ public class OTELUtils {
             return carrier == null ? null : carrier.get(key);
         }
     }
-
-
 
 }

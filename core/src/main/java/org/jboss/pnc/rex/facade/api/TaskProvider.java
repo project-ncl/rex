@@ -4,24 +4,30 @@
  */
 package org.jboss.pnc.rex.facade.api;
 
-import org.jboss.pnc.rex.common.enums.ResponseFlag;
-import org.jboss.pnc.rex.dto.TaskDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
+import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 
 public interface TaskProvider {
 
     //todo document
     Set<TaskDTO> create(CreateGraphRequest request);
+
     /**
      * returns all tasks based on filter
      *
      * @return set of tasks
      */
-    Set<TaskDTO> getAll(boolean waiting, boolean running, boolean finished, boolean rollingback, List<String> queueFilter);
+    Set<TaskDTO> getAll(
+            boolean waiting,
+            boolean running,
+            boolean finished,
+            boolean rollingback,
+            List<String> queueFilter);
 
     /**
      * Cancels execution of the task and its dependants
@@ -56,8 +62,8 @@ public interface TaskProvider {
      * @param taskName name of existing task
      * @param rollback whether this response comes from rollback endpoint
      * @param response body of the response
-     * @param flags        OPTIONAL flags that slightly modify the behaviour of schedule (for example SKIP_ROLLBACK will
-     *                     skip rollback process and fail the Task immediately)
+     * @param flags OPTIONAL flags that slightly modify the behaviour of schedule (for example SKIP_ROLLBACK will
+     *        skip rollback process and fail the Task immediately)
      */
     void positiveRemoteResponse(String taskName, boolean rollback, Object response, Set<ResponseFlag> flags);
 
@@ -65,11 +71,11 @@ public interface TaskProvider {
      * Used for communication with remote entity. Invoked by remote entity by provided callback. Remote entity responds
      * that the service has failed its execution.
      *
-     * @param taskName     name of existing task
-     * @param rollback     whether this response comes from rollback endpoint
-     * @param response     body of the response
-     * @param flags        OPTIONAL flags that slightly modify the behaviour of schedule (for example SKIP_ROLLBACK will
-     *                     skip rollback process and fail the Task immediately)
+     * @param taskName name of existing task
+     * @param rollback whether this response comes from rollback endpoint
+     * @param response body of the response
+     * @param flags OPTIONAL flags that slightly modify the behaviour of schedule (for example SKIP_ROLLBACK will
+     *        skip rollback process and fail the Task immediately)
      */
     void negativeRemoteResponse(String taskName, boolean rollback, Object response, Set<ResponseFlag> flags);
 

@@ -4,13 +4,15 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.smallrye.mutiny.Context;
-import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.infrastructure.Infrastructure;
-import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.subscription.Cancellable;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
+
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.common.enums.CJobOperation;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
@@ -28,12 +30,12 @@ import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.smallrye.mutiny.Context;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
+import io.smallrye.mutiny.subscription.Cancellable;
 
 public class HeartbeatVerifierClusterJob extends ClusteredJob {
 
@@ -96,8 +98,9 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
 
         BiConsumer<Context, CompletableFuture<Void>> periodicVerifier = otel.wrapConsumer(
                 (Context ctx, CompletableFuture<Void> complete) -> decorator.withTolerance(
-                        () -> QuarkusTransaction.requiringNew().run(
-                                () -> verify(ctx, complete, heartbeatInterval, failureThreshold))));
+                        () -> QuarkusTransaction.requiringNew()
+                                .run(
+                                        () -> verify(ctx, complete, heartbeatInterval, failureThreshold))));
 
         theTicker(heartbeatInterval, initialDelay, periodicVerifier);
 
@@ -115,8 +118,12 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
             return;
         }
 
-        if (EnumSet.of(StateGroup.FINAL, StateGroup.ROLLBACK, StateGroup.ROLLBACK_TODO).contains(refreshedTask.getState().getGroup())) {
-            log.info("HEARTBEAT {}: Task is in {} state, cancelling verifier.", refreshedTask.getName(), refreshedTask.getState());
+        if (EnumSet.of(StateGroup.FINAL, StateGroup.ROLLBACK, StateGroup.ROLLBACK_TODO)
+                .contains(refreshedTask.getState().getGroup())) {
+            log.info(
+                    "HEARTBEAT {}: Task is in {} state, cancelling verifier.",
+                    refreshedTask.getName(),
+                    refreshedTask.getState());
             complete.complete(null);
             return;
         }
@@ -150,26 +157,37 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
         context.put(FAILURE_COUNT, failureCount);
     }
 
-    private void theTicker(Duration interval,
-                               Duration initialDelay,
-                               BiConsumer<Context, CompletableFuture<Void>> workAction) {
+    private void theTicker(
+            Duration interval,
+            Duration initialDelay,
+            BiConsumer<Context, CompletableFuture<Void>> workAction) {
         var future = new CompletableFuture<Void>();
         Context sharedContext = Context.of();
-        Cancellable cancellable = Multi.createBy().repeating().uni(() -> Uni.createFrom().<Object>nullItem().attachContext()
-                        .call(ictx -> {
-                            var delay = Uni.createFrom().item(ictx).onItem().delayIt();
+        Cancellable cancellable = Multi.createBy()
+                .repeating()
+                .uni(
+                        () -> Uni.createFrom()
+                                .<Object> nullItem()
+                                .attachContext()
+                                .call(ictx -> {
+                                    var delay = Uni.createFrom().item(ictx).onItem().delayIt();
 
-                            return delay.by(calculateNextTick(initialDelay, interval, ictx.context().getOrElse(START_TIME, () -> null)));
-                        })
-                        .invoke(ictx -> ictx.context().put(START_TIME, Instant.now())) // capture startTime of the action
-                        // workAction is transactional, so it needs a worker thread
-                        // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.35#methods-annotated-with-transactional-are-no-longer-automatically-considered-blocking-by-quarkus
-                        .emitOn(Infrastructure.getDefaultExecutor())
-                        .invoke(ictx -> workAction.accept(ictx.context(), future))
-                        .onFailure().invoke(() -> future.complete(null)))
+                                    return delay.by(
+                                            calculateNextTick(
+                                                    initialDelay,
+                                                    interval,
+                                                    ictx.context().getOrElse(START_TIME, () -> null)));
+                                })
+                                .invoke(ictx -> ictx.context().put(START_TIME, Instant.now())) // capture startTime of the action
+                                // workAction is transactional, so it needs a worker thread
+                                // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.35#methods-annotated-with-transactional-are-no-longer-automatically-considered-blocking-by-quarkus
+                                .emitOn(Infrastructure.getDefaultExecutor())
+                                .invoke(ictx -> workAction.accept(ictx.context(), future))
+                                .onFailure()
+                                .invoke(() -> future.complete(null)))
                 .until(item -> future.isDone())
                 .subscribe()
-                    .with(sharedContext, (ign) -> {});
+                .with(sharedContext, (ign) -> {});
         future.join();
         cancellable.cancel();
     }
@@ -189,7 +207,11 @@ public class HeartbeatVerifierClusterJob extends ClusteredJob {
         // align to next time interval
         Duration timeToNextInterval = interval.minus(truncatedDuration);
 
-        log.debug("HEARTBEAT {}: last verification took {} next tick in {}", this.context.getName(), lastRunDuration, timeToNextInterval);
+        log.debug(
+                "HEARTBEAT {}: last verification took {} next tick in {}",
+                this.context.getName(),
+                lastRunDuration,
+                timeToNextInterval);
         return timeToNextInterval;
     }
 

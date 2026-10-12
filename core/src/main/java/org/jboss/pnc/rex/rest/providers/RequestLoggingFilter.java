@@ -7,16 +7,15 @@ package org.jboss.pnc.rex.rest.providers;
 import jakarta.ws.rs.container.*;
 import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.UriInfo;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jboss.resteasy.reactive.server.ServerRequestFilter;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 
-import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class RequestLoggingFilter {
     private static final String REQUEST_EXECUTION_START = "request-execution-start";
-
 
     @ServerRequestFilter
     public void filter(ContainerRequestContext requestContext) {
@@ -39,7 +38,8 @@ public class RequestLoggingFilter {
         } else {
             took = Long.toString(System.currentTimeMillis() - startTime);
         }
-        log.info("Request {} completed with status {} and took {}ms",
+        log.info(
+                "Request {} completed with status {} and took {}ms",
                 requestContext.getUriInfo().getPath(),
                 responseContext.getStatus(),
                 took);

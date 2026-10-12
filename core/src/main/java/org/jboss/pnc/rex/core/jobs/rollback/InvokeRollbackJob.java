@@ -4,10 +4,12 @@
  */
 package org.jboss.pnc.rex.core.jobs.rollback;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.smallrye.mutiny.Uni;
+import java.util.HashMap;
+import java.util.Set;
+
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.api.dto.ErrorResponse;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.RemoteEntityClient;
@@ -18,8 +20,9 @@ import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Set;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.smallrye.mutiny.Uni;
 
 public class InvokeRollbackJob extends ControllerJob {
 
@@ -41,10 +44,12 @@ public class InvokeRollbackJob extends ControllerJob {
     }
 
     @Override
-    protected void beforeExecute() {}
+    protected void beforeExecute() {
+    }
 
     @Override
-    protected void afterExecute() {}
+    protected void afterExecute() {
+    }
 
     @Override
     public boolean execute() {
@@ -54,21 +59,36 @@ public class InvokeRollbackJob extends ControllerJob {
     }
 
     @Override
-    protected void onFailure() {}
+    protected void onFailure() {
+    }
 
     @Override
     protected void onException(Throwable e) {
         logger.error("ROLLBACK {}: UNEXPECTED exception has been thrown.", context.getName(), e);
-        Uni.createFrom().voidItem()
-                .onItem().invoke((ignore) -> controller.fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, true, Set.of()))
-                .onFailure().invoke((throwable) -> logger.warn("ROLLBACK {}: Failed to transition task to START_FAILED state. Retrying.", context.getName(), throwable))
-                .onFailure().retry().atMost(5)
-                .onFailure().recoverWithNull()
-                .await().indefinitely();
+        Uni.createFrom()
+                .voidItem()
+                .onItem()
+                .invoke(
+                        (ignore) -> controller
+                                .fail(context.getName(), createResponse(e), Origin.REX_INTERNAL_ERROR, true, Set.of()))
+                .onFailure()
+                .invoke(
+                        (throwable) -> logger.warn(
+                                "ROLLBACK {}: Failed to transition task to START_FAILED state. Retrying.",
+                                context.getName(),
+                                throwable))
+                .onFailure()
+                .retry()
+                .atMost(5)
+                .onFailure()
+                .recoverWithNull()
+                .await()
+                .indefinitely();
     }
 
     private Object createResponse(Throwable e) {
         return mapper.convertValue(
-                new ErrorResponse(e, "Rex failed to rollback a Task on the remote entity."), HashMap.class);
+                new ErrorResponse(e, "Rex failed to rollback a Task on the remote entity."),
+                HashMap.class);
     }
 }

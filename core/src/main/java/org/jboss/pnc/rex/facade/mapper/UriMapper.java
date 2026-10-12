@@ -4,10 +4,9 @@
  */
 package org.jboss.pnc.rex.facade.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.MapperConfig;
-
 import java.net.URI;
+
+import org.mapstruct.Mapper;
 
 @Mapper(config = MapperCentralConfig.class)
 public class UriMapper implements EntityMapper<URI, String> {

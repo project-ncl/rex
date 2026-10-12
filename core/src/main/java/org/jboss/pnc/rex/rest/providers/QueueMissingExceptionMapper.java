@@ -8,13 +8,15 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jboss.pnc.rex.common.exceptions.QueueMissingException;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Provider
-public class QueueMissingExceptionMapper implements ExceptionMapper<QueueMissingException>  {
+public class QueueMissingExceptionMapper implements ExceptionMapper<QueueMissingException> {
 
     @Override
     public Response toResponse(QueueMissingException e) {

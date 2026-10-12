@@ -4,17 +4,29 @@
  */
 package org.jboss.pnc.rex.facade.mapper;
 
-import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.model.Task;
 import org.mapstruct.*;
 
-@Mapper(config = MapperCentralConfig.class,
-        uses = {RequestMapper.class, ServerResponseMapper.class, ConfigurationMapper.class, TransitionTimeMapper.class})
+@Mapper(
+        config = MapperCentralConfig.class,
+        uses = {
+                RequestMapper.class,
+                ServerResponseMapper.class,
+                ConfigurationMapper.class,
+                TransitionTimeMapper.class })
 public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
 
     @Override
-    @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "serverResponses", "starting",
-            "controllerMode", "disposable", "rollbackMeta", "heartbeatMeta"})
+    @BeanMapping(
+            ignoreUnmappedSourceProperties = {
+                    "unfinishedDependencies",
+                    "serverResponses",
+                    "starting",
+                    "controllerMode",
+                    "disposable",
+                    "rollbackMeta",
+                    "heartbeatMeta" })
     TaskDTO toDTO(Task dbEntity);
 
     @Override
@@ -27,6 +39,6 @@ public interface TaskMapper extends EntityMapper<TaskDTO, Task> {
     @Mapping(target = "disposable", ignore = true)
     @Mapping(target = "rollbackMeta", ignore = true)
     @Mapping(target = "heartbeatMeta", ignore = true)
-//    @BeanMapping(ignoreUnmappedSourceProperties = {"stopFlag"})
+    //    @BeanMapping(ignoreUnmappedSourceProperties = {"stopFlag"})
     Task toDB(TaskDTO dtoEntity);
 }

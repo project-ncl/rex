@@ -6,6 +6,7 @@ package org.jboss.pnc.rex.core.jobs.rollback;
 
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.core.api.RollbackManager;
 import org.jboss.pnc.rex.core.delegates.WithRetries;
 import org.jboss.pnc.rex.core.jobs.ControllerJob;
@@ -27,22 +28,29 @@ public class RollbackFromMilestoneJob extends ControllerJob {
     }
 
     @Override
-    protected void beforeExecute() {}
+    protected void beforeExecute() {
+    }
 
     @Override
-    protected void afterExecute() {}
+    protected void afterExecute() {
+    }
 
     @Override
     public boolean execute() {
-        logger.info("ROLLBACK {}: Initiating rollback process from Milestone {}", context.getName(), context.getMilestoneTask());
+        logger.info(
+                "ROLLBACK {}: Initiating rollback process from Milestone {}",
+                context.getName(),
+                context.getMilestoneTask());
         manager.rollbackFromMilestone(context.getMilestoneTask());
 
         return true;
     }
 
     @Override
-    protected void onFailure() {}
+    protected void onFailure() {
+    }
 
     @Override
-    protected void onException(Throwable e) {}
+    protected void onException(Throwable e) {
+    }
 }

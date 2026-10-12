@@ -4,14 +4,23 @@
  */
 package org.jboss.pnc.rex.core;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.arc.Unremovable;
-import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.infrastructure.Infrastructure;
-import io.vertx.mutiny.core.buffer.Buffer;
-import io.vertx.mutiny.ext.web.client.HttpResponse;
-import lombok.extern.slf4j.Slf4j;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
+import static org.jboss.pnc.rex.core.utils.OTELUtils.getOTELContext;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.jboss.pnc.api.dto.ErrorResponse;
 import org.jboss.pnc.api.dto.HeartbeatConfig;
 import org.jboss.pnc.rex.common.enums.Origin;
@@ -28,21 +37,15 @@ import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.jboss.pnc.rex.model.requests.StopRequest;
 import org.slf4j.MDC;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
-import static org.jboss.pnc.rex.core.utils.OTELUtils.getOTELContext;
+import io.quarkus.arc.Unremovable;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Unremovable
 @ApplicationScoped
@@ -67,11 +70,12 @@ public class RemoteEntityClient {
 
     private final String baseUrl;
 
-    public RemoteEntityClient(GenericVertxHttpClient client,
-                              @WithTransactions TaskController controller,
-                              TaskRegistry taskRegistry,
-                              ObjectMapper mapper,
-                              ApplicationConfig config) {
+    public RemoteEntityClient(
+            GenericVertxHttpClient client,
+            @WithTransactions TaskController controller,
+            TaskRegistry taskRegistry,
+            ObjectMapper mapper,
+            ApplicationConfig config) {
         this.controller = controller;
         this.taskRegistry = taskRegistry;
         this.client = client;
@@ -82,8 +86,11 @@ public class RemoteEntityClient {
     public void stopJob(Task task) {
         if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeyMapping() != null) {
             var keys = task.getConfiguration().getMdcHeaderKeyMapping();
-            var headers = task.getRemoteCancel().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
-            
+            var headers = task.getRemoteCancel()
+                    .getHeaders()
+                    .stream()
+                    .collect(Collectors.toMap(Header::getName, Header::getValue));
+
             wrapWithMDC(keys, headers, () -> stopJobInternal(task));
         } else {
             stopJobInternal(task);
@@ -93,7 +100,10 @@ public class RemoteEntityClient {
     public void startJob(Task task) {
         if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeyMapping() != null) {
             var keys = task.getConfiguration().getMdcHeaderKeyMapping();
-            var headers = task.getRemoteStart().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
+            var headers = task.getRemoteStart()
+                    .getHeaders()
+                    .stream()
+                    .collect(Collectors.toMap(Header::getName, Header::getValue));
 
             wrapWithMDC(keys, headers, () -> startJobInternal(task));
         } else {
@@ -104,7 +114,10 @@ public class RemoteEntityClient {
     public void rollbackJob(Task task) {
         if (task.getConfiguration() != null && task.getConfiguration().getMdcHeaderKeyMapping() != null) {
             var keys = task.getConfiguration().getMdcHeaderKeyMapping();
-            var headers = task.getRemoteRollback().getHeaders().stream().collect(Collectors.toMap(Header::getName, Header::getValue));
+            var headers = task.getRemoteRollback()
+                    .getHeaders()
+                    .stream()
+                    .collect(Collectors.toMap(Header::getName, Header::getValue));
 
             wrapWithMDC(keys, headers, () -> rollbackJobInternal(task));
         } else {
@@ -119,10 +132,11 @@ public class RemoteEntityClient {
         try {
             url = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("remoteCancel.url is not a valid URL for task with name " +
-                    task.getName(), e);
+            throw new IllegalArgumentException(
+                    "remoteCancel.url is not a valid URL for task with name " +
+                            task.getName(),
+                    e);
         }
-
 
         org.jboss.pnc.api.dto.Request callbackRequest = getCallbackRequest(task.getName(), SINGLE_FINISH_ENDPOINT_PATH);
         org.jboss.pnc.api.dto.Request positiveCallback = getCallbackRequest(task.getName(), SUCCESS_ENDPOINT_PATH);
@@ -137,7 +151,8 @@ public class RemoteEntityClient {
                 .mdc(getOptionalMDCAndOTELValues(task))
                 .build();
 
-        client.makeRequest(url,
+        client.makeRequest(
+                url,
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
@@ -164,7 +179,6 @@ public class RemoteEntityClient {
         return mdcBody;
     }
 
-
     private void startJobInternal(Task task) {
         Request requestDefinition = task.getRemoteStart();
 
@@ -172,8 +186,10 @@ public class RemoteEntityClient {
         try {
             uri = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("remoteStart.url is not a valid URL for task with name " +
-                    task.getName(), e);
+            throw new IllegalArgumentException(
+                    "remoteStart.url is not a valid URL for task with name " +
+                            task.getName(),
+                    e);
         }
 
         org.jboss.pnc.api.dto.Request callbackRequest = getCallbackRequest(task.getName(), SINGLE_FINISH_ENDPOINT_PATH);
@@ -191,7 +207,8 @@ public class RemoteEntityClient {
                 .mdc(getOptionalMDCAndOTELValues(task))
                 .build();
 
-        client.makeRequest(uri,
+        client.makeRequest(
+                uri,
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
@@ -219,13 +236,18 @@ public class RemoteEntityClient {
         try {
             url = new URI(requestDefinition.getUrl());
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("remoteRollback.url is not a valid URL for task with name " +
-                    task.getName(), e);
+            throw new IllegalArgumentException(
+                    "remoteRollback.url is not a valid URL for task with name " +
+                            task.getName(),
+                    e);
         }
 
-
-        org.jboss.pnc.api.dto.Request positiveCallback = getCallbackRequest(task.getName(), SUCCESS_ROLLBACK_ENDPOINT_PATH);
-        org.jboss.pnc.api.dto.Request negativeCallback = getCallbackRequest(task.getName(), FAILED_ROLLBACK_ENDPOINT_PATH);
+        org.jboss.pnc.api.dto.Request positiveCallback = getCallbackRequest(
+                task.getName(),
+                SUCCESS_ROLLBACK_ENDPOINT_PATH);
+        org.jboss.pnc.api.dto.Request negativeCallback = getCallbackRequest(
+                task.getName(),
+                FAILED_ROLLBACK_ENDPOINT_PATH);
 
         RollbackRequest request = RollbackRequest.builder()
                 .payload(requestDefinition.getAttachment())
@@ -235,7 +257,8 @@ public class RemoteEntityClient {
                 .mdc(getOptionalMDCAndOTELValues(task))
                 .build();
 
-        client.makeRequest(url,
+        client.makeRequest(
+                url,
                 requestDefinition.getMethod(),
                 requestDefinition.getHeaders(),
                 request,
@@ -259,17 +282,30 @@ public class RemoteEntityClient {
 
     private Uni<Void> handleConnectionFailure(Throwable exception, Task task, boolean rollback) {
         log.error("ERROR {}: Couldn't reach the remote entity.", task.getName(), exception);
-        return Uni.createFrom().voidItem().emitOn(Infrastructure.getDefaultExecutor())
-            .onItem().invoke(
-                () -> controller.fail(
-                    task.getName(),
-                    convertToHashMap(new ErrorResponse(exception.getClass().getSimpleName(), exception.getMessage(), "Rex couldn't contact remote entity.")),
-                    Origin.REX_INTERNAL_ERROR,
-                    rollback,
-                    Set.of()))
-            .onFailure().retry().atMost(5)
-            .onFailure().invoke((throwable) -> log.error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
-            .onFailure().recoverWithNull();
+        return Uni.createFrom()
+                .voidItem()
+                .emitOn(Infrastructure.getDefaultExecutor())
+                .onItem()
+                .invoke(
+                        () -> controller.fail(
+                                task.getName(),
+                                convertToHashMap(
+                                        new ErrorResponse(
+                                                exception.getClass().getSimpleName(),
+                                                exception.getMessage(),
+                                                "Rex couldn't contact remote entity.")),
+                                Origin.REX_INTERNAL_ERROR,
+                                rollback,
+                                Set.of()))
+                .onFailure()
+                .retry()
+                .atMost(5)
+                .onFailure()
+                .invoke(
+                        (throwable) -> log
+                                .error("ERROR: Couldn't commit transaction. Data corruption is possible.", throwable))
+                .onFailure()
+                .recoverWithNull();
     }
 
     /**
@@ -286,7 +322,10 @@ public class RemoteEntityClient {
             try {
                 objectResponse = mapper.readValue(body, Object.class);
             } catch (JsonProcessingException ignored) {
-                log.warn("Response(statusCode: {}) could not be parsed. Response: {}", response.statusCode(), response.bodyAsString());
+                log.warn(
+                        "Response(statusCode: {}) could not be parsed. Response: {}",
+                        response.statusCode(),
+                        response.bodyAsString());
             }
         }
         return objectResponse;
@@ -298,16 +337,23 @@ public class RemoteEntityClient {
         org.jboss.pnc.api.dto.Request callbackRequest;
         try {
             URI callbackUri = new URI(callback);
-            List<org.jboss.pnc.api.dto.Request.Header> headers = List.of(new org.jboss.pnc.api.dto.Request.Header(CONTENT_TYPE, APPLICATION_JSON));
-            callbackRequest = new org.jboss.pnc.api.dto.Request(org.jboss.pnc.api.dto.Request.Method.POST, callbackUri, headers);
+            List<org.jboss.pnc.api.dto.Request.Header> headers = List
+                    .of(new org.jboss.pnc.api.dto.Request.Header(CONTENT_TYPE, APPLICATION_JSON));
+            callbackRequest = new org.jboss.pnc.api.dto.Request(
+                    org.jboss.pnc.api.dto.Request.Method.POST,
+                    callbackUri,
+                    headers);
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("callbackUri " + callback + " is not a valid URL for task with name " + taskName, e);
+            throw new IllegalArgumentException(
+                    "callbackUri " + callback + " is not a valid URL for task with name " + taskName,
+                    e);
         }
         return callbackRequest;
     }
 
     /**
      * Get task results of dependencies if the configuration allows it, otherwise return null
+     * 
      * @param task to process
      *
      * @return task results of dependencies

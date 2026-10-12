@@ -4,8 +4,22 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.narayana.jta.TransactionSemantics;
-import lombok.extern.slf4j.Slf4j;
+import static jakarta.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
+import static jakarta.enterprise.event.TransactionPhase.IN_PROGRESS;
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.transaction.Transactional;
+
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
@@ -14,10 +28,10 @@ import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
+import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.core.api.DependencyMessenger;
 import org.jboss.pnc.rex.core.api.DependentMessenger;
 import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
 import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.core.jobs.ClearConstraintJob;
@@ -52,21 +66,8 @@ import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.TransitionTime;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Event;
-import jakarta.transaction.Transactional;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
-import static jakarta.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
-import static jakarta.enterprise.event.TransactionPhase.IN_PROGRESS;
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
-import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
+import io.quarkus.narayana.jta.TransactionSemantics;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped
@@ -80,11 +81,11 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     private final FaultToleranceDecorator ft;
 
-
-    public TaskControllerImpl(TaskContainerImpl container,
-                              Event<ControllerJob> scheduleJob,
-                              TaskConfiguration config,
-                              FaultToleranceDecorator ftDecorator) {
+    public TaskControllerImpl(
+            TaskContainerImpl container,
+            Event<ControllerJob> scheduleJob,
+            TaskConfiguration config,
+            FaultToleranceDecorator ftDecorator) {
         this.container = container;
         this.scheduleJob = scheduleJob;
         this.config = config;
@@ -115,20 +116,22 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             case STOPPING_TO_STOPPED -> List.of(new DependencyCancelledJob(task, task.getName()));
 
             case NEW_to_STOPPED, WAITING_to_STOPPED, ENQUEUED_to_STOPPED, ROLLBACK_TRIGGERED_to_STOPPED,
-                 ROLLEDBACK_to_STOPPED, ROLLBACK_FAILED_to_STOPPED -> {
+                    ROLLEDBACK_to_STOPPED, ROLLBACK_FAILED_to_STOPPED -> {
                 var jobs = new ArrayList<ControllerJob>();
                 switch (task.getStopFlag()) {
                     case CANCELLED -> jobs.add(new DependencyCancelledJob(task, task.getStoppedCause()));
                     case DEPENDENCY_FAILED -> jobs.add(new DependencyStoppedJob(task, task.getStoppedCause()));
-                    case DEPENDENCY_NOTIFY_FAILED -> jobs.add(new DependencyNotificationFailedJob(task, task.getStoppedCause()));
+                    case DEPENDENCY_NOTIFY_FAILED ->
+                        jobs.add(new DependencyNotificationFailedJob(task, task.getStoppedCause()));
                     // UNSUCCESSFUL is in FAILED transitions
-                    case UNSUCCESSFUL, NONE -> {}
+                    case UNSUCCESSFUL, NONE -> {
+                    }
                 }
                 yield jobs;
             }
 
             case UP_to_FAILED, STARTING_to_START_FAILED, STOPPING_TO_STOP_FAILED, STOP_REQUESTED_to_STOP_FAILED ->
-                    List.of(new DependencyStoppedJob(task, task.getName()));
+                List.of(new DependencyStoppedJob(task, task.getName()));
 
             case STOP_REQUESTED_to_STOPPING -> List.of(new TimeoutCancelClusterJob(task));
 
@@ -154,15 +157,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             case SUCCESSFUL_to_TO_ROLLBACK -> List.of();
 
             case TO_ROLLBACK_to_ROLLBACK_REQUESTED, ROLLBACK_TRIGGERED_to_ROLLBACK_REQUESTED, UP_to_ROLLBACK_REQUESTED,
-                 STARTING_to_ROLLBACK_REQUESTED, START_FAILED_to_ROLLBACK_REQUESTED, FAILED_to_ROLLBACK_REQUESTED,
-                 SUCCESSFUL_to_ROLLBACK_REQUESTED
-                  -> List.of(new InvokeRollbackJob(task));
+                    STARTING_to_ROLLBACK_REQUESTED, START_FAILED_to_ROLLBACK_REQUESTED, FAILED_to_ROLLBACK_REQUESTED,
+                    SUCCESSFUL_to_ROLLBACK_REQUESTED ->
+                List.of(new InvokeRollbackJob(task));
 
             // no rollback request invoked
             case NEW_to_ROLLEDBACK, WAITING_to_ROLLEDBACK, ENQUEUED_to_ROLLEDBACK, STOPPED_to_ROLLEDBACK -> List.of();
 
             case TO_ROLLBACK_to_ROLLEDBACK, ROLLINGBACK_to_ROLLEDBACK,
-                 ROLLINGBACK_to_ROLLBACK_FAILED, ROLLBACK_REQUESTED_to_ROLLBACK_FAILED  -> {
+                    ROLLINGBACK_to_ROLLBACK_FAILED, ROLLBACK_REQUESTED_to_ROLLBACK_FAILED -> {
                 var jobs = new ArrayList<ControllerJob>();
                 if (task.getRollbackMeta().isRollbackSource()) {
                     jobs.add(new ResetFromMilestoneJob(task));
@@ -182,7 +185,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
             // no jobs
             case UP_to_ROLLEDBACK, STARTING_to_ROLLEDBACK, FAILED_to_ROLLEDBACK, START_FAILED_to_ROLLEDBACK,
-                 ROLLBACK_REQUESTED_to_ROLLINGBACK-> List.of();
+                    ROLLBACK_REQUESTED_to_ROLLINGBACK ->
+                List.of();
 
             case TO_ROLLBACK_to_STOPPED, ROLLBACK_REQUESTED_to_STOPPED, ROLLINGBACK_to_STOPPED -> {
                 var jobs = new ArrayList<ControllerJob>();
@@ -192,9 +196,11 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 switch (task.getStopFlag()) {
                     case CANCELLED -> jobs.add(new DependencyCancelledJob(task, task.getStoppedCause()));
                     case DEPENDENCY_FAILED -> jobs.add(new DependencyStoppedJob(task, task.getStoppedCause()));
-                    case DEPENDENCY_NOTIFY_FAILED -> jobs.add(new DependencyNotificationFailedJob(task, task.getStoppedCause()));
+                    case DEPENDENCY_NOTIFY_FAILED ->
+                        jobs.add(new DependencyNotificationFailedJob(task, task.getStoppedCause()));
                     // UNSUCCESSFUL is in FAILED transitions
-                    case UNSUCCESSFUL, NONE -> {}
+                    case UNSUCCESSFUL, NONE -> {
+                    }
                 }
                 yield jobs;
             }
@@ -275,12 +281,17 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         return treeJobBuilder.build();
     }
 
-    private void addDependantPostNotifyJobs(Task task, TreeJob.TreeJobBuilder treeJobBuilder, NotifyCallerJob notifyJob) {
+    private void addDependantPostNotifyJobs(
+            Task task,
+            TreeJob.TreeJobBuilder treeJobBuilder,
+            NotifyCallerJob notifyJob) {
         var successJob = withTransactionAndTolerance(new DependencySucceededJob(task));
         treeJobBuilder.triggerAfterSuccess(notifyJob, successJob);
         treeJobBuilder.triggerAfter(successJob, new PokeQueueJob());
 
-        treeJobBuilder.triggerAfterFailure(notifyJob, withTransactionAndTolerance(new DependencyNotificationFailedJob(task, task.getName())));
+        treeJobBuilder.triggerAfterFailure(
+                notifyJob,
+                withTransactionAndTolerance(new DependencyNotificationFailedJob(task, task.getName())));
     }
 
     private DelegateJob moveToTheEndOfTransaction(ControllerJob delegate) {
@@ -294,6 +305,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 .delegate(delegate)
                 .build();
     }
+
     private DelegateJob withTransactionAndTolerance(ControllerJob delegate) {
         return DelegateJob.builder()
                 .async(false)
@@ -339,7 +351,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             }
             case STARTING -> {
                 int counter = task.getRollbackMeta().getRollbackCounter();
-                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.STARTING, counter)).toList();
+                var responses = task.getServerResponses()
+                        .stream()
+                        .filter(sr -> filterForThisState(sr, State.STARTING, counter))
+                        .toList();
 
                 if (shouldRequestRollback(task))
                     yield Transition.STARTING_to_ROLLBACK_REQUESTED;
@@ -358,7 +373,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             }
             case UP -> {
                 int counter = task.getRollbackMeta().getRollbackCounter();
-                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.UP, counter)).toList();
+                var responses = task.getServerResponses()
+                        .stream()
+                        .filter(sr -> filterForThisState(sr, State.UP, counter))
+                        .toList();
 
                 if (shouldRequestRollback(task))
                     yield Transition.UP_to_ROLLBACK_REQUESTED;
@@ -377,7 +395,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             }
             case STOP_REQUESTED -> {
                 int counter = task.getRollbackMeta().getRollbackCounter();
-                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.STOP_REQUESTED, counter)).toList();
+                var responses = task.getServerResponses()
+                        .stream()
+                        .filter(sr -> filterForThisState(sr, State.STOP_REQUESTED, counter))
+                        .toList();
 
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.STOP_REQUESTED_to_STOPPING;
@@ -387,7 +408,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             }
             case STOPPING -> {
                 int counter = task.getRollbackMeta().getRollbackCounter();
-                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.STOPPING, counter)).toList();
+                var responses = task.getServerResponses()
+                        .stream()
+                        .filter(sr -> filterForThisState(sr, State.STOPPING, counter))
+                        .toList();
 
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.STOPPING_TO_STOPPED;
@@ -443,7 +467,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             }
             case ROLLBACK_REQUESTED -> {
                 int counter = task.getRollbackMeta().getRollbackCounter();
-                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.ROLLBACK_REQUESTED, counter)).toList();
+                var responses = task.getServerResponses()
+                        .stream()
+                        .filter(sr -> filterForThisState(sr, State.ROLLBACK_REQUESTED, counter))
+                        .toList();
 
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.ROLLBACK_REQUESTED_to_ROLLINGBACK;
@@ -455,7 +482,10 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
             }
             case ROLLINGBACK -> {
                 int counter = task.getRollbackMeta().getRollbackCounter();
-                var responses = task.getServerResponses().stream().filter(sr -> filterForThisState(sr, State.ROLLINGBACK, counter)).toList();
+                var responses = task.getServerResponses()
+                        .stream()
+                        .filter(sr -> filterForThisState(sr, State.ROLLINGBACK, counter))
+                        .toList();
 
                 if (responses.stream().anyMatch(ServerResponse::isPositive))
                     yield Transition.ROLLINGBACK_to_ROLLEDBACK;
@@ -510,7 +540,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
     private boolean shouldHandleNotStartedFails(Task task) {
         return shouldRollback(task) && task.getRemoteRollback() != null
-                && (task.getStopFlag() == StopFlag.DEPENDENCY_FAILED || task.getStopFlag() == StopFlag.DEPENDENCY_NOTIFY_FAILED);
+                && (task.getStopFlag() == StopFlag.DEPENDENCY_FAILED
+                        || task.getStopFlag() == StopFlag.DEPENDENCY_NOTIFY_FAILED);
     }
 
     private boolean shouldRollbackWithNoActions(Task task) {
@@ -583,7 +614,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
     }
 
     private void saveChanges(VersionedValue<Task> taskMetadata, Task task) {
-        log.trace("SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
+        log.trace(
+                "SAVE {}: Saving task into ISPN. (ISPN-VERSION: {}) BODY: {}",
                 task.getName(),
                 taskMetadata.getVersion(),
                 task);
@@ -591,7 +623,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         boolean pushed = container.getCache().replaceWithVersion(task.getName(), task, taskMetadata.getVersion());
         if (!pushed) {
             log.error("SAVE {}: Concurrent update detected. Transaction will fail.", task.getName());
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException(
+                    "Task " + task.getName() + " was remotely updated during the transaction");
         }
     }
 
@@ -618,7 +651,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         Mode currentMode = task.getControllerMode();
         if (currentMode == Mode.CANCEL || (mode == Mode.IDLE && currentMode == Mode.ACTIVE)) {
             //no possible movement
-            log.error("SET-MODE {}: Incorrect request. (current-mode: {}, proposed-mode: {}) ",
+            log.error(
+                    "SET-MODE {}: Incorrect request. (current-mode: {}, proposed-mode: {}) ",
                     name,
                     currentMode,
                     mode);
@@ -632,7 +666,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         // #3 HANDLE
         if (pokeQueue) {
-            handle(taskMetadata, task, new ControllerJob[]{new PokeQueueJob()});
+            handle(taskMetadata, task, new ControllerJob[] { new PokeQueueJob() });
         } else {
             handle(taskMetadata, task);
         }
@@ -646,9 +680,16 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        if (assertStateForResponses(task, isRollback, true, flags)) return;
+        if (assertStateForResponses(task, isRollback, true, flags))
+            return;
 
-        ServerResponse positiveResponse = new ServerResponse(task.getState(), true, response, origin, task.getRollbackMeta().getRollbackCounter(), flags);
+        ServerResponse positiveResponse = new ServerResponse(
+                task.getState(),
+                true,
+                response,
+                origin,
+                task.getRollbackMeta().getRollbackCounter(),
+                flags);
         List<ServerResponse> responses = task.getServerResponses();
         responses.add(positiveResponse);
 
@@ -664,9 +705,16 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         Task task = taskMetadata.getValue();
 
         // #2 ALTER
-        if (assertStateForResponses(task, isRollback, false, flags)) return;
+        if (assertStateForResponses(task, isRollback, false, flags))
+            return;
 
-        ServerResponse negativeResponse = new ServerResponse(task.getState(), false, response, origin, task.getRollbackMeta().getRollbackCounter(), flags);
+        ServerResponse negativeResponse = new ServerResponse(
+                task.getState(),
+                false,
+                response,
+                origin,
+                task.getRollbackMeta().getRollbackCounter(),
+                flags);
         List<ServerResponse> responses = task.getServerResponses();
         responses.add(negativeResponse);
 
@@ -687,11 +735,12 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #2 ALTER
         if (!Set.of(State.UP, State.STARTING).contains(task.getState())) {
             throw new BadRequestException("Task " + task.getName() + " is not in state UP nor STARTING.");
-        };
+        }
+        ;
 
         if (task.getConfiguration() == null
                 || !task.getConfiguration().isHeartbeatEnable()) {
-            throw new BadRequestException("Task "+ task.getName() + " does not have Heartbeat enabled.");
+            throw new BadRequestException("Task " + task.getName() + " does not have Heartbeat enabled.");
         }
 
         task.setHeartbeatMeta(new HeartbeatMetadata(beatTime, response));
@@ -700,43 +749,53 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         handle(taskMetadata, task);
     }
 
-    private static boolean assertStateForResponses(Task task, boolean isRollback, boolean isPositive, Set<ResponseFlag> flags) {
+    private static boolean assertStateForResponses(
+            Task task,
+            boolean isRollback,
+            boolean isPositive,
+            Set<ResponseFlag> flags) {
         var acceptedRollbackStates = EnumSet.of(State.TO_ROLLBACK, State.ROLLBACK_REQUESTED, State.ROLLINGBACK);
         var acceptedStandardStates = EnumSet.of(State.STARTING, State.UP, State.STOP_REQUESTED, State.STOPPING);
         var failFast = false;
 
         if (isRollback && flags.contains(SKIP_ROLLBACK)) {
-            throw new BadRequestException("Invalid parameter combination." +
-                    " 'skipRollback' flag doesn't work with Rollback endpoints.");
+            throw new BadRequestException(
+                    "Invalid parameter combination." +
+                            " 'skipRollback' flag doesn't work with Rollback endpoints.");
         }
 
         if (isRollback) {
             if (acceptedStandardStates.contains(task.getState())) {
                 if (task.getState() != State.STOPPED) {
-                    throw new IllegalStateException("Got rollback response from remote entity while not in a state to do so." +
-                            " Task: " + task.getName() + " State: " + task.getState());
+                    throw new IllegalStateException(
+                            "Got rollback response from remote entity while not in a state to do so." +
+                                    " Task: " + task.getName() + " State: " + task.getState());
                 }
 
                 // callback from rollback came too late (task may have been cancelled in the middle of rollback process)
-                log.warn("Cannot accept rollback callback from {} because task was cancelled. State {}",
+                log.warn(
+                        "Cannot accept rollback callback from {} because task was cancelled. State {}",
                         task.getName(),
                         task.getState());
                 failFast = true;
             } else if (!acceptedRollbackStates.contains(task.getState())) {
-                throw new IllegalStateException("Got response from the remote entity while not in a state to do so." +
-                        " Task: " + task.getName() + " State: " + task.getState());
+                throw new IllegalStateException(
+                        "Got response from the remote entity while not in a state to do so." +
+                                " Task: " + task.getName() + " State: " + task.getState());
             }
         } else {
             if (acceptedRollbackStates.contains(task.getState())) {
                 // callback from finished task came too late
-                log.warn("Cannot accept {} callback from {} because task is in process of rollback. State {}",
+                log.warn(
+                        "Cannot accept {} callback from {} because task is in process of rollback. State {}",
                         isPositive ? "positive" : "negative",
                         task.getName(),
                         task.getState());
                 failFast = true;
             } else if (!acceptedStandardStates.contains(task.getState())) {
-                throw new IllegalStateException("Got response from the remote entity while not in a state to do so." +
-                        " Task: " + task.getName() + " State: " + task.getState());
+                throw new IllegalStateException(
+                        "Got response from the remote entity while not in a state to do so." +
+                                " Task: " + task.getName() + " State: " + task.getState());
             }
         }
         return failFast;
@@ -753,7 +812,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         if (task.getState() == State.ENQUEUED) {
             task.setStarting(true);
         } else {
-            throw new IllegalStateException("Attempting to dequeue while not in a state to do. Task: " + task.getName() + " State: " + task.getState());
+            throw new IllegalStateException(
+                    "Attempting to dequeue while not in a state to do. Task: " + task.getName() + " State: "
+                            + task.getState());
         }
 
         // #3 HANDLE
@@ -766,7 +827,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
         Task task = taskMetadata.getValue();
 
@@ -787,7 +850,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
         Task task = taskMetadata.getValue();
 
@@ -804,14 +869,15 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         handle(taskMetadata, task);
     }
 
-
     @Override
     @Transactional(MANDATORY)
     public void dependencyCancelled(String name, String cause) {
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
 
         Task task = taskMetadata.getValue();
@@ -834,7 +900,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
         Task task = taskMetadata.getValue();
 
@@ -859,7 +927,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
         Task task = taskMetadata.getValue();
 
@@ -877,7 +947,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #4 PULL
         taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
         task = taskMetadata.getValue();
 
@@ -919,7 +991,12 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         }
         Task task = taskMetadata.getValue();
 
-        log.trace("Triggered by deleted task: {}. Task {} has {} dependants: {}.", deletedDependant, task.getName(), task.getDependants().size(), task.getDependants());
+        log.trace(
+                "Triggered by deleted task: {}. Task {} has {} dependants: {}.",
+                deletedDependant,
+                task.getName(),
+                task.getDependants().size(),
+                task.getDependants());
         if (task.getState().isFinal() && task.isDisposable() && task.getDependants().size() <= 1) {
             // DELETE the task if deletedDependant is the last dependant that has been deleted
             doExecute(List.of(new DeleteTaskJob(task)));
@@ -936,7 +1013,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getRequiredTaskWithMetadata(name);
         Task task = taskMetadata.getValue();
-        
+
         // #2 ALTER
         if (!task.getState().isRollback()) {
             // ignore if a Task is not part of Rollback process
@@ -957,7 +1034,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         // #2 ALTER
         if (!task.getState().isFinal()) {
-            throw new IllegalStateException("Attempting to mark a task for disposal while not in a final state. Task: " + task.getName() + " State: " + task.getState());
+            throw new IllegalStateException(
+                    "Attempting to mark a task for disposal while not in a final state. Task: " + task.getName()
+                            + " State: " + task.getState());
         }
 
         log.info("TASK {}: MARKING FOR DELETION.", name);
@@ -983,14 +1062,19 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         // #2 DELETE
         if (!task.getState().isFinal()) {
-            throw new IllegalStateException("Attempting to delete a task while not in a final state. Task: " + task.getName() + " State: " + task.getState());
+            throw new IllegalStateException(
+                    "Attempting to delete a task while not in a final state. Task: " + task.getName() + " State: "
+                            + task.getState());
         }
 
         if (!task.isDisposable()) {
-            throw new IllegalStateException("Attempting to delete a task while not marked as disposable. Task: " + task.getName() + " State: " + task.getState());
+            throw new IllegalStateException(
+                    "Attempting to delete a task while not marked as disposable. Task: " + task.getName() + " State: "
+                            + task.getState());
         }
 
-        log.debug("DELETE {}: Deleting task from ISPN. (ISPN-VERSION: {}) BODY: {}",
+        log.debug(
+                "DELETE {}: Deleting task from ISPN. (ISPN-VERSION: {}) BODY: {}",
                 task.getName(),
                 taskMetadata.getVersion(),
                 task);
@@ -998,7 +1082,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         boolean deleted = container.getCache().removeWithVersion(name, taskMetadata.getVersion());
         if (!deleted) {
             log.error("DELETE {}: Concurrent update detected. Transaction will fail.", task.getName());
-            throw new ConcurrentUpdateException("Task " + task.getName() + " was remotely updated during the transaction");
+            throw new ConcurrentUpdateException(
+                    "Task " + task.getName() + " was remotely updated during the transaction");
         }
 
         handleOptionalConstraint(task);
@@ -1034,7 +1119,9 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         // #1 PULL
         VersionedValue<Task> taskMetadata = container.getWithMetadata(name);
         if (taskMetadata == null) {
-            throw new ConcurrentUpdateException("Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: " + name);
+            throw new ConcurrentUpdateException(
+                    "Task missing in critical moment. This could happen with concurrent deletion of this Task. Task: "
+                            + name);
         }
         Task task = taskMetadata.getValue();
 
@@ -1061,7 +1148,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         // #2 ALTER
         if (task.getState() != State.ROLLBACK_TRIGGERED) {
-            throw new IllegalStateException("Task '" + task.getName() + "' not in ROLLBACK_TRIGGERED state. Can't increase counter.");
+            throw new IllegalStateException(
+                    "Task '" + task.getName() + "' not in ROLLBACK_TRIGGERED state. Can't increase counter.");
         }
         task.setStopFlag(StopFlag.NONE);
         task.getRollbackMeta().incTriggerCounter();
@@ -1124,7 +1212,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
 
         // FORCED CONSTRUCTOR for compilation errors. Brand-new fields may need to be handled/reset in this method so
         // that Task rollbacks to NEW properly.
-        return new Task(task.getName(),
+        return new Task(
+                task.getName(),
                 task.getConstraint(),
                 task.getCorrelationID(),
                 task.getRemoteStart(),
@@ -1146,8 +1235,7 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
                 task.getMilestoneTask(),
                 task.getRemoteRollback(),
                 rollbackMeta,
-                heartbeatMeta
-        );
+                heartbeatMeta);
     }
 
     private void reintroduceConstraint(Task task) {
@@ -1155,7 +1243,8 @@ public class TaskControllerImpl implements TaskController, DependentMessenger, D
         if (constraint != null) {
             String previousHolder = container.getConstraintCache().putIfAbsent(constraint, task.getName());
             if (previousHolder != null && !previousHolder.equals(task.getName())) {
-                log.warn("RACE CONDITION {}: Constraint {} is already taken by '{}'. This will cause unique constraint issues.",
+                log.warn(
+                        "RACE CONDITION {}: Constraint {} is already taken by '{}'. This will cause unique constraint issues.",
                         task.getName(),
                         task.getConstraint(),
                         previousHolder);

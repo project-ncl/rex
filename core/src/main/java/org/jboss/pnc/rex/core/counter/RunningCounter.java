@@ -4,16 +4,17 @@
  */
 package org.jboss.pnc.rex.core.counter;
 
-import io.quarkus.infinispan.client.Remote;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.VersionedValue;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.pnc.rex.core.common.Constants;
+import static java.util.stream.Collectors.toMap;
 
 import java.util.Map;
 
-import static java.util.stream.Collectors.toMap;
+import jakarta.enterprise.context.ApplicationScoped;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
+import org.jboss.pnc.rex.core.common.Constants;
+
+import io.quarkus.infinispan.client.Remote;
 
 @Running
 @ApplicationScoped
@@ -69,13 +70,15 @@ public class RunningCounter implements Counter {
 
     @Override
     public Map<String, Long> entries() {
-        Map<String, Long> entries = counterCache.entrySet().stream()
+        Map<String, Long> entries = counterCache.entrySet()
+                .stream()
                 .filter(e -> e.getKey().startsWith(Constants.RUNNING_COUNTER_KEY))
-                .collect(toMap(
-                        entry -> entry.getKey()
-                                .replaceFirst(Constants.RUNNING_COUNTER_KEY, "")
-                                .replaceFirst(Constants.NAME_SEPARATOR, ""),
-                        Map.Entry::getValue));
+                .collect(
+                        toMap(
+                                entry -> entry.getKey()
+                                        .replaceFirst(Constants.RUNNING_COUNTER_KEY, "")
+                                        .replaceFirst(Constants.NAME_SEPARATOR, ""),
+                                Map.Entry::getValue));
 
         // should be always true, unless default queue was never initialized
         if (entries.containsKey("")) {

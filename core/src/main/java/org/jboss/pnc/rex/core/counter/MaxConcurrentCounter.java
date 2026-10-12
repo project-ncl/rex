@@ -4,19 +4,19 @@
  */
 package org.jboss.pnc.rex.core.counter;
 
-import io.quarkus.infinispan.client.Remote;
-import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.VersionedValue;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.pnc.rex.core.common.Constants;
-import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
+import static java.util.stream.Collectors.toMap;
 
 import java.util.Map;
 
-import static java.util.stream.Collectors.toMap;
+import jakarta.annotation.Nullable;
+import jakarta.enterprise.context.ApplicationScoped;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
+import org.jboss.pnc.rex.core.common.Constants;
+import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
+
+import io.quarkus.infinispan.client.Remote;
 
 @MaxConcurrent
 @ApplicationScoped
@@ -26,8 +26,9 @@ public class MaxConcurrentCounter implements Counter {
 
     private final TaskConfiguration taskConfig;
 
-    public MaxConcurrentCounter(@Remote("rex-counter") RemoteCache<String, Long> counterCache,
-                                TaskConfiguration taskConfig) {
+    public MaxConcurrentCounter(
+            @Remote("rex-counter") RemoteCache<String, Long> counterCache,
+            TaskConfiguration taskConfig) {
         this.counterCache = counterCache;
         this.taskConfig = taskConfig;
     }
@@ -79,13 +80,15 @@ public class MaxConcurrentCounter implements Counter {
 
     @Override
     public Map<String, Long> entries() {
-        Map<String, Long> entries = counterCache.entrySet().stream()
+        Map<String, Long> entries = counterCache.entrySet()
+                .stream()
                 .filter(e -> e.getKey().startsWith(Constants.MAX_COUNTER_KEY))
-                .collect(toMap(
-                        entry -> entry.getKey()
-                                .replaceFirst(Constants.MAX_COUNTER_KEY, "")
-                                .replaceFirst(Constants.NAME_SEPARATOR, ""),
-                        Map.Entry::getValue));
+                .collect(
+                        toMap(
+                                entry -> entry.getKey()
+                                        .replaceFirst(Constants.MAX_COUNTER_KEY, "")
+                                        .replaceFirst(Constants.NAME_SEPARATOR, ""),
+                                Map.Entry::getValue));
 
         // should be always true, unless default queue was never initialized
         if (entries.containsKey("")) {

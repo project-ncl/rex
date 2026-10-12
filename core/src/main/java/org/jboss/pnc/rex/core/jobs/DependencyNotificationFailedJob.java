@@ -5,6 +5,7 @@
 package org.jboss.pnc.rex.core.jobs;
 
 import jakarta.enterprise.event.TransactionPhase;
+
 import org.jboss.pnc.rex.model.Task;
 
 public class DependencyNotificationFailedJob extends DependantMessageJob {

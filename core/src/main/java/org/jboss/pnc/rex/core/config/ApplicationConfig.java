@@ -4,12 +4,13 @@
  */
 package org.jboss.pnc.rex.core.config;
 
+import java.time.Duration;
+
+import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
+
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
-import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
-
-import java.time.Duration;
 
 @ConfigMapping(prefix = "scheduler")
 public interface ApplicationConfig {
@@ -24,7 +25,6 @@ public interface ApplicationConfig {
     @WithName("baseUrl")
     String baseUrl();
 
-
     Options options();
 
     /**
@@ -34,6 +34,7 @@ public interface ApplicationConfig {
 
         /**
          * Configuration related to handling Tasks. It is also independently injectable.
+         * 
          * @return task configuration
          */
         TaskConfiguration taskConfiguration();
@@ -61,9 +62,9 @@ public interface ApplicationConfig {
              *
              * If true, the Tasks are deleted automatically.
              * The circumstances of cleaning depend on a Task definition:
-             *  - If Notification Request IS defined. The removal is done AFTER a Notification of FINAL transition
-             *    succeeds.
-             *  - If Notification Request IS NOT defined. The Task is removed immediately after it is finished.
+             * - If Notification Request IS defined. The removal is done AFTER a Notification of FINAL transition
+             * succeeds.
+             * - If Notification Request IS NOT defined. The Task is removed immediately after it is finished.
              * Additionally, Tasks are deleted only if they have no dependants, meaning that the dependency tree must be
              * almost entirely finished before removal starts to happen. The deletion is recursive from dependants to
              * dependencies so the end result is that the entire/part of tree is deleted in one transaction.

@@ -6,12 +6,12 @@ package org.jboss.pnc.rex.facade;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+
 import org.jboss.pnc.rex.core.FailoverInitiator;
 import org.jboss.pnc.rex.core.api.ClusteredJobRegistry;
 import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
 import org.jboss.pnc.rex.facade.api.MaintenanceProvider;
-
 
 @ApplicationScoped
 public class MaintenanceProviderImpl implements MaintenanceProvider {
@@ -24,10 +24,11 @@ public class MaintenanceProviderImpl implements MaintenanceProvider {
 
     private final FailoverInitiator failoverInitiator;
 
-    public MaintenanceProviderImpl(TaskRegistry taskRegistry,
-                                   QueueManager queueManager,
-                                   ClusteredJobRegistry jobRegistry,
-                                   FailoverInitiator failoverInitiator) {
+    public MaintenanceProviderImpl(
+            TaskRegistry taskRegistry,
+            QueueManager queueManager,
+            ClusteredJobRegistry jobRegistry,
+            FailoverInitiator failoverInitiator) {
         this.taskRegistry = taskRegistry;
         this.queueManager = queueManager;
         this.jobRegistry = jobRegistry;
