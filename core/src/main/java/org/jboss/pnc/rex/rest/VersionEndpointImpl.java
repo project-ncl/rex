@@ -5,22 +5,14 @@
 package org.jboss.pnc.rex.rest;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.api.dto.ComponentVersion;
 import org.jboss.pnc.rex.api.VersionEndpoint;
 import org.jboss.pnc.rex.common.Constants;
 
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
 import java.time.ZonedDateTime;
 
-@Tag(name = "Version Endpoint")
-@Path("/rest/version")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@ApplicationScoped
 public class VersionEndpointImpl implements VersionEndpoint {
 
     @ConfigProperty(name = "quarkus.application.name")
