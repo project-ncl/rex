@@ -4,22 +4,24 @@
  */
 package org.jboss.pnc.rex.model;
 
+import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToByteArray;
+import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToObject;
+
+import java.io.IOException;
+import java.time.Instant;
+
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.descriptors.Type;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import lombok.extern.slf4j.Slf4j;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.descriptors.Type;
-
-import java.io.IOException;
-import java.time.Instant;
-
-import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToByteArray;
-import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToObject;
 
 @Builder(toBuilder = true)
 @AllArgsConstructor
@@ -28,7 +30,7 @@ import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToObject;
 @Jacksonized
 public class HeartbeatMetadata {
 
-    @Getter(onMethod_ = {@ProtoField(number = 1)})
+    @Getter(onMethod_ = { @ProtoField(number = 1) })
     private final Instant lastBeat;
 
     @Getter

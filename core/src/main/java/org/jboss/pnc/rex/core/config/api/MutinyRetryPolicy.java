@@ -4,15 +4,15 @@
  */
 package org.jboss.pnc.rex.core.config.api;
 
-import io.smallrye.config.WithDefault;
-import io.smallrye.config.WithName;
-import io.smallrye.mutiny.Uni;
-
-import org.jboss.pnc.rex.core.config.validation.ValidBackoff;
-
 import java.time.Duration;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import org.jboss.pnc.rex.core.config.validation.ValidBackoff;
+
+import io.smallrye.config.WithDefault;
+import io.smallrye.config.WithName;
+import io.smallrye.mutiny.Uni;
 
 public interface MutinyRetryPolicy {
 
@@ -56,7 +56,7 @@ public interface MutinyRetryPolicy {
          * @return minimum delay in millis
          */
         @WithDefault("0")
-//        @DurationMin(nanos = 1) // positive
+        //        @DurationMin(nanos = 1) // positive
         @WithName("min-delay")
         Duration initialDelay();
 
@@ -71,9 +71,9 @@ public interface MutinyRetryPolicy {
         /**
          * Jitter factor which is applied on each retry. Jitter factor takes the fixed exponential delay and applies
          * jitter as a factor. Therefore, the delay will be in range of
-         *    [delay - (delay * jitterFactor), delay + (delay * jitterFactor)]
+         * [delay - (delay * jitterFactor), delay + (delay * jitterFactor)]
          *
-         * @return  millis
+         * @return millis
          */
         @WithDefault("0.5")
         Double jitterFactor();
@@ -116,7 +116,6 @@ public interface MutinyRetryPolicy {
     default <T> Uni<T> applyToleranceExceptOn(Set<Class<? extends RuntimeException>> shouldNotMatch, Uni<T> uni) {
         return applyToleranceOn(t -> shouldNotMatch.stream().noneMatch(c -> c.isInstance(t)), uni);
     }
-
 
     default <T> Uni<T> applyTolerance(Uni<T> uni) {
         return applyToleranceOn(__ -> true, uni);

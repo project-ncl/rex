@@ -4,17 +4,18 @@
  */
 package org.jboss.pnc.rex.core.delegates;
 
+import java.time.Instant;
+import java.util.Set;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
-import io.quarkus.arc.Unremovable;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.core.api.TaskController;
 
-import java.time.Instant;
-import java.util.Set;
+import io.quarkus.arc.Unremovable;
 
 @WithTransactions
 @Unremovable

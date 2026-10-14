@@ -4,9 +4,13 @@
  */
 package org.jboss.pnc.rex.core.jobs.cluster;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
+import static org.jboss.pnc.rex.core.utils.OTELUtils.getOTELContext;
+
+import java.util.HashMap;
+
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.common.enums.CJobOperation;
 import org.jboss.pnc.rex.core.api.ClusteredJobManager;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
@@ -15,26 +19,24 @@ import org.jboss.pnc.rex.core.jobs.ControllerJob;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.model.Task;
 
-import java.util.HashMap;
-
-import static org.jboss.pnc.rex.core.utils.OTELUtils.getOTELContext;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 
 /**
  * The classes that implement this interface will be handled as ClusteredJobs, therefore, they will be failed-over in
  * case the node is unresponsive or shutdown (forcefully or gracefully).
  *
  * There are several restrictions and rules the implementors must obey:
- *  1. The #execute() part must be fully independent. It does not need any prior information apart from the type of Job
- *     and Task name.
- *  2. It has to expect that the underlying Task can be deleted at any time.
- *  3. It has to expect that the owner of this Job can change at any time. For the task it means it has to call
- *     #isOwned() at every deciding moment (for example right at the start of @Retries or if there is a long time
- *     period)
- *  4. It had to expect that the Task context may be outdated/inconsistent.
- *  5. The job has to be able to be run at ANY instance at ANY time.
- *  6. The job can be FULLY instantiated from its ClusteredJobReference. (Most of the required data should be in Task)
- *  7. Every unique ClusteredJob has its own CJobOperationType.
- *  8. The job has to check that the Task after consistency refresh is in the correct state for this Task to be run.
+ * 1. The #execute() part must be fully independent. It does not need any prior information apart from the type of Job
+ * and Task name.
+ * 2. It has to expect that the underlying Task can be deleted at any time.
+ * 3. It has to expect that the owner of this Job can change at any time. For the task it means it has to call
+ * #isOwned() at every deciding moment (for example right at the start of @Retries or if there is a long time
+ * period)
+ * 4. It had to expect that the Task context may be outdated/inconsistent.
+ * 5. The job has to be able to be run at ANY instance at ANY time.
+ * 6. The job can be FULLY instantiated from its ClusteredJobReference. (Most of the required data should be in Task)
+ * 7. Every unique ClusteredJob has its own CJobOperationType.
+ * 8. The job has to check that the Task after consistency refresh is in the correct state for this Task to be run.
  */
 public abstract class ClusteredJob extends ControllerJob {
 
@@ -56,12 +58,16 @@ public abstract class ClusteredJob extends ControllerJob {
         this.reference = generateReference(context, operationType, config.name());
     }
 
-    private ClusteredJobReference generateReference(Task context, CJobOperation operationType, String localInstanceName) {
-        return new ClusteredJobReference(generateReferenceId(context.getName(), operationType),
-            localInstanceName,
-            operationType,
-            new HashMap<>(getOTELContext()),
-            context.getName());
+    private ClusteredJobReference generateReference(
+            Task context,
+            CJobOperation operationType,
+            String localInstanceName) {
+        return new ClusteredJobReference(
+                generateReferenceId(context.getName(), operationType),
+                localInstanceName,
+                operationType,
+                new HashMap<>(getOTELContext()),
+                context.getName());
     }
 
     // if created from reference
@@ -79,12 +85,13 @@ public abstract class ClusteredJob extends ControllerJob {
 
     private void validateReference(ClusteredJobReference reference) {
         if (reference == null || !reference.isOwnedBy(config.name()) || reference.getType() != operationType) {
-            throw new IllegalArgumentException("Creating "+ this.getClass().getCanonicalName() + " from invalid reference: " + reference);
+            throw new IllegalArgumentException(
+                    "Creating " + this.getClass().getCanonicalName() + " from invalid reference: " + reference);
         }
     }
 
     public static String generateReferenceId(String taskName, CJobOperation operation) {
-        return taskName+ '-' + operation.name();
+        return taskName + '-' + operation.name();
     }
 
     /**
@@ -144,5 +151,6 @@ public abstract class ClusteredJob extends ControllerJob {
     abstract public boolean execute();
 
     @Override
-    protected void onFailure() {}
+    protected void onFailure() {
+    }
 }

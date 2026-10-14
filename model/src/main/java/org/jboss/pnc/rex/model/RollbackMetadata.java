@@ -4,14 +4,15 @@
  */
 package org.jboss.pnc.rex.model;
 
-import lombok.*;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+
+import lombok.*;
 
 @Setter
 @ToString
 @Builder(toBuilder = true)
-@AllArgsConstructor(onConstructor_ = {@ProtoFactory})
+@AllArgsConstructor(onConstructor_ = { @ProtoFactory })
 public class RollbackMetadata {
 
     /**
@@ -66,6 +67,5 @@ public class RollbackMetadata {
     public void incTriggerCounter() {
         triggerCounter++;
     }
-
 
 }

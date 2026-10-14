@@ -6,6 +6,7 @@ package org.jboss.pnc.rex.core.jobs;
 
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.core.delegates.WithTransactions;
@@ -26,10 +27,12 @@ public class ClearConstraintJob extends ControllerJob {
     }
 
     @Override
-    protected void beforeExecute() {}
+    protected void beforeExecute() {
+    }
 
     @Override
-    protected void afterExecute() {}
+    protected void afterExecute() {
+    }
 
     @Override
     public boolean execute() {
@@ -38,8 +41,10 @@ public class ClearConstraintJob extends ControllerJob {
     }
 
     @Override
-    protected void onFailure() {}
+    protected void onFailure() {
+    }
 
     @Override
-    protected void onException(Throwable e) {}
+    protected void onException(Throwable e) {
+    }
 }

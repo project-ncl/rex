@@ -4,14 +4,15 @@
  */
 package org.jboss.pnc.rex.rest.providers;
 
-import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
-import org.jboss.pnc.rex.dto.responses.ErrorResponse;
-
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
+
+import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
+import org.jboss.pnc.rex.dto.responses.ErrorResponse;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Provider

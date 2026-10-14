@@ -10,7 +10,6 @@ import static org.hamcrest.Matchers.containsString;
 import java.net.URI;
 import java.util.Set;
 
-import io.smallrye.jwt.build.Jwt;
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.test.profile.WithWiremockOpenId;
@@ -21,6 +20,7 @@ import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
+import io.smallrye.jwt.build.Jwt;
 
 @QuarkusTest
 @TestProfile(WithWiremockOpenId.class)
@@ -39,7 +39,7 @@ public class AuthenticationTest {
         given()
                 .when()
                 .contentType(ContentType.JSON)
-                .put(taskEndpointURI.getPath()+"/missing/cancel")
+                .put(taskEndpointURI.getPath() + "/missing/cancel")
                 .then()
                 .statusCode(401);
     }
@@ -50,7 +50,7 @@ public class AuthenticationTest {
                 .auth().oauth2(getAccessToken("alice", Set.of("pnc-app-rex-user")))
                 .when()
                 .contentType(ContentType.JSON)
-                .put(taskEndpointURI.getPath()+"/missing/cancel")
+                .put(taskEndpointURI.getPath() + "/missing/cancel")
                 .then()
                 .statusCode(400)
                 .body("errorType", containsString("TaskMissingException"));
@@ -62,7 +62,7 @@ public class AuthenticationTest {
                 .auth().oauth2(getAccessToken("admin", Set.of("pnc-app-rex-editor")))
                 .when()
                 .contentType(ContentType.JSON)
-                .post(queueEndpointURI.getPath()+"/concurrency?amount=40")
+                .post(queueEndpointURI.getPath() + "/concurrency?amount=40")
                 .then()
                 .statusCode(204);
     }
@@ -73,7 +73,7 @@ public class AuthenticationTest {
                 .auth().oauth2(getAccessToken("jdoe", Set.of("user")))
                 .when()
                 .contentType(ContentType.JSON)
-                .post(queueEndpointURI.getPath()+"/concurrency?amount=40")
+                .post(queueEndpointURI.getPath() + "/concurrency?amount=40")
                 .then()
                 .statusCode(403);
     }

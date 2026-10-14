@@ -4,13 +4,14 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.quarkus.narayana.jta.TransactionSemantics;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.enterprise.event.TransactionPhase;
+
 import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.model.Task;
 
-import jakarta.enterprise.event.TransactionPhase;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.narayana.jta.TransactionSemantics;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DelegateJob extends ControllerJob {
@@ -25,14 +26,15 @@ public class DelegateJob extends ControllerJob {
 
     private final FaultToleranceDecorator ft;
 
-    private DelegateJob(TransactionPhase invocationPhase,
-                        Task context,
-                        boolean async,
-                        boolean tolerant,
-                        boolean transactional,
-                        TransactionSemantics transactionSemantics,
-                        ControllerJob delegate,
-                        FaultToleranceDecorator ft) {
+    private DelegateJob(
+            TransactionPhase invocationPhase,
+            Task context,
+            boolean async,
+            boolean tolerant,
+            boolean transactional,
+            TransactionSemantics transactionSemantics,
+            ControllerJob delegate,
+            FaultToleranceDecorator ft) {
         super(invocationPhase, context, async);
         this.delegate = delegate;
         this.tolerant = tolerant;
@@ -75,7 +77,9 @@ public class DelegateJob extends ControllerJob {
     }
 
     @Override
-    protected void onFailure() {delegate.onFailure();}
+    protected void onFailure() {
+        delegate.onFailure();
+    }
 
     @Override
     protected void onException(Throwable e) {
@@ -144,13 +148,13 @@ public class DelegateJob extends ControllerJob {
     public String toString() {
         return delegate.toString(context, async, invocationPhase) + appendDelegateInfo();
     }
+
     private String appendDelegateInfo() {
         if (transactional || tolerant) {
-            return " + [" + (transactional ? "inner TXs" : "") + (tolerant ? ", fault-tolerant" : "") +"]";
+            return " + [" + (transactional ? "inner TXs" : "") + (tolerant ? ", fault-tolerant" : "") + "]";
         } else {
             return "";
         }
     }
 
 }
-

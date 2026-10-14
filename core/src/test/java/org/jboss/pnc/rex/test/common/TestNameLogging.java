@@ -4,11 +4,12 @@
  */
 package org.jboss.pnc.rex.test.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.quarkus.test.junit.callback.QuarkusTestAfterEachCallback;
 import io.quarkus.test.junit.callback.QuarkusTestBeforeEachCallback;
 import io.quarkus.test.junit.callback.QuarkusTestMethodContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestNameLogging implements QuarkusTestBeforeEachCallback, QuarkusTestAfterEachCallback {
 
@@ -16,13 +17,15 @@ public class TestNameLogging implements QuarkusTestBeforeEachCallback, QuarkusTe
     public void beforeEach(QuarkusTestMethodContext context) {
         Logger log = LoggerFactory.getLogger(context.getTestInstance().getClass());
         log.info("Executing {}\n" +
-                "----------------------------------------------------------------------------------", context.getTestMethod());
+                "----------------------------------------------------------------------------------", context
+                        .getTestMethod());
     }
 
     @Override
     public void afterEach(QuarkusTestMethodContext context) {
         Logger log = LoggerFactory.getLogger(context.getTestInstance().getClass());
         log.info("Execution of {} is finished\n" +
-                "----------------------------------------------------------------------------------", context.getTestMethod());
+                "----------------------------------------------------------------------------------", context
+                        .getTestMethod());
     }
 }
