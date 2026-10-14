@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+
+    SPDX-FileCopyrightText: Copyright © 2021 Red Hat, Inc., and individual contributors as indicated by the @author tags.
+    SPDX-License-Identifier: Apache-2.0
+
+-->
 <profiles version="15">
 <profile kind="CodeFormatterProfile" name="PNC" version="15">
 <setting id="org.eclipse.jdt.core.formatter.align_assignment_statements_on_columns" value="false"/>
