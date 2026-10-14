@@ -4,14 +4,16 @@
  */
 package org.jboss.pnc.rex.model.requests;
 
+import java.util.Map;
+
+import org.jboss.pnc.api.dto.HeartbeatConfig;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
-import org.jboss.pnc.api.dto.HeartbeatConfig;
-
-import java.util.Map;
 
 /**
  * Request sent to the remote entity to start execution of remote Task.

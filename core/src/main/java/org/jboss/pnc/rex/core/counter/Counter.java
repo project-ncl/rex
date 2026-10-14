@@ -4,10 +4,11 @@
  */
 package org.jboss.pnc.rex.core.counter;
 
-import jakarta.annotation.Nullable;
-import org.infinispan.client.hotrod.VersionedValue;
-
 import java.util.Map;
+
+import jakarta.annotation.Nullable;
+
+import org.infinispan.client.hotrod.VersionedValue;
 
 /**
  * Interface for interacting with counter. Use Metadata versions of get/replace methods to avoid concurrent updates in

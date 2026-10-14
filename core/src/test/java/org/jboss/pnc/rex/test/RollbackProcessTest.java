@@ -4,9 +4,17 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTaskTransitionsInto;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
+import static org.jboss.pnc.rex.test.common.TestData.*;
+
+import java.util.*;
+
 import jakarta.inject.Inject;
+
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
@@ -28,14 +36,8 @@ import org.jboss.pnc.rex.test.common.TransitionRecorder;
 import org.jboss.pnc.rex.test.profile.WithoutTaskCleaning;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTaskTransitionsInto;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
-import static org.jboss.pnc.rex.test.common.TestData.*;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks
@@ -59,7 +61,6 @@ public class RollbackProcessTest extends AbstractTest {
     @Inject
     ManagedExecutor executor;
 
-
     @Test
     public void testSingleTaskFastRollback() {
         //with
@@ -77,7 +78,8 @@ public class RollbackProcessTest extends AbstractTest {
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
         assertThat(tasks).hasSize(1);
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
 
         //then
         assertThat(triggerRecords)
@@ -99,7 +101,7 @@ public class RollbackProcessTest extends AbstractTest {
     public void testSingleTaskRollbackWithCallback() {
         //with
         String trigger = "test-task";
-        
+
         var triggerTask = getMockTaskWithStart(trigger, Mode.ACTIVE, true, true);
         triggerTask.milestoneTask = trigger; //reset from itself
         triggerTask.remoteStart = getRequestWithNegativeCallback("payload");
@@ -113,7 +115,8 @@ public class RollbackProcessTest extends AbstractTest {
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
         assertThat(tasks).hasSize(1);
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
 
         //then
         assertThat(triggerRecords)
@@ -131,7 +134,7 @@ public class RollbackProcessTest extends AbstractTest {
                         Transition.ENQUEUED_to_STARTING,
                         Transition.STARTING_to_UP,
                         Transition.UP_to_FAILED);
-        }
+    }
 
     @Test
     public void testSimpleRollbackFromDependency() {
@@ -159,10 +162,13 @@ public class RollbackProcessTest extends AbstractTest {
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
         assertThat(tasks).hasSize(2);
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().orElseThrow().getTimestamps();
-        var dependencyRecords = tasks.stream().filter(task -> task.getName().equals(dependency)).findFirst().orElseThrow().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().orElseThrow()
+                .getTimestamps();
+        var dependencyRecords = tasks.stream().filter(task -> task.getName().equals(dependency)).findFirst()
+                .orElseThrow().getTimestamps();
 
-        assertMilestoneTrigger(triggerRecords, false, true);;
+        assertMilestoneTrigger(triggerRecords, false, true);
+        ;
 
         assertRolledBackTask(dependencyRecords, false, false);
     }
@@ -192,8 +198,10 @@ public class RollbackProcessTest extends AbstractTest {
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
         assertThat(tasks).hasSize(2);
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var dependencyRecords = tasks.stream().filter(task -> task.getName().equals(dependency)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var dependencyRecords = tasks.stream().filter(task -> task.getName().equals(dependency)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertThat(triggerRecords)
@@ -253,14 +261,17 @@ public class RollbackProcessTest extends AbstractTest {
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
         assertThat(tasks).hasSize(3);
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
-        var failedStateTaskRecords = tasks.stream().filter(task -> task.getName().equals(failedState)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
+        var failedStateTaskRecords = tasks.stream().filter(task -> task.getName().equals(failedState)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertMilestoneTrigger(triggerRecords, false, false);
 
-        assertRolledBackTask(milestoneRecords,false, false);
+        assertRolledBackTask(milestoneRecords, false, false);
 
         assertThat(failedStateTaskRecords)
                 .extracting(TransitionTimeDTO::getTransition)
@@ -314,9 +325,12 @@ public class RollbackProcessTest extends AbstractTest {
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
-        var upStateRecords = tasks.stream().filter(task -> task.getName().equals(upState)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
+        var upStateRecords = tasks.stream().filter(task -> task.getName().equals(upState)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertMilestoneTrigger(triggerRecords, false, false);
@@ -373,9 +387,12 @@ public class RollbackProcessTest extends AbstractTest {
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
-        var successRecords = tasks.stream().filter(task -> task.getName().equals(success)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
+        var successRecords = tasks.stream().filter(task -> task.getName().equals(success)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertMilestoneTrigger(triggerRecords, false, false);
@@ -408,7 +425,7 @@ public class RollbackProcessTest extends AbstractTest {
         String milestone = "milestone-task";
         String up = "up-task";
         String waiting = "waiting-task";
-        
+
         var triggerTask = getMockTaskWithoutStart(trigger, Mode.ACTIVE, false);
         triggerTask.milestoneTask = milestone; //rollback from dependency
         triggerTask.configuration = ConfigurationDTO.builder().rollbackLimit(1).build();
@@ -416,7 +433,7 @@ public class RollbackProcessTest extends AbstractTest {
         var milestoneTask = getMockTaskWithStart(milestone, Mode.ACTIVE, false, false);
 
         var upTask = getMockTaskWithoutStart(up, Mode.ACTIVE, false);
-        
+
         var waitingTask = getMockTaskWithStart(waiting, Mode.ACTIVE, false, false);
 
         CreateGraphRequest graph = CreateGraphRequest.builder()
@@ -442,10 +459,13 @@ public class RollbackProcessTest extends AbstractTest {
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
         var upRecords = tasks.stream().filter(task -> task.getName().equals(up)).findFirst().get().getTimestamps();
-        var waitingRecords = tasks.stream().filter(task -> task.getName().equals(waiting)).findFirst().get().getTimestamps();
+        var waitingRecords = tasks.stream().filter(task -> task.getName().equals(waiting)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertMilestoneTrigger(triggerRecords, false, false);
@@ -518,9 +538,12 @@ public class RollbackProcessTest extends AbstractTest {
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
-        var cancelledRecords = tasks.stream().filter(task -> task.getName().equals(cancelled)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
+        var cancelledRecords = tasks.stream().filter(task -> task.getName().equals(cancelled)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertMilestoneTrigger(triggerRecords, false, false);
@@ -583,9 +606,12 @@ public class RollbackProcessTest extends AbstractTest {
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
-        var stoppedRecords = tasks.stream().filter(task -> task.getName().equals(stopped)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
+        var stoppedRecords = tasks.stream().filter(task -> task.getName().equals(stopped)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertMilestoneTrigger(triggerRecords, false, false);
@@ -643,10 +669,14 @@ public class RollbackProcessTest extends AbstractTest {
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
-        var stoppedRecords = tasks.stream().filter(task -> task.getName().equals(stopped)).findFirst().get().getTimestamps();
-        var failedRecords = tasks.stream().filter(task -> task.getName().equals(failed)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
+        var stoppedRecords = tasks.stream().filter(task -> task.getName().equals(stopped)).findFirst().get()
+                .getTimestamps();
+        var failedRecords = tasks.stream().filter(task -> task.getName().equals(failed)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertMilestoneTrigger(triggerRecords, false, false);
@@ -677,7 +707,6 @@ public class RollbackProcessTest extends AbstractTest {
                         Transition.ROLLEDBACK_to_NEW,
                         Transition.NEW_to_WAITING);
     }
-
 
     @Test
     public void shouldIgnoreNotifyFailedTaskFromOtherBranch() {
@@ -728,9 +757,12 @@ public class RollbackProcessTest extends AbstractTest {
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
-        var stoppedRecords = tasks.stream().filter(task -> task.getName().equals(stopped)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
+        var stoppedRecords = tasks.stream().filter(task -> task.getName().equals(stopped)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertMilestoneTrigger(triggerRecords, false, false);
@@ -766,7 +798,6 @@ public class RollbackProcessTest extends AbstractTest {
 
         var successTask = getMockTaskWithStart(success, Mode.ACTIVE, true, false);
 
-
         CreateGraphRequest graph = CreateGraphRequest.builder()
                 .edge(EdgeDTO.builder().source(trigger).target(milestone).build())
                 .edge(EdgeDTO.builder().source(success).target(milestone).build())
@@ -791,9 +822,12 @@ public class RollbackProcessTest extends AbstractTest {
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
-        var successRecords = tasks.stream().filter(task -> task.getName().equals(success)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
+        var successRecords = tasks.stream().filter(task -> task.getName().equals(success)).findFirst().get()
+                .getTimestamps();
         var idleRecords = tasks.stream().filter(task -> task.getName().equals(idle)).findFirst().get().getTimestamps();
 
         // then
@@ -841,9 +875,12 @@ public class RollbackProcessTest extends AbstractTest {
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
-        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get().getTimestamps();
-        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get().getTimestamps();
-        var noCallbackRecords = tasks.stream().filter(task -> task.getName().equals(noCallback)).findFirst().get().getTimestamps();
+        var triggerRecords = tasks.stream().filter(task -> task.getName().equals(trigger)).findFirst().get()
+                .getTimestamps();
+        var milestoneRecords = tasks.stream().filter(task -> task.getName().equals(milestone)).findFirst().get()
+                .getTimestamps();
+        var noCallbackRecords = tasks.stream().filter(task -> task.getName().equals(noCallback)).findFirst().get()
+                .getTimestamps();
 
         // then
         assertMilestoneTrigger(triggerRecords, true, true);
@@ -873,13 +910,14 @@ public class RollbackProcessTest extends AbstractTest {
 
         executor.runAsync(() -> callbackEndpoint.fail("h", "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
-        waitTillTaskTransitionsInto(State.WAITING, "j",2);
-        waitTillTaskTransitionsInto(State.SUCCESSFUL, "i",2);
+        waitTillTaskTransitionsInto(State.WAITING, "j", 2);
+        waitTillTaskTransitionsInto(State.SUCCESSFUL, "i", 2);
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
         // then
-        assertThat(tasks.stream().filter(task -> Set.of("e", "g").contains(task.getName())).map(TaskDTO::getTimestamps).toList())
+        assertThat(tasks.stream().filter(task -> Set.of("e", "g").contains(task.getName())).map(TaskDTO::getTimestamps)
+                .toList())
                 .allSatisfy(records -> {
                     assertRolledBackTask(records, true, true, true);
                 });
@@ -892,21 +930,20 @@ public class RollbackProcessTest extends AbstractTest {
                     assertThat(records)
                             .extracting(TransitionTimeDTO::getTransition)
                             .containsExactly(
-                            Transition.NEW_to_WAITING,
-                            Transition.WAITING_to_ENQUEUED,
-                            Transition.ENQUEUED_to_STARTING,
-                            Transition.STARTING_to_UP,
-                            Transition.UP_to_SUCCESSFUL,
-                            Transition.SUCCESSFUL_to_TO_ROLLBACK,
-                            Transition.TO_ROLLBACK_to_ROLLBACK_REQUESTED,
-                            Transition.ROLLBACK_REQUESTED_to_ROLLINGBACK,
-                            Transition.ROLLINGBACK_to_ROLLEDBACK,
-                            Transition.ROLLEDBACK_to_NEW,
-                            Transition.NEW_to_ENQUEUED,
-                            Transition.ENQUEUED_to_STARTING,
-                            Transition.STARTING_to_UP,
-                            Transition.UP_to_SUCCESSFUL
-                    );
+                                    Transition.NEW_to_WAITING,
+                                    Transition.WAITING_to_ENQUEUED,
+                                    Transition.ENQUEUED_to_STARTING,
+                                    Transition.STARTING_to_UP,
+                                    Transition.UP_to_SUCCESSFUL,
+                                    Transition.SUCCESSFUL_to_TO_ROLLBACK,
+                                    Transition.TO_ROLLBACK_to_ROLLBACK_REQUESTED,
+                                    Transition.ROLLBACK_REQUESTED_to_ROLLINGBACK,
+                                    Transition.ROLLINGBACK_to_ROLLEDBACK,
+                                    Transition.ROLLEDBACK_to_NEW,
+                                    Transition.NEW_to_ENQUEUED,
+                                    Transition.ENQUEUED_to_STARTING,
+                                    Transition.STARTING_to_UP,
+                                    Transition.UP_to_SUCCESSFUL);
                 });
     }
 
@@ -933,11 +970,11 @@ public class RollbackProcessTest extends AbstractTest {
         // when
         taskEndpoint.start(graph);
 
-        waitTillTaskTransitionsInto(State.UP, "0",1);
+        waitTillTaskTransitionsInto(State.UP, "0", 1);
         executor.runAsync(() -> callbackEndpoint.fail("0", "lol", ErrorOption.IGNORE, Set.of())); //trigger rollback
 
         // then
-        waitTillTaskTransitionsInto(State.UP, "0",2);
+        waitTillTaskTransitionsInto(State.UP, "0", 2);
         executor.runAsync(() -> callbackEndpoint.succeed("0", "lol", ErrorOption.IGNORE, Set.of()));
         waitTillTasksAreFinishedWith(State.SUCCESSFUL, graph.getVertices().keySet().toArray(new String[0]));
     }
@@ -962,8 +999,8 @@ public class RollbackProcessTest extends AbstractTest {
 
         executor.runAsync(() -> callbackEndpoint.fail("h", "lol", ErrorOption.IGNORE, Set.of(SKIP_ROLLBACK))); //trigger rollback
 
-        waitTillTaskTransitionsInto(State.STOPPED, "j",1);
-        waitTillTaskTransitionsInto(State.FAILED, "h",1);
+        waitTillTaskTransitionsInto(State.STOPPED, "j", 1);
+        waitTillTaskTransitionsInto(State.FAILED, "h", 1);
 
         var tasks = taskEndpoint.getAll(getAllParameters(), List.of());
 
@@ -978,8 +1015,7 @@ public class RollbackProcessTest extends AbstractTest {
                                     Transition.WAITING_to_ENQUEUED,
                                     Transition.ENQUEUED_to_STARTING,
                                     Transition.STARTING_to_UP,
-                                    Transition.UP_to_FAILED
-                            );
+                                    Transition.UP_to_FAILED);
                 });
         assertThat(tasks.stream().filter(task -> "j".equals(task.getName())).map(TaskDTO::getTimestamps).toList())
                 .allSatisfy(records -> {
@@ -987,10 +1023,10 @@ public class RollbackProcessTest extends AbstractTest {
                             .extracting(TransitionTimeDTO::getTransition)
                             .containsExactly(
                                     Transition.NEW_to_WAITING,
-                                    Transition.WAITING_to_STOPPED
-                            );
+                                    Transition.WAITING_to_STOPPED);
                 });
-        assertThat(tasks.stream().filter(task -> Set.of("d", "e", "g", "i").contains(task.getName())).map(TaskDTO::getTimestamps).toList())
+        assertThat(tasks.stream().filter(task -> Set.of("d", "e", "g", "i").contains(task.getName())).map(
+                TaskDTO::getTimestamps).toList())
                 .allSatisfy(records -> {
                     assertThat(records)
                             .extracting(TransitionTimeDTO::getTransition)
@@ -999,20 +1035,22 @@ public class RollbackProcessTest extends AbstractTest {
                                     Transition.WAITING_to_ENQUEUED,
                                     Transition.ENQUEUED_to_STARTING,
                                     Transition.STARTING_to_UP,
-                                    Transition.UP_to_SUCCESSFUL
-                            );
+                                    Transition.UP_to_SUCCESSFUL);
                 });
 
     }
 
-    private static void assertMilestoneTrigger(List<TransitionTimeDTO> triggerRecords, boolean withCallback, boolean endsWithFail) {
+    private static void assertMilestoneTrigger(
+            List<TransitionTimeDTO> triggerRecords,
+            boolean withCallback,
+            boolean endsWithFail) {
         var std = List.of(Transition.NEW_to_WAITING,
                 Transition.WAITING_to_ENQUEUED,
                 Transition.ENQUEUED_to_STARTING,
                 Transition.STARTING_to_UP);
 
         List<Transition> body;
-        if (withCallback){
+        if (withCallback) {
             body = List.of(Transition.UP_to_ROLLBACK_TRIGGERED,
                     Transition.ROLLBACK_TRIGGERED_to_ROLLBACK_REQUESTED,
                     Transition.ROLLBACK_REQUESTED_to_ROLLINGBACK,
@@ -1038,11 +1076,18 @@ public class RollbackProcessTest extends AbstractTest {
                 .containsExactly(transitions.toArray(new Transition[0]));
     }
 
-    private static void assertRolledBackTask(List<TransitionTimeDTO> taskRecords, boolean withCallback, boolean isWaiting) {
+    private static void assertRolledBackTask(
+            List<TransitionTimeDTO> taskRecords,
+            boolean withCallback,
+            boolean isWaiting) {
         assertRolledBackTask(taskRecords, withCallback, isWaiting, false);
     }
 
-    private static void assertRolledBackTask(List<TransitionTimeDTO> taskRecords, boolean withCallback, boolean isWaiting, boolean hasDependencies) {
+    private static void assertRolledBackTask(
+            List<TransitionTimeDTO> taskRecords,
+            boolean withCallback,
+            boolean isWaiting,
+            boolean hasDependencies) {
         List<Transition> std;
         if (hasDependencies) {
             std = List.of(Transition.NEW_to_WAITING,

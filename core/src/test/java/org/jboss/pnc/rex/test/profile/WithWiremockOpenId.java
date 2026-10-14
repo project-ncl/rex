@@ -15,11 +15,11 @@ public class WithWiremockOpenId implements QuarkusTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         return Map.of("quarkus.oidc.enabled", "true",
-                "quarkus.oidc.auth-server-url","${keycloak.url}/realms/quarkus/",
+                "quarkus.oidc.auth-server-url", "${keycloak.url}/realms/quarkus/",
                 "quarkus.oidc.client-id", "quarkus-service-app",
-                "quarkus.oidc.application-type","service",
+                "quarkus.oidc.application-type", "service",
                 "quarkus.test.oidc.token.admin-roles", "system-user",
-                "smallrye.jwt.sign.key.location","privateKey.jwk");
+                "smallrye.jwt.sign.key.location", "privateKey.jwk");
     }
 
     @Override

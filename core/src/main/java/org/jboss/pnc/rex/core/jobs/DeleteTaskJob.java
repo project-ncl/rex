@@ -4,11 +4,11 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.model.Task;
-
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
+import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.model.Task;
 
 public class DeleteTaskJob extends ControllerJob {
 
@@ -28,14 +28,18 @@ public class DeleteTaskJob extends ControllerJob {
     }
 
     @Override
-    protected void afterExecute() {}
+    protected void afterExecute() {
+    }
 
     @Override
-    protected void beforeExecute() {}
+    protected void beforeExecute() {
+    }
 
     @Override
-    protected void onFailure() {}
+    protected void onFailure() {
+    }
 
     @Override
-    protected void onException(Throwable e) {}
+    protected void onException(Throwable e) {
+    }
 }

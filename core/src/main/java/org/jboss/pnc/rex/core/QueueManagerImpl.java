@@ -4,9 +4,16 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import static java.util.stream.Collectors.groupingBy;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
+
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.core.api.TaskController;
@@ -17,14 +24,8 @@ import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.model.Task;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
-import static java.util.stream.Collectors.groupingBy;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped
@@ -37,11 +38,12 @@ public class QueueManagerImpl implements QueueManager {
     private final TaskController controller;
     private final FaultToleranceDecorator ft;
 
-    public QueueManagerImpl(@MaxConcurrent Counter max,
-                            @Running Counter running,
-                            TaskRegistry container,
-                            TaskController controller,
-                            FaultToleranceDecorator ft) {
+    public QueueManagerImpl(
+            @MaxConcurrent Counter max,
+            @Running Counter running,
+            TaskRegistry container,
+            TaskController controller,
+            FaultToleranceDecorator ft) {
         this.max = max;
         this.running = running;
         this.container = container;
@@ -86,8 +88,7 @@ public class QueueManagerImpl implements QueueManager {
                     queue == null ? DEFAULT_QUEUE_NAMING : queue,
                     freeSpace,
                     randomEnqueuedTasks.size(),
-                    randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList())
-            );
+                    randomEnqueuedTasks.stream().map(Task::getName).collect(Collectors.toList()));
 
             randomEnqueuedTasks.forEach(task -> controller.dequeue(task.getName()));
 
@@ -98,7 +99,8 @@ public class QueueManagerImpl implements QueueManager {
                     runningMetadata.getVersion());
             if (!running.replaceValue(queue, runningMetadata, runningValue + randomEnqueuedTasks.size())) {
                 RuntimeException e = new ConcurrentModificationException("Running counter was modified concurrently.");
-                log.error("QUEUE '{}': Concurrent modification detected.", queue == null ? DEFAULT_QUEUE_NAMING : queue, e);
+                log.error("QUEUE '{}': Concurrent modification detected.", queue == null ? DEFAULT_QUEUE_NAMING : queue,
+                        e);
                 throw e;
             }
         }
@@ -157,7 +159,6 @@ public class QueueManagerImpl implements QueueManager {
                 .stream()
                 .collect(groupingBy(Task::getQueue));
 
-
         Set<String> existingQueues = running.entries().keySet();
         for (String queue : existingQueues) {
             var runningValue = running.getMetadataValue(queue);
@@ -171,7 +172,9 @@ public class QueueManagerImpl implements QueueManager {
             }
 
             if (!runningValue.getValue().equals(actualValue)) {
-                log.info("Synchronizing running counter. Mismatch between active tasks and counter found. Previous value '{}' -> new value '{}'", runningValue.getValue(), actualValue);
+                log.info(
+                        "Synchronizing running counter. Mismatch between active tasks and counter found. Previous value '{}' -> new value '{}'",
+                        runningValue.getValue(), actualValue);
                 running.replaceValue(queue, runningValue, actualValue);
             }
 

@@ -11,10 +11,16 @@ import org.jboss.pnc.rex.model.requests.MinimizedTask;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 
-@Mapper(config = MapperCentralConfig.class, uses = {TransitionTimeMapper.class})
+@Mapper(config = MapperCentralConfig.class, uses = { TransitionTimeMapper.class })
 public interface MiniTaskMapper {
 
-    @BeanMapping(ignoreUnmappedSourceProperties = {"unfinishedDependencies", "starting", "controllerMode", "disposable",
-            "rollbackMeta", "heartbeatMeta"})
+    @BeanMapping(
+            ignoreUnmappedSourceProperties = {
+                    "unfinishedDependencies",
+                    "starting",
+                    "controllerMode",
+                    "disposable",
+                    "rollbackMeta",
+                    "heartbeatMeta" })
     MinimizedTask minimize(Task task);
 }

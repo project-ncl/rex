@@ -4,15 +4,25 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.http.ContentType;
-import io.vertx.core.impl.ConcurrentHashSet;
+import static io.restassured.RestAssured.get;
+import static io.restassured.RestAssured.given;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.jboss.pnc.rex.test.common.Assertions.*;
+
+import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
@@ -37,26 +47,17 @@ import org.jboss.pnc.rex.test.common.TestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.URI;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static io.restassured.RestAssured.get;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.jboss.pnc.rex.test.common.Assertions.*;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
+import io.vertx.core.impl.ConcurrentHashSet;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @QuarkusTest
 public class ClusteredJobsTest extends AbstractTest {
-
 
     @Inject
     ClusteredJobRegistry registry;
@@ -110,12 +111,12 @@ public class ClusteredJobsTest extends AbstractTest {
 
         // when
         given()
-            .contentType(ContentType.JSON)
-            .body(graph)
-            .when()
-            .post(taskURI.getPath())
-            .then()
-            .statusCode(200);
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
         waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
@@ -145,12 +146,12 @@ public class ClusteredJobsTest extends AbstractTest {
 
         // when
         given()
-            .contentType(ContentType.JSON)
-            .body(graph)
-            .when()
-            .post(taskURI.getPath())
-            .then()
-            .statusCode(200);
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
         waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
@@ -164,7 +165,7 @@ public class ClusteredJobsTest extends AbstractTest {
         assertThat(enlistedJob.getOwner()).isNotNull().isNotBlank();
         assertThat(enlistedJob.getTaskName()).isEqualTo(task);
         assertThat(enlistedJob.getTelemetry()).isNotNull().isNotEmpty()
-            .containsKey("traceparent");
+                .containsKey("traceparent");
     }
 
     @Test
@@ -180,12 +181,12 @@ public class ClusteredJobsTest extends AbstractTest {
 
         // when
         given()
-            .contentType(ContentType.JSON)
-            .body(graph)
-            .when()
-            .post(taskURI.getPath())
-            .then()
-            .statusCode(200);
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
         waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
@@ -212,12 +213,12 @@ public class ClusteredJobsTest extends AbstractTest {
 
         // when
         given()
-            .contentType(ContentType.JSON)
-            .body(graph)
-            .when()
-            .post(taskURI.getPath())
-            .then()
-            .statusCode(200);
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
         waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
@@ -248,12 +249,12 @@ public class ClusteredJobsTest extends AbstractTest {
         graph.graphConfiguration.cancelTimeout = timeoutValue;
 
         given()
-            .contentType(ContentType.JSON)
-            .body(graph)
-            .when()
-            .post(taskURI.getPath())
-            .then()
-            .statusCode(200);
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
         waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
@@ -274,14 +275,14 @@ public class ClusteredJobsTest extends AbstractTest {
 
         // wait for twice the limit
         assertThatThrownBy(() -> waitTillTasksAre(State.STOPPED,
-            container,
-            (int) (timeoutValue.toMillis()*2),
-            MILLISECONDS,
-            task))
-            .isInstanceOf(AssertionError.class);
+                container,
+                (int) (timeoutValue.toMillis() * 2),
+                MILLISECONDS,
+                task))
+                .isInstanceOf(AssertionError.class);
 
         assertThat(get(taskURI.getPath() + TaskEndpoint.GET_SPECIFIC_FMT.formatted(task)).as(TaskDTO.class))
-            .isNotNull().extracting("state").isEqualTo(State.STOPPING);
+                .isNotNull().extracting("state").isEqualTo(State.STOPPING);
     }
 
     @Test
@@ -297,12 +298,12 @@ public class ClusteredJobsTest extends AbstractTest {
 
         // when
         given()
-            .contentType(ContentType.JSON)
-            .body(graph)
-            .when()
-            .post(taskURI.getPath())
-            .then()
-            .statusCode(200);
+                .contentType(ContentType.JSON)
+                .body(graph)
+                .when()
+                .post(taskURI.getPath())
+                .then()
+                .statusCode(200);
         waitTillTaskTransitionsInto(State.UP, task);
 
         given().put(taskURI.getPath() + TaskEndpoint.CANCEL_PATH_FMT.formatted(task)).then().statusCode(202);
@@ -319,7 +320,13 @@ public class ClusteredJobsTest extends AbstractTest {
         assertThat(taskDTO).isNotNull().extracting("state").isEqualTo(State.STOPPING);
 
         // create job from reference and run it
-        TimeoutCancelClusterJob timeoutCancelClusterJob = new TimeoutCancelClusterJob(new ClusteredJobReference(referenceId, jobReference.getOwner(), CJobOperation.CANCEL_TIMEOUT, new HashMap<>(jobReference.getTelemetry()), task));
+        TimeoutCancelClusterJob timeoutCancelClusterJob = new TimeoutCancelClusterJob(
+                new ClusteredJobReference(
+                        referenceId,
+                        jobReference.getOwner(),
+                        CJobOperation.CANCEL_TIMEOUT,
+                        new HashMap<>(jobReference.getTelemetry()),
+                        task));
         // run it from reference and verify it works
         jobEvent.fire(timeoutCancelClusterJob);
 
@@ -524,7 +531,8 @@ public class ClusteredJobsTest extends AbstractTest {
         assertThat(internalTask.getServerResponses().get(internalTask.getServerResponses().size() - 1))
                 .isNotNull().extracting(ServerResponse::getOrigin).isEqualTo(Origin.REX_HEARTBEAT_TIMEOUT);
         Duration officialDelay = initialDelay.plus(interval);
-        assertThat(Duration.between(startTimer, endTime)).isGreaterThan(officialDelay).isLessThan(officialDelay.plus(PROCESSING_LEEWAY));
+        assertThat(Duration.between(startTimer, endTime)).isGreaterThan(officialDelay).isLessThan(officialDelay.plus(
+                PROCESSING_LEEWAY));
     }
 
     @Test
@@ -563,11 +571,14 @@ public class ClusteredJobsTest extends AbstractTest {
         Task task3fail = waitTillTaskTransitionsInto(State.FAILED, taskId3).getFirst();
 
         assertThat(task1fail).isNotNull();
-        assertThat(task1fail.getServerResponses()).isNotEmpty().anyMatch(serverResponse -> serverResponse.getOrigin().equals(Origin.REX_HEARTBEAT_TIMEOUT));
+        assertThat(task1fail.getServerResponses()).isNotEmpty().anyMatch(serverResponse -> serverResponse.getOrigin()
+                .equals(Origin.REX_HEARTBEAT_TIMEOUT));
         assertThat(task2fail).isNotNull();
-        assertThat(task2fail.getServerResponses()).isNotEmpty().anyMatch(serverResponse -> serverResponse.getOrigin().equals(Origin.REX_HEARTBEAT_TIMEOUT));
+        assertThat(task2fail.getServerResponses()).isNotEmpty().anyMatch(serverResponse -> serverResponse.getOrigin()
+                .equals(Origin.REX_HEARTBEAT_TIMEOUT));
         assertThat(task3fail).isNotNull();
-        assertThat(task3fail.getServerResponses()).isNotEmpty().anyMatch(serverResponse -> serverResponse.getOrigin().equals(Origin.REX_HEARTBEAT_TIMEOUT));
+        assertThat(task3fail.getServerResponses()).isNotEmpty().anyMatch(serverResponse -> serverResponse.getOrigin()
+                .equals(Origin.REX_HEARTBEAT_TIMEOUT));
 
     }
 
@@ -582,10 +593,11 @@ public class ClusteredJobsTest extends AbstractTest {
                 Duration aligned = interval.minus(Duration.between(startTime, Instant.now()));
                 Thread.sleep(aligned.toMillis());
             }
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
     }
 
     public static String taskID() {
-        return "test-task-"+counter.getAndIncrement();
+        return "test-task-" + counter.getAndIncrement();
     }
 }

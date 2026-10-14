@@ -4,12 +4,14 @@
  */
 package org.jboss.pnc.rex.model.requests;
 
+import org.jboss.pnc.rex.common.enums.State;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
-import org.jboss.pnc.rex.common.enums.State;
 
 /**
  * Request sent to the initial caller to notify him of Task's state transitions.

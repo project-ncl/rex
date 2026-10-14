@@ -4,12 +4,13 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import org.jboss.pnc.rex.core.api.DependencyMessenger;
-import org.jboss.pnc.rex.model.Task;
+import java.util.Set;
 
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
-import java.util.Set;
+
+import org.jboss.pnc.rex.core.api.DependencyMessenger;
+import org.jboss.pnc.rex.model.Task;
 
 public abstract class DependencyMessageJob extends ControllerJob {
 
@@ -34,14 +35,18 @@ public abstract class DependencyMessageJob extends ControllerJob {
     protected abstract void inform(final String dependencyName);
 
     @Override
-    protected void beforeExecute() {}
+    protected void beforeExecute() {
+    }
 
     @Override
-    protected void afterExecute() {}
+    protected void afterExecute() {
+    }
 
     @Override
-    protected void onFailure() {}
+    protected void onFailure() {
+    }
 
     @Override
-    protected void onException(Throwable e) {}
+    protected void onException(Throwable e) {
+    }
 }

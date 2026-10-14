@@ -4,16 +4,7 @@
  */
 package org.jboss.pnc.rex.test.endpoints;
 
-import io.vertx.core.impl.ConcurrentHashSet;
-import org.jboss.pnc.rex.common.enums.Transition;
-import org.jboss.pnc.rex.model.TransitionTime;
-import org.jboss.pnc.rex.model.requests.NotificationRequest;
-
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import static java.util.stream.Collectors.toMap;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -24,7 +15,17 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toMap;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+import org.jboss.pnc.rex.common.enums.Transition;
+import org.jboss.pnc.rex.model.TransitionTime;
+import org.jboss.pnc.rex.model.requests.NotificationRequest;
+
+import io.vertx.core.impl.ConcurrentHashSet;
 
 @Path("/transition")
 public class TransitionRecorderEndpoint {
@@ -76,9 +77,7 @@ public class TransitionRecorderEndpoint {
                                 Map.Entry::getKey,
                                 entry -> entry.getValue().stream()
                                         .map(TransitionTime::getTransition)
-                                        .collect(Collectors.toSet()))
-                        )
-        );
+                                        .collect(Collectors.toSet()))));
     }
 
     public Map<String, Set<TransitionTime>> getRecordsWithTimestamps() {

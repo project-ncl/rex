@@ -4,17 +4,17 @@
  */
 package org.jboss.pnc.rex.rest;
 
-import io.smallrye.faulttolerance.api.ApplyGuard;
 import jakarta.annotation.security.RolesAllowed;
-import jakarta.ws.rs.NotFoundException;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.common.exceptions.QueueMissingException;
 import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.dto.responses.LongResponse;
 import org.jboss.pnc.rex.facade.api.OptionsProvider;
 
-import jakarta.enterprise.context.ApplicationScoped;
+import io.smallrye.faulttolerance.api.ApplyGuard;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped

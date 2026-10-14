@@ -4,15 +4,16 @@
  */
 package org.jboss.pnc.rex.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.rex.common.enums.Mode;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.rex.common.enums.Mode;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 @Builder(toBuilder = true)
 @Getter
