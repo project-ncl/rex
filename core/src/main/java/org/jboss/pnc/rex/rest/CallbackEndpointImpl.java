@@ -117,7 +117,8 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
     }
 
     @Override
-    @RolesAllowed({ "pnc-app-rex-banger", "pnc-users-admin" })
+    // FIXME uncomment after role is filled
+    // @RolesAllowed({ "pnc-app-rex-banger", "pnc-users-admin" })
     @ApplyGuard("internal-retry")
     public void beat(String taskName, Object body) {
         taskProvider.beat(taskName, body, Instant.now());
