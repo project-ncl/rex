@@ -37,6 +37,13 @@ scheduler:
           max-retries: 0
           expire-in: 10m # 10minutes
 
+rex:
+  queue:
+    # Running-counter implementation:
+    #   cas    - optimistic compare-and-swap on the rex-counter cache (default, historical behavior)
+    #   strong - Infinispan clustered StrongCounter (removes single-key contention; scales concurrency)
+    running-tracker: ${REX_QUEUE_RUNNING_TRACKER:cas}
+
 pnc_client_auth:
   type: OIDC # or LDAP
   # ldap_credentials:
