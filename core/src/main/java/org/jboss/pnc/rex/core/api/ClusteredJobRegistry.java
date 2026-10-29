@@ -4,9 +4,9 @@
  */
 package org.jboss.pnc.rex.core.api;
 
-import org.jboss.pnc.rex.model.ClusteredJobReference;
-
 import java.util.List;
+
+import org.jboss.pnc.rex.model.ClusteredJobReference;
 
 /**
  * Registry for interacting with persisted ClusteredJobReferences. Clustered Jobs are Jobs that are long-running and
@@ -14,7 +14,8 @@ import java.util.List;
  * Jobs are failed-over to another instance. It is required that the Job (under package org.jboss.pnc.rex.core.jobs) can
  * be instantiated from just the persisted reference.
  *
- * Every job has an owner, which is the instance that created it. The instance id is defined in application configuration.
+ * Every job has an owner, which is the instance that created it. The instance id is defined in application
+ * configuration.
  */
 public interface ClusteredJobRegistry {
 

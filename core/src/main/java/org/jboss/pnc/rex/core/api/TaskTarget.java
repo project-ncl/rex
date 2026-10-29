@@ -4,11 +4,11 @@
  */
 package org.jboss.pnc.rex.core.api;
 
+import java.util.Set;
+
 import org.jboss.pnc.rex.common.enums.StateGroup;
 import org.jboss.pnc.rex.core.model.TaskGraph;
 import org.jboss.pnc.rex.model.Task;
-
-import java.util.Set;
 
 /**
  * Target where Tasks are installed into and removed from.

@@ -4,22 +4,23 @@
  */
 package org.jboss.pnc.rex.test.common;
 
-import io.vertx.core.impl.ConcurrentHashSet;
-import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.event.TransactionPhase;
-import org.jboss.pnc.rex.model.Task;
-import org.jboss.pnc.rex.model.TransitionTime;
-
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.TransactionPhase;
+
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
+import org.jboss.pnc.rex.model.Task;
+import org.jboss.pnc.rex.model.TransitionTime;
+
+import io.vertx.core.impl.ConcurrentHashSet;
+import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
 @Slf4j
@@ -44,9 +45,9 @@ public class TransitionRecorder {
                 .orElseThrow()
                 .getTimestamps()
                 .stream()
-                    .filter(ttime -> ttime.getTransition() == transitionJob.getTransition())
-                    .max(Comparator.naturalOrder())
-                    .get();
+                .filter(ttime -> ttime.getTransition() == transitionJob.getTransition())
+                .max(Comparator.naturalOrder())
+                .get();
         Task task = transitionJob.getContext().get().toBuilder().build();
 
         Tuple<TransitionTime, Task> snapshot = new Tuple<>(tt, task);
@@ -64,7 +65,8 @@ public class TransitionRecorder {
                 .getTimestamps()
                 .stream()
                 .filter(ttime -> ttime.getTransition() == transitionJob.getTransition())
-                .max(Comparator.naturalOrder()).get();
+                .max(Comparator.naturalOrder())
+                .get();
         Task task = transitionJob.getContext().get().toBuilder().build();
 
         if (subscriptionDos.containsKey(task.getName()) &&
@@ -76,8 +78,7 @@ public class TransitionRecorder {
     private void extractTransitionAndRecord(NotifyCallerJob transitionJob) {
         Tuple<String, State> state = new Tuple<>(
                 transitionJob.getContext().get().getName(),
-                transitionJob.getTransition().getAfter()
-        );
+                transitionJob.getTransition().getAfter());
 
         if (transitionJob.getTransition().getAfter().isFinal()) {
             log.info("Adding state {}", state);
@@ -149,17 +150,20 @@ public class TransitionRecorder {
     public int count(String taskName, State state) {
         if (snapshots.get(taskName) == null) {
             return 0;
-        };
+        }
+        ;
 
         int count = 0;
         var transitions = snapshots.get(taskName);
         for (var transition : transitions) {
             State after = transition.first.getTransition().getAfter();
-            if (after == state) count++;
+            if (after == state)
+                count++;
         }
 
         return count;
     }
 
-    public record Tuple<T1, T2>(T1 first, T2 second) {}
+    public record Tuple<T1, T2>(T1 first, T2 second) {
+    }
 }

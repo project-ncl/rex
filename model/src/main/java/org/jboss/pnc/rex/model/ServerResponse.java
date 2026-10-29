@@ -4,14 +4,12 @@
  */
 package org.jboss.pnc.rex.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.extern.jackson.Jacksonized;
-import lombok.extern.slf4j.Slf4j;
+import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToByteArray;
+import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToObject;
+
+import java.io.IOException;
+import java.util.Set;
+
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.descriptors.Type;
@@ -19,12 +17,15 @@ import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.common.enums.State;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToByteArray;
-import static org.jboss.pnc.rex.common.util.SerializationUtils.convertToObject;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.jackson.Jacksonized;
+import lombok.extern.slf4j.Slf4j;
 
 @Builder
 @AllArgsConstructor
@@ -37,31 +38,32 @@ public class ServerResponse {
     /**
      * Task's state when the Response from remote entity arrived (before transition)
      */
-    @Getter(onMethod_ = {@ProtoField(number = 1, type = Type.ENUM)})
+    @Getter(onMethod_ = { @ProtoField(number = 1, type = Type.ENUM) })
     private final State state;
 
-    @Getter(onMethod_ = {@ProtoField(number = 2, defaultValue = "true")})
+    @Getter(onMethod_ = { @ProtoField(number = 2, defaultValue = "true") })
     private final boolean positive;
 
     @Getter
     private final Object body;
 
-    @Getter(onMethod_ = {@ProtoField(number = 4, type = Type.ENUM)})
+    @Getter(onMethod_ = { @ProtoField(number = 4, type = Type.ENUM) })
     private final Origin origin;
 
-    @Getter(onMethod_ = {@ProtoField(number = 5, defaultValue = "0")})
+    @Getter(onMethod_ = { @ProtoField(number = 5, defaultValue = "0") })
     private final int rollbackCounter;
 
-    @Getter(onMethod_ = {@ProtoField(number = 6)})
+    @Getter(onMethod_ = { @ProtoField(number = 6) })
     private final Set<ResponseFlag> flags;
 
     @ProtoFactory
-    public ServerResponse(State state,
-                          boolean positive,
-                          byte[] byteBody,
-                          Origin origin,
-                          int rollbackCounter,
-                          Set<ResponseFlag> flags) {
+    public ServerResponse(
+            State state,
+            boolean positive,
+            byte[] byteBody,
+            Origin origin,
+            int rollbackCounter,
+            Set<ResponseFlag> flags) {
         this.state = state;
         this.positive = positive;
         this.origin = origin;

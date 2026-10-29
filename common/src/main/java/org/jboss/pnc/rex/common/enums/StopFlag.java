@@ -13,32 +13,28 @@ public enum StopFlag {
     /**
      * Default state.
      */
-    @ProtoEnumValue(number = 0)
-    NONE,
+    @ProtoEnumValue(number = 0) NONE,
 
     /**
      * A Task was requested to be cancelled.
      */
-    @ProtoEnumValue(number = 1)
-    CANCELLED,
+    @ProtoEnumValue(number = 1) CANCELLED,
 
     /**
      * A Task has failed its execution remotely.
      */
-    @ProtoEnumValue(number = 2)
-    UNSUCCESSFUL,
+    @ProtoEnumValue(number = 2) UNSUCCESSFUL,
 
     /**
      * A Task's dependency(can be transitive) has failed.
      */
-    @ProtoEnumValue(number = 3)
-    DEPENDENCY_FAILED,
+    @ProtoEnumValue(number = 3) DEPENDENCY_FAILED,
 
     /**
-     * A Task's dependency(can be transitive) has configured to wait for successful final notification, which has failed.
+     * A Task's dependency(can be transitive) has configured to wait for successful final notification, which has
+     * failed.
      *
      * NOTE: The dependency will be in state SUCCESS but the notification request received 4xx+ result.
      */
-    @ProtoEnumValue(number = 4)
-    DEPENDENCY_NOTIFY_FAILED
+    @ProtoEnumValue(number = 4) DEPENDENCY_NOTIFY_FAILED
 }

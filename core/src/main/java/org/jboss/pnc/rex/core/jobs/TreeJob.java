@@ -4,6 +4,16 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
+import java.util.Iterator;
+import java.util.List;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.enterprise.util.TypeLiteral;
+
+import org.jboss.pnc.rex.model.Task;
+
 import com.google.common.graph.ElementOrder;
 import com.google.common.graph.ImmutableValueGraph;
 import com.google.common.graph.MutableValueGraph;
@@ -11,16 +21,9 @@ import com.google.common.graph.SuccessorsFunction;
 import com.google.common.graph.Traverser;
 import com.google.common.graph.ValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.event.TransactionPhase;
-import jakarta.enterprise.inject.spi.CDI;
-import jakarta.enterprise.util.TypeLiteral;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.rex.model.Task;
-
-import java.util.Iterator;
-import java.util.List;
 
 @Slf4j
 public class TreeJob extends ControllerJob {
@@ -39,23 +42,27 @@ public class TreeJob extends ControllerJob {
      * @param async
      * @param graph
      */
-    private TreeJob(ControllerJob root,
-                   TransactionPhase invocationPhase,
-                   Task context,
-                   boolean async,
-                   ValueGraph<ControllerJob, ChainTrigger> graph) {
+    private TreeJob(
+            ControllerJob root,
+            TransactionPhase invocationPhase,
+            Task context,
+            boolean async,
+            ValueGraph<ControllerJob, ChainTrigger> graph) {
         super(invocationPhase, context, async);
         this.graph = graph;
         this.root = root;
-        var event = new TypeLiteral<Event<ControllerJob>>() {};
+        var event = new TypeLiteral<Event<ControllerJob>>() {
+        };
         this.jobEvent = CDI.current().select(event).get();
     }
 
     @Override
-    protected void beforeExecute() {}
+    protected void beforeExecute() {
+    }
 
     @Override
-    protected void afterExecute() {}
+    protected void afterExecute() {
+    }
 
     @Override
     public boolean execute() {
@@ -73,10 +80,12 @@ public class TreeJob extends ControllerJob {
     }
 
     @Override
-    protected void onFailure() {}
+    protected void onFailure() {
+    }
 
     @Override
-    protected void onException(Throwable e) {}
+    protected void onException(Throwable e) {
+    }
 
     private enum ChainTrigger {
         ON_SUCCESS,
@@ -87,6 +96,7 @@ public class TreeJob extends ControllerJob {
     public static TreeJobBuilder of(ControllerJob root) {
         return new TreeJobBuilder(root);
     }
+
     public static TreeJobBuilder of(ControllerJob root, TransactionPhase invocationPhase, Task context, boolean async) {
         return new TreeJobBuilder(root, invocationPhase, context, async);
     }
@@ -106,7 +116,10 @@ public class TreeJob extends ControllerJob {
                     log.info("Running {}", parent);
                     jobEvent.fire(parent);
                 } catch (Exception e) {
-                    log.warn("Job {} has thrown an exception. Executing Job defined in the TreeJob regardless.", parent, e);
+                    log.warn(
+                            "Job {} has thrown an exception. Executing Job defined in the TreeJob regardless.",
+                            parent,
+                            e);
                 }
             }
 
@@ -115,18 +128,22 @@ public class TreeJob extends ControllerJob {
             }
 
             boolean parentResult = parent.isSuccessful();
-            List<ControllerJob> list = graph.successors(parent).stream().filter(
-                (job) -> {
-                    ChainTrigger trigger = graph.edgeValue(parent, job)
-                        .orElseThrow(() -> new IllegalStateException("Missing trigger between " + parent + " and " + job));
+            List<ControllerJob> list = graph.successors(parent)
+                    .stream()
+                    .filter(
+                            (job) -> {
+                                ChainTrigger trigger = graph.edgeValue(parent, job)
+                                        .orElseThrow(
+                                                () -> new IllegalStateException(
+                                                        "Missing trigger between " + parent + " and " + job));
 
-                    return switch (trigger) {
-                        case ON_SUCCESS -> parentResult;
-                        case ON_FAILURE -> !parentResult;
-                        case ON_ANY_OUTCOME -> true;
-                    };
-                }
-            ).toList();
+                                return switch (trigger) {
+                                    case ON_SUCCESS -> parentResult;
+                                    case ON_FAILURE -> !parentResult;
+                                    case ON_ANY_OUTCOME -> true;
+                                };
+                            })
+                    .toList();
             return list;
         }
     }
@@ -173,10 +190,14 @@ public class TreeJob extends ControllerJob {
         }
 
         private TreeJobBuilder triggerAfter(ControllerJob parent, ControllerJob child, ChainTrigger trigger) {
-            if (parent == null) throw new IllegalArgumentException("Parent node must not be null.");
-            if (child == null) throw new IllegalArgumentException("Child node must not be null.");
-            if (trigger == null) throw new IllegalArgumentException("Trigger must not be null.");
-            if (parent == child) throw new IllegalArgumentException("Parent cannot be the same instance as child");
+            if (parent == null)
+                throw new IllegalArgumentException("Parent node must not be null.");
+            if (child == null)
+                throw new IllegalArgumentException("Child node must not be null.");
+            if (trigger == null)
+                throw new IllegalArgumentException("Trigger must not be null.");
+            if (parent == child)
+                throw new IllegalArgumentException("Parent cannot be the same instance as child");
             if (!graph.nodes().contains(parent)) {
                 throw new IllegalArgumentException("Parent is not present in the tree graph");
             }

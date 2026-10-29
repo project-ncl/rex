@@ -4,10 +4,14 @@
  */
 package org.jboss.pnc.rex.core;
 
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
+
+import java.util.List;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jboss.pnc.rex.common.enums.ResourceType;
 import org.jboss.pnc.rex.core.api.ClusteredJobManager;
 import org.jboss.pnc.rex.core.api.ClusteredJobRegistry;
@@ -19,9 +23,7 @@ import org.jboss.pnc.rex.core.jobs.cluster.ClusteredJob;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.model.NodeResource;
 
-import java.util.List;
-
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped
@@ -33,9 +35,10 @@ public class ClusteredJobManagerImpl implements ClusteredJobManager, ResourceHol
 
     private final ApplicationConfig appConfig;
 
-    public ClusteredJobManagerImpl(ClusteredJobRegistry registry,
-                                   Event<ClusteredJob> scheduleCJob,
-                                   ApplicationConfig appConfig) {
+    public ClusteredJobManagerImpl(
+            ClusteredJobRegistry registry,
+            Event<ClusteredJob> scheduleCJob,
+            ApplicationConfig appConfig) {
         this.registry = registry;
         this.scheduleCJob = scheduleCJob;
         this.appConfig = appConfig;
@@ -72,10 +75,10 @@ public class ClusteredJobManagerImpl implements ClusteredJobManager, ResourceHol
 
     private static NodeResource toResource(ClusteredJobReference cjob) {
         return NodeResource.builder()
-            .ownerNode(cjob.getOwner())
-            .resourceId(cjob.getId())
-            .resourceType(ResourceType.CLUSTERED_JOB)
-            .build();
+                .ownerNode(cjob.getOwner())
+                .resourceId(cjob.getId())
+                .resourceType(ResourceType.CLUSTERED_JOB)
+                .build();
     }
 
     @Override
@@ -93,8 +96,9 @@ public class ClusteredJobManagerImpl implements ClusteredJobManager, ResourceHol
         var oldJob = registry.getById(resource.getResourceId());
 
         if (oldJob == null) {
-            log.warn("Attempt to register a Clustered Job with id {} failed. It is missing in rex-cluster-jobs Cache.",
-                resource.getResourceId());
+            log.warn(
+                    "Attempt to register a Clustered Job with id {} failed. It is missing in rex-cluster-jobs Cache.",
+                    resource.getResourceId());
             return;
         }
 

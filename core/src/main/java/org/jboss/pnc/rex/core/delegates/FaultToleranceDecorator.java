@@ -4,11 +4,12 @@
  */
 package org.jboss.pnc.rex.core.delegates;
 
-import io.quarkus.arc.Unremovable;
-import io.smallrye.faulttolerance.api.ApplyGuard;
+import java.util.function.Supplier;
+
 import jakarta.enterprise.context.ApplicationScoped;
 
-import java.util.function.Supplier;
+import io.quarkus.arc.Unremovable;
+import io.smallrye.faulttolerance.api.ApplyGuard;
 
 @Unremovable
 @ApplicationScoped

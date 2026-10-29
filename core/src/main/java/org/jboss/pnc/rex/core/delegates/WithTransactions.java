@@ -17,5 +17,6 @@ import jakarta.inject.Qualifier;
 
 @Qualifier
 @Retention(RUNTIME)
-@Target({METHOD, FIELD, PARAMETER, TYPE})
-public @interface WithTransactions {}
+@Target({ METHOD, FIELD, PARAMETER, TYPE })
+public @interface WithTransactions {
+}

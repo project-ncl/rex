@@ -4,10 +4,13 @@
  */
 package org.jboss.pnc.rex.rest;
 
-import io.quarkus.arc.ArcUndeclaredThrowableException;
-import io.smallrye.faulttolerance.api.ApplyGuard;
+import java.time.Instant;
+import java.util.Set;
+
 import jakarta.annotation.security.RolesAllowed;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.parameters.ErrorOption;
 import org.jboss.pnc.rex.common.enums.ResponseFlag;
@@ -15,11 +18,9 @@ import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.facade.api.TaskProvider;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-
-import java.time.Instant;
-import java.util.Set;
+import io.quarkus.arc.ArcUndeclaredThrowableException;
+import io.smallrye.faulttolerance.api.ApplyGuard;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped
@@ -132,7 +133,8 @@ public class CallbackEndpointImpl implements CallbackEndpoint {
 
     void handleWithErrorOption(ErrorOption errorOption, RuntimeException e) {
         switch (errorOption) {
-            case IGNORE -> {}
+            case IGNORE -> {
+            }
             case PASS_ERROR -> throw e;
         }
     }

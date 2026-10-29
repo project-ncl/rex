@@ -4,47 +4,8 @@
  */
 package org.jboss.pnc.rex.core;
 
-import com.google.common.collect.Iterables;
-import com.google.common.graph.ElementOrder;
-import com.google.common.graph.Graph;
-import com.google.common.graph.GraphBuilder;
-import com.google.common.graph.ImmutableGraph;
-import com.google.common.graph.MutableGraph;
-import com.google.common.graph.SuccessorsFunction;
-import com.google.common.graph.Traverser;
-import io.quarkus.infinispan.client.Remote;
-import lombok.extern.slf4j.Slf4j;
-import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.commons.api.query.Query;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.common.exceptions.BadRequestException;
-import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
-import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
-import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
-import org.jboss.pnc.rex.core.api.TaskContainer;
-import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.core.api.TaskTarget;
-import org.jboss.pnc.rex.core.config.ApplicationConfig;
-import org.jboss.pnc.rex.core.jobs.ControllerJob;
-import org.jboss.pnc.rex.core.jobs.PokeQueueJob;
-import org.jboss.pnc.rex.core.mapper.InitialTaskMapper;
-import org.jboss.pnc.rex.core.model.Edge;
-import org.jboss.pnc.rex.core.model.InitialTask;
-import org.jboss.pnc.rex.core.model.TaskGraph;
-import org.jboss.pnc.rex.model.Configuration;
-import org.jboss.pnc.rex.model.ServerResponse;
-import org.jboss.pnc.rex.model.Task;
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import jakarta.transaction.TransactionManager;
-import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,7 +19,49 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.Transactional;
+
+import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.commons.api.query.Query;
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.common.exceptions.BadRequestException;
+import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
+import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
+import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
+import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
+import org.jboss.pnc.rex.core.api.TaskContainer;
+import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.core.api.TaskTarget;
+import org.jboss.pnc.rex.core.config.ApplicationConfig;
+import org.jboss.pnc.rex.core.jobs.ControllerJob;
+import org.jboss.pnc.rex.core.jobs.PokeQueueJob;
+import org.jboss.pnc.rex.core.mapper.InitialTaskMapper;
+import org.jboss.pnc.rex.core.model.Edge;
+import org.jboss.pnc.rex.core.model.InitialTask;
+import org.jboss.pnc.rex.core.model.TaskGraph;
+import org.jboss.pnc.rex.model.Configuration;
+import org.jboss.pnc.rex.model.ServerResponse;
+import org.jboss.pnc.rex.model.Task;
+
+import com.google.common.collect.Iterables;
+import com.google.common.graph.ElementOrder;
+import com.google.common.graph.Graph;
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.ImmutableGraph;
+import com.google.common.graph.MutableGraph;
+import com.google.common.graph.SuccessorsFunction;
+import com.google.common.graph.Traverser;
+
+import io.quarkus.infinispan.client.Remote;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped
@@ -77,12 +80,13 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     private final Event<ControllerJob> jobEvent;
 
     @Inject
-    public TaskContainerImpl(ApplicationConfig appConfig,
-                             TaskController controller,
-                             InitialTaskMapper initialMapper,
-                             @Remote("rex-constraints") RemoteCache<String, String> constraints,
-                             @Remote("rex-tasks") RemoteCache<String, Task> tasks,
-                             Event<ControllerJob> jobEvent) {
+    public TaskContainerImpl(
+            ApplicationConfig appConfig,
+            TaskController controller,
+            InitialTaskMapper initialMapper,
+            @Remote("rex-constraints") RemoteCache<String, String> constraints,
+            @Remote("rex-tasks") RemoteCache<String, Task> tasks,
+            Event<ControllerJob> jobEvent) {
         this.appConfig = appConfig;
         this.controller = controller;
         this.initialMapper = initialMapper;
@@ -144,38 +148,56 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     }
 
     @Override
-    public List<Task> getTasks(boolean waiting, boolean queued, boolean running, boolean finished, boolean rollingback, List<String> queueFilter) {
+    public List<Task> getTasks(
+            boolean waiting,
+            boolean queued,
+            boolean running,
+            boolean finished,
+            boolean rollingback,
+            List<String> queueFilter) {
         if (!waiting && !running && !finished && !queued && !rollingback)
             return Collections.emptyList();
 
         List<State> states = new ArrayList<>();
         if (waiting) {
-            states.addAll(EnumSet.allOf(State.class).stream()
-                    .filter(state -> state.isIdle() || state.isQueued())
-                    .collect(Collectors.toSet()));
+            states.addAll(
+                    EnumSet.allOf(State.class)
+                            .stream()
+                            .filter(state -> state.isIdle() || state.isQueued())
+                            .collect(Collectors.toSet()));
         }
         if (queued) {
-            states.addAll(EnumSet.allOf(State.class).stream()
-                .filter(State::isQueued)
-                .collect(Collectors.toSet()));
+            states.addAll(
+                    EnumSet.allOf(State.class)
+                            .stream()
+                            .filter(State::isQueued)
+                            .collect(Collectors.toSet()));
         }
         if (running) {
-            states.addAll(EnumSet.allOf(State.class).stream()
-                    .filter(State::isRunning)
-                    .collect(Collectors.toSet()));
+            states.addAll(
+                    EnumSet.allOf(State.class)
+                            .stream()
+                            .filter(State::isRunning)
+                            .collect(Collectors.toSet()));
         }
         if (finished) {
-            states.addAll(EnumSet.allOf(State.class).stream()
-                    .filter(State::isFinal)
-                    .collect(Collectors.toSet()));
+            states.addAll(
+                    EnumSet.allOf(State.class)
+                            .stream()
+                            .filter(State::isFinal)
+                            .collect(Collectors.toSet()));
         }
         if (rollingback) {
-            states.addAll(EnumSet.allOf(State.class).stream()
-                    .filter(State::isAwaitingRollback)
-                    .collect(Collectors.toSet()));
-            states.addAll(EnumSet.allOf(State.class).stream()
-                    .filter(State::isRollback)
-                    .collect(Collectors.toSet()));
+            states.addAll(
+                    EnumSet.allOf(State.class)
+                            .stream()
+                            .filter(State::isAwaitingRollback)
+                            .collect(Collectors.toSet()));
+            states.addAll(
+                    EnumSet.allOf(State.class)
+                            .stream()
+                            .filter(State::isRollback)
+                            .collect(Collectors.toSet()));
         }
 
         // reduce to 'NEW','WAITING'.... format
@@ -261,7 +283,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         while (!notVisited.isEmpty()) {
             String current = notVisited.iterator().next();
             if (dfs(current, notVisited, visiting, visited)) {
-                throw new CircularDependencyException("Cycle has been found on Task " + current + " with loop: " + formatCycle(visiting, current));
+                throw new CircularDependencyException(
+                        "Cycle has been found on Task " + current + " with loop: " + formatCycle(visiting, current));
             }
         }
     }
@@ -354,16 +377,23 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
     private void validateMilestoneTasks(Set<Task> newTasks, Graph<Task> graphRepresentation) {
         for (var newTask : newTasks) {
             String milestoneName = newTask.getMilestoneTask();
-            if (milestoneName == null) continue;
+            if (milestoneName == null)
+                continue;
 
             // bfs vs dfs?
             Iterable<Task> transitiveDeps = Traverser.forGraph(graphRepresentation).breadthFirst(newTask);
 
-            var optionalMilestoneTask = Iterables.tryFind(transitiveDeps, (task) -> task.getName().equals(milestoneName));
+            var optionalMilestoneTask = Iterables
+                    .tryFind(transitiveDeps, (task) -> task.getName().equals(milestoneName));
 
             if (!optionalMilestoneTask.isPresent()) {
-                log.warn("Task '{}' has milestone task '{}' that's not a transitive dependency", newTask.getName(), milestoneName);
-                throw new BadRequestException("Task '" + newTask.getName() + "' has milestone task '" + milestoneName + "' that's not a transitive dependency");
+                log.warn(
+                        "Task '{}' has milestone task '{}' that's not a transitive dependency",
+                        newTask.getName(),
+                        milestoneName);
+                throw new BadRequestException(
+                        "Task '" + newTask.getName() + "' has milestone task '" + milestoneName
+                                + "' that's not a transitive dependency");
             }
         }
     }
@@ -399,10 +429,14 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             toBuild.addNode(task);
 
             Set<String> dependencies = task.getDependencies();
-            List<Task> dependencyTasks = dependencies.stream().map(dependency -> fromCacheOrContainer(dependency, cache)).toList();
+            List<Task> dependencyTasks = dependencies.stream()
+                    .map(dependency -> fromCacheOrContainer(dependency, cache))
+                    .toList();
 
             Set<String> dependants = task.getDependants();
-            List<Task> dependantTasks = dependants.stream().map(dependant -> fromCacheOrContainer(dependant, cache)).toList();
+            List<Task> dependantTasks = dependants.stream()
+                    .map(dependant -> fromCacheOrContainer(dependant, cache))
+                    .toList();
 
             Stream.concat(dependencyTasks.stream(), dependantTasks.stream()).forEach(toBuild::addNode);
 
@@ -450,21 +484,29 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             // assert that notifications are not null when waiting for them is configured
             if (config.isDelayDependantsForFinalNotification()
                     && task.getCallerNotifications() == null) {
-                throw new BadRequestException("Task " + task.getName() + " is configured to delay for notifications but notification definition is null.");
+                throw new BadRequestException(
+                        "Task " + task.getName()
+                                + " is configured to delay for notifications but notification definition is null.");
             }
 
             if (config.isHeartbeatEnable()) {
                 if (config.getHeartbeatInterval() == null) {
-                    throw new BadRequestException("Task " + task.getName() + " is configured for heartbeats but the refresh interval is null.");
+                    throw new BadRequestException(
+                            "Task " + task.getName()
+                                    + " is configured for heartbeats but the refresh interval is null.");
                 }
                 if (config.getHeartbeatToleranceThreshold() < 0) {
-                    throw new BadRequestException("Task " + task.getName() + " is misconfigured. Heartbeat tolerance threshold is negative.");
+                    throw new BadRequestException(
+                            "Task " + task.getName() + " is misconfigured. Heartbeat tolerance threshold is negative.");
                 }
                 if (config.getHeartbeatInterval().isNegative()) {
-                    throw new BadRequestException("Task " + task.getName() + " is misconfigured. Heartbeat interval cannot be negative.");
+                    throw new BadRequestException(
+                            "Task " + task.getName() + " is misconfigured. Heartbeat interval cannot be negative.");
                 }
                 if (config.getHeartbeatInitialDelay() != null && config.getHeartbeatInitialDelay().isNegative()) {
-                    throw new BadRequestException("Task " + task.getName() + " is misconfigured. Heartbeat initial delay cannot be negative.");
+                    throw new BadRequestException(
+                            "Task " + task.getName()
+                                    + " is misconfigured. Heartbeat initial delay cannot be negative.");
                 }
             }
         }
@@ -484,7 +526,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
                 Task previousValue = getCache().withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(task.getName(), task);
                 if (previousValue != null) {
                     throw new TaskConflictException(
-                            "Task " + task.getName() + " declared as new in vertices already exists.", previousValue.getName());
+                            "Task " + task.getName() + " declared as new in vertices already exists.",
+                            previousValue.getName());
                 }
 
                 handleOptionalConstraint(task);
@@ -494,7 +537,8 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
             } else {
                 // we have to get the previous version
                 VersionedValue<Task> versioned = getWithMetadata(entry.getKey());
-                boolean success = getCache().replaceWithVersion(entry.getKey(), versioned.getValue(), versioned.getVersion());
+                boolean success = getCache()
+                        .replaceWithVersion(entry.getKey(), versioned.getValue(), versioned.getVersion());
                 if (!success) {
                     throw new ConcurrentUpdateException(
                             "Task " + versioned.getValue() + " was remotely updated during the transaction");
@@ -509,7 +553,10 @@ public class TaskContainerImpl implements TaskContainer, TaskTarget {
         if (constraint != null) {
             String previousHolder = constraints.putIfAbsent(constraint, task.getName());
             if (previousHolder != null) {
-                throw new ConstraintConflictException("Task " + task.getName() + " with constraint '" + task.getConstraint() +"' in conflict. Conflicting Task: " + previousHolder, constraint);
+                throw new ConstraintConflictException(
+                        "Task " + task.getName() + " with constraint '" + task.getConstraint()
+                                + "' in conflict. Conflicting Task: " + previousHolder,
+                        constraint);
             }
         }
     }
