@@ -109,6 +109,13 @@ quarkus:
         level: ERROR
     min-level: TRACE
 
+  # Jib / Container image
+  container-image:
+    registry: quay.io
+    group: rh-newcastle-devel
+    name: rex
+    additional-tags: latest
+
   security:
     ldap:
         # enable LDAP: build-time property
