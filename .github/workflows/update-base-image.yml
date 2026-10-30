@@ -1,0 +1,121 @@
+name: Update Jib Base Image
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check for new base image version and digest
+        id: check-image
+        run: |
+          # Extract current values from pom.xml
+          # <image>:<version>@<digest>
+          IMAGE_POM=$(grep -oP '<quarkus.jib.base-jvm-image>\K[^<]+' pom.xml)
+
+          IMAGE="${IMAGE_POM%%:*}"
+
+          tag_and_digest="${IMAGE_POM#*:}"
+          CURRENT_VERSION="${tag_and_digest%@*}"
+
+          CURRENT_DIGEST="${IMAGE_POM##*@}"
+
+
+          echo "Current image: $IMAGE"
+          echo "Current version: $CURRENT_VERSION"
+          echo "Current digest: $CURRENT_DIGEST"
+
+          # Install skopeo to inspect images
+          sudo apt-get update && sudo apt-get install -y skopeo
+
+          # Get all available tags for the image
+          ALL_TAGS=$(skopeo list-tags "docker://${IMAGE}" | jq -r '.Tags[]')
+
+          # Filter for tags matching the pattern X.YY-Z (e.g., 1.24-1, 1.25-2)
+          # Sort by version number and get the latest
+          LATEST_VERSION=$(echo "$ALL_TAGS" | grep -E '^[0-9]+\.[0-9]+-[0-9]+$' | sort -V | tail -n1)
+
+          echo "Latest available version: $LATEST_VERSION"
+
+          # Get the digest for the latest version
+          LATEST_DIGEST=$(skopeo inspect "docker://${IMAGE}:${LATEST_VERSION}" | jq -r '.Digest')
+
+          echo "Latest digest: $LATEST_DIGEST"
+
+          # Check if version or digest has changed
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ] || [ "$CURRENT_DIGEST" != "$LATEST_DIGEST" ]; then
+            echo "Update needed!"
+            VERSION_CHANGED=$([[ "$CURRENT_VERSION" != "$LATEST_VERSION" ]] && echo "true" || echo "false")
+            {
+              echo "update_needed=true"
+              echo "new_version=$LATEST_VERSION"
+              echo "image=$IMAGE"
+              echo "new_digest=$LATEST_DIGEST"
+              echo "current_version=$CURRENT_VERSION"
+              echo "current_digest=$CURRENT_DIGEST"
+              echo "version_changed=$VERSION_CHANGED"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "Version and digest are up to date"
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update pom.xml
+        if: steps.check-image.outputs.update_needed == 'true'
+        env:
+          IMAGE: ${{ steps.check-image.outputs.image }}
+          NEW_VERSION: ${{ steps.check-image.outputs.new_version }}
+          NEW_DIGEST: ${{ steps.check-image.outputs.new_digest }}
+        run: |
+          # Update the version in pom.xml
+          sed -i "s|<quarkus.jib.base-jvm-image>.*</quarkus.jib.base-jvm-image>|<quarkus.jib.base-jvm-image>${IMAGE}:${NEW_VERSION}@${NEW_DIGEST}</quarkus.jib.base-jvm-image>|" pom.xml
+
+          echo "Updated pom.xml with new version and digest"
+
+      - name: Create Pull Request
+        if: steps.check-image.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            Update Jib base image to ${{ steps.check-image.outputs.new_version }}
+
+            Update ${{ steps.check-image.outputs.image }} from ${{ steps.check-image.outputs.current_version }} to ${{ steps.check-image.outputs.new_version }}
+
+            Previous digest: ${{ steps.check-image.outputs.current_digest }}
+            New digest: ${{ steps.check-image.outputs.new_digest }}
+          branch: update-jib-base-image
+          delete-branch: true
+          title: 'chore: Update Jib base image to ${{ steps.check-image.outputs.image }}:${{ steps.check-image.outputs.new_version }}'
+          body: |
+            ## Base Image Update
+
+            This PR updates the Jib base image to the latest available version.
+
+            **Image:** `${{ steps.check-image.outputs.image }}`
+
+            **Changes:**
+            - Previous version: `${{ steps.check-image.outputs.current_version }}`
+            - New version: `${{ steps.check-image.outputs.new_version }}`
+            - Previous digest: `${{ steps.check-image.outputs.current_digest }}`
+            - New digest: `${{ steps.check-image.outputs.new_digest }}`
+
+            ${{ steps.check-image.outputs.version_changed == 'true' && '**Version Update**: This update includes a new version of the base image, which may include significant updates, security patches, and bug fixes.' || '**Digest Update**: This update only changes the digest for the same version, typically indicating security patches or minor OS updates.' }}
+
+            This is an automated PR created by the Update Jib Base Image workflow.
+          labels: |
+            dependencies
+            automated
