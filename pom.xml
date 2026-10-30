@@ -67,6 +67,7 @@
     <surefire-plugin.version>3.6.1</surefire-plugin.version>
     <lombok.version>1.18.48</lombok.version>
     <delombok-plugin.version>1.18.20.0</delombok-plugin.version>
+    <delombok.output>${project.build.directory}/generated-sources/delombok</delombok.output>
     <slf4j.version>1.7.28</slf4j.version>
     <assertj.version>3.27.7</assertj.version>
     <restassured.version>4.1.1</restassured.version>
@@ -262,7 +263,7 @@ SPDX-License-Identifier: Apache-2.0
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
-            <sourcepath>target/generated-sources/delombok;target/generated-sources/open-api</sourcepath>
+            <sourcepath>${project.build.directory}/generated-sources/delombok;${project.build.directory}/generated-sources/open-api</sourcepath>
             <doclint>all,-missing</doclint>
           </configuration>
           <executions>
@@ -398,7 +399,7 @@ SPDX-License-Identifier: Apache-2.0
       </build>
     </profile>
     <profile>
-      <id>release</id>
+      <id>central-release</id>
       <build>
         <plugins>
           <plugin>
