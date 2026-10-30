@@ -16,7 +16,6 @@ jobs:
       uses: project-ncl/shared-github-actions/.github/workflows/maven-release.yml@e7102dd3bf74f91aaccae7a3539241c03a652d1a # v0.0.27
       with:
         ref_to_release: ${{ inputs.ref_to_release }}
-        fetch_all_commits: true
         quarkus_jib_image: true
         release_command: 'mvn -B -V release:prepare release:perform -DlocalCheckout=true -DpushChanges=false'
       secrets:
