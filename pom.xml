@@ -329,17 +329,6 @@ SPDX-License-Identifier: Apache-2.0
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <configuration>
-          <tagNameFormat>@{project.version}</tagNameFormat>
-          <autoVersionSubmodules>true</autoVersionSubmodules>
-          <useReleaseProfile>false</useReleaseProfile>
-          <releaseProfiles>central-release</releaseProfiles>
-          <goals>deploy</goals>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
