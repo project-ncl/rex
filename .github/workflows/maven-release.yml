@@ -17,7 +17,7 @@ jobs:
       with:
         ref_to_release: ${{ inputs.ref_to_release }}
         fetch_all_commits: true
-        quarkus_jib_image: 'true'
+        quarkus_jib_image: true
         release_command: 'mvn -B -V release:prepare release:perform -DlocalCheckout=true -DpushChanges=false'
       secrets:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
