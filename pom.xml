@@ -12,12 +12,12 @@
     <groupId>org.jboss</groupId>
     <artifactId>jboss-parent</artifactId>
     <version>55</version>
-    <relativePath/>
+    <relativePath />
   </parent>
 
   <groupId>org.jboss.pnc.rex</groupId>
   <artifactId>parent</artifactId>
-  <version>4.0.0-SNAPSHOT</version>
+  <version>4.0.0</version>
   <packaging>pom</packaging>
 
   <name>Rex</name>
@@ -29,7 +29,7 @@
     <connection>scm:git:https://github.com/project-ncl/rex.git</connection>
     <developerConnection>scm:git:git@github.com:project-ncl/rex.git</developerConnection>
     <url>https://github.com/project-ncl/rex/</url>
-    <tag>HEAD</tag>
+    <tag>4.0.0</tag>
   </scm>
 
   <licenses>
