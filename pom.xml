@@ -74,7 +74,7 @@
     <mapstruct.version>1.6.3</mapstruct.version>
     <pnc-api.version>4.0.0</pnc-api.version>
 
-    <quarkus.jib.base-jvm-image>registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24@sha256:fa543e5a747c4d559144ef7ce7902ae6c4c8363a62cf4d7b776d174cf23a8b8d</quarkus.jib.base-jvm-image>
+    <quarkus.jib.base-jvm-image>registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24-3@sha256:f4519929e630051b1a207013ba81700898cf2c4605dfc3c85effc7c14b768e59</quarkus.jib.base-jvm-image>
   </properties>
 
   <dependencyManagement>
