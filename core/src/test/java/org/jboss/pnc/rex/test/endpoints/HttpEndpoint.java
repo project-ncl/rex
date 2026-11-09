@@ -14,8 +14,7 @@ import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.core.GenericVertxHttpClient;
-import org.jboss.pnc.rex.core.counter.Counter;
-import org.jboss.pnc.rex.core.counter.Running;
+import org.jboss.pnc.rex.core.counter.RunningTracker;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.requests.RollbackRequest;
 import org.jboss.pnc.rex.model.requests.StartRequest;
@@ -56,8 +55,7 @@ public class HttpEndpoint {
     ManagedExecutor executor;
 
     @Inject
-    @Running
-    Counter running;
+    RunningTracker running;
 
     @Inject
     TransitionRecorder recorder;
@@ -222,7 +220,7 @@ public class HttpEndpoint {
 
     private void record(Object data) {
         if (shouldRecord) {
-            record.forEach((key, value) -> value.offer(running.getValue(key)));
+            record.forEach((key, value) -> value.offer(running.get(key)));
             recordedRequestData.offer(data);
         }
     }
