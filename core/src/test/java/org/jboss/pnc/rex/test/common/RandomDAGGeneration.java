@@ -4,20 +4,20 @@
  */
 package org.jboss.pnc.rex.test.common;
 
+import static org.jboss.pnc.rex.test.common.TestData.getNotificationsRequest;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
+import static org.jboss.pnc.rex.test.common.TestData.getStopRequest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import static org.jboss.pnc.rex.test.common.TestData.getNotificationsRequest;
-import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
-import static org.jboss.pnc.rex.test.common.TestData.getStopRequest;
 
 public class RandomDAGGeneration {
 

@@ -4,9 +4,9 @@
  */
 package org.jboss.pnc.rex.core.api;
 
-import org.jboss.pnc.rex.model.ClusteredJobReference;
-
 import java.util.List;
+
+import org.jboss.pnc.rex.model.ClusteredJobReference;
 
 /**
  * Registry for interacting with persisted ClusteredJobReferences. Clustered Jobs are Jobs that are long-running and

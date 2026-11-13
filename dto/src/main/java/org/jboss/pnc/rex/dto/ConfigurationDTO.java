@@ -4,15 +4,16 @@
  */
 package org.jboss.pnc.rex.dto;
 
+import java.time.Duration;
+import java.util.Map;
+
+import org.jboss.pnc.rex.common.ConfigurationDefaults;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.jboss.pnc.rex.common.ConfigurationDefaults;
-
-import java.time.Duration;
-import java.util.Map;
 
 /**
  * Class to specify metadata for a Task.

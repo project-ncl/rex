@@ -4,47 +4,8 @@
  */
 package org.jboss.pnc.rex.core;
 
-import com.google.common.collect.Iterables;
-import com.google.common.graph.ElementOrder;
-import com.google.common.graph.Graph;
-import com.google.common.graph.GraphBuilder;
-import com.google.common.graph.ImmutableGraph;
-import com.google.common.graph.MutableGraph;
-import com.google.common.graph.SuccessorsFunction;
-import com.google.common.graph.Traverser;
-import io.quarkus.infinispan.client.Remote;
-import lombok.extern.slf4j.Slf4j;
-import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.commons.api.query.Query;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.common.exceptions.BadRequestException;
-import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
-import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
-import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
-import org.jboss.pnc.rex.core.api.TaskContainer;
-import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
-import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.core.api.TaskTarget;
-import org.jboss.pnc.rex.core.config.ApplicationConfig;
-import org.jboss.pnc.rex.core.jobs.ControllerJob;
-import org.jboss.pnc.rex.core.jobs.PokeQueueJob;
-import org.jboss.pnc.rex.core.mapper.InitialTaskMapper;
-import org.jboss.pnc.rex.core.model.Edge;
-import org.jboss.pnc.rex.core.model.InitialTask;
-import org.jboss.pnc.rex.core.model.TaskGraph;
-import org.jboss.pnc.rex.model.Configuration;
-import org.jboss.pnc.rex.model.ServerResponse;
-import org.jboss.pnc.rex.model.Task;
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import jakarta.transaction.TransactionManager;
-import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,7 +19,49 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.Transactional;
+
+import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.commons.api.query.Query;
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.common.exceptions.BadRequestException;
+import org.jboss.pnc.rex.common.exceptions.CircularDependencyException;
+import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
+import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
+import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
+import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
+import org.jboss.pnc.rex.core.api.TaskContainer;
+import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.core.api.TaskTarget;
+import org.jboss.pnc.rex.core.config.ApplicationConfig;
+import org.jboss.pnc.rex.core.jobs.ControllerJob;
+import org.jboss.pnc.rex.core.jobs.PokeQueueJob;
+import org.jboss.pnc.rex.core.mapper.InitialTaskMapper;
+import org.jboss.pnc.rex.core.model.Edge;
+import org.jboss.pnc.rex.core.model.InitialTask;
+import org.jboss.pnc.rex.core.model.TaskGraph;
+import org.jboss.pnc.rex.model.Configuration;
+import org.jboss.pnc.rex.model.ServerResponse;
+import org.jboss.pnc.rex.model.Task;
+
+import com.google.common.collect.Iterables;
+import com.google.common.graph.ElementOrder;
+import com.google.common.graph.Graph;
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.ImmutableGraph;
+import com.google.common.graph.MutableGraph;
+import com.google.common.graph.SuccessorsFunction;
+import com.google.common.graph.Traverser;
+
+import io.quarkus.infinispan.client.Remote;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped

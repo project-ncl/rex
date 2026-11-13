@@ -4,20 +4,22 @@
  */
 package org.jboss.pnc.rex.dto.requests;
 
+import java.util.Map;
+import java.util.Set;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
+import org.jboss.pnc.rex.dto.CreateTaskDTO;
+import org.jboss.pnc.rex.dto.EdgeDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Singular;
-import org.jboss.pnc.rex.dto.ConfigurationDTO;
-import org.jboss.pnc.rex.dto.CreateTaskDTO;
-import org.jboss.pnc.rex.dto.EdgeDTO;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import java.util.Map;
-import java.util.Set;
 
 @Getter
 @Builder(toBuilder = true)

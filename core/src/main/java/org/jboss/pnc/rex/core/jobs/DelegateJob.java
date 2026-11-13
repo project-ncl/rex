@@ -4,13 +4,14 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.quarkus.narayana.jta.TransactionSemantics;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.enterprise.event.TransactionPhase;
+
 import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.model.Task;
 
-import jakarta.enterprise.event.TransactionPhase;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.narayana.jta.TransactionSemantics;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DelegateJob extends ControllerJob {
@@ -153,4 +154,3 @@ public class DelegateJob extends ControllerJob {
     }
 
 }
-

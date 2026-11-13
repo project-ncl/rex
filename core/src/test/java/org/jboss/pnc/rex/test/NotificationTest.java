@@ -4,35 +4,6 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.junit.QuarkusTest;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.context.ManagedExecutor;
-import org.jboss.pnc.rex.api.CallbackEndpoint;
-import org.jboss.pnc.rex.api.TaskEndpoint;
-import org.jboss.pnc.rex.api.parameters.ErrorOption;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.common.enums.Transition;
-import org.jboss.pnc.rex.core.GenericVertxHttpClient;
-import org.jboss.pnc.rex.core.TaskContainerImpl;
-import org.jboss.pnc.rex.dto.CreateTaskDTO;
-import org.jboss.pnc.rex.dto.EdgeDTO;
-import org.jboss.pnc.rex.test.common.AbstractTest;
-import org.jboss.pnc.rex.test.common.TestData;
-import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
-import org.jboss.pnc.rex.dto.TaskDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.junit.jupiter.api.Test;
-
-import jakarta.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.jboss.pnc.rex.common.enums.Transition.ENQUEUED_to_STARTING;
@@ -56,6 +27,36 @@ import static org.jboss.pnc.rex.test.common.TestData.getNotificationsRequest;
 import static org.jboss.pnc.rex.test.common.TestData.getRequestWithStart;
 import static org.jboss.pnc.rex.test.common.TestData.getStopRequest;
 import static org.jboss.pnc.rex.test.common.TestData.getStopRequestWithCallback;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import jakarta.inject.Inject;
+
+import org.eclipse.microprofile.context.ManagedExecutor;
+import org.jboss.pnc.rex.api.CallbackEndpoint;
+import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.api.parameters.ErrorOption;
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.common.enums.Transition;
+import org.jboss.pnc.rex.core.GenericVertxHttpClient;
+import org.jboss.pnc.rex.core.TaskContainerImpl;
+import org.jboss.pnc.rex.dto.CreateTaskDTO;
+import org.jboss.pnc.rex.dto.EdgeDTO;
+import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.common.TestData;
+import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
+import org.junit.jupiter.api.Test;
+
+import io.quarkus.test.junit.QuarkusTest;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @QuarkusTest

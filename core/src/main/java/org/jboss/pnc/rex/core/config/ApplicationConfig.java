@@ -4,12 +4,13 @@
  */
 package org.jboss.pnc.rex.core.config;
 
+import java.time.Duration;
+
+import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
+
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
-import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
-
-import java.time.Duration;
 
 @ConfigMapping(prefix = "scheduler")
 public interface ApplicationConfig {

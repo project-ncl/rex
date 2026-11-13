@@ -4,22 +4,21 @@
  */
 package org.jboss.pnc.rex.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.jboss.pnc.rex.common.enums.CJobOperation;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
-import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.Indexed;
-import org.infinispan.protostream.annotations.Proto;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.descriptors.Type;
-import org.jboss.pnc.rex.common.enums.CJobOperation;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @ToString
 @Jacksonized

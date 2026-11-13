@@ -4,13 +4,13 @@
  */
 package org.jboss.pnc.rex.facade.api;
 
-import org.jboss.pnc.rex.common.enums.ResponseFlag;
-import org.jboss.pnc.rex.dto.TaskDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+
+import org.jboss.pnc.rex.common.enums.ResponseFlag;
+import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 
 public interface TaskProvider {
 

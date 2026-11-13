@@ -4,20 +4,22 @@
  */
 package org.jboss.pnc.rex.model;
 
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.jboss.pnc.rex.common.ConfigurationDefaults;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import lombok.extern.slf4j.Slf4j;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.jboss.pnc.rex.common.ConfigurationDefaults;
-
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Class to specify metadata for a Task.

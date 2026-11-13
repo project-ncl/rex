@@ -4,22 +4,23 @@
  */
 package org.jboss.pnc.rex.test.common;
 
-import io.vertx.core.impl.ConcurrentHashSet;
-import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.event.TransactionPhase;
-import org.jboss.pnc.rex.model.Task;
-import org.jboss.pnc.rex.model.TransitionTime;
-
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.TransactionPhase;
+
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.core.jobs.NotifyCallerJob;
+import org.jboss.pnc.rex.model.Task;
+import org.jboss.pnc.rex.model.TransitionTime;
+
+import io.vertx.core.impl.ConcurrentHashSet;
+import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
 @Slf4j

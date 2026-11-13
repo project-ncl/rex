@@ -5,6 +5,7 @@
 package org.jboss.pnc.rex.facade.api;
 
 import jakarta.annotation.Nullable;
+
 import org.jboss.pnc.rex.dto.responses.LongResponse;
 
 /**

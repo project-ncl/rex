@@ -4,12 +4,12 @@
  */
 package org.jboss.pnc.rex.common.util;
 
-import org.slf4j.MDC;
-
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import org.slf4j.MDC;
 
 public class MDCUtils {
 

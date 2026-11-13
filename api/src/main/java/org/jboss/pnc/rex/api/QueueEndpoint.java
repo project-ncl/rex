@@ -4,7 +4,11 @@
  */
 package org.jboss.pnc.rex.api;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -14,10 +18,6 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.pnc.rex.api.openapi.OpenapiConstants;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
 import org.jboss.pnc.rex.dto.responses.LongResponse;
-
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.core.MediaType;
 
 @Tag(name = "Endpoint for queue administration")
 @Path("/rest/queue")
