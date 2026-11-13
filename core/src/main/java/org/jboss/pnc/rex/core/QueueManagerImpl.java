@@ -4,9 +4,16 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import static java.util.stream.Collectors.groupingBy;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
+
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.core.api.QueueManager;
 import org.jboss.pnc.rex.core.api.TaskController;
@@ -17,14 +24,8 @@ import org.jboss.pnc.rex.core.counter.Running;
 import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.model.Task;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
-import static java.util.stream.Collectors.groupingBy;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped

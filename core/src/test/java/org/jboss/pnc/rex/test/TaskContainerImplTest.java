@@ -11,16 +11,16 @@ import static org.jboss.pnc.rex.test.common.Assertions.*;
 import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
 import static org.jboss.pnc.rex.test.common.TestData.*;
 
-import com.google.common.graph.Graph;
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.restassured.common.mapper.TypeRef;
-import io.restassured.http.ContentType;
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import jakarta.inject.Inject;
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.TransactionManager;
 
-import lombok.extern.slf4j.Slf4j;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
@@ -33,10 +33,8 @@ import org.jboss.pnc.rex.common.exceptions.ConstraintConflictException;
 import org.jboss.pnc.rex.common.exceptions.TaskConflictException;
 import org.jboss.pnc.rex.core.TaskContainerImpl;
 import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.test.common.AbstractTest;
 import org.jboss.pnc.rex.core.counter.Counter;
 import org.jboss.pnc.rex.core.counter.Running;
-import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.CreateTaskDTO;
 import org.jboss.pnc.rex.dto.EdgeDTO;
@@ -44,19 +42,22 @@ import org.jboss.pnc.rex.dto.TaskDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
-
-import io.quarkus.test.junit.QuarkusTest;
 import org.jboss.pnc.rex.model.requests.StartRequest;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
-import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.graph.Graph;
+
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.common.mapper.TypeRef;
+import io.restassured.http.ContentType;
+import lombok.extern.slf4j.Slf4j;
 
 @QuarkusTest
 @Slf4j

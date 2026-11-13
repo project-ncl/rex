@@ -4,13 +4,14 @@
  */
 package org.jboss.pnc.rex.model.requests;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
-
-import java.util.Map;
 
 /**
  * Request sent to the remote entity to rollback remote Task.

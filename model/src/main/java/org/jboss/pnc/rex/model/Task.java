@@ -4,12 +4,8 @@
  */
 package org.jboss.pnc.rex.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.Singular;
-import lombok.ToString;
+import java.util.*;
+
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
@@ -21,7 +17,12 @@ import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 
-import java.util.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.Singular;
+import lombok.ToString;
 
 /**
  * Task is an entity that holds data of remotely executed process.

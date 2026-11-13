@@ -4,11 +4,11 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.model.Task;
-
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
+import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.model.Task;
 
 /**
  * Job to mark a task as disposable.

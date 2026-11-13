@@ -5,6 +5,29 @@
 package org.jboss.pnc.rex.core;
 
 
+import static java.time.Duration.of;
+
+import java.net.URI;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.control.ActivateRequestContext;
+import jakarta.ws.rs.core.HttpHeaders;
+
+import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
+import org.jboss.pnc.rex.common.enums.Method;
+import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
+import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
+import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
+import org.jboss.pnc.rex.core.config.RequestRetryPolicy;
+import org.jboss.pnc.rex.core.config.StatusCodeRetryPolicy;
+import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
+import org.jboss.pnc.rex.model.Header;
+
 import io.smallrye.mutiny.Context;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
@@ -18,28 +41,7 @@ import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpRequest;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
-import jakarta.enterprise.context.control.ActivateRequestContext;
-import jakarta.ws.rs.core.HttpHeaders;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
-import org.jboss.pnc.rex.common.enums.Method;
-import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
-import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
-import org.jboss.pnc.rex.core.config.RequestRetryPolicy;
-import org.jboss.pnc.rex.core.config.InternalRetryPolicy;
-import org.jboss.pnc.rex.core.config.StatusCodeRetryPolicy;
-import org.jboss.pnc.rex.core.config.api.HttpConfiguration;
-import org.jboss.pnc.rex.model.Header;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import java.net.URI;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import static java.time.Duration.of;
 
 @Slf4j
 @ApplicationScoped

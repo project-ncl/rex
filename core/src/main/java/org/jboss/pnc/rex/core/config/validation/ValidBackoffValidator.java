@@ -6,6 +6,7 @@ package org.jboss.pnc.rex.core.config.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+
 import org.jboss.pnc.rex.core.config.api.MutinyRetryPolicy;
 
 public class ValidBackoffValidator implements ConstraintValidator<ValidBackoff, MutinyRetryPolicy.ExpBackoff> {

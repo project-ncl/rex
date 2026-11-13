@@ -4,12 +4,11 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import org.jboss.pnc.rex.core.api.CleaningManager;
-import org.jboss.pnc.rex.core.delegates.WithRetries;
-import org.jboss.pnc.rex.model.Task;
-
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
+import org.jboss.pnc.rex.core.api.CleaningManager;
+import org.jboss.pnc.rex.core.delegates.WithRetries;
 
 public class PokeCleanJob extends ControllerJob {
 

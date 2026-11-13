@@ -6,6 +6,7 @@ package org.jboss.pnc.rex.rest.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import io.quarkus.jackson.ObjectMapperCustomizer;
 
 public class CustomObjectMapper implements ObjectMapperCustomizer {

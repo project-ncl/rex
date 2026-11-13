@@ -4,15 +4,25 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.http.ContentType;
-import io.vertx.core.impl.ConcurrentHashSet;
+import static io.restassured.RestAssured.get;
+import static io.restassured.RestAssured.given;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.jboss.pnc.rex.test.common.Assertions.*;
+
+import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
@@ -37,21 +47,13 @@ import org.jboss.pnc.rex.test.common.TestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.URI;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static io.restassured.RestAssured.get;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.jboss.pnc.rex.test.common.Assertions.*;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
+import io.vertx.core.impl.ConcurrentHashSet;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @QuarkusTest

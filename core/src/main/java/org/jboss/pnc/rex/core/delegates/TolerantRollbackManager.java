@@ -4,9 +4,11 @@
  */
 package org.jboss.pnc.rex.core.delegates;
 
-import io.smallrye.faulttolerance.api.ApplyGuard;
 import jakarta.enterprise.context.ApplicationScoped;
+
 import org.jboss.pnc.rex.core.api.RollbackManager;
+
+import io.smallrye.faulttolerance.api.ApplyGuard;
 
 @WithRetries
 @ApplicationScoped

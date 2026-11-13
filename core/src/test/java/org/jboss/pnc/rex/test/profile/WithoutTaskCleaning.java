@@ -4,9 +4,9 @@
  */
 package org.jboss.pnc.rex.test.profile;
 
-import io.quarkus.test.junit.QuarkusTestProfile;
-
 import java.util.Map;
+
+import io.quarkus.test.junit.QuarkusTestProfile;
 
 public class WithoutTaskCleaning implements QuarkusTestProfile {
 

@@ -4,11 +4,13 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import lombok.Getter;
-import org.jboss.pnc.rex.model.Task;
+import java.util.Optional;
 
 import jakarta.enterprise.event.TransactionPhase;
-import java.util.Optional;
+
+import org.jboss.pnc.rex.model.Task;
+
+import lombok.Getter;
 
 /**
  * Template for creating Controller Jobs. Usually a ControllerJob is associated with a specific Task which triggered

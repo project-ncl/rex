@@ -4,15 +4,16 @@
  */
 package org.jboss.pnc.rex.core.config;
 
+import java.util.Map;
+
+import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
+import org.jboss.pnc.rex.core.config.api.MutinyRetryPolicy;
+
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithParentName;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
-import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
-import org.jboss.pnc.rex.core.config.api.MutinyRetryPolicy;
-
-import java.util.Map;
 
 /**
  * Configuration of http errors fault tolerance, where key is error code and value a FT policy.

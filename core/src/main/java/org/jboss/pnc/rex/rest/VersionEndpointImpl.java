@@ -4,13 +4,14 @@
  */
 package org.jboss.pnc.rex.rest;
 
+import java.time.ZonedDateTime;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.pnc.api.dto.ComponentVersion;
 import org.jboss.pnc.rex.api.VersionEndpoint;
 import org.jboss.pnc.rex.common.Constants;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import java.time.ZonedDateTime;
 
 @ApplicationScoped
 public class VersionEndpointImpl implements VersionEndpoint {

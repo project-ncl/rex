@@ -4,28 +4,28 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.vertx.core.runtime.VertxMDC;
-import io.vertx.core.Context;
-import io.vertx.core.Vertx;
-import io.vertx.core.impl.ContextInternal;
-import jakarta.annotation.Priority;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.context.ManagedExecutor;
-import org.jboss.pnc.rex.core.jobs.ControllerJob;
+import static jakarta.interceptor.Interceptor.Priority.APPLICATION;
 
+import java.util.concurrent.ConcurrentHashMap;
+
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.BeforeDestroyed;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.TransactionPhase;
-import jakarta.inject.Inject;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.TransactionManager;
 import jakarta.transaction.TransactionScoped;
+
+import org.eclipse.microprofile.context.ManagedExecutor;
+import org.jboss.pnc.rex.core.jobs.ControllerJob;
 import org.slf4j.MDC;
 
-import java.util.concurrent.ConcurrentHashMap;
-
-import static jakarta.interceptor.Interceptor.Priority.APPLICATION;
+import io.quarkus.vertx.core.runtime.VertxMDC;
+import io.vertx.core.Context;
+import io.vertx.core.Vertx;
+import io.vertx.core.impl.ContextInternal;
+import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
 @Slf4j

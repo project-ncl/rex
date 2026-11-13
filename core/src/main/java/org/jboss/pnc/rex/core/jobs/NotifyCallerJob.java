@@ -4,18 +4,16 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
+import java.util.TreeSet;
+
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.core.CallerNotificationClient;
 import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
-import jakarta.enterprise.event.TransactionPhase;
-import jakarta.enterprise.inject.spi.CDI;
-
-import java.util.ArrayList;
-import java.util.TreeSet;
 
 public class NotifyCallerJob extends ControllerJob {
 

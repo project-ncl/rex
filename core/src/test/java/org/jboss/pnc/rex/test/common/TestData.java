@@ -4,6 +4,10 @@
  */
 package org.jboss.pnc.rex.test.common;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jboss.pnc.rex.api.parameters.TaskFilterParameters;
 import org.jboss.pnc.rex.common.enums.Method;
 import org.jboss.pnc.rex.common.enums.Mode;
@@ -13,10 +17,6 @@ import org.jboss.pnc.rex.dto.EdgeDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.model.Header;
 import org.jboss.pnc.rex.model.Request;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TestData {
 
