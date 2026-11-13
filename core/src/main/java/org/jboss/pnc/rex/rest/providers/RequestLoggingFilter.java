@@ -7,11 +7,12 @@ package org.jboss.pnc.rex.rest.providers;
 import jakarta.ws.rs.container.*;
 import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.UriInfo;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jboss.resteasy.reactive.server.ServerRequestFilter;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 
-import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
+
 
 @Slf4j
 public class RequestLoggingFilter {

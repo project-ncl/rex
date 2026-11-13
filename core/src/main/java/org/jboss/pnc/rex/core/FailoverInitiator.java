@@ -4,15 +4,14 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.arc.All;
-import io.quarkus.infinispan.client.Remote;
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.quarkus.narayana.jta.TransactionExceptionResult;
-import io.quarkus.runtime.Shutdown;
-import io.quarkus.runtime.Startup;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.spi.ObserverMethod;
 import jakarta.transaction.Transactional;
+
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -25,9 +24,12 @@ import org.jboss.pnc.rex.model.NodeResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import io.quarkus.arc.All;
+import io.quarkus.infinispan.client.Remote;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.narayana.jta.TransactionExceptionResult;
+import io.quarkus.runtime.Shutdown;
+import io.quarkus.runtime.Startup;
 
 @ApplicationScoped
 public class FailoverInitiator {

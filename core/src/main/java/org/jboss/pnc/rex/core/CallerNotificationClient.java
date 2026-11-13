@@ -4,11 +4,15 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.arc.Unremovable;
-import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.core.buffer.Buffer;
-import io.vertx.mutiny.ext.web.client.HttpResponse;
-import lombok.extern.slf4j.Slf4j;
+import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.common.exceptions.RequestRetryException;
 import org.jboss.pnc.rex.core.mapper.MiniTaskMapper;
@@ -17,13 +21,11 @@ import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.requests.NotificationRequest;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
-import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
+import io.quarkus.arc.Unremovable;
+import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Unremovable
 @ApplicationScoped

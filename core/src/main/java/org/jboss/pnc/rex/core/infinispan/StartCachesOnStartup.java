@@ -4,9 +4,9 @@
  */
 package org.jboss.pnc.rex.core.infinispan;
 
-import io.quarkus.infinispan.client.Remote;
-import io.quarkus.runtime.Startup;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.spi.ObserverMethod;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.model.NodeResource;
@@ -14,9 +14,8 @@ import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
+import io.quarkus.infinispan.client.Remote;
+import io.quarkus.runtime.Startup;
 
 @ApplicationScoped
 public class StartCachesOnStartup {

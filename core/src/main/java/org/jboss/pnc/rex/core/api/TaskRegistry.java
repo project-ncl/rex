@@ -4,14 +4,15 @@
  */
 package org.jboss.pnc.rex.core.api;
 
-import com.google.common.graph.Graph;
-import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
-import org.jboss.pnc.rex.model.Task;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
+import org.jboss.pnc.rex.model.Task;
+
+import com.google.common.graph.Graph;
 
 /**
  * The registry is used to retrieve Tasks.

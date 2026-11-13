@@ -4,13 +4,14 @@
  */
 package org.jboss.pnc.rex.core.config.api;
 
-import io.smallrye.config.WithDefault;
-
-import io.smallrye.faulttolerance.api.Guard;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.PositiveOrZero;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
+
+import io.smallrye.config.WithDefault;
+import io.smallrye.faulttolerance.api.Guard;
 
 public interface MPRetryPolicy {
 

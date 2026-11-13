@@ -4,11 +4,9 @@
  */
 package org.jboss.pnc.rex.model.requests;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.extern.jackson.Jacksonized;
+import java.util.List;
+import java.util.Set;
+
 import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.model.Configuration;
@@ -16,8 +14,12 @@ import org.jboss.pnc.rex.model.Request;
 import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.TransitionTime;
 
-import java.util.List;
-import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.jackson.Jacksonized;
 
 /**
  * Stripped down Task model used for transition notifications.

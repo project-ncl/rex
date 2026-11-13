@@ -4,12 +4,8 @@
  */
 package org.jboss.pnc.rex.test.common;
 
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.core.api.TaskContainer;
-import org.jboss.pnc.rex.test.common.TransitionRecorder.Tuple;
-import org.jboss.pnc.rex.model.Task;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import jakarta.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -18,7 +14,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import jakarta.enterprise.inject.spi.CDI;
+
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.core.api.TaskContainer;
+import org.jboss.pnc.rex.model.Task;
+import org.jboss.pnc.rex.test.common.TransitionRecorder.Tuple;
 
 public class Assertions {
     public static void assertCorrectTaskRelations(Task testing,

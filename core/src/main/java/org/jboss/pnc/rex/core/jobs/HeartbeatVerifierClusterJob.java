@@ -4,13 +4,15 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.smallrye.mutiny.Context;
-import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.infrastructure.Infrastructure;
-import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.subscription.Cancellable;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
+
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.common.enums.CJobOperation;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
@@ -28,12 +30,12 @@ import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.smallrye.mutiny.Context;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
+import io.smallrye.mutiny.subscription.Cancellable;
 
 public class HeartbeatVerifierClusterJob extends ClusteredJob {
 

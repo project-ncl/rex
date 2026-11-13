@@ -4,11 +4,11 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import org.jboss.pnc.rex.core.api.QueueManager;
-import org.jboss.pnc.rex.model.Task;
-
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
+import org.jboss.pnc.rex.core.api.QueueManager;
+import org.jboss.pnc.rex.model.Task;
 
 public class DecreaseCounterJob extends ControllerJob {
 

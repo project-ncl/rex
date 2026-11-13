@@ -4,11 +4,12 @@
  */
 package org.jboss.pnc.rex.test.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.quarkus.test.junit.callback.QuarkusTestAfterEachCallback;
 import io.quarkus.test.junit.callback.QuarkusTestBeforeEachCallback;
 import io.quarkus.test.junit.callback.QuarkusTestMethodContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestNameLogging implements QuarkusTestBeforeEachCallback, QuarkusTestAfterEachCallback {
 

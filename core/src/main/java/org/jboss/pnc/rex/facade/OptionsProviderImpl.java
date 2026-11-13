@@ -4,18 +4,14 @@
  */
 package org.jboss.pnc.rex.facade;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import org.jboss.pnc.rex.common.exceptions.QueueMissingException;
-import org.jboss.pnc.rex.core.api.QueueManager;
-import org.jboss.pnc.rex.dto.responses.ErrorResponse;
-import org.jboss.pnc.rex.dto.responses.LongResponse;
-import org.jboss.pnc.rex.facade.api.OptionsProvider;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+
+import org.jboss.pnc.rex.common.exceptions.QueueMissingException;
+import org.jboss.pnc.rex.core.api.QueueManager;
+import org.jboss.pnc.rex.dto.responses.LongResponse;
+import org.jboss.pnc.rex.facade.api.OptionsProvider;
 
 @ApplicationScoped
 public class OptionsProviderImpl implements OptionsProvider {

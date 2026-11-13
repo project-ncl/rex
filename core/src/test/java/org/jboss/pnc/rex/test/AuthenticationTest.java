@@ -10,7 +10,6 @@ import static org.hamcrest.Matchers.containsString;
 import java.net.URI;
 import java.util.Set;
 
-import io.smallrye.jwt.build.Jwt;
 import org.jboss.pnc.rex.api.QueueEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.test.profile.WithWiremockOpenId;
@@ -21,6 +20,7 @@ import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
+import io.smallrye.jwt.build.Jwt;
 
 @QuarkusTest
 @TestProfile(WithWiremockOpenId.class)

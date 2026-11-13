@@ -4,19 +4,8 @@
  */
 package org.jboss.pnc.rex.core;
 
-import com.google.common.collect.Sets;
-import com.google.common.graph.Graph;
-import com.google.common.graph.Graphs;
-import com.google.common.graph.Traverser;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.common.enums.StopFlag;
-import org.jboss.pnc.rex.core.api.RollbackManager;
-import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.core.api.TaskRegistry;
-import org.jboss.pnc.rex.model.Task;
+import static com.google.common.collect.Iterables.filter;
+import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -28,8 +17,22 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Iterables.filter;
-import static java.util.stream.Collectors.toMap;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
+
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.common.enums.StopFlag;
+import org.jboss.pnc.rex.core.api.RollbackManager;
+import org.jboss.pnc.rex.core.api.TaskController;
+import org.jboss.pnc.rex.core.api.TaskRegistry;
+import org.jboss.pnc.rex.model.Task;
+
+import com.google.common.collect.Sets;
+import com.google.common.graph.Graph;
+import com.google.common.graph.Graphs;
+import com.google.common.graph.Traverser;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped

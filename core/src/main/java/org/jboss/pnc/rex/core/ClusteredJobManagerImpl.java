@@ -4,10 +4,14 @@
  */
 package org.jboss.pnc.rex.core;
 
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
+
+import java.util.List;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jboss.pnc.rex.common.enums.ResourceType;
 import org.jboss.pnc.rex.core.api.ClusteredJobManager;
 import org.jboss.pnc.rex.core.api.ClusteredJobRegistry;
@@ -19,9 +23,7 @@ import org.jboss.pnc.rex.core.jobs.cluster.ClusteredJob;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.model.NodeResource;
 
-import java.util.List;
-
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped

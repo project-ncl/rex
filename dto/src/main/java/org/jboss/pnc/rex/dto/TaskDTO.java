@@ -4,20 +4,20 @@
  */
 package org.jboss.pnc.rex.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-import lombok.ToString;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.common.enums.StopFlag;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.common.enums.StopFlag;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Getter
 @Builder

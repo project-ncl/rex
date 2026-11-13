@@ -4,10 +4,12 @@
  */
 package org.jboss.pnc.rex.core.jobs.rollback;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.smallrye.mutiny.Uni;
+import java.util.HashMap;
+import java.util.Set;
+
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.api.dto.ErrorResponse;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.core.RemoteEntityClient;
@@ -18,8 +20,9 @@ import org.jboss.pnc.rex.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Set;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.smallrye.mutiny.Uni;
 
 public class InvokeRollbackJob extends ControllerJob {
 

@@ -4,8 +4,8 @@
  */
 package org.jboss.pnc.rex.facade.mapper;
 
-import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.model.Task;
 import org.mapstruct.*;
 
 @Mapper(config = MapperCentralConfig.class,

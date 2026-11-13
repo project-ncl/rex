@@ -6,6 +6,7 @@ package org.jboss.pnc.rex.facade;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+
 import org.jboss.pnc.rex.core.FailoverInitiator;
 import org.jboss.pnc.rex.core.api.ClusteredJobRegistry;
 import org.jboss.pnc.rex.core.api.QueueManager;

@@ -4,11 +4,12 @@
  */
 package org.jboss.pnc.rex.core.config;
 
-import io.smallrye.config.ConfigMapping;
-import io.smallrye.faulttolerance.api.Guard;
 import org.jboss.pnc.rex.core.config.api.MPRetryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.smallrye.config.ConfigMapping;
+import io.smallrye.faulttolerance.api.Guard;
 
 @ConfigMapping(prefix = "scheduler.options.internal-retry-policy") //CDI
 public interface InternalRetryPolicy extends MPRetryPolicy {

@@ -4,36 +4,36 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
-import io.restassured.http.ContentType;
-import io.restassured.http.Header;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.rex.api.TaskEndpoint;
-import org.jboss.pnc.rex.common.enums.Mode;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.test.common.AbstractTest;
-import org.jboss.pnc.rex.test.common.TestData;
-import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
-import org.jboss.pnc.rex.dto.ConfigurationDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.jboss.pnc.rex.model.requests.StartRequest;
-import org.junit.jupiter.api.Test;
-
-import jakarta.inject.Inject;
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.TestData.createMockTask;
+import static org.jboss.pnc.rex.test.common.TestData.getRequestFromSingleTask;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.test.common.TestData.createMockTask;
-import static org.jboss.pnc.rex.test.common.TestData.getRequestFromSingleTask;
-import static io.restassured.RestAssured.given;
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.common.enums.Mode;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.rex.model.requests.StartRequest;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.common.TestData;
+import org.jboss.pnc.rex.test.endpoints.HttpEndpoint;
+import org.junit.jupiter.api.Test;
+
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
+import io.restassured.http.Header;
 
 @QuarkusTest
 public class GenericHttpClientTest extends AbstractTest {

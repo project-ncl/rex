@@ -4,9 +4,13 @@
  */
 package org.jboss.pnc.rex.core.jobs.cluster;
 
-import io.quarkus.narayana.jta.QuarkusTransaction;
+import static org.jboss.pnc.rex.core.utils.OTELUtils.getOTELContext;
+
+import java.util.HashMap;
+
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.common.enums.CJobOperation;
 import org.jboss.pnc.rex.core.api.ClusteredJobManager;
 import org.jboss.pnc.rex.core.api.TaskRegistry;
@@ -15,9 +19,7 @@ import org.jboss.pnc.rex.core.jobs.ControllerJob;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 import org.jboss.pnc.rex.model.Task;
 
-import java.util.HashMap;
-
-import static org.jboss.pnc.rex.core.utils.OTELUtils.getOTELContext;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 
 /**
  * The classes that implement this interface will be handled as ClusteredJobs, therefore, they will be failed-over in

@@ -4,8 +4,22 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.narayana.jta.TransactionSemantics;
-import lombok.extern.slf4j.Slf4j;
+import static jakarta.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
+import static jakarta.enterprise.event.TransactionPhase.IN_PROGRESS;
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.transaction.Transactional;
+
 import org.infinispan.client.hotrod.VersionedValue;
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
@@ -14,10 +28,10 @@ import org.jboss.pnc.rex.common.enums.State;
 import org.jboss.pnc.rex.common.enums.StopFlag;
 import org.jboss.pnc.rex.common.enums.Transition;
 import org.jboss.pnc.rex.common.exceptions.BadRequestException;
+import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.core.api.DependencyMessenger;
 import org.jboss.pnc.rex.core.api.DependentMessenger;
 import org.jboss.pnc.rex.core.api.TaskController;
-import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.core.config.ApplicationConfig.Options.TaskConfiguration;
 import org.jboss.pnc.rex.core.delegates.FaultToleranceDecorator;
 import org.jboss.pnc.rex.core.jobs.ClearConstraintJob;
@@ -52,21 +66,8 @@ import org.jboss.pnc.rex.model.ServerResponse;
 import org.jboss.pnc.rex.model.Task;
 import org.jboss.pnc.rex.model.TransitionTime;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Event;
-import jakarta.transaction.Transactional;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
-import static jakarta.enterprise.event.TransactionPhase.BEFORE_COMPLETION;
-import static jakarta.enterprise.event.TransactionPhase.IN_PROGRESS;
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
-import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
+import io.quarkus.narayana.jta.TransactionSemantics;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped

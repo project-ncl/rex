@@ -4,25 +4,11 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
-import io.quarkus.test.security.TestSecurity;
-import org.jboss.pnc.rex.api.TaskEndpoint;
-import org.jboss.pnc.rex.common.enums.State;
-import org.jboss.pnc.rex.common.enums.StopFlag;
-import org.jboss.pnc.rex.common.enums.Transition;
-import org.jboss.pnc.rex.dto.ConfigurationDTO;
-import org.jboss.pnc.rex.model.TransitionTime;
-import org.jboss.pnc.rex.test.common.AbstractTest;
-import org.jboss.pnc.rex.test.common.TestData;
-import org.jboss.pnc.rex.dto.TaskDTO;
-import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
-import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
-import org.jboss.pnc.rex.test.profile.WithoutTaskCleaning;
-import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
-
-import jakarta.inject.Inject;
+import static java.util.stream.Collectors.toMap;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.pnc.rex.common.enums.Transition.*;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.TestData.*;
 
 import java.time.Instant;
 import java.util.List;
@@ -31,11 +17,24 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static java.util.stream.Collectors.toMap;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.common.enums.Transition.*;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.test.common.TestData.*;
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.rex.api.TaskEndpoint;
+import org.jboss.pnc.rex.common.enums.State;
+import org.jboss.pnc.rex.common.enums.StopFlag;
+import org.jboss.pnc.rex.common.enums.Transition;
+import org.jboss.pnc.rex.dto.ConfigurationDTO;
+import org.jboss.pnc.rex.dto.TaskDTO;
+import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
+import org.jboss.pnc.rex.model.TransitionTime;
+import org.jboss.pnc.rex.test.common.AbstractTest;
+import org.jboss.pnc.rex.test.common.TestData;
+import org.jboss.pnc.rex.test.endpoints.TransitionRecorderEndpoint;
+import org.jboss.pnc.rex.test.profile.WithoutTaskCleaning;
+import org.junit.jupiter.api.Test;
+
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks

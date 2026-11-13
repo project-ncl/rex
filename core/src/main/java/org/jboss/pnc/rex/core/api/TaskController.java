@@ -4,12 +4,12 @@
  */
 package org.jboss.pnc.rex.core.api;
 
+import java.time.Instant;
+import java.util.Set;
+
 import org.jboss.pnc.rex.common.enums.Mode;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.ResponseFlag;
-
-import java.time.Instant;
-import java.util.Set;
 
 /**
  * This is API for TaskController.

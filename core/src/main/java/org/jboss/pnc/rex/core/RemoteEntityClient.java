@@ -4,14 +4,23 @@
  */
 package org.jboss.pnc.rex.core;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.arc.Unremovable;
-import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.infrastructure.Infrastructure;
-import io.vertx.mutiny.core.buffer.Buffer;
-import io.vertx.mutiny.ext.web.client.HttpResponse;
-import lombok.extern.slf4j.Slf4j;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
+import static org.jboss.pnc.rex.core.utils.OTELUtils.getOTELContext;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.jboss.pnc.api.dto.ErrorResponse;
 import org.jboss.pnc.api.dto.HeartbeatConfig;
 import org.jboss.pnc.rex.common.enums.Origin;
@@ -28,21 +37,15 @@ import org.jboss.pnc.rex.model.requests.StartRequest;
 import org.jboss.pnc.rex.model.requests.StopRequest;
 import org.slf4j.MDC;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.jboss.pnc.rex.common.util.MDCUtils.wrapWithMDC;
-import static org.jboss.pnc.rex.core.utils.OTELUtils.getOTELContext;
+import io.quarkus.arc.Unremovable;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Unremovable
 @ApplicationScoped

@@ -4,6 +4,8 @@
  */
 package org.jboss.pnc.rex.core.mapper;
 
+import java.util.TreeSet;
+
 import org.jboss.pnc.rex.core.model.InitialTask;
 import org.jboss.pnc.rex.facade.mapper.MapperCentralConfig;
 import org.jboss.pnc.rex.model.HeartbeatMetadata;
@@ -13,8 +15,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValueMappingStrategy;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-
-import java.util.TreeSet;
 
 @Mapper(config = MapperCentralConfig.class, imports = {TreeSet.class, RollbackMetadata.class, HeartbeatMetadata.class},
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_DEFAULT,

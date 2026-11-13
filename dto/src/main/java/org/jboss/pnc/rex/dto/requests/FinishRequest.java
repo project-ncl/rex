@@ -4,12 +4,12 @@
  */
 package org.jboss.pnc.rex.dto.requests;
 
+import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import jakarta.validation.constraints.NotNull;
 
 @Getter
 @NoArgsConstructor

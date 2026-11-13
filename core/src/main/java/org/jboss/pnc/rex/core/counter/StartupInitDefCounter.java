@@ -4,10 +4,10 @@
  */
 package org.jboss.pnc.rex.core.counter;
 
-import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.spi.ObserverMethod;
-import jakarta.inject.Inject;
+
+import io.quarkus.runtime.Startup;
 
 @ApplicationScoped
 public class StartupInitDefCounter {

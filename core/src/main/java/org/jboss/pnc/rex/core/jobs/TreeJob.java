@@ -4,6 +4,16 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
+import java.util.Iterator;
+import java.util.List;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.enterprise.util.TypeLiteral;
+
+import org.jboss.pnc.rex.model.Task;
+
 import com.google.common.graph.ElementOrder;
 import com.google.common.graph.ImmutableValueGraph;
 import com.google.common.graph.MutableValueGraph;
@@ -11,16 +21,9 @@ import com.google.common.graph.SuccessorsFunction;
 import com.google.common.graph.Traverser;
 import com.google.common.graph.ValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.event.TransactionPhase;
-import jakarta.enterprise.inject.spi.CDI;
-import jakarta.enterprise.util.TypeLiteral;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.rex.model.Task;
-
-import java.util.Iterator;
-import java.util.List;
 
 @Slf4j
 public class TreeJob extends ControllerJob {

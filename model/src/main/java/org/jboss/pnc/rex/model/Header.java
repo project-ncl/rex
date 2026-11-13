@@ -4,12 +4,13 @@
  */
 package org.jboss.pnc.rex.model;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
 
 @Builder
 @Jacksonized

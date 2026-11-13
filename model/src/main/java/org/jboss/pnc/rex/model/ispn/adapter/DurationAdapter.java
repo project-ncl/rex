@@ -4,11 +4,11 @@
  */
 package org.jboss.pnc.rex.model.ispn.adapter;
 
+import java.time.Duration;
+
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-
-import java.time.Duration;
 
 @ProtoAdapter(Duration.class)
 public class DurationAdapter {

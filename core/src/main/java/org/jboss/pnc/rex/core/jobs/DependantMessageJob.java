@@ -4,12 +4,13 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import org.jboss.pnc.rex.core.api.DependentMessenger;
-import org.jboss.pnc.rex.model.Task;
+import java.util.Set;
 
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.enterprise.inject.spi.CDI;
-import java.util.Set;
+
+import org.jboss.pnc.rex.core.api.DependentMessenger;
+import org.jboss.pnc.rex.model.Task;
 
 /**
  * Jobs implementing this abstract class are used for messaging all dependants about important changes(dependency has

@@ -4,9 +4,17 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTaskTransitionsInto;
+import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
+import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
+import static org.jboss.pnc.rex.test.common.TestData.*;
+
+import java.util.*;
+
 import jakarta.inject.Inject;
+
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
@@ -28,14 +36,8 @@ import org.jboss.pnc.rex.test.common.TransitionRecorder;
 import org.jboss.pnc.rex.test.profile.WithoutTaskCleaning;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.jboss.pnc.rex.common.enums.ResponseFlag.SKIP_ROLLBACK;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTaskTransitionsInto;
-import static org.jboss.pnc.rex.test.common.Assertions.waitTillTasksAreFinishedWith;
-import static org.jboss.pnc.rex.test.common.RandomDAGGeneration.generateDAG;
-import static org.jboss.pnc.rex.test.common.TestData.*;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
 @TestProfile(WithoutTaskCleaning.class) // disable deletion of tasks

@@ -4,19 +4,21 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.infinispan.client.Remote;
+import static jakarta.transaction.Transactional.TxType.MANDATORY;
+
+import java.util.List;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
+
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.rex.core.api.ClusteredJobRegistry;
 import org.jboss.pnc.rex.core.config.ApplicationConfig;
 import org.jboss.pnc.rex.model.ClusteredJobReference;
 
-import java.util.List;
-
-import static jakarta.transaction.Transactional.TxType.MANDATORY;
+import io.quarkus.infinispan.client.Remote;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped

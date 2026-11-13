@@ -4,14 +4,14 @@
  */
 package org.jboss.pnc.rex.facade.mapper;
 
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jboss.pnc.rex.core.model.TaskGraph;
 import org.jboss.pnc.rex.dto.ConfigurationDTO;
 import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.mapstruct.*;
-
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 
 @Mapper(config = MapperCentralConfig.class, uses = {EdgeMapper.class, CreateTaskMapper.class})
 public interface GraphsMapper extends EntityMapper<CreateGraphRequest, TaskGraph> {

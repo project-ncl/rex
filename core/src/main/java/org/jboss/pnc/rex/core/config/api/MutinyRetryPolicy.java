@@ -4,15 +4,15 @@
  */
 package org.jboss.pnc.rex.core.config.api;
 
-import io.smallrye.config.WithDefault;
-import io.smallrye.config.WithName;
-import io.smallrye.mutiny.Uni;
-
-import org.jboss.pnc.rex.core.config.validation.ValidBackoff;
-
 import java.time.Duration;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import org.jboss.pnc.rex.core.config.validation.ValidBackoff;
+
+import io.smallrye.config.WithDefault;
+import io.smallrye.config.WithName;
+import io.smallrye.mutiny.Uni;
 
 public interface MutinyRetryPolicy {
 

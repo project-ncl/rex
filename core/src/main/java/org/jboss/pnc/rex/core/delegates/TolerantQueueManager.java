@@ -4,11 +4,12 @@
  */
 package org.jboss.pnc.rex.core.delegates;
 
-import io.quarkus.arc.Unremovable;
-import io.smallrye.faulttolerance.api.ApplyGuard;
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.jboss.pnc.rex.core.api.QueueManager;
 
-import jakarta.enterprise.context.ApplicationScoped;
+import io.quarkus.arc.Unremovable;
+import io.smallrye.faulttolerance.api.ApplyGuard;
 
 @WithRetries
 @Unremovable

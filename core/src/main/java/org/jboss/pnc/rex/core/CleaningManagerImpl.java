@@ -4,7 +4,12 @@
  */
 package org.jboss.pnc.rex.core;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
+
 import org.jboss.pnc.rex.common.exceptions.ConcurrentUpdateException;
 import org.jboss.pnc.rex.common.exceptions.TaskMissingException;
 import org.jboss.pnc.rex.core.api.CleaningManager;
@@ -12,10 +17,7 @@ import org.jboss.pnc.rex.core.api.TaskContainer;
 import org.jboss.pnc.rex.core.api.TaskController;
 import org.jboss.pnc.rex.model.Task;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ApplicationScoped

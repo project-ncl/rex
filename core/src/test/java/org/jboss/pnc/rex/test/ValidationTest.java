@@ -4,11 +4,12 @@
  */
 package org.jboss.pnc.rex.test;
 
-import io.quarkus.test.common.http.TestHTTPEndpoint;
-import io.quarkus.test.common.http.TestHTTPResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
+import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithoutStart;
+
+import java.net.URI;
+
 import org.jboss.pnc.rex.api.CallbackEndpoint;
 import org.jboss.pnc.rex.api.TaskEndpoint;
 import org.jboss.pnc.rex.api.parameters.ErrorOption;
@@ -18,11 +19,11 @@ import org.jboss.pnc.rex.dto.requests.CreateGraphRequest;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.junit.jupiter.api.Test;
 
-import java.net.URI;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.containsString;
-import static org.jboss.pnc.rex.test.common.TestData.getMockTaskWithoutStart;
+import io.quarkus.test.common.http.TestHTTPEndpoint;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
+import io.restassured.http.ContentType;
 
 @QuarkusTest
 @TestSecurity(user = "user", roles = {"pnc-app-rex-user"})

@@ -4,14 +4,15 @@
  */
 package org.jboss.pnc.rex.dto;
 
+import java.time.Instant;
+
+import org.jboss.pnc.rex.common.enums.Transition;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.jboss.pnc.rex.common.enums.Transition;
-
-import java.time.Instant;
 
 @Getter
 @Builder

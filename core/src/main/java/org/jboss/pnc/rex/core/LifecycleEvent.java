@@ -4,13 +4,14 @@
  */
 package org.jboss.pnc.rex.core;
 
-import io.quarkus.runtime.Shutdown;
-import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.spi.ObserverMethod;
-import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
+
 import org.jboss.pnc.rex.core.config.ApplicationConfig;
+
+import io.quarkus.runtime.Shutdown;
+import io.quarkus.runtime.Startup;
+import lombok.extern.slf4j.Slf4j;
 
 @ApplicationScoped
 @Slf4j

@@ -4,30 +4,15 @@
  */
 package org.jboss.pnc.rex.test;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.http.Fault;
-import com.github.tomakehurst.wiremock.stubbing.Scenario;
-import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.security.TestSecurity;
-import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.core.buffer.Buffer;
-import io.vertx.mutiny.ext.web.client.HttpResponse;
-import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
-import org.jboss.pnc.rex.common.enums.Method;
-import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
-import org.jboss.pnc.rex.core.GenericVertxHttpClient;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getAllServeEvents;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.time.Duration;
@@ -39,15 +24,31 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.getAllServeEvents;
-import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static org.assertj.core.api.Assertions.assertThat;
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.rex.common.enums.Method;
+import org.jboss.pnc.rex.common.exceptions.HttpResponseException;
+import org.jboss.pnc.rex.core.GenericVertxHttpClient;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.http.Fault;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
+
+import io.quarkus.test.junit.QuarkusTest;
+import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @QuarkusTest

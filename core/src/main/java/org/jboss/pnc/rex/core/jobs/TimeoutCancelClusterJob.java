@@ -4,11 +4,17 @@
  */
 package org.jboss.pnc.rex.core.jobs;
 
-import io.opentelemetry.context.Context;
-import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.smallrye.mutiny.Uni;
-import io.vertx.core.Vertx;
+import static java.time.Duration.between;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Set;
+
 import jakarta.enterprise.inject.spi.CDI;
+
 import org.jboss.pnc.rex.common.enums.CJobOperation;
 import org.jboss.pnc.rex.common.enums.Origin;
 import org.jboss.pnc.rex.common.enums.State;
@@ -23,14 +29,10 @@ import org.jboss.pnc.rex.model.TransitionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Set;
-
-import static java.time.Duration.between;
-import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+import io.opentelemetry.context.Context;
+import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.smallrye.mutiny.Uni;
+import io.vertx.core.Vertx;
 
 public class TimeoutCancelClusterJob extends ClusteredJob {
 

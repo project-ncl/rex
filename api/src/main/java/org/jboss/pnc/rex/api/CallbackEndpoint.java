@@ -4,8 +4,20 @@
  */
 package org.jboss.pnc.rex.api;
 
+import java.util.Set;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -17,18 +29,6 @@ import org.jboss.pnc.rex.api.parameters.ErrorOption;
 import org.jboss.pnc.rex.common.enums.ResponseFlag;
 import org.jboss.pnc.rex.dto.requests.FinishRequest;
 import org.jboss.pnc.rex.dto.responses.ErrorResponse;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-
-import java.util.Set;
 
 @Tag(name = "Callback endpoint")
 @Path("/rest/callback")
